@@ -1140,8 +1140,8 @@
     /* ===== 浮动宠物：发财猫 ===== */
     #lucky-cat {
       position: absolute;
-      top: 24px;
-      right: 46px;
+      top: 29px;
+      right: 65px;
       width: 175px;
       height: 124px;
       z-index: 50;
@@ -6373,89 +6373,82 @@ setInterval(updateClock, 1000);
 
 <script>
 (function () {
-  // 注入 base64 图（避免被反爬）
-  var img = document.getElementById('lucky-cat-img');
-  // Web Audio 合成"叮咚"声
-  var _catAudio = null;
+  // ===== 招财猫互动：点击 -> 叮咚声 + 元宝 + 文字泡泡 =====
+  var CAT_COINS = ['\u{1FA99}','\u{1F4B0}','\u{1F9E7}','\u{2728}','\u{2B50}','\u{1F31F}','\u{1F48E}'];
+  var CAT_BUBBLES = ['发财','今天也要加油~','喵~','好运来~','\u{1F496}','喵喵~','财源滚滚~'];
+
   function playCatSound() {
     try {
       var Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
-      if (!_catAudio) _catAudio = new Ctx();
-      var ctx = _catAudio;
+      var ctx = new Ctx();
+      if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
+      var notes = [987.77, 1318.51, 1760.0, 2637.02];
       var t0 = ctx.currentTime;
-      var notes = [
-        { f: 988,  t: 0.00, d: 0.16, v: 0.16, type: 'sine' },     // B5
-        { f: 1318, t: 0.05, d: 0.18, v: 0.12, type: 'sine' },     // E6
-        { f: 1760, t: 0.10, d: 0.16, v: 0.10, type: 'sine' },     // A6
-        { f: 2637, t: 0.14, d: 0.12, v: 0.07, type: 'triangle' }  // E7
-      ];
-      notes.forEach(function (n) {
-        var o = ctx.createOscillator();
-        var g = ctx.createGain();
-        o.type = n.type;
-        o.frequency.setValueAtTime(n.f, t0 + n.t);
-        o.frequency.exponentialRampToValueAtTime(n.f * 0.55, t0 + n.t + n.d);
-        g.gain.setValueAtTime(0, t0 + n.t);
-        g.gain.linearRampToValueAtTime(n.v, t0 + n.t + 0.012);
-        g.gain.exponentialRampToValueAtTime(0.001, t0 + n.t + n.d);
+      notes.forEach(function (f, i) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        var st = t0 + i * 0.08;
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.exponentialRampToValueAtTime(0.25, st + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + 0.18);
         o.connect(g); g.connect(ctx.destination);
-        o.start(t0 + n.t); o.stop(t0 + n.t + n.d + 0.04);
+        o.start(st); o.stop(st + 0.2);
       });
     } catch (e) {}
   }
 
-  // 金币/元宝 粒子
-  var CAT_COINS = ['🪙','💰','🧧','✨','⭐','🌟','💎'];
   function spawnCoins(x, y, n) {
     for (var i = 0; i < n; i++) {
-      var c = document.createElement('div');
-      c.className = 'cat-coin';
-      c.textContent = CAT_COINS[Math.floor(Math.random() * CAT_COINS.length)];
-      c.style.left = (x - 14) + 'px';
-      c.style.top  = (y - 14) + 'px';
-      var ang = Math.random() * Math.PI * 2;
-      var dist = 90 + Math.random() * 130;
-      c.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(1) + 'px');
-      c.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(1) + 'px');
-      c.style.animationDelay = (Math.random() * 0.12).toFixed(2) + 's';
-      document.body.appendChild(c);
-      (function (el) { setTimeout(function(){ try{ el.remove(); }catch(e){} }, 1750); })(c);
+      (function (i) {
+        var c = document.createElement('div');
+        c.className = 'cat-coin';
+        c.textContent = CAT_COINS[Math.floor(Math.random() * CAT_COINS.length)];
+        c.style.left = (x - 14) + 'px';
+        c.style.top = (y - 14) + 'px';
+        c.style.animationDelay = (i * 0.04) + 's';
+        document.body.appendChild(c);
+        setTimeout(function(){ try { c.remove(); } catch(e){} }, 1750);
+      })(i);
     }
   }
 
-  // 文字泡泡
-  var CAT_BUBBLES = ['发财','今天也要加油~','喵~','好运来~','💖','喵喵~','财源滚滚~'];
   function spawnBubble(x, y) {
     var b = document.createElement('div');
     b.className = 'cat-bubble';
     b.textContent = CAT_BUBBLES[Math.floor(Math.random() * CAT_BUBBLES.length)];
     b.style.left = x + 'px';
-    b.style.top  = (y - 64) + 'px';
+    b.style.top = (y - 64) + 'px';
     document.body.appendChild(b);
-    (function (el) { setTimeout(function(){ try{ el.remove(); }catch(e){} }, 2000); })(b);
+    setTimeout(function(){ try { b.remove(); } catch(e){} }, 2000);
   }
 
-  function init() {
+  function bindCat() {
     var cat = document.getElementById('lucky-cat');
-    if (!cat) return;
+    if (!cat) return false;
+    if (cat.dataset.bound) return true;
+    cat.dataset.bound = '1';
     cat.addEventListener('click', function (e) {
-      var r = cat.getBoundingClientRect();
-      var headX = r.left + r.width * 0.5;
-      var headY = r.top + r.height * 0.12;
-      cat.classList.add('cat-press');
-      setTimeout(function(){ cat.classList.remove('cat-press'); }, 200);
-      spawnCoins(headX, headY, 7);
-      spawnBubble(headX, r.top);
-      playCatSound();
-      e.stopPropagation();
+      try {
+        var r = cat.getBoundingClientRect();
+        var headX = r.left + r.width * 0.5;
+        var headY = r.top + r.height * 0.12;
+        cat.classList.add('cat-press');
+        setTimeout(function(){ cat.classList.remove('cat-press'); }, 200);
+        spawnCoins(headX, headY, 7);
+        spawnBubble(headX, r.top);
+        playCatSound();
+      } catch (err) {}
+      if (e && e.stopPropagation) e.stopPropagation();
     });
-
+    return true;
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+
+  function tryBind() { if (!bindCat()) setTimeout(tryBind, 300); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryBind);
+  else tryBind();
 })();
-</' + 'script>
+</script>
 
 </body>
 </html>
