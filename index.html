@@ -251,10 +251,12 @@
      高度 calc(100vh - 56px) 锁定一屏，面板内容超出在 main 内部滚动 ——
      彻底杜绝「内容被挤到下面留大空白」那一类问题 */
   .main {
-    margin-left: var(--sidebar-w);          /* 让出左侧固定栏宽度 */
-    margin-top: 56px;                        /* 让出顶部固定指令栏高度 */
-    width: auto;
-    height: calc(100vh - 56px);
+    position: fixed;                       /* 与 sidebar/cmd-bar 组成「左中右三件套 fixed」，杜绝任何挤压/掉底 */
+    top: 56px;                             /* 紧贴 cmd-bar 下沿：横向 y=56，面板下方贴 0 */
+    left: var(--sidebar-w);                /* 紧贴 sidebar 右侧：x = 侧栏宽度 */
+    right: 0;
+    bottom: 0;
+    width: auto;                           /* 宽度自动 = 视口 - 侧栏 */
     padding: 24px 28px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -472,8 +474,10 @@
   #home-fortune.has-custom-bg > * { position: relative; z-index: 1; }
 
   /* 其余面板（首页/支出/总收入/自媒体/推荐/体重运动/经期洗头/如厕面膜/日期提醒/电影推荐/侧边栏/整主面板）：
-     极淡蒙版（0.18），让上传图清晰可见——用户切到该面板时一眼能确认"图已应用" */
-  .panel, #sidebar, .main, #home-weight-cal { position: relative; }
+     极淡蒙版（0.18），让上传图清晰可见——用户切到该面板时一眼能确认"图已应用"
+     注意：.main 是 fixed（见 line 253），fixed 元素本身即可作为伪元素 absolute 定位的包含块，
+     不需要被改成 relative；下条规则把 .main 摘出，避免覆写 .main 的 fixed 导致右侧面板掉到底部 */
+  .panel, #sidebar, #home-weight-cal { position: relative; }
   .panel.has-custom-bg::before,
   #sidebar.has-custom-bg::before,
   .main.has-custom-bg::before,
@@ -1148,8 +1152,8 @@
     /* ===== 浮动宠物：发财猫 ===== */
     #lucky-cat {
       position: absolute;
-      top: 7px;
-      right: 70px;
+      top: 5px;
+      right: 65px;
       width: 175px;
       height: 124px;
       z-index: 50;
@@ -1229,7 +1233,7 @@
       #lucky-cat { width: 165px; height: 117px; top: 19px; right: 48px; }
     }
     @media (max-width: 420px) {
-      #lucky-cat { width: 150px; height: 107px; top: 16px; right: 45px; }
+      #lucky-cat { width: 150px; height: 107px; top: 12px; right: 45px; }
     }
     }
 </style>
