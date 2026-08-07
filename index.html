@@ -718,11 +718,12 @@
     background: rgba(255,255,255,0.85);                                  /* 背景再实一点，描边更清晰 */
     backdrop-filter: blur(10px);
     border: 1.5px solid #ffd0dc;                                          /* 描边加粗到 1.5px + 颜色加深，更明确的"线条框" */
-    border-radius: 16px;                                                  /* 与 stat-card / checkin-card 半径一致 */
+    border-radius: 24px;                                                  /* 圆角加大到 24px，让上传背景后的卡片"圆"一眼可辨（避免主人在体重卡上看到的"方块插画"错觉） */
     padding: 18px;                                                        /* 内边距略缩，配合整体紧凑 */
     box-shadow: 0 4px 16px rgba(255, 158, 181, 0.18),                    /* 阴影加强，描边+阴影=清晰边界 */
                 inset 0 1px 0 rgba(255, 255, 255, 0.6);                   /* 高光描边，让边框有"立体的圆角卡片"感 */
     margin-bottom: var(--space-block);
+    overflow: hidden;                                                     /* 关键：与圆角配合，把上传的背景图(::before)裁切进圆角内，整张卡"圆"地露出插画 */
     transition: box-shadow var(--t), transform var(--t);
   }
   .todo-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
@@ -1171,7 +1172,7 @@
     /* ===== 浮动宠物：发财猫 ===== */
     #lucky-cat {
       position: absolute;
-      top: -4px;
+      top: 0;                                               /* 主人要求：电脑端招财猫紧贴指令栏下沿 */
       right: 65px;
       width: 175px;
       height: 124px;
