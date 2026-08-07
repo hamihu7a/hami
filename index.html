@@ -1140,8 +1140,8 @@
     /* ===== 浮动宠物：发财猫 ===== */
     #lucky-cat {
       position: absolute;
-      top: 38px;
-      right: 85px;
+      top: 68px;
+      right: 120px;
       width: 175px;
       height: 124px;
       z-index: 50;
@@ -6376,6 +6376,7 @@ setInterval(updateClock, 1000);
   // ===== 招财猫互动：点击 -> 叮咚声 + 元宝 + 文字泡泡 =====
   var CAT_COINS = ['\u{1FA99}','\u{1F4B0}','\u{1F9E7}','\u{2728}','\u{2B50}','\u{1F31F}','\u{1F48E}'];
   var CAT_BUBBLES = ['财源滚滚~','今天也要加油~','好运来喵~','好运来啦~','暴富喵呜~'];
+  var catSpeakIndex = 0;
 
   function playCatSound() {
     try {
@@ -6405,8 +6406,8 @@ setInterval(updateClock, 1000);
       try { synth.cancel(); } catch (e0) {}
       var u = new SpeechSynthesisUtterance(text);
       u.lang = 'zh-CN';
-      u.pitch = 1.8;
-      u.rate = 1.05;
+      u.pitch = 2.0;
+      u.rate = 1.15;
       u.volume = 1.0;
       try {
         var vs = synth.getVoices();
@@ -6436,7 +6437,7 @@ setInterval(updateClock, 1000);
   function spawnBubble(x, y, text) {
     var b = document.createElement('div');
     b.className = 'cat-bubble';
-    b.textContent = text || CAT_BUBBLES[Math.floor(Math.random() * CAT_BUBBLES.length)];
+    b.textContent = text || CAT_BUBBLES[catSpeakIndex % CAT_BUBBLES.length];
     b.style.left = x + 'px';
     b.style.top = (y - 64) + 'px';
     document.body.appendChild(b);
@@ -6455,7 +6456,8 @@ setInterval(updateClock, 1000);
         var headY = r.top + r.height * 0.12;
         cat.classList.add('cat-press');
         setTimeout(function(){ cat.classList.remove('cat-press'); }, 200);
-        var line = CAT_BUBBLES[Math.floor(Math.random() * CAT_BUBBLES.length)];
+        var line = CAT_BUBBLES[catSpeakIndex % CAT_BUBBLES.length];
+        catSpeakIndex++;
         spawnBubble(headX, r.top, line);
         speakCatLine(line);
         playCatSound();
