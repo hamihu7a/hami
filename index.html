@@ -719,6 +719,9 @@
     color: #d14b73;
     margin-bottom: 14px;
   }
+  /* 「体重记录与变化日历」特殊收紧：缩小卡片上下内边距 + 标题与日历的间距，日期格子本身保持原样 */
+  #home-weight-cal { padding: 12px 22px; }
+  #home-weight-cal h3 { margin-bottom: 6px; }
   .todo-item {
     display: flex;
     justify-content: space-between;
@@ -5716,7 +5719,7 @@ function renderDesktopWeight() {
 
   // 前置空白
   for (let i = 0; i < firstDay; i++) {
-    html += `<div style="height:42px;"></div>`;
+    html += `<div style="height:46px;"></div>`;
   }
 
   // 每天一个小格 — 图二样式：日期→变化图标→体重→运动圆点
@@ -5763,7 +5766,7 @@ function renderDesktopWeight() {
     }
 
     // 格子结构：日期(顶) → 变化值(↑↓数字) → 体重(灰底) → 运动圆点(底)
-    html += `<div style="height:42px;background:${bg};border:1px solid ${border};border-radius:6px;padding:1px 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;${isToday ? 'box-shadow:0 0 0 2px #f0c040;' : ''}">
+    html += `<div style="height:46px;background:${bg};border:1px solid ${border};border-radius:6px;padding:1px 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;${isToday ? 'box-shadow:0 0 0 2px #f0c040;' : ''}">
       <div style="font-size:10px;font-weight:700;color:${isToday ? '#c08020' : '#5a3a48'};line-height:1.1;">${d}</div>
       ${changeText ? `<div style="font-size:9px;font-weight:600;color:${changeColor};line-height:1;white-space:nowrap;">${changeText}</div>` : '<div style="height:7px;"></div>'}
       ${weightText ? `<div style="font-size:10px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 3px;line-height:1.2;">${weightText}</div>` : '<div style="height:10px;"></div>'}
