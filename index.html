@@ -2582,8 +2582,13 @@ function _cloudBase() {
 
 // 全量同步：本地所有 localStorage 键都会镜像到云端（云端为跨设备事实源）。
 // 仅排除「易变/缓存/版本号」等本地专用键，避免无意义同步或版本冲突。
+// 重点：左栏与主面板的「宽度/锁定」4 个键也排除——它们是设备相关布局设置，
+// 手机与电脑屏幕不同，必须各记各的、互不覆盖；否则一台设备改动会被云端同步到
+// 另一台，表现为「每次打开宽度都变回别人的 / 不是我上次锁定的」。
 function _isLocalOnlyKey(k) {
-  return k === 'hami_weather_cache' || k === 'hami_data_version';
+  return k === 'hami_weather_cache' || k === 'hami_data_version'
+    || k === 'hami_sidebar_width' || k === 'hami_sidebar_lock'
+    || k === 'hami_main_width' || k === 'hami_main_lock';
 }
 
 
