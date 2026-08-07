@@ -1140,8 +1140,8 @@
     /* ===== 浮动宠物：发财猫 ===== */
     #lucky-cat {
       position: absolute;
-      top: 29px;
-      right: 65px;
+      top: 38px;
+      right: 85px;
       width: 175px;
       height: 124px;
       z-index: 50;
@@ -6375,7 +6375,7 @@ setInterval(updateClock, 1000);
 (function () {
   // ===== 招财猫互动：点击 -> 叮咚声 + 元宝 + 文字泡泡 =====
   var CAT_COINS = ['\u{1FA99}','\u{1F4B0}','\u{1F9E7}','\u{2728}','\u{2B50}','\u{1F31F}','\u{1F48E}'];
-  var CAT_BUBBLES = ['发财','今天也要加油~','喵~','好运来~','\u{1F496}','喵喵~','财源滚滚~'];
+  var CAT_BUBBLES = ['财源滚滚~','今天也要加油~','好运来喵~','好运来啦~','暴富喵呜~'];
 
   function playCatSound() {
     try {
@@ -6398,6 +6398,26 @@ setInterval(updateClock, 1000);
     } catch (e) {}
   }
 
+  function speakCatLine(text) {
+    try {
+      var synth = window.speechSynthesis;
+      if (!synth) { playCatSound(); return; }
+      try { synth.cancel(); } catch (e0) {}
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'zh-CN';
+      u.pitch = 1.8;
+      u.rate = 1.05;
+      u.volume = 1.0;
+      try {
+        var vs = synth.getVoices();
+        for (var i = 0; i < vs.length; i++) {
+          if (/zh|Chinese|中文|Yaoyao|female|child|婷|童|小/i.test(vs[i].name + ' ' + vs[i].lang)) { u.voice = vs[i]; break; }
+        }
+      } catch (e2) {}
+      synth.speak(u);
+    } catch (e3) { playCatSound(); }
+  }
+
   function spawnCoins(x, y, n) {
     for (var i = 0; i < n; i++) {
       (function (i) {
@@ -6413,10 +6433,10 @@ setInterval(updateClock, 1000);
     }
   }
 
-  function spawnBubble(x, y) {
+  function spawnBubble(x, y, text) {
     var b = document.createElement('div');
     b.className = 'cat-bubble';
-    b.textContent = CAT_BUBBLES[Math.floor(Math.random() * CAT_BUBBLES.length)];
+    b.textContent = text || CAT_BUBBLES[Math.floor(Math.random() * CAT_BUBBLES.length)];
     b.style.left = x + 'px';
     b.style.top = (y - 64) + 'px';
     document.body.appendChild(b);
@@ -6435,8 +6455,9 @@ setInterval(updateClock, 1000);
         var headY = r.top + r.height * 0.12;
         cat.classList.add('cat-press');
         setTimeout(function(){ cat.classList.remove('cat-press'); }, 200);
-        spawnCoins(headX, headY, 7);
-        spawnBubble(headX, r.top);
+        var line = CAT_BUBBLES[Math.floor(Math.random() * CAT_BUBBLES.length)];
+        spawnBubble(headX, r.top, line);
+        speakCatLine(line);
         playCatSound();
       } catch (err) {}
       if (e && e.stopPropagation) e.stopPropagation();
