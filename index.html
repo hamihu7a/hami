@@ -1141,7 +1141,7 @@
     #lucky-cat {
       position: absolute;
       top: 10px;
-      right: 140px;
+      right: 40px;
       width: 175px;
       height: 124px;
       z-index: 50;
@@ -2649,13 +2649,15 @@ async function pullCloudToLocal() {
     _applyingRemote = true;   // 拉取期间的所有写入不触发回推（避免回声）
     (rows || []).forEach(row => { try { if (row.k && !_isLocalOnlyKey(row.k)) localStorage.setItem(row.k, row.v); } catch (e) {} });
     _pendingPush.clear(); _pendingDelete.clear();   // 取消 pull 前排队的本地推送，避免把旧值推回云端
+    // 云端拉取后重放布局宽度/锁定状态：宽度 IIFE 在脚本解析时已用「旧」localStorage 初始化，
+    // 必须在此用云端同步回来的最新值重新应用，否则每次打开都会回退到未锁定/默认尺寸。
+    try { if (window.__applySidebarWidth) window.__applySidebarWidth(); } catch (e) {}
+    try { if (window.__syncSidebarLock) window.__syncSidebarLock(); } catch (e) {}
+    try { if (window.__applyMainWidth) window.__applyMainWidth(); } catch (e) {}
+    try { if (window.__syncMainLock) window.__syncMainLock(); } catch (e) {}
     try { loadData(); } catch (e) {}
     try { applyAllBgs(); } catch (e) {}
     try { rerenderSynced(); } catch (e) {}
-    try {
-      const sw = parseInt(localStorage.getItem('hami_sidebar_width'), 10);
-      if (!isNaN(sw)) document.documentElement.style.setProperty('--sidebar-w', sw + 'px');
-    } catch (e) {}
     _applyingRemote = false;
     window.__lastSync = Date.now();
     updateSyncStatus(true);
@@ -6235,6 +6237,16 @@ function updateCmdBarWidth() {
     applyWidth(100);
     try { localStorage.setItem(SB_W_KEY, 100); } catch (_) {}
   };
+  // 供云端拉取后重放：用云端同步回来的宽度重新应用（含 nav-wrapped 判定）
+  window.__applySidebarWidth = function () {
+    try {
+      var s = parseInt(localStorage.getItem(SB_W_KEY), 10);
+      if (s && s >= SB_MIN && s <= SB_MAX && s !== 220) applyWidth(s);
+    } catch (e) {}
+  };
+  window.__syncSidebarLock = function () {
+    try { locked = localStorage.getItem(SB_LOCK_KEY) === '1'; syncLockUI(); } catch (e) {}
+  };
 })();
 
 // ==================== 主页右面板拖拽调宽 + 锁定（拖拽 ↔ 与 🔒 两键上下并排、置于时间正上方） ====================
@@ -6359,6 +6371,16 @@ function updateCmdBarWidth() {
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
+  // 供云端拉取后重放：用云端同步回来的主面板宽度重新应用（锁定态也一并同步）
+  window.__applyMainWidth = function () {
+    try {
+      var s = parseInt(localStorage.getItem(MAIN_W_KEY), 10);
+      applyMainWidth(s && s >= MAIN_MIN ? s : Infinity);
+    } catch (e) {}
+  };
+  window.__syncMainLock = function () {
+    try { locked = localStorage.getItem(MAIN_LOCK_KEY) === '1'; syncLockUI(); } catch (e) {}
+  };
 })();
 
 // 窗口尺寸变化时，顶部指令栏宽度也要重算
