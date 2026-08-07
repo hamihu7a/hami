@@ -51,7 +51,7 @@
     --gap: 12px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
        之间的垂直距离都用 var(--space-block)，避免"有的黏在一起、有的隔太远"——design token */
-    --space-block: 16px;
+    --space-block: 10px;
     --pad: 20px;
     --t: .25s ease;
   }
@@ -331,7 +331,7 @@
     background: linear-gradient(135deg, #d4a5c4 0%, #b888aa 50%, #c895b0 100%);
     border-radius: 24px;
     padding: 15px 22px;
-    margin-bottom: 0;                              /* hero 与紧跟其后的 checkin-alert-banner 视为"一组"（视觉连体），banner 自己负责 16px 到下一块 */
+    margin-bottom: var(--space-block);              /* hero ↔ alert banner 间留 --space-block(10px) 的呼吸，不黏也不宽 */
     color: #fff;
     box-shadow: 0 6px 24px rgba(180, 130, 160, 0.25);
     position: relative;
@@ -715,20 +715,21 @@
 
   /* 待办卡片 */
   .todo-card {
-    background: rgba(255,255,255,0.78);
+    background: rgba(255,255,255,0.85);                                  /* 背景再实一点，描边更清晰 */
     backdrop-filter: blur(10px);
-    border: 1px solid var(--c-line);                  /* 统一：补上"线条框"（之前只有圆角+阴影，边界偏软），跟 stat-card / checkin-card 视觉一致 */
-    border-radius: var(--radius-lg);
-    padding: 22px;
-    box-shadow: 0 2px 12px rgba(255, 158, 181, 0.1); /* 阴影从 var(--shadow-sm) 略加强，配合 1px 描边更立体 */
-    margin-bottom: var(--space-block);                /* 统一：跟其他块保持 16px 间距，不再"黏在一起" */
+    border: 1.5px solid #ffd0dc;                                          /* 描边加粗到 1.5px + 颜色加深，更明确的"线条框" */
+    border-radius: 16px;                                                  /* 与 stat-card / checkin-card 半径一致 */
+    padding: 18px;                                                        /* 内边距略缩，配合整体紧凑 */
+    box-shadow: 0 4px 16px rgba(255, 158, 181, 0.18),                    /* 阴影加强，描边+阴影=清晰边界 */
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);                   /* 高光描边，让边框有"立体的圆角卡片"感 */
+    margin-bottom: var(--space-block);
     transition: box-shadow var(--t), transform var(--t);
   }
   .todo-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
   .todo-card h3 {
     font-size: 16px;
     color: #d14b73;
-    margin-bottom: 14px;
+    margin-bottom: 10px;                                                  /* 配合 padding 缩，标题与下方内容间距收一下 */
   }
   /* 「体重记录与变化日历」特殊收紧：缩小卡片上下内边距 + 标题与日历的间距，日期格子本身保持原样 */
   #home-weight-cal { padding: 12px 22px; }
