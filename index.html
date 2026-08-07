@@ -5491,10 +5491,10 @@ function renderWeatherFromApi(d) {
         <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
         <span style="font-size:9px;color:#a07080;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
       </div>
-      <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;"><span style="font-size:22px;">${d.icon}</span> ${d.name}</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">${tip}</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己~</div>
       <div style="height:9px;"></div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${d.lo}~${d.hi}° · 湿度 ：${d.humidity}%</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${d.lo}°~${d.hi}°</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">湿度 ：${d.humidity}%</div>
       <div style="font-size:10px;color:#a07080;line-height:1.3;">明日天气：${d.tomorrowName}</div>`;
   } catch(e) { renderWeatherFallback(); }
 }
@@ -5514,11 +5514,11 @@ function renderWeatherFallback() {
       <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
       <span style="font-size:9px;color:#a07080;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
     </div>
-    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;"><span style="font-size:22px;">${icon}</span> ${weather}</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">${weatherDesc}（获取失败，显示默认）</div>
-    <div style="height:9px;"></div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${temp} · 湿度 ：—</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;">明日天气：${weatherTomorrow}（默认）</div>`;
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己~</div>
+      <div style="height:9px;"></div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${temp}</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">湿度 ：—</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;">明日天气：${weatherTomorrow}（默认）</div>`;
 }
 
 function renderWeatherFortune() {
@@ -5532,11 +5532,11 @@ function renderWeatherFortune() {
       <span style="font-size:11px;font-weight:700;color:#d14b73;">📅 今日黄历</span>
       <span style="font-size:9px;color:#a07080;white-space:nowrap;">🐴 ${hl.animal}年</span>
     </div>
-    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;">🗓️ ${hl.lunar}</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日 ·</div>
+    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日</div>
     <div style="height:9px;"></div>
     <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">五行${hl.dayWx} · ${hl.chong} · ${hl.sha}</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;">宜：${hl.yi.replace(/\s+/g, '，')}。忌：${hl.ji.replace(/\s+/g, '，')}</div>`;
+    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">宜：${hl.yi.replace(/\s+/g, '，')}。</div>
+    <div style="font-size:10px;color:#a07080;line-height:1.3;">忌：${hl.ji.replace(/\s+/g, '，')}</div>`;
 
   // 天气：实时拉取（open-meteo 主，wttr.in 备）
   fetchWeather();
