@@ -502,11 +502,6 @@
     transition: filter .3s, opacity .3s;
   }
 
-  /* 「已应用自定义背景」徽章：默认隐藏，仅当所在面板/主页日历组件有 has-custom-bg 时显示 */
-  .bg-applied-badge { display: none; }
-  .panel.has-custom-bg .bg-applied-badge,
-  #home-weight-cal.has-custom-bg .bg-applied-badge { display: inline-flex !important; }
-
   /* 自定义背景设置按钮（右上角，低调不抢视觉） */
   .bg-set-btn {
     position: absolute;
@@ -1369,9 +1364,6 @@
   <!-- ==================== 桌面首页 ==================== -->
   <div id="panel-desktop" class="panel active">
 
-    <!-- 今日打卡提醒横幅 -->
-    <div id="checkin-alert-banner"></div>
-
     <!-- 顶部全局指令栏已移至 body 顶层（见下方 #hami-cmd-bar），此处不再重复，保证所有面板通用 -->
 
     <!-- 顶部紫色卡片：拖拽↔与锁定🔒两键上下并排置于时间正上方（透明玻璃风）+ 时间·日期·星期同一行 + 三条激励语 -->
@@ -1388,6 +1380,9 @@
       </div>
       <div class="desktop-quote" id="desktop-quote"></div>
       </div>
+
+    <!-- 今日打卡提醒横幅：位于时间与激励语板块下方，所有提示统一显示在此处 -->
+    <div id="checkin-alert-banner"></div>
 
     <!-- 倒计时组件：2×2 四点（左=日期提醒，右=日常记录） -->
     <div id="desktop-countdown" style="display:flex;gap:4px;margin-bottom:6px;"></div>
@@ -1421,7 +1416,6 @@
     <div id="home-weight-cal" class="todo-card" style="cursor:pointer;" onclick="switchPanel('fitness', this)">
       <h3>⚖️ 体重记录与变化日历</h3>
       <div id="desktop-weight"></div>
-      <div class="bg-applied-badge" data-bgkey="panel-fitness" style="display:none;align-items:center;gap:6px;padding:6px 12px;margin:8px 0 4px;border-radius:10px;background:linear-gradient(135deg,#ffe4ec,#ffd0e0);color:#d14b73;font-size:12px;font-weight:700;box-shadow:0 1px 4px rgba(255,158,181,0.25);">🎨 已应用自定义背景</div>
     </div>
 
     <!-- 待办 -->
@@ -5722,7 +5716,7 @@ function renderDesktopWeight() {
 
   // 前置空白
   for (let i = 0; i < firstDay; i++) {
-    html += `<div style="height:46px;"></div>`;
+    html += `<div style="height:42px;"></div>`;
   }
 
   // 每天一个小格 — 图二样式：日期→变化图标→体重→运动圆点
@@ -5769,7 +5763,7 @@ function renderDesktopWeight() {
     }
 
     // 格子结构：日期(顶) → 变化值(↑↓数字) → 体重(灰底) → 运动圆点(底)
-    html += `<div style="height:46px;background:${bg};border:1px solid ${border};border-radius:6px;padding:1px 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;${isToday ? 'box-shadow:0 0 0 2px #f0c040;' : ''}">
+    html += `<div style="height:42px;background:${bg};border:1px solid ${border};border-radius:6px;padding:1px 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;${isToday ? 'box-shadow:0 0 0 2px #f0c040;' : ''}">
       <div style="font-size:10px;font-weight:700;color:${isToday ? '#c08020' : '#5a3a48'};line-height:1.1;">${d}</div>
       ${changeText ? `<div style="font-size:9px;font-weight:600;color:${changeColor};line-height:1;white-space:nowrap;">${changeText}</div>` : '<div style="height:7px;"></div>'}
       ${weightText ? `<div style="font-size:10px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 3px;line-height:1.2;">${weightText}</div>` : '<div style="height:10px;"></div>'}
