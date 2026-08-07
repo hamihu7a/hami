@@ -480,7 +480,7 @@
   #home-fortune.has-custom-bg > * { position: relative; z-index: 1; }
 
   /* 其余面板（首页/支出/总收入/自媒体/推荐/体重运动/经期洗头/如厕面膜/日期提醒/电影推荐/侧边栏/整主面板）：
-     极淡蒙版（0.18），让上传图清晰可见——用户切到该面板时一眼能确认"图已应用"
+     极淡蒙版（0.12），让上传图清晰可见——用户切到该面板时一眼能确认"图已应用"
      注意：.main 是 fixed（见 line 253），fixed 元素本身即可作为伪元素 absolute 定位的包含块，
      不需要被改成 relative；下条规则把 .main 摘出，避免覆写 .main 的 fixed 导致右侧面板掉到底部 */
   .panel, #sidebar, #home-weight-cal { position: relative; }
@@ -491,7 +491,7 @@
   #home-weight-cal.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
-    background-image: linear-gradient(rgba(255,238,244,0.18), rgba(255,238,244,0.18)), var(--bg-img);
+    background-image: linear-gradient(rgba(255,238,244,0.12), rgba(255,238,244,0.12)), var(--bg-img);
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .panel.has-custom-bg > *,
