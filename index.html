@@ -25,9 +25,7 @@
     min-height: 100vh;
     color: #4a3340;
     margin: 0;
-    display: grid;                          /* 顶部指令栏第1行 + sidebar+main 第2行的两列；grid 强制对齐，彻底避免 main 掉到底部 */
-    grid-template-rows: 56px 1fr;
-    grid-template-columns: var(--sidebar-w) 1fr;
+    display: block;
   }
 
   /* ============ 左侧导航栏（分组展开版·参考图样式） ============ */
@@ -55,13 +53,14 @@
     --t: .25s ease;
   }
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
     width: var(--sidebar-w);
     background: #fff5ee;
-    padding: 0 0 20px 0;
+    padding: 56px 0 20px 0;                  /* 顶部留 56px 给固定指令栏，内容紧贴其下沿，零缝隙 */
     box-shadow: 2px 0 12px rgba(255, 158, 181, 0.1);
-    grid-row: 2;                            /* grid 第2行（cmd-bar 下方） */
-    grid-column: 1;                         /* grid 第1列（左侧栏） */
-    height: calc(100vh - 56px);             /* 占满「视口 − cmd-bar」 */
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -252,8 +251,8 @@
      高度 calc(100vh - 56px) 锁定一屏，面板内容超出在 main 内部滚动 ——
      彻底杜绝「内容被挤到下面留大空白」那一类问题 */
   .main {
-    grid-row: 2;
-    grid-column: 2;
+    margin-left: var(--sidebar-w);          /* 让出左侧固定栏宽度 */
+    margin-top: 56px;                        /* 让出顶部固定指令栏高度 */
     width: auto;
     height: calc(100vh - 56px);
     padding: 24px 28px;
@@ -602,7 +601,7 @@
   }
   .account-card {
     flex: 1;
-    background: rgba(255,255,255,0.78);
+    background: rgba(255,255,255,0.45);
     backdrop-filter: blur(10px);
     border-radius: 14px;
     padding: 12px 8px;
@@ -1158,9 +1157,9 @@
       user-select: none;
       -webkit-user-drag: none;
       filter:
-        drop-shadow(0 18px 28px rgba(255, 158, 181, 0.42))
-        drop-shadow(0 8px 14px rgba(209, 75, 115, 0.30))
-        drop-shadow(0 2px 4px rgba(120, 60, 40, 0.22));
+        drop-shadow(0 8px 8px rgba(150, 90, 45, 0.32))    /* 外层暖棕大气散射：漂浮光晕 */
+        drop-shadow(0 4px 8px rgba(90, 90, 90, 0.28))     /* 中层灰色近影：猫身体积感 */
+        drop-shadow(0 1px 3px rgba(50, 50, 50, 0.32));    /* 内层深灰接触影：锚定地面 */
       animation: cat-float 3.8s ease-in-out infinite;
       transition: transform .15s ease;
     }
@@ -1176,7 +1175,7 @@
     }
     @keyframes cat-float {
       0%, 100% { transform: translateY(0) rotate(-1.5deg); }
-      50%      { transform: translateY(-14px) rotate(1.5deg); }
+      50%      { transform: translateY(-9px) rotate(1.5deg); }
     }
     .cat-coin {
       position: fixed;
