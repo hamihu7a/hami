@@ -5535,13 +5535,12 @@ function renderWeatherFortune() {
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
       <span style="font-size:11px;font-weight:700;color:#d14b73;">📅 今日黄历</span>
-      <span style="font-size:9px;color:#a07080;white-space:nowrap;">${hl.animal}年</span>
+      <span style="font-size:9px;color:#a07080;white-space:nowrap;">🐴 ${hl.animal}年</span>
     </div>
-    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;">${break4(hl.lunar)}</div>
-    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日 · 五行${hl.dayWx}</div>
-    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.jianchu}　${hl.chong}·${hl.sha}</div>
-    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><b style="color:#a07080;">宜</b> ${hl.yi}</div>
-    <div style="font-size:9px;color:#a07080;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><b style="color:#a07080;">忌</b> ${hl.ji}</div>`;
+    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;">${hl.lunar}</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日 ·</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:2px;">五行${hl.dayWx} · ${hl.jianchu} · ${hl.chong} · ${hl.sha}</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;">宜：${hl.yi.replace(/\s+/g, '，')}。忌：${hl.ji.replace(/\s+/g, '，')}</div>`;
 
   // 天气：实时拉取（open-meteo 主，wttr.in 备）
   fetchWeather();
