@@ -5249,32 +5249,67 @@ function checkWeeklyUpdateAlert() {
 }
 
 // ==================== 天气 + 运势 ====================
-const FORTUNE_POOL = [
-  { luck: '大吉', text: '今天万事顺遂，心想事成！把握好时机，会有意外惊喜。', color: '#e84a5f', yi: '进取', ji: '懈怠' },
-  { luck: '吉', text: '好运连连，适合做决定~相信直觉，勇敢迈出那一步吧。', color: '#ff7f9e', yi: '决断', ji: '犹豫' },
-  { luck: '中吉', text: '平稳的一天，小确幸不断。保持微笑，美好就在身边。', color: '#e8a0c0', yi: '微笑', ji: '较真' },
-  { luck: '小吉', text: '微小的幸运在等你发现。留意身边细节，会有温柔回报。', color: '#c4a0ac', yi: '留意', ji: '粗心' },
-  { luck: '末吉', text: '保持平常心，万事都OK。慢一点也没关系，稳稳前行。', color: '#a0b0c0', yi: '静心', ji: '冲动' },
-  { luck: '大吉', text: '贵人相助，把握机会！主动联系想见的人，会有好结果。', color: '#e84a5f', yi: '社交', ji: '封闭' },
-  { luck: '吉', text: '今天适合创作和表达。把灵感记录下来，会有意外收获。', color: '#ff7f9e', yi: '创作', ji: '设限' },
-  { luck: '中吉', text: '耐心等待，好消息在路上。不要急躁，时间会给你答案。', color: '#e8a0c0', yi: '等待', ji: '急躁' },
-  { luck: '小吉', text: '注意细节，避免小失误。慢工出细活，稳扎稳打更好。', color: '#c4a0ac', yi: '细致', ji: '敷衍' },
-  { luck: '吉', text: '财运不错，有意外收获~留意身边的赚钱小机会哦。', color: '#ff7f9e', yi: '理财', ji: '挥霍' },
-  { luck: '大吉', text: '人际关系超棒，多交流！真诚待人，会遇到懂你的伙伴。', color: '#e84a5f', yi: '洽谈', ji: '争执' },
-  { luck: '中吉', text: '健康运佳，适合运动。出门走走，让身体和心情都轻盈。', color: '#e8a0c0', yi: '运动', ji: '久坐' },
-  { luck: '小吉', text: '慢一点也没关系，稳稳的。按照自己的节奏来就好。', color: '#c4a0ac', yi: '稳进', ji: '慌乱' },
-  { luck: '吉', text: '灵感爆发，赶紧记录下来！今天的创意值得认真对待。', color: '#ff7f9e', yi: '记录', ji: '散漫' },
-  { luck: '中吉', text: '今天适合整理和复盘。回顾过去，规划未来，事半功倍。', color: '#e8a0c0', yi: '整理', ji: '拖延' }
+// ========== 真实黄历算法（lunardate 0.2.2 精确移植 + 干支/生肖/建除/宜忌/冲煞）==========
+// 已校验：2024-02-10=甲辰正月初一；2023-03-22=癸卯闰二月初一；2000-01-01=己卯冬月廿五；
+//          1949-10-01 日干支=甲子（开国大典）；2026-08-07=丙午六月廿五·破日。纯前端本地计算，无网络依赖。
+var HL_YEAR_INFOS = [
+  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,
+  0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,
+  0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,
+  0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,
+  0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,
+  0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b5a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,
+  0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,
+  0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,
+  0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+  0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0xa4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,
+  0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,
+  0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,
+  0x0ea50,0x06aa0,0x1a6c4,0x0aae0,0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,
+  0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+  0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,
+  0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252
 ];
+function hlYearInfo2yearDay(yi){ yi=Math.floor(yi); var res=29*12; var leap=false; if(yi%16!==0){leap=true;res+=29;} yi=Math.floor(yi/16); var n=12+(leap?1:0); for(var i=0;i<n;i++){ if(yi%2===1) res+=1; yi=Math.floor(yi/2);} return res; }
+var HL_YEAR_DAYS = HL_YEAR_INFOS.map(hlYearInfo2yearDay);
+function* hlEnumMonth(yi){ var months=[]; for(var i=1;i<=12;i++) months.push([i,0]); var lm=yi%16; if(lm>0&&lm<=12) months.splice(lm,0,[lm,1]); for(var k=0;k<months.length;k++){ var m=months[k][0],il=months[k][1]; var days; if(il) days=((yi>>16)%2)+29; else days=((yi>>(16-m))%2)+29; yield [m,days,il]; } }
+function hlFromOffset(offset){ offset=Math.floor(offset); var idx=0; for(var i=0;i<HL_YEAR_DAYS.length;i++){ if(offset<HL_YEAR_DAYS[i]){idx=i;break;} offset-=HL_YEAR_DAYS[i]; idx=i; } var year=1900+idx; var yi=HL_YEAR_INFOS[idx]; var month=1,day=1,isLeapMonth=false; for(var em of hlEnumMonth(yi)){ if(offset<em[1]){month=em[0];day=offset+1;isLeapMonth=em[2];break;} offset-=em[1]; } return {year:year,month:month,day:day,isLeapMonth:isLeapMonth}; }
+function hlFromSolar(y,m,d){ var start=Date.UTC(1900,0,31); var tgt=Date.UTC(y,m-1,d); return hlFromOffset(Math.round((tgt-start)/86400000)); }
 
-// 运势等级 → 小字标签（两字吉祥语）
-const FORTUNE_TAG = {
-  '大吉': '承瑞',
-  '吉':   '顺遂',
-  '中吉': '熙遂',
-  '小吉': '怀顺',
-  '末吉': '守常'
-};
+var HL_GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+var HL_ZHI=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+var HL_ANIMALS=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+var HL_MONTHS=['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+var HL_WX_GAN=['木','火','土','木','土','火','金','金','水','水'];
+var HL_WX_ZHI=['水','土','木','木','土','火','火','土','金','金','土','水'];
+var HL_JIEQI=[[1,6,1],[2,4,2],[3,6,3],[4,5,4],[5,6,5],[6,6,6],[7,7,7],[8,8,8],[9,8,9],[10,8,10],[11,7,11],[12,7,0]];
+var HL_JIANCHU=['建','除','满','平','定','执','破','危','成','收','开','闭'];
+var HL_YI={'建':'出行 祈福 动土 订盟 纳采 嫁娶 安床 修造 入宅 开市 求嗣','除':'祭祀 祈福 求嗣 开光 订盟 纳采 嫁娶 出行 解除 动土 开市 交易 立券 移徙 安床','满':'祭祀 祈福 开光 求嗣 出行 解除 移徙 开市 交易 立券 纳财 造仓 栽种 纳畜','平':'祭祀 祈福 嫁娶 开市 交易 修造 动土 移徙 安床 出行','定':'祭祀 祈福 嫁娶 造屋 修造 入学 纳财 种植 开市 动土 安门 安床 出行','执':'祭祀 祈福 求嗣 开光 出行 解除 伐木 盖屋 起基 安床 栽种 纳畜','破':'破屋 坏垣 求医 治病 解除 破土 安葬','危':'祭祀 祈福 求嗣 开光 出行 解除 安床 栽种 纳畜 安葬','成':'祭祀 祈福 嫁娶 开市 交易 立券 出行 移徙 安床 入宅 修造 动土 安门 纳财 栽种 纳畜','收':'祭祀 祈福 嫁娶 开市 交易 立券 纳财 移徙 安床 捕捉 纳畜 栽种','开':'祭祀 祈福 求嗣 开光 出行 解除 伐木 盖屋 起基 安门 安床 栽种 牧养 纳畜','闭':'祭祀 祈福 求嗣 开光 嫁娶 安床 出行 纳财 安葬 修坟 立碑 破土'};
+var HL_JI={'建':'无','除':'无','满':'动土 安葬 破土 伐木 修坟','平':'无','定':'词讼 出行 医疗','执':'开市 交易 立券 纳财 移徙 出行','破':'诸事不宜','危':'筑堤 修造 动土 嫁娶 出行','成':'无','收':'出行 安葬 入宅 开仓','开':'安葬 嫁娶 出行 入宅 开市 动土','闭':'开市 交易 立券 开仓 出货财 动土 破土 栽种 移徙'};
+function hlDayName(d){ if(d===10) return '初十'; if(d===20) return '二十'; if(d===30) return '三十'; var t=['初','十','廿'][Math.floor((d-1)/10)]; var o=['一','二','三','四','五','六','七','八','九','十'][(d-1)%10]; return t+o; }
+function hlGanZhiDay(y,m,d){ var base=new Date(Date.UTC(1900,0,1)); var cur=new Date(Date.UTC(y,m-1,d)); var diff=Math.round((cur-base)/86400000); var idx=((10+diff)%60+60)%60; return {gan:HL_GAN[idx%10], zhi:HL_ZHI[idx%12], idx:idx}; }
+function getHuangLi(y,m,d){
+  var L=hlFromSolar(y,m,d);
+  var gyIdx=(L.year-4)%60; if(gyIdx<0) gyIdx+=60;
+  var gzYi=HL_GAN[gyIdx%10], gzYz=HL_ZHI[gyIdx%12];
+  var animal=HL_ANIMALS[gyIdx%12];
+  var mZhi=(L.month+1)%12;
+  var mGan=((gyIdx%10)*2+2+(L.month-1))%10;
+  var gzMi=HL_GAN[mGan], gzMz=HL_ZHI[mZhi];
+  var gd=hlGanZhiDay(y,m,d);
+  var dayWx=HL_WX_GAN[gd.idx%10]+HL_WX_ZHI[gd.idx%12];
+  var mz=0; for(var j=0;j<HL_JIEQI.length;j++){ if(m>HL_JIEQI[j][0]||(m===HL_JIEQI[j][0]&&d>=HL_JIEQI[j][1])) mz=HL_JIEQI[j][2]; }
+  var jcIdx=((gd.idx%12)-mz+12)%12;
+  var jianchu=HL_JIANCHU[jcIdx];
+  var chongZhi=(gd.idx%12+6)%12;
+  var chongAnimal=HL_ANIMALS[chongZhi];
+  var groups=[[2,6,10],[0,4,8],[3,7,11],[1,5,9]];
+  var shaArr=['北','南','西','东'];
+  var sha='';
+  for(var g=0;g<4;g++){ if(groups[g].indexOf(gd.idx%12)>=0){sha=shaArr[g];break;} }
+  return { lunar:(L.isLeapMonth?'闰':'')+HL_MONTHS[L.month-1]+'月'+hlDayName(L.day), gzYear:gzYi+gzYz, gzMonth:gzMi+gzMz, gzDay:gd.gan+gd.zhi, animal:animal, dayWx:dayWx, jianchu:jianchu+'日', yi:HL_YI[jianchu], ji:HL_JI[jianchu], chong:'冲'+chongAnimal, sha:'煞'+sha };
+}
 
 // 实时天气：wttr.in（汕尾），每天打开自动拉取真实天气
 const WEATHER_CITY = 'Shanwei'; // 汕尾
@@ -5484,40 +5519,22 @@ function renderWeatherFallback() {
 
 function renderWeatherFortune() {
   const now = new Date();
-
-  // 运势（按日期轮换，每天固定一条）
-  const d = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-  const fortune = FORTUNE_POOL[d % FORTUNE_POOL.length];
-  const fortuneTag = FORTUNE_TAG[fortune.luck] || '';
-
-  // 幸运色 + 幸运数字（也按日期固定）
-  const luckyColors = [
-    { name: '忧郁蓝', hex: '#4a90e2' },
-    { name: '樱花粉', hex: '#ffb3c6' },
-    { name: '薄荷绿', hex: '#7ed6a7' },
-    { name: '奶咖色', hex: '#c8a888' },
-    { name: '香芋紫', hex: '#c8a2c8' },
-    { name: '柠檬黄', hex: '#f5d76e' },
-    { name: '蜜桃橙', hex: '#ff9e7a' },
-    { name: '玫瑰金', hex: '#e8a0c0' },
-    { name: '天空蓝', hex: '#a0d2f0' },
-    { name: '薄藤紫', hex: '#d8a8e0' }
-  ];
-  const luckyNums = ['2,9', '5,8', '1,6', '3,7', '4,8', '6,9', '2,7', '1,5', '3,8', '5,9'];
-  const luckyColor = luckyColors[d % luckyColors.length];
-  const luckyNum = luckyNums[d % luckyNums.length];
-
-  document.getElementById('desktop-fortune').innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-      <span style="font-size:11px;font-weight:700;color:#d14b73;">🍀 今日运势</span>
-      <span style="font-size:9px;color:#a07080;white-space:nowrap;">${fortuneTag}</span>
+  const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+  const hl = getHuangLi(y, m, d);
+  const el = document.getElementById('desktop-fortune');
+  if (!el || !hl) return;
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+      <span style="font-size:11px;font-weight:700;color:#d14b73;">📅 今日黄历</span>
+      <span style="font-size:9px;color:#a07080;white-space:nowrap;">${hl.animal}年</span>
     </div>
-    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:4px;">${fortune.luck}</div>
-    <div style="font-size:9px;color:#a07080;line-height:1.4;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${fortune.text}</div>
-    <div style="font-size:9px;color:#a07080;white-space:nowrap;">幸运色：<b style="color:#a07080;">${luckyColor.name}</b>　忌：<b style="color:#a07080;">${fortune.ji}</b></div>
-    <div style="font-size:9px;color:#a07080;white-space:nowrap;">幸运数：<b style="color:#a07080;">${luckyNum}</b>　宜：<b style="color:#a07080;">${fortune.yi}</b></div>`;
+    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;">农历 ${hl.lunar}</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日 · 五行${hl.dayWx}</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.jianchu}　${hl.chong}·${hl.sha}</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;margin-bottom:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><b style="color:#a07080;">宜</b> ${hl.yi}</div>
+    <div style="font-size:9px;color:#a07080;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><b style="color:#a07080;">忌</b> ${hl.ji}</div>`;
 
-  // 天气：改为实时拉取（wttr.in，汕尾），异步填充
+  // 天气：实时拉取（open-meteo 主，wttr.in 备）
   fetchWeather();
 }
 

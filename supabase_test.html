@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Supabase 分层诊断（绕开 CloudStudio）</title>
+<style>
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f7fa; padding: 24px; max-width: 820px; margin: 0 auto; }
+h1 { color: #2a9bc4; margin-top: 0; }
+.box { background: #fff; border-radius: 12px; padding: 18px; margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.kv { font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.8; }
+.kv .k { color: #888; display: inline-block; width: 130px; }
+.kv .v { color: #2a9bc4; }
+button { padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg,#5ec6e0,#2a9bc4); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
+button:hover { opacity: 0.9; }
+button.ghost { background: #e0e0e0; color: #333; }
+#log { background: #1e1e1e; color: #d4d4d4; padding: 14px; border-radius: 8px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; min-height: 280px; max-height: 480px; overflow: auto; }
+.ok { color: #4ec9b0; }
+.err { color: #f48771; font-weight: 700; }
+.info { color: #569cd6; }
+.warn { color: #dcdcaa; }
+.legend { background: #fafafa; padding: 12px; border-radius: 8px; font-size: 12px; line-height: 1.8; }
+.legend b { color: #2a9bc4; }
+</style>
+</head>
+<body>
+<h1>🔬 Supabase 4 层诊断</h1>
+
+<div class="box">
+  <div class="kv">
+    <div><span class="k">目标 URL：</span><span class="v">https://jqxcqpawytqsdcijhqtg.supabase.co</span></div>
+    <div><span class="k">anon key：</span><span class="v">sb_publishable_y4MhbnBDeda_V5Hp0Q-JPA_RkvfuAj-</span></div>
+    <div><span class="k">navigator.onLine：</span><span class="v" id="online">检测中…</span></div>
+  </div>
+</div>
+
+<div class="box">
+  <button id="run-all">▶ 跑全部 4 层诊断</button>
+  <button id="run-img" class="ghost">① 仅测试图片探活</button>
+  <button id="run-simple" class="ghost">② 仅测试无头 GET</button>
+  <button id="run-full" class="ghost">③ 仅测试带头 GET</button>
+  <button id="clear" class="ghost">清屏</button>
+</div>
+
+<div class="box legend">
+  <b>判读指南：</b><br>
+  • <b>①过 ②过 ③过</b>：你的浏览器对 Supabase 完全正常，可能只是 CloudStudio CDN 缓存，强刷部署页即可<br>
+  • <b>①过 ②过 ③挂</b>：CORS 预检被拦（罕见，可能是浏览器扩展或代理），临时关 AdGuard/uBlock 再试<br>
+  • <b>①过 ②挂</b>：网络能到 Supabase 但 REST API 路径有问题（极少见）<br>
+  • <b>①挂</b>：你电脑根本连不上 Supabase 域名（被 GFW / 防火墙 / 代理拦了），需要换网络或用代理
+</div>
+
+<div class="box">
+  <div id="log">点击按钮开始诊断…</div>
+</div>
+
+<script>
+const URL = 'https://jqxcqpawytqsdcijhqtg.supabase.co';
+const KEY = 'sb_publishable_y4MhbnBDeda_V5Hp0Q-JPA_RkvfuAj-';
+const REST = URL + '/rest/v1/hami_sync';
+const HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
+const log = document.getElementById('log');
+const online = document.getElementById('online');
+online.innerHTML = navigator.onLine ? '<span style="color:#1a9e4b">✅ 在线</span>' : '<span style="color:#d14b73">❌ 离线</span>';
+
+function out(line, cls) { log.innerHTML += '\n' + (cls ? `<span class="${cls}">${line}</span>` : line); log.scrollTop = log.scrollHeight; }
+function clear() { log.innerHTML = ''; }
+function h(n) { return '═'.repeat(n); }
+
+// ① 图片探活：完全绕过 CORS、预检、fetch，纯 TCP/HTTPS 连通性测试
+function test1_imagePing() {
+  return new Promise(resolve => {
+    out(h(8) + ' ① 图片探活（绕过 CORS/预检，测 TCP+HTTPS）' + h(8), 'info');
+    const img = new Image();
+    const t0 = Date.now();
+    const url = URL + '/favicon.ico?t=' + Date.now();
+    img.onload = () => { out('  ✅ 加载成功（耗时 ' + (Date.now()-t0) + 'ms） → 能连到 ' + URL, 'ok'); resolve(true); };
+    img.onerror = () => { out('  ❌ 加载失败 → 无法连接到 ' + URL + '，可能是 DNS/TCP/TLS/防火墙/代理拦截', 'err'); resolve(false); };
+    setTimeout(() => { out('  ⏱ 10 秒超时未响应', 'err'); resolve(false); }, 10000);
+    img.src = url;
+  });
+}
+
+// ② 无头 GET：纯 GET 不带任何自定义头 → 不触发 CORS 预检，测 Supabase REST 端点是否响应
+async function test2_simpleGet() {
+  out(h(8) + ' ② 无头 GET（不带自定义头，不触发 CORS 预检）' + h(8), 'info');
+  try {
+    const r = await fetch(REST + '?select=k&limit=1', { method: 'GET' });
+    out('  → HTTP ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'warn');
+    out('  → 含义：能拿到 HTTP 响应，说明 Supabase REST 端点可达', 'info');
+    if (r.status === 401) out('  → 401 是预期的（没带 key），只要拿到 4xx 响应就算通', 'warn');
+    return true;
+  } catch (e) {
+    out('  ❌ 异常：' + (e.message || e), 'err');
+    out('  → 这说明连无头 GET 都失败，问题在网络层（DNS/TCP/TLS/代理）', 'err');
+    return false;
+  }
+}
+
+// ③ 带头 GET：带 apikey/Authorization → 会触发 CORS 预检，测授权链路
+async function test3_fullGet() {
+  out(h(8) + ' ③ 带头 GET（带 apikey，会触发 CORS 预检）' + h(8), 'info');
+  try {
+    const r = await fetch(REST + '?select=k&limit=1', { method: 'GET', headers: HEADERS });
+    const txt = await r.text();
+    out('  → HTTP ' + r.status + ' ' + r.statusText, r.ok ? 'ok' : 'warn');
+    out('  → 响应体（前 200 字符）：' + txt.slice(0, 200), r.ok ? 'ok' : 'warn');
+    return r.ok;
+  } catch (e) {
+    out('  ❌ 异常：' + (e.message || e), 'err');
+    out('  → 带自定义头的请求触发 CORS 预检，浏览器拒绝 → 大概率是浏览器扩展/代理拦截了带 key 的请求', 'err');
+    return false;
+  }
+}
+
+// ④ 写+读+删完整闭环
+async function test4_fullCrud() {
+  out(h(8) + ' ④ 完整 CRUD（POST → GET → DELETE）' + h(8), 'info');
+  const probe = '__diag_test_' + Date.now();
+  try {
+    const r1 = await fetch(REST, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify([{ k: probe, v: '1' }]) });
+    out('  [POST] HTTP ' + r1.status, r1.ok ? 'ok' : 'err');
+    if (!r1.ok) return false;
+    const r2 = await fetch(REST + '?select=k,v&k=eq.' + encodeURIComponent(probe), { method: 'GET', headers: HEADERS });
+    const data = await r2.json();
+    out('  [GET]  HTTP ' + r2.status + ' → ' + JSON.stringify(data), r2.ok && data.length ? 'ok' : 'err');
+    if (!data.length) return false;
+    const r3 = await fetch(REST + '?k=eq.' + encodeURIComponent(probe), { method: 'DELETE', headers: { ...HEADERS, 'Prefer': 'return=minimal' } });
+    out('  [DEL]  HTTP ' + r3.status, r3.ok ? 'ok' : 'err');
+    return r3.ok;
+  } catch (e) {
+    out('  ❌ 异常：' + (e.message || e), 'err');
+    return false;
+  }
+}
+
+document.getElementById('clear').onclick = () => clear();
+document.getElementById('run-img').onclick = async () => { clear(); await test1_imagePing(); };
+document.getElementById('run-simple').onclick = async () => { clear(); await test2_simpleGet(); };
+document.getElementById('run-full').onclick = async () => { clear(); await test3_fullGet(); };
+document.getElementById('run-all').onclick = async () => {
+  clear();
+  out('══════ Supabase 分层诊断 @ ' + new Date().toLocaleString() + ' ══════', 'info');
+  out('你的浏览器 UA：' + navigator.userAgent, 'info');
+  out('navigator.onLine = ' + navigator.onLine, 'info');
+  out('');
+  const a = await test1_imagePing(); out('');
+  const b = await test2_simpleGet(); out('');
+  const c = await test3_fullGet(); out('');
+  if (a && b && c) {
+    out('');
+    out('🎉 前 3 层全过！接下来跑完整 CRUD 验证：', 'ok');
+    await test4_fullCrud();
+  } else {
+    out('');
+    out('⚠ 早期层就失败了，请按上方"判读指南"对照结果', 'warn');
+  }
+};
+</script>
+</body>
+</html>

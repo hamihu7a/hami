@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Supabase 极简抓包诊断</title>
+<style>
+body{margin:0;padding:24px;background:#1a1828;color:#e8e0d8;font-family:system-ui,"PingFang SC",sans-serif;min-height:100vh;}
+h1{margin:0 0 8px;font-size:20px;}
+.box{background:#262338;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid #3a3550;}
+.btn{padding:14px 20px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff8aa6,#d14b73);color:#fff;font-weight:700;cursor:pointer;display:block;width:100%;margin-bottom:8px;}
+.btn:hover{opacity:0.9;}
+pre{white-space:pre-wrap;word-break:break-all;background:#0f0e1a;color:#e8e0d8;padding:14px;border-radius:8px;margin:8px 0 0;font-size:13px;line-height:1.5;}
+.ok{color:#7ad0a0;}
+.err{color:#ff6e9c;}
+.muted{color:#7a7290;font-size:12px;}
+</style>
+</head>
+<body>
+<h1>Supabase 极简抓包诊断</h1>
+<div class="muted">每次只测一个动作，把请求/响应<b>完整</b>打印出来</div>
+
+<button class="btn" id="b1">1) 最简 GET（仅 apikey，无 Authorization，无 Content-Type）</button>
+<div class="box"><pre id="r1">点击上面按钮</pre></div>
+
+<button class="btn" id="b2">2) 完整 GET（含 apikey + Content-Type，复制工作台代码）</button>
+<div class="box"><pre id="r2">点击上面按钮</pre></div>
+
+<button class="btn" id="b3">3) POST 写一行（验证写入权限）</button>
+<div class="box"><pre id="r3">点击上面按钮</pre></div>
+
+<button class="btn" id="b4">4) GET 单行（验证读取权限——你测试按钮报 401 的就是这个）</button>
+<div class="box"><pre id="r4">点击上面按钮</pre></div>
+
+<button class="btn" id="b5">5) DELETE 清理</button>
+<div class="box"><pre id="r5">点击上面按钮</pre></div>
+
+<button class="btn" id="b6">6) 🔍 查看浏览器实际发出的请求头（apikey 是否被剥）</button>
+<div class="box"><pre id="r6">点击上面按钮</pre></div>
+
+<script>
+const URL = 'https://jqxcqpawytqsdcijhqtg.supabase.co/rest/v1/hami_sync';
+const KEY = 'sb_publishable_y4MhbnBDeda_V5Hp0Q-JPA_RkvfuAj-';
+
+function log(id, label, content, isErr) {
+  const el = document.getElementById(id);
+  el.innerHTML = '<b class="' + (isErr ? 'err' : 'ok') + '">' + label + '</b>\n' + content;
+}
+
+async function test1() {
+  const start = Date.now();
+  try {
+    const r = await fetch(URL + '?select=k&limit=1', {
+      method: 'GET',
+      headers: { 'apikey': KEY }
+    });
+    const txt = await r.text();
+    log('r1', '✅ HTTP ' + r.status + '（耗时 ' + (Date.now()-start) + 'ms）',
+      'URL: ' + URL + '?select=k&limit=1\n' +
+      '请求头: { apikey: sb_publishable_... }\n' +
+      '响应: ' + txt.slice(0, 400), false);
+  } catch (e) {
+    log('r1', '❌ 异常: ' + e.message, String(e.stack || ''), true);
+  }
+}
+
+async function test2() {
+  const start = Date.now();
+  try {
+    const r = await fetch(URL + '?select=k&limit=1', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Content-Type': 'application/json' }
+    });
+    const txt = await r.text();
+    log('r2', '✅ HTTP ' + r.status + '（耗时 ' + (Date.now()-start) + 'ms）',
+      '请求头: { apikey + Content-Type }\n' +
+      '响应: ' + txt.slice(0, 400), false);
+  } catch (e) {
+    log('r2', '❌ 异常: ' + e.message, String(e.stack || ''), true);
+  }
+}
+
+async function test3() {
+  const start = Date.now();
+  try {
+    const r = await fetch(URL, {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify([{ k: '__diag_' + start, v: 'yes' }])
+    });
+    const txt = await r.text();
+    log('r3', '✅ HTTP ' + r.status + '（耗时 ' + (Date.now()-start) + 'ms）',
+      '请求体: [{k:"__diag_' + start + '",v:"yes"}]\n' +
+      '响应: ' + (txt || '(空)'), false);
+  } catch (e) {
+    log('r3', '❌ 异常: ' + e.message, String(e.stack || ''), true);
+  }
+}
+
+async function test4() {
+  const start = Date.now();
+  try {
+    const r = await fetch(URL + '?select=k,v&k=eq.__diag_' + start, {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'Content-Type': 'application/json' }
+    });
+    const txt = await r.text();
+    log('r4', r.ok ? '✅ HTTP ' + r.status + '（耗时 ' + (Date.now()-start) + 'ms）' : '❌ HTTP ' + r.status + '（耗时 ' + (Date.now()-start) + 'ms）',
+      '响应: ' + txt.slice(0, 600), !r.ok);
+  } catch (e) {
+    log('r4', '❌ 异常: ' + e.message, String(e.stack || ''), true);
+  }
+}
+
+async function test5() {
+  const start = Date.now();
+  try {
+    const r = await fetch(URL + '?k=like.__diag_*', {
+      method: 'DELETE',
+      headers: { 'apikey': KEY, 'Prefer': 'return=minimal' }
+    });
+    const txt = await r.text();
+    log('r5', '✅ HTTP ' + r.status + '（耗时 ' + (Date.now()-start) + 'ms）', '清理完成', false);
+  } catch (e) {
+    log('r5', '❌ 异常: ' + e.message, String(e.stack || ''), true);
+  }
+}
+
+async function test6() {
+  // 用 c-equivalent 思路直接打印 fetch() 的实际请求头（浏览器显示）
+  // 实际上 fetch 不让你看完整头，但可以让你看 fetch 调用方给的是否在网络层变样
+  // 通过发起一个会被浏览器 DevTools Network 抓到的请求，提示用户打开 F12
+  try {
+    const ac = new AbortController();
+    const r = await fetch('https://jqxcqpawytqsdcijhqtg.supabase.co/rest/v1/', {
+      method: 'GET',
+      headers: { 'apikey': KEY, 'X-Custom-Probe': 'diag-' + Date.now() },
+      signal: ac.signal
+    });
+    const txt = await r.text();
+    let info = '请求头实际生效：\n';
+    info += '  apikey: ' + (r.headers.get('apikey') || '[无法读取，浏览器侧不暴露]') + '\n';
+    info += '\n打开 DevTools (F12) → Network → 找到这条请求 → 查看 Request Headers，把所有 apikey / Authorization / X-Custom-Probe 行的值截给我\n';
+    info += '\n当前请求: GET https://jqxcqpawytqsdcijhqtg.supabase.co/rest/v1/\n返回 HTTP ' + r.status + '\n响应 body: ' + txt.slice(0, 300);
+    log('r6', '✅ 已发起探测请求（F12 查看网络）', info, false);
+  } catch (e) {
+    log('r6', '❌ 异常: ' + e.message, String(e.stack || ''), true);
+  }
+}
+
+document.getElementById('b1').onclick = test1;
+document.getElementById('b2').onclick = test2;
+document.getElementById('b3').onclick = test3;
+document.getElementById('b4').onclick = test4;
+document.getElementById('b5').onclick = test5;
+document.getElementById('b6').onclick = test6;
+</script>
+</body>
+</html>
