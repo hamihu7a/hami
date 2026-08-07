@@ -67,6 +67,8 @@
     flex-direction: column;
     overflow-y: auto;
   }
+  /* 让头像紧贴 cmd-bar 下边缘：上方不留白 */
+  .sidebar > .nav-header { margin-top: -4px; padding: 6px 12px 14px; }
   /* 侧边栏拖拽手柄：半透明圆形，位于侧边栏底部「左侧宽度」下方，按住左右拖动改变宽度 */
   .nav-header-row {
     position: relative;
@@ -452,12 +454,13 @@
   .accounts-wrap.has-custom-bg #desktop-accounts { z-index: 1; }
 
   /* 天气 / 运势 区域：浅粉蒙版 + 等比例铺满（cover 不变形），各自独立可设背景 */
-  #home-weather, #home-fortune { position: relative; }
+  #home-weather, #home-fortune { position: relative; overflow: hidden; border-radius: 10px; }
   #home-weather.has-custom-bg::before,
   #home-fortune.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
-    background-image: linear-gradient(rgba(255,238,244,0.66), rgba(255,238,244,0.66)), var(--bg-img);
+    border-radius: 10px;
+    background-image: linear-gradient(rgba(255,238,244,0.30), rgba(255,238,244,0.30)), var(--bg-img);
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   #home-weather.has-custom-bg > *,
@@ -5383,6 +5386,7 @@ function renderWeatherFromApi(data) {
   try {
     const c = data.current_condition && data.current_condition[0];
     const w = data.weather && data.weather[0];
+    const w2 = data.weather && data.weather[1];   /* 明日 */
     if (!c) { renderWeatherFallback(); return; }
     const code = c.weatherCode;
     const map = WEATHER_CODE_MAP[code] || { name: (c.weatherDesc && c.weatherDesc[0] && c.weatherDesc[0].value) || '未知', icon: '🌡️' };
@@ -5392,6 +5396,10 @@ function renderWeatherFromApi(data) {
     const lo = w ? w.mintempC + '°' : '—';
     const humidity = c.humidity || '—';
     const tip = getWeatherTip(map.name);
+    /* 明日天气文字描述（系统语言 zh） */
+    const tomorrowName = w2 && w2.hourly && w2.hourly[4] && w2.hourly[4].weatherDesc
+      ? (w2.hourly[4].weatherDesc[0] && w2.hourly[4].weatherDesc[0].value) || '未知'
+      : (w2 && w2.weatherDesc && w2.weatherDesc[0] && w2.weatherDesc[0].value) || '未知';
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
@@ -5403,8 +5411,8 @@ function renderWeatherFromApi(data) {
         <span style="font-size:9px;color:#a07080;margin-left:auto;">${lo}~${hi}</span>
       </div>
       <div style="font-size:9px;color:#a07080;line-height:1.4;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${tip}</div>
-      <div style="font-size:9px;color:#a07080;">温度: <b style="color:#a07080;">${temp}</b> · 体感: <b style="color:#a07080;">${feels}</b></div>
-      <div style="font-size:9px;color:#a07080;">湿度: <b style="color:#a07080;">${humidity}%</b></div>`;
+      <div style="font-size:9px;color:#a07080;">温度：<b style="color:#a07080;">${temp}</b>，湿度<b style="color:#a07080;">${humidity}%</b></div>
+      <div style="font-size:9px;color:#a07080;">明日天气：<b style="color:#a07080;">${tomorrowName}</b></div>`;
   } catch(e) { renderWeatherFallback(); }
 }
 
@@ -5413,11 +5421,11 @@ function renderWeatherFallback() {
   const el = document.getElementById('desktop-weather');
   if (!el) return;
   const month = new Date().getMonth() + 1;
-  let weather, temp, icon, feelsLike, weatherDesc;
-  if (month >= 6 && month <= 9) { weather = '多云转晴'; temp = '28~35°'; icon = '⛅'; feelsLike = '36°'; weatherDesc = '天气较闷热，注意防晒补水。'; }
-  else if (month >= 3 && month <= 5) { weather = '晴'; temp = '18~26°'; icon = '☀️'; feelsLike = '27°'; weatherDesc = '天气晴朗温暖，适合出门散步。'; }
-  else if (month >= 10 && month <= 11) { weather = '晴'; temp = '15~25°'; icon = '☀️'; feelsLike = '26°'; weatherDesc = '秋高气爽，早晚温差大记得添衣。'; }
-  else { weather = '晴'; temp = '8~18°'; icon = '🌞'; feelsLike = '17°'; weatherDesc = '天气晴冷干燥，注意保暖保湿。'; }
+  let weather, temp, icon, feelsLike, weatherDesc, weatherTomorrow;
+  if (month >= 6 && month <= 9) { weather = '多云转晴'; temp = '28~35°'; icon = '⛅'; feelsLike = '36°'; weatherDesc = '天气较闷热，注意防晒补水。'; weatherTomorrow = '晴'; }
+  else if (month >= 3 && month <= 5) { weather = '晴'; temp = '18~26°'; icon = '☀️'; feelsLike = '27°'; weatherDesc = '天气晴朗温暖，适合出门散步。'; weatherTomorrow = '多云'; }
+  else if (month >= 10 && month <= 11) { weather = '晴'; temp = '15~25°'; icon = '☀️'; feelsLike = '26°'; weatherDesc = '秋高气爽，早晚温差大记得添衣。'; weatherTomorrow = '阴'; }
+  else { weather = '晴'; temp = '8~18°'; icon = '🌞'; feelsLike = '17°'; weatherDesc = '天气晴冷干燥，注意保暖保湿。'; weatherTomorrow = '多云转晴'; }
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
       <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
@@ -5428,7 +5436,8 @@ function renderWeatherFallback() {
       <span style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;">${weather}</span>
     </div>
     <div style="font-size:9px;color:#a07080;line-height:1.4;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${weatherDesc}（获取失败，显示默认）</div>
-    <div style="font-size:9px;color:#a07080;">温度: <b style="color:#a07080;">${temp}</b> · 体感: <b style="color:#a07080;">${feelsLike}</b></div>`;
+    <div style="font-size:9px;color:#a07080;">温度：<b style="color:#a07080;">${temp}</b>，湿度<b style="color:#a07080;">—</b></div>
+    <div style="font-size:9px;color:#a07080;">明日天气：<b style="color:#a07080;">${weatherTomorrow}</b>（默认）</div>`;
 }
 
 function renderWeatherFortune() {
