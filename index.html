@@ -3272,6 +3272,13 @@ function parseTargetDate(txt) {
   return null;
 }
 
+// 共用：如厕记录核心逻辑（顶部指令框"上厕所" + 如厕面板"我今天上了厕所"按钮都调这个，保证两边绝对同步）
+function __recordToiletCore(date) {
+  const existing = store.toiletRecords.find(r => r.date === date);
+  if (existing) existing.count = (existing.count || 1) + 1;
+  else store.toiletRecords.push({ date: date, count: 1 });
+}
+
 function sendHamiCmd() {
   const input = document.getElementById('hami-cmd-input');
   if (!input) return;
@@ -3416,9 +3423,7 @@ function sendHamiCmd() {
 
   // —— 如厕 ——
   if (/上厕所|上厕所了|便便|拉屎|如厕|toilet/i.test(txt)) {
-    const existing = store.toiletRecords.find(r => r.date === targetDate);
-    if (existing) existing.count = (existing.count || 1) + 1;
-    else store.toiletRecords.push({ date: targetDate, count: 1 });
+    __recordToiletCore(targetDate);
     acted = true;
   }
 
@@ -5851,12 +5856,10 @@ function logWash() {
   alert('🧴 已记录：今天洗了头~');
 }
 
-// 记录：今天上了厕所（当天可累加次数）
+// 记录：今天上了厕所（当天可累加次数）—— 走共用核心函数 __recordToiletCore，与顶部指令框"上厕所"绝对同源
 function logToilet() {
   const today = todayStr();
-  let rec = store.toiletRecords.find(r => r.date === today);
-  if (rec) rec.count = (rec.count || 0) + 1;
-  else store.toiletRecords.push({ date: today, count: 1 });
+  __recordToiletCore(today);
   saveData();
   renderToilet();
   renderCountdown();
