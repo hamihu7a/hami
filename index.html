@@ -455,6 +455,9 @@
 
   /* 天气 / 运势 区域：浅粉蒙版 + 等比例铺满（cover 不变形），各自独立可设背景 */
   #home-weather, #home-fortune { position: relative; overflow: hidden; border-radius: 10px; }
+  /* 天气/运势文字：保持字号与颜色不变，仅加很微弱白色描边光晕，背景变明显后仍清晰可读 */
+  #desktop-weather, #desktop-fortune { text-shadow: 0 0 2px rgba(255,255,255,0.85); }
+  #desktop-weather *, #desktop-fortune * { text-shadow: 0 0 2px rgba(255,255,255,0.85); }
   #home-weather.has-custom-bg::before,
   #home-fortune.has-custom-bg::before {
     content: "";
