@@ -341,10 +341,10 @@
     display: flex;
     align-items: baseline;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 2px;
   }
   .desktop-time {
-    font-size: 22px;
+    font-size: 30px;
     font-weight: 700;
     letter-spacing: 1px;
   }
@@ -355,7 +355,7 @@
   /* 三条激励语：完全融入 hero 渐变，无背景容器/无边框/无模糊，仅保留内边距保证行距 */
   .desktop-quote {
     background: transparent;
-    padding: 4px 2px 0;
+    padding: 2px 2px 0;
   }
   .desktop-quote .quote-line {
     font-size: 13px;
@@ -1109,7 +1109,7 @@
     .main {
       padding: 14px 12px 24px;
     }
-    .desktop-time { font-size: 20px; }
+    .desktop-time { font-size: 28px; }
     .desktop-hero { padding: 12px 12px; }
     .stat-card .value { font-size: 18px; }
     th, td { padding: 8px 5px; font-size: 11px; }
@@ -2647,6 +2647,11 @@ async function pullCloudToLocal() {
     if (!r.ok) return false;
     const rows = await r.json();
     _applyingRemote = true;   // 拉取期间的所有写入不触发回推（避免回声）
+    // 关键修复：在云端数据覆盖本地之前，先把「本地已保存的用户数据」读进内存(store)。
+    // 否则当页面初始化顺序导致内存里还是默认值时，云端那份旧数据会把用户刚记的
+    // 如厕/体重等记录整份覆盖掉，表现为「记录无效、每次都要重记」。
+    // 之后下面的 loadData() 会用内存里的本地数据 + 云端数据做合并（按日期去重保留），本地记录得以保留。
+    try { loadData(); } catch (e) {}
     (rows || []).forEach(row => { try { if (row.k && !_isLocalOnlyKey(row.k)) localStorage.setItem(row.k, row.v); } catch (e) {} });
     _pendingPush.clear(); _pendingDelete.clear();   // 取消 pull 前排队的本地推送，避免把旧值推回云端
     // 云端拉取后重放布局宽度/锁定状态：宽度 IIFE 在脚本解析时已用「旧」localStorage 初始化，
@@ -2658,6 +2663,9 @@ async function pullCloudToLocal() {
     try { loadData(); } catch (e) {}
     try { applyAllBgs(); } catch (e) {}
     try { rerenderSynced(); } catch (e) {}
+    // 关键修复：把云端 + 本地合并后的结果写回本地存档，确保本地记录不会因云端旧数据被覆盖而再丢失
+    // （此时 _applyingRemote 仍为 true，saveData 的写入不会回声推回云端，避免把合并结果又冲掉）
+    try { saveData(); } catch (e) {}
     _applyingRemote = false;
     window.__lastSync = Date.now();
     updateSyncStatus(true);
