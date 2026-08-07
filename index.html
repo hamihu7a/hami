@@ -6534,22 +6534,25 @@ setInterval(updateClock, 1000);
 (function () {
   // ===== 招财猫互动：点击 -> 叮咚声 + 元宝 + 文字泡泡 =====
   var CAT_COINS = ['\u{1FA99}','\u{1F4B0}','\u{1F9E7}','\u{2728}','\u{2B50}','\u{1F31F}','\u{1F48E}'];
-  var CAT_BUBBLES = ['财源滚滚~','今天也要加油~','好运来喵~','好运来啦~','暴富喵呜~'];
+  var CAT_BUBBLES = ['财源滚滚~','今天也要加油~','好运来喵~','暴富喵呜~','万事顺意~','福气满满~','平安顺逆~'];
   var catSpeakIndex = 0;
+  // 多种音效旋律，点击时顺序轮换（每次音效不同）
+  var CAT_SOUNDS = [
+    [ {f:523.25,t:0.00,d:0.12},{f:659.25,t:0.10,d:0.12},{f:783.99,t:0.20,d:0.12},{f:1046.50,t:0.30,d:0.16},{f:1318.51,t:0.42,d:0.20} ],
+    [ {f:1046.50,t:0.00,d:0.12},{f:880.00,t:0.10,d:0.12},{f:698.46,t:0.20,d:0.12},{f:587.33,t:0.30,d:0.16},{f:523.25,t:0.42,d:0.20} ],
+    [ {f:659.25,t:0.00,d:0.12},{f:987.77,t:0.10,d:0.12},{f:783.99,t:0.20,d:0.12},{f:1174.66,t:0.30,d:0.16},{f:880.00,t:0.42,d:0.20} ],
+    [ {f:440.00,t:0.00,d:0.14},{f:554.37,t:0.12,d:0.14},{f:659.25,t:0.24,d:0.14},{f:880.00,t:0.36,d:0.16},{f:1108.73,t:0.48,d:0.22} ],
+    [ {f:783.99,t:0.00,d:0.10},{f:1046.50,t:0.09,d:0.10},{f:659.25,t:0.20,d:0.12},{f:987.77,t:0.32,d:0.14},{f:1318.51,t:0.46,d:0.20} ]
+  ];
+  var catSoundIndex = 0;
 
-  function playHappyCatSound() {
+  function playHappyCatSound(notes) {
     try {
+      if (!notes || !notes.length) return;
       var Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
       var ctx = new Ctx();
       if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
-      var notes = [
-        {f:523.25, t:0.00, d:0.12},
-        {f:659.25, t:0.10, d:0.12},
-        {f:783.99, t:0.20, d:0.12},
-        {f:1046.50, t:0.30, d:0.16},
-        {f:1318.51, t:0.42, d:0.20}
-      ];
       notes.forEach(function (n) {
         var o = ctx.createOscillator(), g = ctx.createGain();
         o.type = 'triangle';
@@ -6605,7 +6608,9 @@ setInterval(updateClock, 1000);
         var line = CAT_BUBBLES[catSpeakIndex % CAT_BUBBLES.length];
         catSpeakIndex++;
         spawnBubble(headX, r.top, line);
-        playHappyCatSound();
+        var melody = CAT_SOUNDS[catSoundIndex % CAT_SOUNDS.length];
+        catSoundIndex++;
+        playHappyCatSound(melody);
       } catch (err) {}
       if (e && e.stopPropagation) e.stopPropagation();
     });
