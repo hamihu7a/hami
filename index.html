@@ -51,7 +51,7 @@
     --gap: 12px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
        之间的垂直距离都用 var(--space-block)，避免"有的黏在一起、有的隔太远"——design token */
-    --space-block: 10px;
+    --space-block: 7px;
     --pad: 20px;
     --t: .25s ease;
   }
@@ -69,8 +69,8 @@
     flex-direction: column;
     overflow-y: auto;
   }
-  /* 让头像紧贴 cmd-bar 下边缘：上方不留白 */
-  .sidebar > .nav-header { margin-top: 0; padding: 0 12px 14px; }
+    /* 头像上方留一点间距（不再贴死指令栏） */
+  .sidebar > .nav-header { margin-top: 0; padding: 10px 12px 14px; }
   /* 侧边栏拖拽手柄：半透明圆形，位于侧边栏底部「左侧宽度」下方，按住左右拖动改变宽度 */
   .nav-header-row {
     position: relative;
