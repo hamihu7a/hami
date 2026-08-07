@@ -5311,7 +5311,19 @@ function getHuangLi(y,m,d){
   var shaArr=['北','南','西','东'];
   var sha='';
   for(var g=0;g<4;g++){ if(groups[g].indexOf(gd.idx%12)>=0){sha=shaArr[g];break;} }
-  return { lunar:(L.isLeapMonth?'闰':'')+HL_MONTHS[L.month-1]+'月'+hlDayName(L.day), gzYear:gzYi+gzYz, gzMonth:gzMi+gzMz, gzDay:gd.gan+gd.zhi, animal:animal, dayWx:dayWx, jianchu:jianchu+'日', yi:HL_YI[jianchu], ji:HL_JI[jianchu], chong:'冲'+chongAnimal, sha:'煞'+sha };
+  return { lunar:(L.isLeapMonth?'闰':'')+HL_MONTHS[L.month-1]+'月'+hlDayName(L.day), day:L.day, gzYear:gzYi+gzYz, gzMonth:gzMi+gzMz, gzDay:gd.gan+gd.zhi, animal:animal, dayWx:dayWx, jianchu:jianchu+'日', yi:HL_YI[jianchu], ji:HL_JI[jianchu], chong:'冲'+chongAnimal, sha:'煞'+sha };
+}
+
+// 农历日 → 随每日变化的月亮 emoji（供黄历卡大字号行使用）
+function moonEmoji(day) {
+  if (day <= 1) return '🌑';        // 初一 新月
+  if (day <= 7) return '🌒';        // 初七前 蛾眉月
+  if (day === 8) return '🌓';       // 初八 上弦
+  if (day <= 14) return '🌔';       // 十五前 盈凸
+  if (day === 15) return '🌕';      // 十五 满月
+  if (day <= 22) return '🌖';       // 廿二前 亏凸
+  if (day === 23) return '🌗';      // 廿三 下弦
+  return '🌘';                       // 廿三后 残月
 }
 
 // 实时天气：wttr.in（汕尾），每天打开自动拉取真实天气
@@ -5396,7 +5408,7 @@ function getWeatherTip(name) {
   if (name.indexOf('雷') >= 0) return '打雷别在空旷处停留，关好门窗~';
   if (name === '晴') return '天气晴好，适合出门散心，记得防晒~';
   if (name === '多云' || name === '阴') return '云量较多温度适宜，心情也会很舒展~';
-  return '关注天气变化，照顾好自己~';
+  return '关注天气变化，照顾好自己';
 }
 
 // 4 字文本：在第 2 字后换行（如 晴间多云 → 晴间 / 多云，六月廿五 → 六月 / 廿五）
@@ -5491,7 +5503,8 @@ function renderWeatherFromApi(d) {
         <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
         <span style="font-size:9px;color:#a07080;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
       </div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己~</div>
+      <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;"><span style="font-size:22px;">${d.icon}</span> ${d.name}</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己</div>
       <div style="height:9px;"></div>
       <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${d.lo}°~${d.hi}°</div>
       <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">湿度 ：${d.humidity}%</div>
@@ -5514,7 +5527,8 @@ function renderWeatherFallback() {
       <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
       <span style="font-size:9px;color:#a07080;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
     </div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己~</div>
+      <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;"><span style="font-size:22px;">${icon}</span> ${weather}</div>
+      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己</div>
       <div style="height:9px;"></div>
       <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${temp}</div>
       <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">湿度 ：—</div>
@@ -5532,6 +5546,7 @@ function renderWeatherFortune() {
       <span style="font-size:11px;font-weight:700;color:#d14b73;">📅 今日黄历</span>
       <span style="font-size:9px;color:#a07080;white-space:nowrap;">🐴 ${hl.animal}年</span>
     </div>
+    <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;">${moonEmoji(hl.day)} ${hl.lunar}</div>
     <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日</div>
     <div style="height:9px;"></div>
     <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">五行${hl.dayWx} · ${hl.chong} · ${hl.sha}</div>
