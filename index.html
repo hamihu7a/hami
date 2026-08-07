@@ -68,7 +68,7 @@
     overflow-y: auto;
   }
   /* 让头像紧贴 cmd-bar 下边缘：上方不留白 */
-  .sidebar > .nav-header { margin-top: -4px; padding: 6px 12px 14px; }
+  .sidebar > .nav-header { margin-top: 0; padding: 0 12px 14px; }
   /* 侧边栏拖拽手柄：半透明圆形，位于侧边栏底部「左侧宽度」下方，按住左右拖动改变宽度 */
   .nav-header-row {
     position: relative;
@@ -1157,7 +1157,10 @@
       cursor: pointer;
       user-select: none;
       -webkit-user-drag: none;
-      filter: drop-shadow(0 8px 14px rgba(180, 100, 50, 0.28));
+      filter:
+        drop-shadow(0 18px 28px rgba(255, 158, 181, 0.42))
+        drop-shadow(0 8px 14px rgba(209, 75, 115, 0.30))
+        drop-shadow(0 2px 4px rgba(120, 60, 40, 0.22));
       animation: cat-float 3.8s ease-in-out infinite;
       transition: transform .15s ease;
     }
@@ -3847,7 +3850,7 @@ function checkCheckinAlerts() {
   }
   // 敷面膜提醒：本周未满2次
   if (maskInfo.needRemind) {
-    alerts.push({ icon: '🧖', text: '本周面膜还差' + (maskInfo.goal - maskInfo.count) + '次（' + maskInfo.count + '/' + maskInfo.goal + '）', color: '#856404', bg: '#fff3cd', action: 'toiletmask' });
+    alerts.push({ icon: '🧖', text: '本周面膜还差' + (maskInfo.goal - maskInfo.count) + '次（' + maskInfo.count + '/' + maskInfo.goal + '）', color: '#a03e62', bg: 'rgba(255, 198, 215, 0.5)', action: 'toiletmask' });
   }
 
   // 显示横幅
