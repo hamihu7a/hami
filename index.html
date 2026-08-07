@@ -1428,7 +1428,7 @@
 
     <!-- 自媒体账号概览 -->
     <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 10px;border-radius:12px;margin-bottom:var(--space-block);">
-      <div class="ac-title" style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px;">📱 自媒体实时数据</div>
+      <div class="ac-title" style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px;">📱 自媒体数据</div>
       <div id="desktop-accounts"></div>
     </div>
 
@@ -1879,8 +1879,8 @@
                 <span class="mirror-tag">🌟 今日运势</span>
               </div>
             </div>
-            <div class="mirror-block mirror-accounts" data-bgkey="accounts" title="点击修改自媒体实时数据背景">
-              <span class="mirror-tag">📱 自媒体实时数据</span>
+            <div class="mirror-block mirror-accounts" data-bgkey="accounts" title="点击修改自媒体数据背景">
+              <span class="mirror-tag">📱 自媒体数据</span>
             </div>
             <div class="mirror-block mirror-weight" data-bgkey="panel-fitness" title="点击修改主页「体重记录与变化日历」背景">
               <span class="mirror-tag">⚖️ 体重记录与变化日历</span>
@@ -2410,7 +2410,7 @@ function mergeByDatePriority(defaultArr, savedArr, hasValue) {
 }
 
 // ==================== 自定义背景（上传图片替换纯色背景）====================
-// 镜像面板（点击板块上传，改对应主页区域）：hero（时间与激励语区域） / weather（今日天气） / fortune（今日运势） / accounts（自媒体实时数据） / panel-fitness（体重记录与变化日历）。左侧任务栏、整体面板大背景、自媒体更新记录不在镜像内。
+// 镜像面板（点击板块上传，改对应主页区域）：hero（时间与激励语区域） / weather（今日天气） / fortune（今日运势） / accounts（自媒体数据） / panel-fitness（体重记录与变化日历）。左侧任务栏、整体面板大背景、自媒体更新记录不在镜像内。
 // BG_KEYS / BG_ELS 同时保留了 sidebar / main 等其它 key，用于兼容历史 localStorage 与极少数角落入口
 const BG_KEYS = {
   hero: 'hami_bg_hero',
@@ -3643,7 +3643,7 @@ function loadData() {
       if (p.toiletRecords && p.toiletRecords.length > 0) store.toiletRecords = mergeByDatePriority(store.toiletRecords, p.toiletRecords, r => r && r.count != null);
       if (p.maskRecords && p.maskRecords.length > 0) store.maskRecords = p.maskRecords;
       if (p.accountRecords && p.accountRecords.length > 0) store.accountRecords = p.accountRecords;
-      // 账号监控数据以文件内置为准（由助手/定时任务更新），不从 localStorage 覆盖，确保刷新后可见
+      // 账号数据以文件内置为准（由主人手动看后台、报给小助理写入），不从 localStorage 覆盖，确保刷新后可见
       if (p.importantDates && p.importantDates.length > 0) store.importantDates = p.importantDates;
       if (p.travelPlans && p.travelPlans.length > 0) store.travelPlans = p.travelPlans;
       if (p.movieData && p.movieData.recommendList && p.movieData.recommendList.length > 0) store.movieData = p.movieData;
@@ -5256,7 +5256,7 @@ function checkWeeklyUpdateAlert() {
     if (!sessionStorage.getItem('weeklyAlertShown')) {
       sessionStorage.setItem('weeklyAlertShown', '1');
       setTimeout(() => {
-        alert('📊 周一提醒：\n该更新三个账号的实时数据啦！\n\n• 小红书大号：sims哈弥老师\n• 小红书小号：sims哈弥老师（定制版）\n• 抖音：sims哈弥老师\n\n请前往「自媒体更新记录」更新粉丝数、笔记数、获赞收藏等数据~');
+        alert('📊 周一提醒：\n该更新三个账号的数据啦！\n\n• 小红书大号：sims哈弥老师\n• 小红书小号：sims哈弥（定制版）\n• 抖音：sims哈弥老师\n\n请打开小红书/抖音后台看一眼粉丝数和获赞数，报给小助理（Hami的），我来帮您写进工作台~');
       }, 1200);
     }
     // 横幅常驻
@@ -5265,7 +5265,7 @@ function checkWeeklyUpdateAlert() {
       const existing = banner.innerHTML;
       const weeklyBanner = `<div style="padding:10px 14px;border-radius:12px;margin-bottom:8px;background:#e8e0f0;color:#6a3a8a;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="switchPanel('media', this)">
         <span style="font-size:16px;">📊</span>
-        <span>周一提醒：该更新三个账号的实时数据啦！</span>
+        <span>周一提醒：去后台看一眼账号数据，报给小助理更新~</span>
       </div>`;
       if (existing.indexOf('周一提醒') < 0) {
         banner.innerHTML = weeklyBanner + existing;
