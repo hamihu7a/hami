@@ -3264,6 +3264,8 @@ function parseTargetDate(txt) {
   m = txt.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
   if (m) return { date: m[1] + '-' + p2(m[2]) + '-' + p2(m[3]), token: m[0] };
   if (/今天|今日|当天|今儿/.test(txt)) return { date: t, token: '' };
+  m = txt.match(/(\d+)\s*天[以之]?前/);
+  if (m) return { date: addDaysStr(t, -parseInt(m[1],10)), token: m[0] };
   if (/大前天/.test(txt)) return { date: addDaysStr(t, -3), token: '' };
   if (/前天/.test(txt)) return { date: addDaysStr(t, -2), token: '' };
   if (/昨天|昨日/.test(txt)) return { date: addDaysStr(t, -1), token: '' };
@@ -3409,7 +3411,7 @@ function sendHamiCmd() {
   }
 
   // —— 经期开始 / 结束（健康）——
-  if (/大姨妈|来姨妈|来例假|来月事|月经来了|经期开始|好朋友来了|生理期来了|来事了/.test(txt)) {
+  if (/大姨妈|来姨妈|来例假|来月事|月经来了|经期开始|好朋友来了|生理期来了|来事了|来大姨妈了|大姨妈来了/.test(txt)) {
     const open = store.periodRecords.find(p => !p.end);
     if (!open) store.periodRecords.push({ start: targetDate, end: '' });
     acted = true;
@@ -3421,20 +3423,28 @@ function sendHamiCmd() {
   }
 
   // —— 洗头 ——
-  if (/洗头|洗头发|洗发|wash/i.test(txt)) {
+  if (/洗头|洗头发|洗发|洗下头|洗了头|wash/i.test(txt)) {
     if (!store.washRecords.some(r => r.date === targetDate))
       store.washRecords.push({ date: targetDate });
     acted = true;
   }
 
+  // —— 刷新模拟人生笔记推荐（强制换一条，不受 3 天间隔限制）——
+  if (/(刷新|更新|换一条|换一换|换一个|重新生成|重刷|刷新一下|更新一下).*(模拟人生|笔记|推荐|灵感|小红书)|(模拟人生|笔记|推荐|灵感|小红书).*(刷新|更新|换一条|换一换|重新生成)/i.test(txt)) {
+    try { window.refreshInspireToday(); } catch (e) {}
+    showCmdToast('🔄 已刷新模拟人生笔记推荐，换了一条新草稿~');
+    input.value = '';
+    return;
+  }
+
   // —— 如厕 ——
-  if (/上厕所|上厕所了|便便|拉屎|如厕|toilet/i.test(txt)) {
+  if (/上厕所|上了?个?厕所|去上厕所|去上厕|如厕|便便|拉屎|拉了?个?屎|上大号|去厕所|蹲坑|方便(?:一下|了|下)|toilet/i.test(txt)) {
     __recordToiletCore(targetDate);
     acted = true;
   }
 
   // —— 敷面膜 ——
-  if (/敷面膜|面膜|mask/i.test(txt)) {
+  if (/敷面膜|面膜|敷了?个?膜|敷脸|做了?面膜|mask/i.test(txt)) {
     if (!store.maskRecords.some(r => r.date === targetDate))
       store.maskRecords.push({ date: targetDate });
     acted = true;
@@ -3464,7 +3474,7 @@ function sendHamiCmd() {
   }
 
   // —— 运动 ——
-  if (/运动|健身|锻炼|exercise|workout/i.test(txt)) {
+  if (/运动|健身|锻炼|练了?|运动了|exercise|workout/i.test(txt)) {
     const durMatch = txt.match(/(\d+)\s*分钟|min/);
     const duration = durMatch ? durMatch[1] + '分钟' : '已打卡';
     const exRec = { date: targetDate, aerobics: true, cardio: true, weights: true,
@@ -3559,7 +3569,7 @@ function sendHamiCmd() {
     showCmdToast('✅ 已记录' + dateTip + where + '：' + txt);
     try { playSound('cmd'); } catch (e) {}
   } else {
-    showCmdToast('🤔 没识别到，试试："买裙子花了129.9" / "8.2日消费了裙子花了129" / "昨日体重88.2" / "前天量体重87.5" / "接单2单" / "来大姨妈了" / "灵感：做秋日特辑" / "生日妈妈农历九月初九" / "收藏电影《盗梦空间》"');
+    showCmdToast('🤔 没识别到，试试："前天上了厕所" / "买裙子花了129.9" / "8.2日消费了裙子花了129" / "昨日体重88.2" / "前天量体重87.5" / "接单2单" / "来大姨妈了" / "灵感：做秋日特辑" / "刷新模拟人生笔记推荐" / "生日妈妈农历九月初九" / "收藏电影《盗梦空间》"');
   }
 }
 
