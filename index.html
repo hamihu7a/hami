@@ -1117,8 +1117,13 @@
     .nav-group-title { font-size: 14px; padding: 10px 6px 4px; }
     .nav-item { font-size: 10px; padding: 7px 6px 7px 12px; gap: 6px; }
     .nav-item .nav-icon { font-size: 14px; }
-    /* 移动端：sidebar 100px 已在 :root 处覆盖，main 走基础规则（relative 定位）只需覆盖 padding */
+    /* 移动端：.main 显式 fixed，彻底杜绝「被其它 relative 规则覆写 → 主面板掉到底部」（桌面端用三件套 fixed 同理） */
     .main {
+      position: fixed;
+      top: 56px;
+      left: var(--sidebar-w);
+      right: 0;
+      bottom: 0;
       padding: 14px 12px 24px;
     }
     .desktop-time { font-size: 28px; }
@@ -1133,8 +1138,13 @@
     :root { --sidebar-w: 220px; }
     .sidebar .nav-text { font-size: 13px; }
     .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
-    /* 桌面端 sidebar 220px 已在 :root 覆盖，main 走基础规则只需覆盖 padding */
+    /* 桌面端 sidebar 220px 已在 :root 覆盖；.main 显式 fixed（与基础规则一致，杜绝被覆写） */
     .main {
+      position: fixed;
+      top: 56px;
+      left: var(--sidebar-w);
+      right: 0;
+      bottom: 0;
       padding: 28px 48px;
     }
     .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
@@ -1152,7 +1162,7 @@
     /* ===== 浮动宠物：发财猫 ===== */
     #lucky-cat {
       position: absolute;
-      top: 5px;
+      top: 2px;
       right: 65px;
       width: 175px;
       height: 124px;
@@ -1233,7 +1243,7 @@
       #lucky-cat { width: 165px; height: 117px; top: 19px; right: 48px; }
     }
     @media (max-width: 420px) {
-      #lucky-cat { width: 150px; height: 107px; top: 12px; right: 45px; }
+      #lucky-cat { width: 150px; height: 107px; top: 9px; right: 45px; }
     }
     }
 </style>
