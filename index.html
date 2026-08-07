@@ -1372,7 +1372,7 @@
         <div id="main-grip" class="main-grip" title="按住拖动调整右侧主面板宽度">↔</div>
         <button id="main-lock-btn" class="main-lock-btn" title="锁定/解锁主面板宽度" onclick="toggleMainLock()">🔓</button>
       </div>
-      <div class="hero-line" style="justify-content:center;">
+      <div class="hero-line" style="justify-content:flex-start;">
         <span class="desktop-time" id="hero-time">--:--</span>
         <span class="desktop-date"><span id="hero-date">--</span> · <span id="hero-week">--</span></span>
       </div>
@@ -6241,7 +6241,7 @@ function updateCmdBarWidth() {
 (function () {
   var MAIN_W_KEY = 'hami_main_width';
   var MAIN_LOCK_KEY = 'hami_main_lock';
-  var MAIN_MIN = 420;       // 主面板可手动调窄到的最小宽度
+  var MAIN_MIN = 300;       // 主面板可手动调窄到的最小宽度（已调小下限，允许往左拉得更窄）
   var mainEl = document.querySelector('.main');
   var grip = document.getElementById('main-grip');
   var lockBtn = document.getElementById('main-lock-btn');
