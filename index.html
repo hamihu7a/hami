@@ -49,7 +49,7 @@
     --c-pink-tint: rgba(255, 158, 181, 0.12);
     --c-bg: #fdf6f1;
     --c-text: #4a3340;
-    --c-muted: #a07080;
+    --c-muted: #7d4a5a;
     --c-line: #ffe4ec;
     --gap: 12px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
@@ -390,7 +390,7 @@
     box-sizing:border-box;
   }
   .hami-cmd-bar .cmd-label {
-    font-size:13px;color:#a07080;font-weight:600;
+    font-size:13px;color:#7d4a5a;font-weight:600;
     white-space:nowrap;display:flex;align-items:center;gap:4px;
     flex-shrink:0;
   }
@@ -760,7 +760,7 @@
     transition: background var(--t);
   }
   .todo-btn:hover { background: var(--c-pink); color: #fff; }
-  .todo-btn.del { background: #ffe0e0; color: #d98a8a; }
+  .todo-btn.del { background: #ffe0e0; color: #c25f5f; }
   .todo-btn.del:hover { background: #f3b4b4; color: #fff; }
 
   /* ============ 通用 ============ */
@@ -1833,7 +1833,7 @@
       <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
         <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
           🎯 电影推荐
-          <span id="movie-recommend-date" style="margin-left:auto;font-size:11px;font-weight:400;color:#c4a0ac;background:#fff0f5;padding:2px 8px;border-radius:10px;"></span>
+          <span id="movie-recommend-date" style="margin-left:auto;font-size:11px;font-weight:400;color:#9a6a7e;background:#fff0f5;padding:2px 8px;border-radius:10px;"></span>
         </div>
         <div id="movie-daily-recommend"></div>
       </div>
@@ -1842,7 +1842,7 @@
       <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
         <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
           🎫 近期上映
-          <span style="margin-left:auto;font-size:11px;font-weight:400;color:#c4a0ac;background:#fff0f5;padding:2px 8px;border-radius:10px;">热映中</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:400;color:#9a6a7e;background:#fff0f5;padding:2px 8px;border-radius:10px;">热映中</span>
         </div>
         <div id="movie-now-playing"></div>
       </div>
@@ -4012,7 +4012,7 @@ function renderDesktopCheckin() {
       <div class="ci-icon">${c.icon}</div>
       <div class="ci-label">${c.label}</div>
       <div class="ci-status ${c.done ? 'done' : 'pending'}">${c.done ? '✓ 已完成' : '待打卡'}</div>
-      ${c.extra ? `<div style="font-size:11px;color:#a07080;margin-top:5px;">${c.extra}</div>` : ''}
+      ${c.extra ? `<div style="font-size:11px;color:#7d4a5a;margin-top:5px;">${c.extra}</div>` : ''}
     </div>`;
   });
   document.getElementById('desktop-checkin').innerHTML = html;
@@ -4325,7 +4325,7 @@ function renderWeightChart(data) {
   for (let i = 0; i <= 4; i++) {
     const y = p.top + (i/4) * ch;
     svg += `<line x1="${p.left}" y1="${y}" x2="${width-p.right}" y2="${y}" stroke="#ffe4ec" stroke-width="1"/>`;
-    svg += `<text x="${p.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#c4a0ac">${(maxV - (i/4)*range).toFixed(1)}</text>`;
+    svg += `<text x="${p.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#9a6a7e">${(maxV - (i/4)*range).toFixed(1)}</text>`;
   }
   svg += `<line x1="${p.left}" y1="${sy}" x2="${width-p.right}" y2="${sy}" stroke="#ff9eb5" stroke-width="1.5" stroke-dasharray="5,5"/>`;
   svg += `<text x="${width-p.right}" y="${sy-5}" text-anchor="end" font-size="10" fill="#ff7f9e" font-weight="600">起始 ${START_WEIGHT}kg</text>`;
@@ -4342,7 +4342,7 @@ function renderWeightChart(data) {
 
   data.forEach((d,i) => {
     if (data.length > 10 && i % Math.ceil(data.length/8) !== 0) return;
-    svg += `<text x="${xs(i)}" y="${height-p.bottom+18}" text-anchor="middle" font-size="10" fill="#c4a0ac">${d.date.substring(5)}</text>`;
+    svg += `<text x="${xs(i)}" y="${height-p.bottom+18}" text-anchor="middle" font-size="10" fill="#9a6a7e">${d.date.substring(5)}</text>`;
   });
 
   svg += `<rect x="${p.left}" y="8" width="10" height="10" fill="#ff9eb5" rx="2"/>`;
@@ -4468,7 +4468,7 @@ function renderInspire() {
           <span class="badge pending">🔥 ${latest.traffic || '—'}</span>
         </div>
         <div style="font-size:15px;font-weight:600;color:#d14b73;margin-bottom:8px;">${latest.title}</div>
-        <div style="font-size:12px;color:#a07080;">📅 ${latest.date}</div>
+        <div style="font-size:12px;color:#7d4a5a;">📅 ${latest.date}</div>
       </div>
       ${detailHtml}`;
   }
@@ -4490,7 +4490,7 @@ function renderInspire() {
 function renderDesktopInspire() {
   const sorted = [...store.inspireRecords].sort((a,b) => b.date.localeCompare(a.date));
   if (sorted.length === 0) {
-    document.getElementById('desktop-inspire').innerHTML = `<div style="text-align:center;color:#c4a0ac;padding:16px;font-size:13px;">暂无推荐，每3天更新1条~</div>`;
+    document.getElementById('desktop-inspire').innerHTML = `<div style="text-align:center;color:#9a6a7e;padding:16px;font-size:13px;">暂无推荐，每3天更新1条~</div>`;
   } else {
     const latest = sorted[0];
     const subtitle = latest.type === 'web'
@@ -4679,7 +4679,7 @@ function renderAccountTrend() {
     const y = baseY - (i/4) * chartH;
     const val = Math.round((i/4) * maxVal);
     svg += `<line x1="30" y1="${y}" x2="${width-10}" y2="${y}" stroke="#ffe4ec" stroke-width="1"/>`;
-    svg += `<text x="26" y="${y+4}" text-anchor="end" font-size="9" fill="#c4a0ac">${val}</text>`;
+    svg += `<text x="26" y="${y+4}" text-anchor="end" font-size="9" fill="#9a6a7e">${val}</text>`;
   }
 
   // 柱子
@@ -5089,12 +5089,12 @@ function renderReminder() {
               <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
               ${lunarTag}
             </div>
-            <div style="font-size:12px;color:#a07080;">📅 ${dateDisplay}</div>
-            ${countText ? `<div style="font-size:11px;color:#c4a0ac;margin-top:3px;">${countText}</div>` : ''}
+            <div style="font-size:12px;color:#7d4a5a;">📅 ${dateDisplay}</div>
+            ${countText ? `<div style="font-size:11px;color:#9a6a7e;margin-top:3px;">${countText}</div>` : ''}
           </div>
           <div style="text-align:center;min-width:64px;padding-left:8px;">
             <div style="font-size:22px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
-            <div style="font-size:10px;color:#a07080;margin-top:2px;">${countLabel}</div>
+            <div style="font-size:10px;color:#7d4a5a;margin-top:2px;">${countLabel}</div>
           </div>
         </div>
       </div>`;
@@ -5173,7 +5173,7 @@ function renderReminder() {
     html += `</tbody></table></div>`;
 
     // 操作提示
-    html += `<div style="margin-top:10px;font-size:11px;color:#c4a0ac;text-align:center;">💡 点击准备清单项可勾选/取消勾选</div>`;
+    html += `<div style="margin-top:10px;font-size:11px;color:#9a6a7e;text-align:center;">💡 点击准备清单项可勾选/取消勾选</div>`;
 
     document.getElementById('travel-reminders').innerHTML = html;
   }
@@ -5205,12 +5205,12 @@ function renderDesktopAccounts() {
     html += `<div class="account-card">
       <div style="text-align:center;margin-bottom:5px;">
         <div style="font-size:13px;font-weight:700;color:#d14b73;line-height:1.3;white-space:nowrap;">${c.nameCn}</div>
-        <div style="font-size:10px;color:#a07080;margin-top:2px;white-space:nowrap;display:flex;justify-content:center;align-items:center;gap:6px;">
+        <div style="font-size:10px;color:#7d4a5a;margin-top:2px;white-space:nowrap;display:flex;justify-content:center;align-items:center;gap:6px;">
           <span>${c.data.platform}</span>
-          <span style="cursor:pointer;color:#a07080;background:rgba(160,112,128,0.15);padding:1px 6px;border-radius:8px;font-size:9px;" onclick="promptUpdateAccount('${c.key}')">✎更新</span>
+          <span style="cursor:pointer;color:#7d4a5a;background:rgba(160,112,128,0.15);padding:1px 6px;border-radius:8px;font-size:9px;" onclick="promptUpdateAccount('${c.key}')">✎更新</span>
         </div>
       </div>
-      <div style="text-align:center;font-size:18px;font-weight:800;color:#ff7f9e;margin:4px 0;white-space:nowrap;">${c.data.followers}<span style="font-size:10px;color:#c4a0ac;font-weight:400;"> 粉丝</span></div>
+      <div style="text-align:center;font-size:18px;font-weight:800;color:#ff7f9e;margin:4px 0;white-space:nowrap;">${c.data.followers}<span style="font-size:10px;color:#9a6a7e;font-weight:400;"> 粉丝</span></div>
       <div style="font-size:10px;display:flex;justify-content:space-between;color:#8a6270;margin-bottom:2px;white-space:nowrap;"><span>❤️获赞</span><b>${c.data.likes}</b></div>
       <div style="font-size:10px;display:flex;justify-content:space-between;color:#8a6270;white-space:nowrap;"><span>📅本周</span><b>${c.data.weekly}</b></div>
     </div>`;
@@ -5527,14 +5527,14 @@ function renderWeatherFromApi(d) {
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
         <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
-        <span style="font-size:9px;color:#a07080;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
+        <span style="font-size:9px;color:#7d4a5a;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
       </div>
       <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;"><span style="font-size:22px;">${d.icon}</span> ${d.name}</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己</div>
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己</div>
       <div style="height:9px;"></div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${d.lo}°~${d.hi}°</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">湿度 ：${d.humidity}%</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;">明日天气：${d.tomorrowName}</div>`;
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">温度：${d.lo}°~${d.hi}°</div>
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">湿度 ：${d.humidity}%</div>
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;">明日天气：${d.tomorrowName}</div>`;
   } catch(e) { renderWeatherFallback(); }
 }
 
@@ -5551,14 +5551,14 @@ function renderWeatherFallback() {
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
       <span style="font-size:11px;font-weight:700;color:#d14b73;">🌤️ 今日天气</span>
-      <span style="font-size:9px;color:#a07080;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
+      <span style="font-size:9px;color:#7d4a5a;white-space:nowrap;">📍 ${WEATHER_CITY_CN}</span>
     </div>
       <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;"><span style="font-size:22px;">${icon}</span> ${weather}</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己</div>
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">关注天气变化，照顾好自己</div>
       <div style="height:9px;"></div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">温度：${temp}</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">湿度 ：—</div>
-      <div style="font-size:10px;color:#a07080;line-height:1.3;">明日天气：${weatherTomorrow}（默认）</div>`;
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">温度：${temp}</div>
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">湿度 ：—</div>
+      <div style="font-size:10px;color:#7d4a5a;line-height:1.3;">明日天气：${weatherTomorrow}（默认）</div>`;
 }
 
 function renderWeatherFortune() {
@@ -5570,14 +5570,14 @@ function renderWeatherFortune() {
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
       <span style="font-size:11px;font-weight:700;color:#d14b73;">📅 今日黄历</span>
-      <span style="font-size:9px;color:#a07080;white-space:nowrap;">🐴 ${hl.animal}年</span>
+      <span style="font-size:9px;color:#7d4a5a;white-space:nowrap;">🐴 ${hl.animal}年</span>
     </div>
     <div style="font-size:16px;font-weight:700;color:#d14b73;line-height:1.2;margin-bottom:3px;">${moonEmoji(hl.day)} ${hl.lunar}</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日</div>
+    <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">${hl.gzYear}年 · ${hl.gzMonth}月 · ${hl.gzDay}日</div>
     <div style="height:9px;"></div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">五行${hl.dayWx} · ${hl.chong} · ${hl.sha}</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;margin-bottom:2px;">宜：${hl.yi.replace(/\s+/g, '，')}。</div>
-    <div style="font-size:10px;color:#a07080;line-height:1.3;">忌：${hl.ji.replace(/\s+/g, '，')}</div>`;
+    <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">五行${hl.dayWx} · ${hl.chong} · ${hl.sha}</div>
+    <div style="font-size:10px;color:#7d4a5a;line-height:1.3;margin-bottom:2px;">宜：${hl.yi.replace(/\s+/g, '，')}。</div>
+    <div style="font-size:10px;color:#7d4a5a;line-height:1.3;">忌：${hl.ji.replace(/\s+/g, '，')}</div>`;
 
   // 天气：实时拉取（open-meteo 主，wttr.in 备）
   fetchWeather();
@@ -5661,7 +5661,7 @@ function renderUserMovies() {
   if (!el) return;
   const list = store.userMovies || [];
   if (list.length === 0) {
-    el.innerHTML = '<div style="font-size:12px;color:#a07080;line-height:1.6;">还没有收藏~ 试试顶部指令：<br>「收藏电影《盗梦空间》导演诺兰 科幻 评分9.4」<br>「想看《花样年华》王家卫」</div>';
+    el.innerHTML = '<div style="font-size:12px;color:#7d4a5a;line-height:1.6;">还没有收藏~ 试试顶部指令：<br>「收藏电影《盗梦空间》导演诺兰 科幻 评分9.4」<br>「想看《花样年华》王家卫」</div>';
     return;
   }
   el.innerHTML = list.slice().reverse().map(m => {
@@ -5672,7 +5672,7 @@ function renderUserMovies() {
         <div style="font-size:13px;font-weight:600;color:#5a3a48;">${escHtml(m.title)}</div>
         <div style="font-size:11px;color:#8a6270;">${escHtml(meta) || '—'}</div>
       </div>
-      <span style="font-size:10px;color:#c4a0ac;white-space:nowrap;">${escHtml(m.date)}</span>
+      <span style="font-size:10px;color:#9a6a7e;white-space:nowrap;">${escHtml(m.date)}</span>
     </div>`;
   }).join('');
 }
@@ -5706,7 +5706,7 @@ function renderDesktopWeight() {
       else if (diff < 0) downDays++;
     }
   }
-  let monthChange = '—', monthChangeColor = '#a07080';
+  let monthChange = '—', monthChangeColor = '#7d4a5a';
   if (monthWeights.length >= 2) {
     const lastW = monthWeights[monthWeights.length-1].after, firstW = monthWeights[0].after;
     if (lastW != null && firstW != null) {
@@ -5733,13 +5733,13 @@ function renderDesktopWeight() {
 
   // 星期表头 — grid 7 列等分，自动填满容器宽度（去除原"六"被换行的 bug）
   html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">日</div>
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">一</div>
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">二</div>
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">三</div>
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">四</div>
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">五</div>
-    <div style="text-align:center;font-size:10px;font-weight:600;color:#a07080;">六</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">日</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">一</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">二</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">三</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">四</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">五</div>
+    <div style="text-align:center;font-size:10px;font-weight:600;color:#7d4a5a;">六</div>
   </div>`;
 
   // 日期区 — grid 7 列等分，每格自动填满（去掉原右侧空白列）
@@ -5769,7 +5769,7 @@ function renderDesktopWeight() {
 
     // 变化值（↑红增/↓绿减/—持平），显示在体重数字正上方
     let changeText = '';
-    let changeColor = '#a07080';
+    let changeColor = '#7d4a5a';
     if (w) {
       const idx = monthWeights.findIndex(x => x.date === dateStr);
       if (idx > 0 && w.after != null && monthWeights[idx-1].after != null) {
@@ -5806,7 +5806,7 @@ function renderDesktopWeight() {
   html += `</div>`;
 
   // 图例
-  html += `<div style="display:flex;justify-content:space-around;font-size:9px;color:#a07080;margin-top:6px;padding-top:4px;border-top:1px dashed #ffe4ec;">
+  html += `<div style="display:flex;justify-content:space-around;font-size:9px;color:#7d4a5a;margin-top:6px;padding-top:4px;border-top:1px dashed #ffe4ec;">
     <span><span style="color:#e84a5f;">●</span>健身操</span>
     <span><span style="color:#34c759;">●</span>有氧</span>
     <span><span style="color:#d14b73;">●</span>器械</span>
@@ -5877,7 +5877,7 @@ function renderDesktopMovieTickets() {
         </div>
       </div>`;
   });
-  previewHtml += `<div style="text-align:right;font-size:9px;color:#c4a0ac;">点击查看全部 →</div>`;
+  previewHtml += `<div style="text-align:right;font-size:9px;color:#9a6a7e;">点击查看全部 →</div>`;
   document.getElementById('desktop-movie-preview').innerHTML = previewHtml;
 }
 
@@ -6095,7 +6095,7 @@ function renderCountdown() {
   function boxHtml(item) {
     if (!item) {
       return `<div style="flex:1;min-width:0;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:9px;padding:5px 6px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);display:flex;align-items:center;gap:5px;">
-        <div style="flex:1;text-align:center;font-size:10px;color:#c4a0ac;">暂无安排</div>
+        <div style="flex:1;text-align:center;font-size:10px;color:#9a6a7e;">暂无安排</div>
       </div>`;
     }
     const dDate = item.targetDate;
