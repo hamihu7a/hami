@@ -3019,6 +3019,7 @@ let store = {
   modSales: {},
   beautyRecords: [],   // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
   weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
+  weightSeedV1Applied: false,  // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
   startWeight: 90.0,    // 起始体重（kg）基准线，主人可改；减肥累计减重的起点
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
@@ -4634,8 +4635,37 @@ function loadData() {
       if (p.weightGoal != null) store.weightGoal = p.weightGoal;
       // 起始体重：同理显式恢复
       if (p.startWeight != null) store.startWeight = p.startWeight;
+      // 体重种子一次性标记恢复（避免删记录后下次又复活）
+      if (p.weightSeedV1Applied) store.weightSeedV1Applied = p.weightSeedV1Applied;
     }
+    // 八月份体重种子：仅当本地缺失对应日期时一次性补入（本地优先、绝不覆盖主人真实记录）
+    try { applyWeightSeedV1(); } catch (e) {}
   } catch(e) {}
+}
+
+// 八月份体重种子（从主人 8/8 截图中精确提取）：仅当本地缺失对应日期时一次性补入，
+// 绝不覆盖主人已有记录；补完后写入 weightSeedV1Applied=true，避免以后删了又被复活
+function applyWeightSeedV1() {
+  if (store.weightSeedV1Applied) return;
+  const seed = [
+    { date: '2026-08-01', before: 88.9, after: 88.9, value: 88.9, note: '' },
+    { date: '2026-08-02', before: 88.5, after: 88.5, value: 88.5, note: '' },
+    { date: '2026-08-03', before: 88.2, after: 88.2, value: 88.2, note: '' },
+    { date: '2026-08-04', before: 88.2, after: 88.2, value: 88.2, note: '' },
+    { date: '2026-08-05', before: 88.3, after: 88.3, value: 88.3, note: '' },
+    { date: '2026-08-06', before: 88.3, after: 88.3, value: 88.3, note: '' },
+    { date: '2026-08-07', before: 88.9, after: 88.9, value: 88.9, note: '' }
+  ];
+  let added = 0;
+  seed.forEach(function (s) {
+    const exists = (store.weightRecords || []).some(function (r) { return r && r.date === s.date; });
+    if (!exists) { store.weightRecords.push(s); added++; }
+  });
+  store.weightSeedV1Applied = true;
+  if (added > 0) {
+    try { saveData(); } catch (e) {}
+    try { console.log('[Hami] 一次性补入缺失的八月份体重种子，共', added, '条'); } catch (e) {}
+  }
 }
 
 // 默认值保护：如果 localStorage 里这些字段为空，强制使用默认值
