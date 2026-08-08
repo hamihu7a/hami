@@ -1932,8 +1932,19 @@
       💕 <b>使用说明</b>：定制单来一单告诉我记一笔（下单日期/需完成日期/金额/状态）。美化档每月底报销量，自动×98。数据本地保存~
     </div>
 
-    <div class="month-selector">
-      <button class="fin-add-btn" style="margin-left:auto;" onclick="openCustomOrderModal()">➕ 记定制单</button>
+    <div class="fin-topbar">
+      <div class="fin-month">
+        <span style="font-size:14px;">📅</span>
+        <select id="income-month" onchange="renderIncome()">
+          <option value="2026-07">2026年7月</option>
+          <option value="2026-08" selected>2026年8月</option>
+          <option value="2026-09">2026年9月</option>
+          <option value="2026-10">2026年10月</option>
+          <option value="2026-11">2026年11月</option>
+          <option value="2026-12">2026年12月</option>
+        </select>
+      </div>
+      <button class="fin-add-btn" onclick="openCustomOrderModal()">➕ 记定制单</button>
     </div>
 
     <div class="stats-grid" id="income-stats"></div>
@@ -2065,7 +2076,18 @@
       💕 <b>使用说明</b>：每次发笔记后告诉我：哪个号、发了什么、是否同步抖音。目标：每周至少更4条~
     </div>
 
-    <div class="month-selector">
+    <div class="fin-topbar">
+      <div class="fin-month">
+        <span style="font-size:14px;">📅</span>
+        <select id="media-month" onchange="renderMedia()">
+          <option value="2026-07">2026年7月</option>
+          <option value="2026-08" selected>2026年8月</option>
+          <option value="2026-09">2026年9月</option>
+          <option value="2026-10">2026年10月</option>
+          <option value="2026-11">2026年11月</option>
+          <option value="2026-12">2026年12月</option>
+        </select>
+      </div>
       <button class="media-add-btn" onclick="openMediaRecordModal()">➕ 记一条</button>
     </div>
 
@@ -4608,12 +4630,22 @@ function switchPanel(name, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (navEl) navEl.classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
-  // 切到「模拟人生总收入 / 自媒体更新记录」面板，强制刷新（永久用当月，下拉已删除）
+  // 切到「模拟人生总收入 / 自媒体更新记录」面板，强制把月份下拉设为当月（与个人支出与收入面板同款）
   if (name === 'income') {
-    try { renderIncome(); } catch (e) {}
+    try {
+      const sel = document.getElementById('income-month');
+      const cur = todayStr().substring(0, 7);
+      if (sel) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
+      renderIncome();
+    } catch (e) {}
   }
   if (name === 'media') {
-    try { renderMedia(); } catch (e) {}
+    try {
+      const sel = document.getElementById('media-month');
+      const cur = todayStr().substring(0, 7);
+      if (sel) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
+      renderMedia();
+    } catch (e) {}
   }
   // 切到任意面板时，对所有 key 检查；若对应元素已在 DOM 且 localStorage 有图，则强制再 apply 一次。
   // 说明：BG_ELS 里部分 key 指向主页日历缩略组件（如 #home-weight-cal），不与 panel id 一一对应，
@@ -4955,8 +4987,9 @@ function renderWeightChart(data) {
 const WEEKLY_MEDIA_GOAL = 4; // 每周至少更4条
 
 function renderMedia() {
-  // 月份下拉已删除，永远用当月
-  const month = todayStr().substring(0, 7);
+  // 月份选择器：与 panel-account / panel-income 风格统一，每次切面板强制当月（switchPanel 中处理）
+  const monthEl = document.getElementById('media-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
   const monthRecords = store.mediaRecords.filter(r => r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
 
   // 大号小号分别统计
