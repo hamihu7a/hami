@@ -2163,7 +2163,7 @@
     <div class="modal-card" style="max-width:380px;">
       <div class="arm-head">
         <span class="arm-close" onclick="closeWeightEditModal()" aria-label="关闭">✕</span>
-        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">⚖️ 修改体重记录</div>
+        <div id="we-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">⚖️ 修改体重记录</div>
         <span style="width:36px;"></span>
       </div>
       <div class="co-body">
@@ -2321,7 +2321,9 @@
     </div>
 
     <div class="card">
-      <div class="card-title"><span>📋</span> 每日体重</div>
+      <div class="card-title"><span>📋</span> 每日体重
+        <button class="media-add-btn" style="margin-left:auto;" onclick="openWeightEditModal()">➕ 记一项</button>
+      </div>
       <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>日期</th><th>体重 (kg)</th><th>备注</th><th>操作</th></tr></thead>
@@ -5886,16 +5888,30 @@ function deleteExerciseItem(idx) {
 // ==================== 体重记录 修改/删除 ====================
 let weightEditIdx = -1;
 function openWeightEditModal(idx) {
-  const w = store.weightRecords && store.weightRecords[idx];
-  if (!w) { finToast('记录不存在'); return; }
-  weightEditIdx = idx;
   const dEl = document.getElementById('we-date');
   const vEl = document.getElementById('we-value');
   const nEl = document.getElementById('we-note');
+  const titleEl = document.getElementById('we-modal-title');
+  // 新增模式：idx 为 null/undefined/-1 → 打开空白弹窗让主人补一条体重
+  if (idx == null || idx < 0) {
+    weightEditIdx = -1;
+    if (dEl) dEl.value = todayStr();
+    if (vEl) vEl.value = '';
+    if (nEl) nEl.value = '';
+    if (titleEl) titleEl.textContent = '➕ 记一项体重';
+    const m = document.getElementById('weight-edit-modal');
+    if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    return;
+  }
+  // 修改模式：idx 对应记录必须存在
+  const w = store.weightRecords && store.weightRecords[idx];
+  if (!w) { finToast('记录不存在'); return; }
+  weightEditIdx = idx;
   const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
   if (dEl) dEl.value = w.date || '';
   if (vEl) vEl.value = v != null ? v : '';
   if (nEl) nEl.value = w.note || '';
+  if (titleEl) titleEl.textContent = '⚖️ 修改体重记录';
   const m = document.getElementById('weight-edit-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
@@ -5906,7 +5922,6 @@ function closeWeightEditModal() {
   weightEditIdx = -1;
 }
 function submitWeightEdit() {
-  if (weightEditIdx < 0 || !store.weightRecords || !store.weightRecords[weightEditIdx]) { finToast('记录不存在'); return; }
   const dEl = document.getElementById('we-date');
   const vEl = document.getElementById('we-value');
   const nEl = document.getElementById('we-note');
@@ -5914,20 +5929,32 @@ function submitWeightEdit() {
   const v = parseFloat(vEl ? vEl.value : '');
   if (isNaN(v) || v <= 0) { finToast('请填写有效体重'); return; }
   const note = (nEl && nEl.value ? nEl.value : '').trim();
-  // 按新日期查冲突：如果改了日期且已有同日期记录，则合并到原索引上覆盖（不创建新记录）
-  const w = store.weightRecords[weightEditIdx];
-  w.date = date;
-  w.value = parseFloat(v.toFixed(1));
-  w.after = parseFloat(v.toFixed(1));  // 兼容旧字段
-  w.note = note;
-  // 删除原日期已被替换产生的可能重复（同日期其他记录）
-  store.weightRecords = store.weightRecords.filter((r, i) => i === weightEditIdx || r.date !== date);
+  const val = parseFloat(v.toFixed(1));
+  if (!store.weightRecords) store.weightRecords = [];
+  if (weightEditIdx >= 0) {
+    // 修改模式：原地覆盖、按日期去重（不创建新记录）
+    if (!store.weightRecords[weightEditIdx]) { finToast('记录不存在'); return; }
+    const w = store.weightRecords[weightEditIdx];
+    w.date = date;
+    w.value = val;
+    w.after = val;  // 兼容旧字段
+    w.note = note;
+    store.weightRecords = store.weightRecords.filter((r, i) => i === weightEditIdx || r.date !== date);
+    finToast('✅ 已更新体重 ' + val.toFixed(1) + ' kg');
+  } else {
+    // 新增模式：若同日已有记录则拒绝（避免误建重复条），引导主人用「✏️ 修改」去更新
+    if (store.weightRecords.some(function (r) { return r && r.date === date; })) {
+      finToast(date + ' 已有记录了哦～请点该行的 ✏️ 修改按钮去更新');
+      return;
+    }
+    store.weightRecords.push({ date: date, value: val, after: val, note: note });
+    finToast('✅ 已记体重 ' + val.toFixed(1) + ' kg（' + date + '）');
+  }
   saveData();
   closeWeightEditModal();
   try { renderFitness(); } catch(e) {}
   try { renderDesktopWeight(); } catch(e) {}
   try { rerenderSynced(); } catch(e) {}
-  finToast('✅ 已更新体重 ' + v.toFixed(1) + ' kg');
 }
 function deleteWeightRecord(idx) {
   const w = store.weightRecords && store.weightRecords[idx];
