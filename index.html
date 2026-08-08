@@ -2928,6 +2928,25 @@
           </button>
           <span style="font-size:11px;color:#a090d0;">⚠️ 不要在 WorkBuddy 预览里测试 fetch，会被拦截</span>
         </div>
+
+        <!-- ===== 数据备份与恢复：云同步 ≠ 备份，这里才是真正存成一份文件 ===== -->
+        <div style="margin-top:16px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,255,255,0.78);border:1.5px solid var(--c-line,#ffe4ec);">
+          <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;">数据备份（建议每月点一次）</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:12px;">
+            云同步只是让手机和电脑保持一致，<b>它不等于备份</b>——云端出问题时一样会跟着错。<br>
+            点「下载备份文件」会把你所有记录存成一个文件放进手机/电脑，万一哪天数据出意外，用「从备份恢复」就能原样找回来。
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="settings-export-data" style="padding:11px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(209,75,115,0.3);min-height:44px;">
+              下载备份文件
+            </button>
+            <button id="settings-import-data" style="padding:11px 16px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;min-height:44px;">
+              从备份恢复
+            </button>
+            <input type="file" id="settings-import-file" accept="application/json,.json" style="display:none;">
+          </div>
+          <div id="settings-backup-status" style="margin-top:10px;font-size:12px;color:#2a9bc4;line-height:1.6;"></div>
+        </div>
       </div>
 
       <!-- ===== 右侧：外观 / 音效 / 弱化 ===== -->
@@ -3349,7 +3368,41 @@ recommendList: [
   }
 };
 
-function saveData() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e) {} try { renderBackupReminder(); } catch(e) {} }
+// 保存失败可见化：localStorage 写入失败（最常见是 5MB 配额被背景图占满）绝不能静默吞掉，
+// 否则主人以为记上了、界面也照常显示成功，一刷新全没。这里改为弹出醒目红条告知。
+let _saveFailedNotified = false;
+function showSaveFailedBanner(err) {
+  const msg = String((err && err.message) || '');
+  const isQuota = !!(err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014)) || /quota|exceeded|storage/i.test(msg);
+  let el = document.getElementById('save-failed-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-failed-banner';
+    el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:var(--c-pink-deep,#d14b73);color:#fff;padding:12px 16px;font-size:14px;font-weight:700;line-height:1.6;box-shadow:0 2px 12px rgba(0,0,0,.22);';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = (isQuota
+      ? '存不下了！刚才这条<b>没有保存成功</b>。手机存储被背景图占满了，请去「面板设计」删掉几张背景图，然后重新记一次。'
+      : '保存失败，刚才这条<b>没有存上</b>，请再记一次。')
+    + ' <button id="save-failed-close" style="margin-left:8px;border:0;border-radius:8px;padding:5px 12px;background:#fff;color:var(--c-pink-deep,#d14b73);font-weight:700;cursor:pointer;">知道了</button>';
+  const btn = document.getElementById('save-failed-close');
+  if (btn) btn.onclick = function () { el.remove(); _saveFailedNotified = false; };
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    if (_saveFailedNotified) {
+      _saveFailedNotified = false;
+      const ok = document.getElementById('save-failed-banner');
+      if (ok) ok.remove();
+    }
+  } catch (e) {
+    console.error('[saveData] 本地保存失败', e);
+    if (!_saveFailedNotified) { _saveFailedNotified = true; try { showSaveFailedBanner(e); } catch (e2) {} }
+  }
+  try { renderBackupReminder(); } catch(e) {}
+}
 
 // 统计本地数据总条数（数组取长度，对象取键数），用于备份提醒阈值判断
 function totalDataCount() {
@@ -3375,7 +3428,7 @@ function renderBackupReminder() {
   const n = totalDataCount();
   if (n >= 30) {
     el.style.display = 'flex';
-    el.innerHTML = '📦 本地已存 <b>' + n + '</b> 条数据，记得备份（设置里点 ☁️ 测试云端同步）。'
+    el.innerHTML = '📦 本地已存 <b>' + n + '</b> 条数据，建议备份一次（设置 → 数据备份 → 下载备份文件）。云同步不等于备份哦~'
       + '<button class="backup-dismiss" id="backup-tip-dismiss">知道了</button>';
     const b = document.getElementById('backup-tip-dismiss');
     if (b) b.onclick = function () {
@@ -3687,18 +3740,26 @@ function mergeStoreData(local, cloud) {
     const la = Array.isArray(local[key]) ? local[key] : [];
     const ca = Array.isArray(cloud[key]) ? cloud[key] : [];
     if (!la.length && !ca.length) return;
-    const map = {};
-    la.forEach(function (it) { if (it && it.date) map[it.date] = it; });
-    ca.forEach(function (it) { if (it && it.date && !map[it.date]) map[it.date] = it; });
-    local[key] = Object.values(map);
+    // 【严禁】用 map[date] 去重：同一天完全可能有多条记录（一天记多笔账 / 多次如厕 /
+    // 接多个定制单 / 多次运动），按日期当唯一键会把同一天的 N 条压成最后 1 条，
+    // 且每次云端拉取都压一次，属于静默丢数据。
+    // 正确策略：本地记录【整体原样保留、顺序不变】，云端只补「本地完全没有的日期」。
+    const localDates = new Set();
+    la.forEach(function (it) { if (it && it.date) localDates.add(it.date); });
+    const merged = la.slice();
+    ca.forEach(function (it) { if (it && it.date && !localDates.has(it.date)) merged.push(it); });
+    local[key] = merged;
   });
   const lp = Array.isArray(local.periodRecords) ? local.periodRecords : [];
   const cp = Array.isArray(cloud.periodRecords) ? cloud.periodRecords : [];
   if (lp.length || cp.length) {
-    const mp = {};
-    lp.forEach(function (it) { if (it && it.startDate) mp[it.startDate] = it; });
-    cp.forEach(function (it) { if (it && it.startDate && !mp[it.startDate]) mp[it.startDate] = it; });
-    local.periodRecords = Object.values(mp);
+    // 同上：本地整体保留、顺序不变，云端只补本地没有的 startDate（避免 Object.values 重排顺序，
+    // 顺序变动会让「按下标定位的修改/删除按钮」错位）。
+    const localStarts = new Set();
+    lp.forEach(function (it) { if (it && it.startDate) localStarts.add(it.startDate); });
+    const mergedP = lp.slice();
+    cp.forEach(function (it) { if (it && it.startDate && !localStarts.has(it.startDate)) mergedP.push(it); });
+    local.periodRecords = mergedP;
   }
   ['weightGoal','startWeight'].forEach(function (k) {
     if ((local[k] == null || local[k] === '') && cloud[k] != null && cloud[k] !== '') local[k] = cloud[k];
@@ -4241,6 +4302,84 @@ function initSettingsPanel() {
       }
     });
   }
+
+  // 7) 数据备份与恢复（真备份：存成一个文件，云同步 ≠ 备份）
+  const expBtn = document.getElementById('settings-export-data');
+  if (expBtn) expBtn.addEventListener('click', function () { exportAllData(); });
+  const impBtn = document.getElementById('settings-import-data');
+  const impFile = document.getElementById('settings-import-file');
+  if (impBtn && impFile) {
+    impBtn.addEventListener('click', function () { impFile.click(); });
+    impFile.addEventListener('change', function (e) {
+      const f = e.target && e.target.files && e.target.files[0];
+      if (f) importAllData(f);
+      e.target.value = '';   // 允许连续选同一个文件
+    });
+  }
+}
+
+// ==================== 数据备份 / 恢复 ====================
+// 把 store 主键 + 所有 hami_ 开头的本地键打包成一个 JSON 文件下载。
+// 这是「真备份」：与云同步互不依赖，云端出问题时仍可原样恢复。
+function exportAllData() {
+  const st = document.getElementById('settings-backup-status');
+  try {
+    const bundle = { _type: 'hami-backup', _version: 1, _exportedAt: new Date().toISOString(), data: {} };
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k === STORAGE_KEY || k.indexOf('hami_') === 0) bundle.data[k] = localStorage.getItem(k);
+    }
+    let n = 0;
+    try { n = totalDataCount(); } catch (e) {}
+    const d = new Date();
+    const pad = function (x) { return String(x).padStart(2, '0'); };
+    const name = 'hami备份-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json';
+    const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1000);
+    if (st) { st.style.color = '#1a9e4b'; st.textContent = '已下载备份文件「' + name + '」，含 ' + n + ' 条记录。请把它保存到相册/文件里~'; }
+  } catch (e) {
+    console.error('[exportAllData] 导出失败', e);
+    if (st) { st.style.color = '#d14b73'; st.textContent = '导出失败：' + ((e && e.message) ? e.message : e); }
+  }
+}
+
+function importAllData(file) {
+  const st = document.getElementById('settings-backup-status');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    try {
+      const bundle = JSON.parse(String((ev.target && ev.target.result) || ''));
+      if (!bundle || bundle._type !== 'hami-backup' || !bundle.data) {
+        if (st) { st.style.color = '#d14b73'; st.textContent = '这个文件不是 Hami 的备份文件，换一个再试~'; }
+        return;
+      }
+      const keys = Object.keys(bundle.data);
+      const when = bundle._exportedAt ? String(bundle._exportedAt).replace('T', ' ').substring(0, 16) : '未知时间';
+      if (!confirm('确定用这份备份恢复吗？\n\n备份时间：' + when + '\n包含数据：' + keys.length + ' 项\n\n恢复会覆盖当前数据，完成后页面自动刷新。')) return;
+      let okCount = 0;
+      keys.forEach(function (k) {
+        try { localStorage.setItem(k, bundle.data[k]); okCount++; }
+        catch (e) { console.error('[importAllData] 写入失败', k, e); }
+      });
+      if (okCount < keys.length) {
+        if (st) { st.style.color = '#d14b73'; st.textContent = '部分恢复失败（' + okCount + '/' + keys.length + '），可能是存储空间不足，请先删掉几张背景图再试。'; }
+        return;
+      }
+      if (st) { st.style.color = '#1a9e4b'; st.textContent = '恢复完成，正在刷新页面…'; }
+      setTimeout(function () { location.reload(); }, 800);
+    } catch (e) {
+      console.error('[importAllData] 恢复失败', e);
+      if (st) { st.style.color = '#d14b73'; st.textContent = '恢复失败，文件可能已损坏：' + ((e && e.message) ? e.message : e); }
+    }
+  };
+  reader.onerror = function () { if (st) { st.style.color = '#d14b73'; st.textContent = '读取文件失败，请重试'; } };
+  reader.readAsText(file);
 }
 
 // ==================== 指令输入框：自然语言解析并记录数据 ====================
