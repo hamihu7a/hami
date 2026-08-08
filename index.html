@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌸 Hami的小助理</title>
+<title>🌸 Hami小助理</title>
 <!-- PWA：添加到手机桌面后独立窗口全屏运行 -->
 <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkhhbWnnmoTlsI/liqnnkIYiLAogICJzaG9ydF9uYW1lIjogIkhhbWnliqnnkIYiLAogICJkZXNjcmlwdGlvbiI6ICJIYW1p55qE5Liq5Lq65bel5L2c5Y+wIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZkZjZmMSIsCiAgInRoZW1lX2NvbG9yIjogIiNmZjllYjUiLAogICJpY29ucyI6IFsKICAgIHsgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBeE9USWdNVGt5SWo0S0lDQThjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnY25nOUlqUXlJaUJtYVd4c1BTSWpabVk1WldJMUlpOCtDaUFnUEhKbFkzUWdkMmxrZEdnOUlqRTVNaUlnYUdWcFoyaDBQU0l4T1RJaUlISjRQU0kwTWlJZ1ptbHNiRDBpZFhKc0tDTm5LU0lnYjNCaFkybDBlVDBpTUM0eklpOCtDaUFnUEdSbFpuTStDaUFnSUNBOGJHbHVaV0Z5UjNKaFpHbGxiblFnYVdROUltY2lJSGd4UFNJd0lpQjVNVDBpTUNJZ2VESTlJakVpSUhreVBTSXhJajRLSUNBZ0lDQWdQSE4wYjNBZ2IyWm1jMlYwUFNJd0pTSWdjM1J2Y0MxamIyeHZjajBpSTJabVppSXZQZ29nSUNBZ0lDQThjM1J2Y0NCdlptWnpaWFE5SWpFd01DVWlJSE4wYjNBdFkyOXNiM0k5SWlObVpqZG1PV1VpTHo0S0lDQWdJRHd2YkdsdVpXRnlSM0poWkdsbGJuUStDaUFnUEM5a1pXWnpQZ29nSUR4MFpYaDBJSGc5SWprMklpQjVQU0l4TWpBaUlHWnZiblF0YzJsNlpUMGlPVEFpSUhSbGVIUXRZVzVqYUc5eVBTSnRhV1JrYkdVaVB2Q2ZqTGc4TDNSbGVIUStDand2YzNablBnbz0iLCAic2l6ZXMiOiAiMTkyeDE5MiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiIH0sCiAgICB7ICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQXhPVElnTVRreUlqNEtJQ0E4Y21WamRDQjNhV1IwYUQwaU1Ua3lJaUJvWldsbmFIUTlJakU1TWlJZ2NuZzlJalF5SWlCbWFXeHNQU0lqWm1ZNVpXSTFJaTgrQ2lBZ1BISmxZM1FnZDJsa2RHZzlJakU1TWlJZ2FHVnBaMmgwUFNJeE9USWlJSEo0UFNJME1pSWdabWxzYkQwaWRYSnNLQ05uS1NJZ2IzQmhZMmwwZVQwaU1DNHpJaTgrQ2lBZ1BHUmxabk0rQ2lBZ0lDQThiR2x1WldGeVIzSmhaR2xsYm5RZ2FXUTlJbWNpSUhneFBTSXdJaUI1TVQwaU1DSWdlREk5SWpFaUlIa3lQU0l4SWo0S0lDQWdJQ0FnUEhOMGIzQWdiMlptYzJWMFBTSXdKU0lnYzNSdmNDMWpiMnh2Y2owaUkyWm1aaUl2UGdvZ0lDQWdJQ0E4YzNSdmNDQnZabVp6WlhROUlqRXdNQ1VpSUhOMGIzQXRZMjlzYjNJOUlpTm1aamRtT1dVaUx6NEtJQ0FnSUR3dmJHbHVaV0Z5UjNKaFpHbGxiblErQ2lBZ1BDOWtaV1p6UGdvZ0lEeDBaWGgwSUhnOUlqazJJaUI1UFNJeE1qQWlJR1p2Ym5RdGMybDZaVDBpT1RBaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlQdkNmakxnOEwzUmxlSFErQ2p3dmMzWm5QZ289IiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiB9CiAgXQp9Cg==">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Hami的小助理">
+<meta name="apple-mobile-web-app-title" content="Hami小助理">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ff9eb5">
-<meta name="application-name" content="Hami的小助理">
+<meta name="application-name" content="Hami小助理">
 <meta name="description" content="Hami的个人工作台 - 收入/减肥/自媒体/电影推荐">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
@@ -2213,6 +2213,13 @@
           <tbody id="period-table"></tbody>
         </table>
       </div>
+      <div style="margin-top:12px;">
+        <div style="display:flex;gap:8px;">
+          <input type="date" id="period-start-input" class="date-log-input" title="开始日期" placeholder="开始">
+          <input type="date" id="period-end-input" class="date-log-input" title="结束日期" placeholder="结束">
+        </div>
+        <button id="period-log-btn" class="date-log-btn" style="width:100%;margin-top:8px;" onclick="logPeriodForDate()">📅 记录此日</button>
+      </div>
     </div>
 
     <div class="card">
@@ -2649,13 +2656,7 @@ let store = {
     { date: "2026-07-31", deadline: "2026-08-01", amount: 35, status: "done", desc: "人物+一套服装" }
   ],
   modSales: {},
-  weightRecords: [
-    { date: "2026-07-30", before: 90.0, after: 90.0, note: "便前" },
-    { date: "2026-07-31", before: 90.0, after: 90.0, note: "便前·休息日" },
-    { date: "2026-08-01", before: 88.9, after: 88.9, note: "便前·感冒休息" },
-    { date: "2026-08-02", before: 88.5, after: 88.5, note: "已称" },
-    { date: "2026-08-03", before: 88.15, after: 88.15, note: "已称" }
-  ],
+  weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
     { date: "2026-07-31", aerobics: false, cardio: false, weights: false, cardioType: "", weightsContent: "", sets: "", duration: "休息日" },
@@ -4469,7 +4470,7 @@ function fireCheckinNotifications(alerts) {
     sessionStorage.setItem(key, '1');
     alerts.forEach(a => {
       try {
-        new Notification('Hami的小助理 · 打卡提醒', {
+        new Notification('Hami小助理 · 打卡提醒', {
           body: a.icon + ' ' + a.text,
           icon: ''
         });
@@ -5919,6 +5920,14 @@ function bindFinanceEvents() {
 // ==================== 经期与洗头 ====================
 function renderPeriod() {
   fillDateInputDefault('wash-date-input');
+  if (editingPeriodIdx < 0) {
+    fillDateInputDefault('period-start-input');
+    var peEl = document.getElementById('period-end-input');
+    if (peEl && !peEl.value) {
+      var pd = new Date(todayStr() + 'T00:00:00'); pd.setDate(pd.getDate() + 5);
+      peEl.value = pd.getFullYear() + '-' + String(pd.getMonth() + 1).padStart(2, '0') + '-' + String(pd.getDate()).padStart(2, '0');
+    }
+  }
   const today = todayStr();
   const todayDate = new Date(today);
   const periods = [...store.periodRecords].sort((a,b) => a.start.localeCompare(b.start));
@@ -5997,7 +6006,8 @@ function renderPeriod() {
       } else {
         status = '<span class="badge rest">进行中</span>';
       }
-      html += `<tr><td>${p.start}</td><td>${p.end || '—'}</td><td>${duration}${p.end?'天':''}</td><td>${cycle}</td><td>${status}</td></tr>`;
+      const pIdx = store.periodRecords.indexOf(p);
+      html += `<tr style="cursor:pointer;" onclick="editPeriod(${pIdx})" title="点击修改开始/结束日期"><td>${p.start}</td><td>${p.end || '—'}</td><td>${duration}${p.end?'天':''}</td><td>${cycle}</td><td>${status}</td></tr>`;
     });
     document.getElementById('period-table').innerHTML = html;
   }
@@ -7187,10 +7197,16 @@ function getNextMaskInfo() {
 // 记录：今天洗了头
 function logWash() {
   const today = todayStr();
-  if (!store.washRecords.some(w => w.date === today)) {
-    store.washRecords.push({ date: today });
+  const idx = store.washRecords.findIndex(w => w.date === today);
+  if (idx >= 0) {
+    store.washRecords.splice(idx, 1);
     saveData();
+    renderPeriod(); renderCountdown();
+    alert('🧴 已取消今天的洗头记录~');
+    return;
   }
+  store.washRecords.push({ date: today });
+  saveData();
   renderPeriod();
   renderCountdown();
   try { playSound('task'); } catch (e) {}
@@ -7237,6 +7253,40 @@ function logWashForDate() {
   renderCountdown();
   try { playSound('task'); } catch (e) {}
   alert('🧴 已记录：' + date + ' 洗了头~');
+}
+
+// ==================== 经期记录：选日期记录 / 修改 ====================
+let editingPeriodIdx = -1;
+function logPeriodForDate() {
+  const sEl = document.getElementById('period-start-input');
+  const eEl = document.getElementById('period-end-input');
+  const s = (sEl && sEl.value) ? sEl.value : todayStr();
+  const e = (eEl && eEl.value) ? eEl.value : '';
+  if (!s) { alert('请选择开始日期~'); return; }
+  if (e && e < s) { alert('结束日期不能早于开始日期哦~'); return; }
+  if (editingPeriodIdx >= 0 && store.periodRecords[editingPeriodIdx]) {
+    store.periodRecords[editingPeriodIdx].start = s;
+    store.periodRecords[editingPeriodIdx].end = e;
+  } else {
+    store.periodRecords.push({ start: s, end: e });
+  }
+  editingPeriodIdx = -1;
+  const btn = document.getElementById('period-log-btn');
+  if (btn) btn.textContent = '📅 记录此日';
+  saveData(); renderPeriod();
+  alert('🌸 已记录经期：' + s + (e ? (' 至 ' + e) : '（进行中）'));
+}
+function editPeriod(i) {
+  const p = store.periodRecords[i];
+  if (!p) return;
+  editingPeriodIdx = i;
+  const sEl = document.getElementById('period-start-input');
+  const eEl = document.getElementById('period-end-input');
+  if (sEl) sEl.value = p.start;
+  if (eEl) eEl.value = p.end || '';
+  const btn = document.getElementById('period-log-btn');
+  if (btn) btn.textContent = '💾 保存修改';
+  try { document.getElementById('period-start-input').scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e2) {}
 }
 
 // 选日期记录：上厕所（指定日期，可累加）
@@ -7435,18 +7485,21 @@ loadData();
     return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
   }
   var yesterday = ymdAdd(today, -1);
-  // 体重：昨日 88.2 / 今日 88.35 仅作为「首次打开、当天尚无记录」时的演示种子；
-  // 关键修复：当天已有记录（用户/云端同步来的真实体重）时【绝不覆盖】，否则每次刷新都会把真实体重顶回演示值。
-  function setWeight(date, val) {
-    if (!store.weightRecords) store.weightRecords = [];
-    var v = parseFloat(val);
-    if (isNaN(v)) return;
-    var r = store.weightRecords.find(function (x) { return x.date === date; });
-    if (!r) { r = { date: date, before: v, after: v, note: '已称' }; store.weightRecords.push(r); }
-    // 已存在则保留用户/云端已有值，不再覆盖（修复「刷新后真实体重被改回 88.3」）
-  }
-  setWeight(yesterday, 88.2);
-  setWeight(today, 88.35);
+  // 体重：不再注入任何演示/编造数据——「体重记录与变化日历」与「每日体重」只显示主人真实记录的体重。
+  // 旧版本曾预填 88.x 等演示值，已清除；下方迁移会剔除旧 localStorage 中残留的编造记录。
+  (function cleanFakeWeights() {
+    if (!store.weightRecords || !store.weightRecords.length) return;
+    var fakeNotes = { '便前': 1, '便前·休息日': 1, '便前·感冒休息': 1 };
+    store.weightRecords = store.weightRecords.filter(function (w) {
+      var a = w.after;
+      if (w.note && fakeNotes[w.note]) return false;                 // 种子专用 note，必删
+      if (a === 88.2 || a === 88.35) return false;                   // 演示种子值
+      if (w.date === '2026-08-02' && a === 88.5) return false;       // 旧种子
+      if (w.date === '2026-08-03' && a === 88.15) return false;      // 旧种子
+      return true;
+    });
+    try { saveData(); } catch (e) {}
+  })();
   // 运动打卡：今日保留一条"已完成"记录（使主页/健身面板的「运动打卡」保持 完成）；
   // 但 体重记录与变化日历 面板的【健身操/有氧/器械】三项刻意记为未打卡（○）——只保留当日总打卡标记，不展开具体类型。
   if (!store.exerciseRecords) store.exerciseRecords = [];
