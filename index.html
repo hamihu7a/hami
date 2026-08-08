@@ -3635,11 +3635,15 @@ function embedBgConfigIntoHtml(html, cfg) {
 // 任意设备打开时从云端拉取并覆盖本地（云端为跨设备「事实源」）；改动时防抖推回云端。
 // 首次若云端为空且本地有真实数据，自动把本地全量播种到云端（让已有桌面数据也能跨设备同步）。
 // 切回标签页时自动拉取，捕获其他设备的最新改动。建表 SQL 见对话说明。
-// 说明：localStorage 仅作为本地缓存/离线兜底，数据的「事实源」在 Supabase 云端。
+// 安全止血（2026-08-08）：原云端凭据曾明文写在此处且随公开页面泄露，云端表未开 RLS，
+// 导致任何人都可读/写/删主人隐私数据。已临时关闭云同步并清空明文密钥。
+// 恢复云同步前必须满足：① Supabase 已 roll 旧 key ② hami_sync 表已开启 RLS 且 anon 无任何策略
+// ③ 前端改为「主人输入密码登录后拿私有 token」或「owner_secret 本地保存、不进源码」。
+// 在此之前，数据只在您本机（localStorage）保存，不再上传任何云端。
 const HAMI_CLOUD = {
-  enabled: true,
-  url: 'https://jqxcqpawytqsdcijhqtg.supabase.co',
-  anonKey: 'sb_publishable_y4MhbnBDeda_V5Hp0Q-JPA_RkvfuAj-',
+  enabled: false,
+  url: '',
+  anonKey: '',
   table: 'hami_sync'
 };
 const HAMI_CLOUD_VER = '20260806b'; // 代码版本指纹：浏览器点测试时显示，用于快速排除 CDN/浏览器缓存了旧版 HTML
