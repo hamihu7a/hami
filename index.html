@@ -1987,7 +1987,7 @@
   <div id="panel-income" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：定制单来一单告诉我记一笔（下单日期/需完成日期/金额/状态）。美化档每月底报销量，自动×98。数据本地保存~
+      💕 <b>使用说明</b>：定制单来一单告诉我记一笔（下单日期/需完成日期/金额/状态）。美化档可一条条记「美化档明细」（档数×98自动算金额），也可按月看销量汇总。数据本地保存~
     </div>
 
     <div class="fin-topbar">
@@ -2003,6 +2003,7 @@
         </select>
       </div>
       <button class="fin-add-btn" onclick="openCustomOrderModal()">➕ 记定制单</button>
+      <button class="fin-add-btn" onclick="openBeautyRecordModal()">➕ 记美化档</button>
     </div>
 
     <div class="stats-grid" id="income-stats"></div>
@@ -2010,6 +2011,11 @@
     <div class="card">
       <div class="card-title"><span>📝</span> 定制单明细</div>
       <div id="custom-orders-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>🎨</span> 美化档明细</div>
+      <div id="beauty-records-table"></div>
     </div>
 
     <div class="card">
@@ -2070,6 +2076,39 @@
       <div class="co-actions">
         <button class="co-cancel" onclick="closeCustomOrderModal()">取消</button>
         <button class="co-save" onclick="submitCustomOrder()">保存定制单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 美化档明细 记美化档 弹窗 ==================== -->
+  <div id="beauty-record-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeBeautyRecordModal()">
+    <div class="modal-card">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeBeautyRecordModal()" aria-label="关闭">✕</span>
+        <div id="beauty-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记美化档</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="beauty-date" />
+        </div>
+        <div class="co-field">
+          <label>🎨 档数（销量）</label>
+          <input type="number" id="beauty-count" inputmode="decimal" min="0" step="1" placeholder="如 3" oninput="updateBeautyAmount()" />
+        </div>
+        <div class="co-field">
+          <label>💰 金额（元，自动=档数×98）</label>
+          <input type="number" id="beauty-amount" inputmode="decimal" min="0" step="0.01" readonly placeholder="自动计算" />
+        </div>
+        <div class="co-field">
+          <label>📝 备注</label>
+          <input type="text" id="beauty-note" placeholder="如：人物+二套服装美化" />
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeBeautyRecordModal()">取消</button>
+        <button class="co-save" onclick="submitBeautyRecord()">保存美化档</button>
       </div>
     </div>
   </div>
@@ -2346,7 +2385,7 @@
       <div class="card-title"><span>📝</span> 更新明细记录</div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>日期</th><th>账号</th><th>笔记内容</th><th>同步抖音</th><th>备注</th></tr></thead>
+          <thead><tr><th>日期</th><th>账号</th><th>笔记内容</th><th>同步抖音</th><th>备注</th><th>操作</th></tr></thead>
           <tbody id="media-table"></tbody>
         </table>
       </div>
@@ -2972,6 +3011,7 @@ let store = {
     { date: "2026-07-31", deadline: "2026-08-01", amount: 35, status: "done", desc: "人物+一套服装" }
   ],
   modSales: {},
+  beautyRecords: [],   // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
   weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
@@ -4245,7 +4285,7 @@ function sendHamiCmd() {
     account: store.accountRecords.length,
     weight: store.weightRecords.length,
     exercise: store.exerciseRecords.length,
-    modSales: JSON.stringify(store.modSales),
+    beauty: JSON.stringify(store.beautyRecords || []),
     custom: store.customOrders.length,
     period: store.periodRecords.length,
     wash: store.washRecords.length,
@@ -4333,14 +4373,13 @@ function sendHamiCmd() {
     }
   }
 
-  // —— 接单 / 卖美化档（工作更新）——
+  // —— 接单 / 卖美化档（写入「美化档明细」，金额=档数×98）——
   if (/接单|出单|卖档|卖了一个|卖了档|美化档.*单|出一单/.test(txt)) {
-    const month = targetDate.substring(0, 7);
-    if (!store.modSales[month]) store.modSales[month] = { count: 0 };
     let n = 1;
     const cnt = txt.match(/(\d+)\s*单/);
     if (cnt) n = parseInt(cnt[1], 10);
-    store.modSales[month].count += n;
+    if (!store.beautyRecords) store.beautyRecords = [];
+    store.beautyRecords.push({ id: 'bea_' + Date.now(), date: targetDate, count: n, amount: n * MOD_PRICE, note: '指令自动记', status: 'done' });
     acted = true;
   }
 
@@ -4473,7 +4512,7 @@ function sendHamiCmd() {
   }
   if (store.weightRecords.length > snap.weight) hints.push('体重记录');
   if (store.exerciseRecords.length > snap.exercise) hints.push('运动打卡');
-  if (JSON.stringify(store.modSales) !== snap.modSales) hints.push('模拟人生收入');
+  if (JSON.stringify(store.beautyRecords || []) !== snap.beauty) hints.push('模拟人生收入');
   if (simsIncome) hints.push('模拟人生定制单收入');
   if (store.customOrders.length > snap.custom) hints.push('定制单');
   if (store.periodRecords.length > snap.period) hints.push('经期记录');
@@ -4522,6 +4561,15 @@ function loadData() {
       const p = JSON.parse(saved);
       if (p.customOrders && p.customOrders.length > 0) store.customOrders = p.customOrders;
       if (p.modSales && Object.keys(p.modSales).length > 0) store.modSales = p.modSales;
+      if (p.beautyRecords && p.beautyRecords.length > 0) store.beautyRecords = p.beautyRecords;
+      // 兼容旧数据：若没有美化档明细，但旧 modSales 里有销量，则迁移成明细记录（避免数据丢失）
+      if ((!store.beautyRecords || store.beautyRecords.length === 0) && p.modSales && Object.keys(p.modSales).length > 0) {
+        store.beautyRecords = [];
+        Object.keys(p.modSales).forEach(function (m) {
+          const c = p.modSales[m] && p.modSales[m].count ? p.modSales[m].count : 0;
+          if (c > 0) store.beautyRecords.push({ id: 'bea_' + m, date: m + '-01', count: c, amount: c * MOD_PRICE, note: '旧数据迁移', status: 'done' });
+        });
+      }
       if (p.weightRecords && p.weightRecords.length > 0) store.weightRecords = mergeByDatePriority(store.weightRecords, p.weightRecords, r => r && r.after != null);
       if (p.exerciseRecords && p.exerciseRecords.length > 0) store.exerciseRecords = mergeRecordsByDate(store.exerciseRecords, p.exerciseRecords);
       if (p.periodRestDays && Object.keys(p.periodRestDays).length > 0) store.periodRestDays = p.periodRestDays;
@@ -5016,7 +5064,8 @@ function renderIncome() {
   const customIncome = monthOrders.filter(o => o.status === 'done').reduce((s,o) => s+o.amount, 0);
   const pendingCount = monthOrders.filter(o => o.status === 'pending').length;
   const overdueCount = monthOrders.filter(o => o.status === 'pending' && new Date(o.deadline) < new Date(today)).length;
-  const modCount = store.modSales[month] ? store.modSales[month].count : 0;
+  const monthBeauty = (store.beautyRecords || []).filter(b => b.date.startsWith(month));
+  const modCount = monthBeauty.reduce((s,b)=> s + (parseInt(b.count)||0), 0);
   const modIncome = modCount * MOD_PRICE;
   const totalIncome = customIncome + modIncome;
 
@@ -5044,7 +5093,7 @@ function renderIncome() {
   const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
   let modHtml = '';
   months.forEach(m => {
-    const c = store.modSales[m] ? store.modSales[m].count : 0;
+    const c = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0);
     modHtml += `<tr><td>${m}</td><td>${c}</td><td>¥${MOD_PRICE}</td><td>¥${c*MOD_PRICE}</td></tr>`;
   });
   document.getElementById('mod-sales-table').innerHTML = modHtml;
@@ -5052,10 +5101,28 @@ function renderIncome() {
   let sumHtml = '';
   months.forEach(m => {
     const mc = store.customOrders.filter(o => o.date.startsWith(m) && o.status === 'done').reduce((s,o)=>s+o.amount, 0);
-    const mm = (store.modSales[m] ? store.modSales[m].count : 0) * MOD_PRICE;
+    const mm = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0) * MOD_PRICE;
     sumHtml += `<tr><td>${m}</td><td>¥${mc}</td><td>¥${mm}</td><td><b>¥${mc+mm}</b></td></tr>`;
   });
   document.getElementById('monthly-summary-table').innerHTML = sumHtml;
+
+  // 美化档明细表
+  const beautyTableEl = document.getElementById('beauty-records-table');
+  if (beautyTableEl) {
+    const recs = (store.beautyRecords || []).filter(b => b.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+    if (recs.length === 0) {
+      beautyTableEl.innerHTML = `<div class="empty-state"><div class="big-icon">🎨</div><p>本月暂无美化档记录</p><p style="font-size:12px;margin-top:6px;">每月底报销量时告诉我「美化档×N」，或点上方「➕ 记美化档」</p></div>`;
+    } else {
+      let bhtml = `<div style="overflow-x:auto;"><table><thead><tr><th>日期</th><th>档数</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody>`;
+      store.beautyRecords.forEach((b, idx) => {
+        if (!b.date.startsWith(month)) return;
+        const amt = (b.amount != null ? b.amount : (b.count * MOD_PRICE));
+        bhtml += `<tr><td>${b.date}</td><td>${b.count}</td><td>¥${amt}</td><td>${b.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openBeautyRecordModal(${idx})">✏️ 修改</button> <button class="row-del-btn" onclick="deleteBeautyRecord(${idx})">🗑</button></td></tr>`;
+      });
+      bhtml += '</tbody></table></div>';
+      beautyTableEl.innerHTML = bhtml;
+    }
+  }
 }
 
 // ==================== 记定制单 弹窗（模拟人生总收入面板） ====================
@@ -5142,11 +5209,85 @@ function deleteCustomOrder(idx) {
   try { renderIncome(); } catch (e) {}
   finToast('🗑️ 已删除定制单');
 }
+
+// ==================== 美化档明细 记美化档 弹窗（模拟人生总收入面板） ====================
+let editingBeautyIdx = -1;
+function openBeautyRecordModal(idx) {
+  editingBeautyIdx = (typeof idx === 'number' && idx >= 0 && store.beautyRecords && store.beautyRecords[idx]) ? idx : -1;
+  const dEl = document.getElementById('beauty-date');
+  const cEl = document.getElementById('beauty-count');
+  const aEl = document.getElementById('beauty-amount');
+  const nEl = document.getElementById('beauty-note');
+  const title = document.getElementById('beauty-modal-title');
+  if (editingBeautyIdx >= 0) {
+    const b = store.beautyRecords[editingBeautyIdx];
+    if (dEl) dEl.value = b.date;
+    if (cEl) cEl.value = b.count;
+    if (nEl) nEl.value = b.note || '';
+    if (aEl) aEl.value = (b.amount != null ? b.amount : (b.count * MOD_PRICE)).toFixed(2);
+    if (title) title.textContent = '✏️ 修改美化档';
+  } else {
+    if (dEl) dEl.value = todayStr();
+    if (cEl) cEl.value = '';
+    if (nEl) nEl.value = '';
+    if (aEl) aEl.value = '';
+    if (title) title.textContent = '➕ 记美化档';
+  }
+  const m = document.getElementById('beauty-record-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeBeautyRecordModal() {
+  const m = document.getElementById('beauty-record-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  editingBeautyIdx = -1;
+}
+function updateBeautyAmount() {
+  const cEl = document.getElementById('beauty-count');
+  const aEl = document.getElementById('beauty-amount');
+  if (!cEl || !aEl) return;
+  const c = parseInt(cEl.value) || 0;
+  aEl.value = (c * MOD_PRICE).toFixed(2);
+}
+function submitBeautyRecord() {
+  const dEl = document.getElementById('beauty-date');
+  const cEl = document.getElementById('beauty-count');
+  const nEl = document.getElementById('beauty-note');
+  const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const count = parseInt(cEl ? cEl.value : '');
+  if (isNaN(count) || count <= 0) { finToast('请填写有效档数'); return; }
+  const amount = count * MOD_PRICE;
+  const note = (nEl && nEl.value ? nEl.value : '').trim();
+  if (!store.beautyRecords) store.beautyRecords = [];
+  if (editingBeautyIdx >= 0 && store.beautyRecords[editingBeautyIdx]) {
+    // 原地修改：保留原 id，仅更新字段
+    const orig = store.beautyRecords[editingBeautyIdx];
+    store.beautyRecords[editingBeautyIdx] = Object.assign({}, orig, { date: date, count: count, amount: amount, note: note, status: 'done' });
+  } else {
+    store.beautyRecords.push({ id: 'bea_' + Date.now(), date: date, count: count, amount: amount, note: note, status: 'done' });
+  }
+  editingBeautyIdx = -1;
+  saveData();
+  closeBeautyRecordModal();
+  try { renderIncome(); } catch (e) {}
+  finToast('✅ 已保存美化档 ' + count + ' 档 ¥' + amount.toFixed(2));
+}
+function deleteBeautyRecord(idx) {
+  if (!store.beautyRecords || !store.beautyRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
+  const b = store.beautyRecords[idx];
+  if (!confirm('确定删除美化档「' + b.date + ' ' + b.count + '档 ¥' + (b.amount != null ? b.amount : b.count * MOD_PRICE) + '」吗？')) return;
+  store.beautyRecords.splice(idx, 1);
+  saveData();
+  try { renderIncome(); } catch (e) {}
+  finToast('🗑️ 已删除美化档记录');
+}
 // ESC 关闭记定制单弹窗
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     const m = document.getElementById('custom-order-modal');
     if (m && m.style.display !== 'none') closeCustomOrderModal();
+    const bm = document.getElementById('beauty-record-modal');
+    if (bm && bm.style.display !== 'none') closeBeautyRecordModal();
   }
 });
 
