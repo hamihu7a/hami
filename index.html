@@ -1933,15 +1933,6 @@
     </div>
 
     <div class="month-selector">
-      <label>📅 选择月份：</label>
-      <select id="income-month" onchange="renderIncome()">
-        <option value="2026-07">2026年7月</option>
-        <option value="2026-08">2026年8月</option>
-        <option value="2026-09">2026年9月</option>
-        <option value="2026-10">2026年10月</option>
-        <option value="2026-11">2026年11月</option>
-        <option value="2026-12">2026年12月</option>
-      </select>
       <button class="fin-add-btn" style="margin-left:auto;" onclick="openCustomOrderModal()">➕ 记定制单</button>
     </div>
 
@@ -2018,7 +2009,7 @@
   <div id="panel-fitness" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：每天记体重（便前/便后分开）。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>（永远按今天所在月算），日历改了这里自动更新。
+      💕 <b>使用说明</b>：每天只记一次体重。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>（永远按今天所在月算），日历改了这里自动更新。
     </div>
 
     <div class="goal-row" id="weight-goal-row">
@@ -2044,7 +2035,7 @@
       <div class="card-title"><span>📋</span> 每日体重</div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>日期</th><th>便前</th><th>便后</th><th>备注</th></tr></thead>
+          <thead><tr><th>日期</th><th>体重 (kg)</th><th>备注</th></tr></thead>
           <tbody id="weight-table"></tbody>
         </table>
       </div>
@@ -2075,15 +2066,6 @@
     </div>
 
     <div class="month-selector">
-      <label>📅 选择月份：</label>
-      <select id="media-month" onchange="renderMedia()">
-        <option value="2026-07">2026年7月</option>
-        <option value="2026-08">2026年8月</option>
-        <option value="2026-09">2026年9月</option>
-        <option value="2026-10">2026年10月</option>
-        <option value="2026-11">2026年11月</option>
-        <option value="2026-12">2026年12月</option>
-      </select>
       <button class="media-add-btn" onclick="openMediaRecordModal()">➕ 记一条</button>
     </div>
 
@@ -2460,12 +2442,6 @@
       💕 <b>使用说明</b>：左侧「今日推荐」每天自动推荐一部电影，含海报、评分、导演及推荐理由。右侧「近期上映」以票根设计展示当前热映和即将上映影片。数据每日自动更新~
     </div>
 
-    <!-- 我收藏 / 想看的电影（顶部指令写入） -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-title"><span>⭐</span> 我收藏 / 想看的电影</div>
-      <div id="user-movies-list"></div>
-    </div>
-
     <!-- 左右并排布局 -->
     <div style="display:flex;gap:16px;flex-wrap:wrap;">
 
@@ -2534,25 +2510,13 @@
         <input type="file" id="settings-bg-file" accept="image/*" style="display:none;">
         <div id="settings-bg-status" style="margin-top:10px;font-size:12px;color:#8a6270;"></div>
         <div style="margin-top:14px;display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
-          <button id="settings-reset-all" style="flex:1 1 0;min-width:0;padding:10px 14px;border:1px solid #ffd0e0;border-radius:10px;background:#fff0f5;color:#d14b73;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            🧹 一键恢复所有默认背景
-          </button>
           <button id="settings-sync-all-bg" style="flex:1 1 0;min-width:0;padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#a78bfa,#6d28d9);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(109,40,217,0.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             🔄 一键同步所有背景
           </button>
         </div>
-        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button id="settings-bake-file" style="padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff8aa6,#d14b73);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
-            📥 导出含背景的网页（网页/小程序通用）
-          </button>
-          <span style="font-size:11px;color:#a98;">（含清除各区域的"弱化"状态 · 点此下载一个自带背景的 HTML，网页/小程序打开即见）</span>
-        </div>
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button id="settings-cloud-test" style="padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#5ec6e0,#2a9bc4);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(42,155,196,0.3);">
             ☁️ 测试云端同步（手机↔电脑）
-          </button>
-          <button id="settings-cloud-pull" style="padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#7ad0a0,#2a9b6c);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(42,155,108,0.3);">
-            🔄 立即从云端同步
           </button>
           <button id="settings-cloud-upload" style="padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffb05e,#e08a2a);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(224,138,42,0.3);">
             ⬆️ 上传本地全部数据到云端
@@ -2681,7 +2645,6 @@ let store = {
   toiletRecords: [{ date: "2026-07-31", count: 1 }, { date: "2026-08-03", count: 1 }],   // 如厕记录 { date, count }  count=当天上厕所次数
   maskRecords: [],     // 敷面膜记录 { date }
   accountRecords: [],   // 记账记录 { date, type('income'/'expense'), category, subCategory, amount, note }
-  userMovies: [],       // 电影推荐收藏 { date, title, director, genres, rating, note }
   accounts: {
     big: {
       name: 'sims哈弥老师', platform: '小红书', accountId: 'hamihami1998',
@@ -3350,7 +3313,7 @@ async function pullCloudToLocal() {
 
 // 重新渲染依赖 store 的数据面板
 function rerenderSynced() {
-  ['renderDesktop','renderDesktopWeight','renderDesktopTodo','renderIncome','renderFitness','renderMedia','renderInspire','renderPeriod','renderToilet','renderMask','renderAccount','renderReminder','renderMovie','renderUserMovies','renderQuotes','renderBackupReminder'].forEach(function (fn) {
+  ['renderDesktop','renderDesktopWeight','renderDesktopTodo','renderIncome','renderFitness','renderMedia','renderInspire','renderPeriod','renderToilet','renderMask','renderAccount','renderReminder','renderMovie','renderQuotes','renderBackupReminder'].forEach(function (fn) {
     try { if (typeof window[fn] === 'function') window[fn](); } catch (e) {}
   });
   try { if (typeof updateCmdBarWidth === 'function') updateCmdBarWidth(); } catch (e) {}
@@ -3663,29 +3626,8 @@ function initSettingsPanel() {
     });
   }
 
-  // 4) 一键恢复所有默认背景（含各区域弱化状态）
-  const resetBtn = document.getElementById('settings-reset-all');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      if (!confirm('确定恢复所有自定义背景为默认纯色？')) return;
-      Object.keys(BG_KEYS).forEach(k => {
-        try { localStorage.removeItem(BG_KEYS[k]); localStorage.removeItem('hami_weak_' + k); } catch (e) {}
-        const el = document.querySelector(BG_ELS[k]);
-        if (el) { el.classList.remove('has-custom-bg', 'weakened'); el.style.removeProperty('--bg-img'); }
-      });
-      document.querySelectorAll('.mirror-block').forEach(b => {
-        b.classList.remove('has-bg', 'has-weak');
-        b.style.backgroundImage = '';
-        const i = b.querySelector('.mirror-weak input'); if (i) i.checked = false;
-      });
-      if (statusEl) statusEl.textContent = '🧹 已恢复所有默认背景';
-      afterBgChange(statusEl);
-      try { playSound('save'); } catch (e) {}
-    });
-  }
-
   // 4.5) 一键同步所有背景：把本机当前所有背景（图片+弱化状态）批量推送到云端，
-  //       任意平台上传好后按一下，其它设备刷新或点「立即从云端同步」即可看到。
+  //       任意平台上传好后按一下，其它设备强刷或开页即可看到。
   //       与恢复按钮并列展示在「背景图设计」第一行。
   const syncAllBtn = document.getElementById('settings-sync-all-bg');
   if (syncAllBtn) {
@@ -3730,7 +3672,7 @@ function initSettingsPanel() {
           if (!r.ok) throw new Error('HTTP ' + r.status);
           okCount += chunk.length;
         }
-        if (statusEl) statusEl.textContent = '✅ 已同步 ' + okCount + ' 个背景到云端（其它设备刷新或按「立即从云端同步」即可看到）';
+        if (statusEl) statusEl.textContent = '✅ 已同步 ' + okCount + ' 个背景到云端（其它设备强刷或开页即可看到）';
         try { playSound('save'); } catch (e) {}
       } catch (err) {
         if (statusEl) statusEl.textContent = '❌ 同步失败：' + (err && err.message ? err.message : err) + '（请检查网络，或用系统浏览器打开）';
@@ -3738,15 +3680,6 @@ function initSettingsPanel() {
         syncAllBtn.disabled = false;
         syncAllBtn.textContent = oldText;
       }
-    });
-  }
-
-  // 5) 导出含背景的网页：把当前所有背景/弱化配置烘焙进一个自包含 HTML 并下载（全浏览器/小程序通用）
-  const bakeBtn = document.getElementById('settings-bake-file');
-  if (bakeBtn) {
-    bakeBtn.addEventListener('click', () => {
-      if (statusEl) statusEl.textContent = '📥 正在导出含背景的网页…';
-      bakeBgToFile(statusEl);
     });
   }
 
@@ -3837,18 +3770,6 @@ function initSettingsPanel() {
         if (/Failed to fetch|Load failed|NetworkError|fetch failed/i.test(msg)) msg = '网络层失败（浏览器到 Supabase 不通）。常见原因：①CloudStudio CDN 缓存了旧版 HTML → 请 Ctrl+Shift+R 强刷；②浏览器扩展（AdGuard/uBlock）拦截了 apikey/Authorization 头；③网络代理/防火墙；④Supabase 项目被暂停';
         testStatus.textContent = '❌ ' + msg;
       }
-    });
-  }
-
-  // 7) 立即从云端同步（拉取并覆盖本地）
-  const pullBtn = document.getElementById('settings-cloud-pull');
-  if (pullBtn) {
-    pullBtn.addEventListener('click', async () => {
-      if (!cloudEnabled()) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 云端未启用'; return; }
-      testStatus.style.color = '#2a9bc4'; testStatus.textContent = '⏳ 正在从云端拉取…';
-      const ok = await pullCloudToLocal();
-      testStatus.style.color = ok ? '#1a9e4b' : '#d14b73';
-      testStatus.textContent = ok ? '✅ 已拉取云端最新数据' : '❌ 拉取失败（离线或表未建）';
     });
   }
 
@@ -3980,7 +3901,6 @@ function sendHamiCmd() {
     mask: store.maskRecords.length,
     inspire: store.inspireRecords.length,
     dates: store.importantDates.length,
-    movies: (store.userMovies || []).length,
     userTodos: (store.userTodos || []).length
   };
 
@@ -4001,8 +3921,8 @@ function sendHamiCmd() {
     if (g >= 30 && g <= 200) {
       store.weightGoal = g;
       saveData();
-      const allS = [...store.weightRecords].filter(w => w.after != null).sort((a,b)=>b.date.localeCompare(a.date));
-      const cur = allS.length ? allS[0].after : null;
+      const allS = [...store.weightRecords].map(w => ({ date: w.date, v: w.value != null ? w.value : w.after })).filter(w => w.v != null).sort((a,b)=>b.date.localeCompare(a.date));
+      const cur = allS.length ? allS[0].v : null;
       const tail = cur != null ? ('，当前 ' + cur.toFixed(1) + ' kg，还差 ' + Math.max(0, cur - g).toFixed(1) + ' kg 冲鸭～') : '，快去记一条体重看进度吧～';
       showCmdToast('🎯 目标体重已设为 ' + g.toFixed(1) + ' kg' + tail);
       try { renderFitness(); } catch(e) {}
@@ -4016,7 +3936,8 @@ function sendHamiCmd() {
     const w = parseFloat(wMatch[1]);
     if (w >= 30 && w <= 200) {
       const existing = store.weightRecords.findIndex(r => r.date === targetDate);
-      const rec = { date: targetDate, before: w, after: w, note: '已称' };
+      // 新版统一存 { date, value, note }，兼容并清理旧 before/after（合并取首个非空）
+      const rec = { date: targetDate, value: w, note: '已称' };
       if (existing >= 0) store.weightRecords[existing] = rec;
       else store.weightRecords.push(rec);
       acted = true;
@@ -4175,25 +4096,7 @@ function sendHamiCmd() {
     }
   }
 
-  // —— 六·电影推荐 / 想看 / 收藏 ——
-  if (/电影|影片|剧集|想看|收藏电影|看了一部|观影|好电影|推荐.{0,3}片/.test(txt)) {
-    let title = '';
-    const bk = txt.match(/《([^》]+)》/);
-    if (bk) title = bk[1];
-    else {
-      const t = txt.match(/(?:电影|影片|剧集|片|剧)\s*[：: ]\s*(.+)/);
-      if (t) title = t[1].trim();
-    }
-    if (title) {
-      title = title.split(/[,，。；;、]|\s+(?:导演|评分|类型|诺兰|豆瓣|推荐理由|主演|简介)/)[0].trim();
-      const director = (txt.match(/导演[：: ]?\s*([^\s,，。；;、]+)/) || [,''])[1] || '';
-      const rating = (txt.match(/评分[：: ]?\s*(\d+(?:\.\d+)?)/) || [,''])[1] || '';
-      const genres = (txt.match(/类型[：: ]?\s*([^\s,，。；;、]+)/) || [,''])[1] || '';
-      if (!store.userMovies) store.userMovies = [];
-      store.userMovies.push({ date: targetDate, title, director, genres, rating, note: txt });
-      acted = true;
-    }
-  }
+  // —— 电影推荐 / 想看 / 收藏 已删除（按主人要求取消该功能）——
 
   // 保存 + 刷新（覆盖所有已开发模块）
   saveData();
@@ -4207,7 +4110,6 @@ function sendHamiCmd() {
   try { renderInspire(); } catch(e) {}
   try { renderDesktopInspire(); } catch(e) {}
   try { renderReminder(); } catch(e) {}
-  try { renderUserMovies(); } catch(e) {}
   try { renderDesktopTodo(); } catch(e) {}
 
   // 判断记到了哪个分类（用于反馈提示）
@@ -4229,7 +4131,6 @@ function sendHamiCmd() {
   if ((store.userTodos || []).length > snap.userTodos) hints.push('待办');
   if (store.inspireRecords.length > snap.inspire) hints.push('灵感笔记');
   if (store.importantDates.length > snap.dates) hints.push('日期提醒');
-  if ((store.userMovies || []).length > snap.movies) hints.push('电影推荐');
 
   input.value = '';
   if (acted) {
@@ -4284,7 +4185,6 @@ function loadData() {
       if (p.importantDates && p.importantDates.length > 0) store.importantDates = p.importantDates;
       if (p.travelPlans && p.travelPlans.length > 0) store.travelPlans = p.travelPlans;
       if (p.movieData && p.movieData.recommendList && p.movieData.recommendList.length > 0) store.movieData = p.movieData;
-      if (p.userMovies && p.userMovies.length > 0) store.userMovies = p.userMovies;
       // 目标体重：必须显式恢复，否则刷新后 renderWeightGoal 读到默认 null 而"消失"
       if (p.weightGoal != null) store.weightGoal = p.weightGoal;
     }
@@ -4492,7 +4392,7 @@ function checkCheckinAlerts() {
 
   // 量体重提醒：早上8点起到13点前温柔提醒（每天打开都能看到）
   if (!hasWeight && hour >= 8 && hour < 13) {
-    alerts.push({ icon: '⚖️', text: '该量体重啦！记得便前+便后都量~', color: '#856404', bg: '#fff3cd', action: 'fitness' });
+    alerts.push({ icon: '⚖️', text: '该量体重啦！记得记录今天的体重~', color: '#856404', bg: '#fff3cd', action: 'fitness' });
   }
   // 运动打卡提醒：19:00-20:00 之间
   if (!hasExercise && hour >= 19 && hour < 20) {
@@ -4661,7 +4561,7 @@ function renderDesktopTodo() {
   const todayExercise = store.exerciseRecords.some(e => e.date === today);
 
   let todos = [];
-  if (!todayWeight) todos.push({ icon: '⚖️', text: '量体重（便前+便后）', urgent: false });
+  if (!todayWeight) todos.push({ icon: '⚖️', text: '量体重', urgent: false });
   if (!todayExercise) todos.push({ icon: '🏃‍♀️', text: '运动打卡', urgent: false });
 
   pendingOrders.forEach(o => {
@@ -4708,33 +4608,12 @@ function switchPanel(name, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (navEl) navEl.classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
-  // 每次点开「模拟人生总收入」面板，强制月份回到当前月（满足主人"点开显示当月"诉求）
+  // 切到「模拟人生总收入 / 自媒体更新记录」面板，强制刷新（永久用当月，下拉已删除）
   if (name === 'income') {
-    try {
-      const im = document.getElementById('income-month');
-      if (im) {
-        const cur = todayStr().substring(0, 7);
-        if (Array.from(im.options).some(o => o.value === cur)) {
-          im.value = cur;
-          Array.from(im.options).forEach(o => { o.selected = (o.value === cur); });
-        }
-      }
-      renderIncome();
-    } catch (e) {}
+    try { renderIncome(); } catch (e) {}
   }
-  // 每次点开「自媒体更新记录」面板，强制月份回到当前月（满足主人"点开显示当月"诉求）
   if (name === 'media') {
-    try {
-      const mm = document.getElementById('media-month');
-      if (mm) {
-        const cur = todayStr().substring(0, 7);
-        if (Array.from(mm.options).some(o => o.value === cur)) {
-          mm.value = cur;
-          Array.from(mm.options).forEach(o => { o.selected = (o.value === cur); });
-        }
-      }
-      renderMedia();
-    } catch (e) {}
+    try { renderMedia(); } catch (e) {}
   }
   // 切到任意面板时，对所有 key 检查；若对应元素已在 DOM 且 localStorage 有图，则强制再 apply 一次。
   // 说明：BG_ELS 里部分 key 指向主页日历缩略组件（如 #home-weight-cal），不与 panel id 一一对应，
@@ -4933,18 +4812,21 @@ function bindWeightGoalInput() {
 function renderFitness() {
   const month = todayStr().substring(0, 7);   // 关键：与 renderDesktopWeight 同一份 month 来源
   const today = todayStr();
-  const monthWeights = store.weightRecords.filter(w => w.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+  // 兼容旧数据：旧记录用 {before,after}，新记录用 {value}
+  const getW = (w) => w.value != null ? w.value : (w.after != null ? w.after : w.before);
+  const monthWeights = store.weightRecords.filter(w => w.date.startsWith(month) && getW(w) != null).sort((a,b)=>a.date.localeCompare(b.date));
   const monthExercises = store.exerciseRecords.filter(e => e.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
   const restDays = store.periodRestDays[month] || [];
 
-  // 起始体重 = weightRecords 中按 date 升序最早一条的 after（与日历同源；无记录则用 START_WEIGHT 兜底 90.0）
+  // 起始体重 = weightRecords 中按 date 升序最早一条（与日历同源；无记录则用 START_WEIGHT 兜底 90.0）
   const allSorted = [...store.weightRecords]
-    .filter(w => w.after != null)
+    .map(w => ({ date: w.date, v: getW(w) }))
+    .filter(w => w.v != null)
     .sort((a, b) => a.date.localeCompare(b.date));
-  const startWeight = allSorted.length > 0 ? allSorted[0].after : START_WEIGHT;
+  const startWeight = allSorted.length > 0 ? allSorted[0].v : START_WEIGHT;
 
-  const lastWithVal = [...monthWeights].reverse().find(w => w.after != null);
-  const latestAfter = lastWithVal ? lastWithVal.after : null;
+  const lastWithVal = [...monthWeights].reverse().find(w => getW(w) != null);
+  const latestAfter = lastWithVal ? getW(lastWithVal) : null;
   const latestAfterText = latestAfter != null ? latestAfter.toFixed(1) : '—';
   const totalLost = latestAfter != null ? (startWeight - latestAfter).toFixed(1) : '—';
   const exerciseDays = monthExercises.length;
@@ -4968,10 +4850,13 @@ function renderFitness() {
   renderWeightChart(monthWeights);
 
   if (monthWeights.length === 0) {
-    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="big-icon">⚖️</div><p>本月暂无体重记录</p></div></td></tr>`;
+    document.getElementById('weight-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="big-icon">⚖️</div><p>本月暂无体重记录</p></div></td></tr>`;
   } else {
     let html = '';
-    monthWeights.forEach(w => { html += `<tr><td>${w.date}</td><td>${w.before != null ? w.before.toFixed(1) : '—'}</td><td>${w.after != null ? w.after.toFixed(1) : '—'}</td><td>${w.note||'—'}</td></tr>`; });
+    monthWeights.forEach(w => {
+      const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
+      html += `<tr><td>${w.date}</td><td>${v != null ? v.toFixed(1) : '—'}</td><td>${w.note||'—'}</td></tr>`;
+    });
     document.getElementById('weight-table').innerHTML = html;
   }
 
@@ -5032,7 +4917,7 @@ function renderWeightChart(data) {
   const p = { top: 30, right: 30, bottom: 45, left: 45 };
   const cw = width - p.left - p.right;
   const ch = height - p.top - p.bottom;
-  const vals = data.flatMap(d => [d.before, d.after]);
+  const vals = data.map(d => d.value != null ? d.value : (d.after != null ? d.after : d.before)).filter(v => v != null);
   const minV = Math.min(...vals) - 1;
   const maxV = Math.max(...vals) + 1;
   const range = maxV - minV;
@@ -5049,25 +4934,18 @@ function renderWeightChart(data) {
   svg += `<line x1="${p.left}" y1="${sy}" x2="${width-p.right}" y2="${sy}" stroke="#ff9eb5" stroke-width="1.5" stroke-dasharray="5,5"/>`;
   svg += `<text x="${width-p.right}" y="${sy-5}" text-anchor="end" font-size="10" fill="#ff7f9e" font-weight="600">起始 ${START_WEIGHT}kg</text>`;
 
-  let bp = '';
-  data.forEach((d,i) => { if (d.before != null) bp += (i===0?'M':'L') + xs(i) + ',' + ys(d.before) + ' '; });
-  svg += `<path d="${bp}" fill="none" stroke="#ff9eb5" stroke-width="2.5"/>`;
-  data.forEach((d,i) => { if (d.before != null) svg += `<circle cx="${xs(i)}" cy="${ys(d.before)}" r="4" fill="#ff9eb5"/>`; });
-
   let ap = '';
-  data.forEach((d,i) => { if (d.after != null) ap += (i===0?'M':'L') + xs(i) + ',' + ys(d.after) + ' '; });
+  data.forEach((d,i) => { const v = d.value != null ? d.value : (d.after != null ? d.after : d.before); if (v != null) ap += (i===0?'M':'L') + xs(i) + ',' + ys(v) + ' '; });
   svg += `<path d="${ap}" fill="none" stroke="#e88a4f" stroke-width="2.5"/>`;
-  data.forEach((d,i) => { if (d.after != null) svg += `<circle cx="${xs(i)}" cy="${ys(d.after)}" r="4" fill="#e88a4f"/>`; });
+  data.forEach((d,i) => { const v = d.value != null ? d.value : d.after; if (v != null) svg += `<circle cx="${xs(i)}" cy="${ys(v)}" r="4" fill="#e88a4f"/>`; });
 
   data.forEach((d,i) => {
     if (data.length > 10 && i % Math.ceil(data.length/8) !== 0) return;
     svg += `<text x="${xs(i)}" y="${height-p.bottom+18}" text-anchor="middle" font-size="10" fill="#9a6a7e">${d.date.substring(5)}</text>`;
   });
 
-  svg += `<rect x="${p.left}" y="8" width="10" height="10" fill="#ff9eb5" rx="2"/>`;
-  svg += `<text x="${p.left+15}" y="17" font-size="11" fill="#8a4a60">便前</text>`;
-  svg += `<rect x="${p.left+55}" y="8" width="10" height="10" fill="#e88a4f" rx="2"/>`;
-  svg += `<text x="${p.left+70}" y="17" font-size="11" fill="#8a4a60">便后</text>`;
+  svg += `<rect x="${p.left}" y="8" width="10" height="10" fill="#e88a4f" rx="2"/>`;
+  svg += `<text x="${p.left+15}" y="17" font-size="11" fill="#8a4a60">体重 (kg)</text>`;
   svg += '</svg>';
   document.getElementById('weight-chart').innerHTML = svg;
 }
@@ -5077,7 +4955,8 @@ function renderWeightChart(data) {
 const WEEKLY_MEDIA_GOAL = 4; // 每周至少更4条
 
 function renderMedia() {
-  const month = document.getElementById('media-month').value;
+  // 月份下拉已删除，永远用当月
+  const month = todayStr().substring(0, 7);
   const monthRecords = store.mediaRecords.filter(r => r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
 
   // 大号小号分别统计
@@ -6877,28 +6756,6 @@ function renderMovie() {
   document.getElementById('movie-now-playing').innerHTML = ticketsHtml;
 }
 
-// ==================== 用户收藏 / 想看的电影（顶部指令写入） ====================
-function renderUserMovies() {
-  const el = document.getElementById('user-movies-list');
-  if (!el) return;
-  const list = store.userMovies || [];
-  if (list.length === 0) {
-    el.innerHTML = '<div style="font-size:12px;color:#7d4a5a;line-height:1.6;">还没有收藏~ 试试顶部指令：<br>「收藏电影《盗梦空间》导演诺兰 科幻 评分9.4」<br>「想看《花样年华》王家卫」</div>';
-    return;
-  }
-  el.innerHTML = list.slice().reverse().map(m => {
-    const meta = [m.director, m.genres, m.rating ? '⭐' + m.rating : ''].filter(Boolean).join(' · ');
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#fff8fa;margin-bottom:6px;border-left:3px solid #ff9eb5;">
-      <span style="font-size:18px;">🎬</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:#5a3a48;">${escHtml(m.title)}</div>
-        <div style="font-size:11px;color:#8a6270;">${escHtml(meta) || '—'}</div>
-      </div>
-      <span style="font-size:10px;color:#9a6a7e;white-space:nowrap;">${escHtml(m.date)}</span>
-    </div>`;
-  }).join('');
-}
-
 // ==================== 主面板体重记录卡片 ====================
 function renderDesktopWeight() {
   const today = todayStr();
@@ -7489,13 +7346,22 @@ loadData();
   // 旧版本曾预填 88.x 等演示值，已清除；下方迁移会剔除旧 localStorage 中残留的编造记录。
   (function cleanFakeWeights() {
     if (!store.weightRecords || !store.weightRecords.length) return;
-    var fakeNotes = { '便前': 1, '便前·休息日': 1, '便前·感冒休息': 1 };
+    // 旧记录用 {before, after}，迁移为 {value = after ?? before}
+    store.weightRecords.forEach(function (w) {
+      if (w.value == null && (w.before != null || w.after != null)) {
+        w.value = w.after != null ? w.after : w.before;
+      }
+    });
+    // 旧版演示种子的备注/数值，仅用于在迁移时剔除"演示数据"，不与新表头口径冲突。
+    var demoNotes = { 'beforeToilet': 1, 'beforeToiletRest': 1, 'beforeToiletSick': 1 };
+    var demoNotesHasBathroom = /(便|厕)/;
     store.weightRecords = store.weightRecords.filter(function (w) {
-      var a = w.after;
-      if (w.note && fakeNotes[w.note]) return false;                 // 种子专用 note，必删
-      if (a === 88.2 || a === 88.35) return false;                   // 演示种子值
-      if (w.date === '2026-08-02' && a === 88.5) return false;       // 旧种子
-      if (w.date === '2026-08-03' && a === 88.15) return false;      // 旧种子
+      var v = w.value != null ? w.value : w.after;
+      if (w.note && demoNotes[w.note]) return false;                // 仅命中演示种子的旧备注
+      if (w.note && demoNotesHasBathroom.test(w.note)) return false; // 凡是含"便/厕"的备注一律视为旧演示数据
+      if (v === 88.2 || v === 88.35) return false;                    // 演示种子值
+      if (w.date === '2026-08-02' && v === 88.5) return false;        // 旧种子
+      if (w.date === '2026-08-03' && v === 88.15) return false;       // 旧种子
       return true;
     });
     try { saveData(); } catch (e) {}
@@ -7573,21 +7439,12 @@ try {
       Array.from(am.options).forEach(function (o) { o.selected = (o.value === curMonth); });
     }
   }
-  // 模拟人生总收入面板：同样默认当月
-  var im2 = document.getElementById('income-month');
-  if (im2) {
-    var curMonth2 = todayStr().substring(0, 7);
-    var hasOpt2 = Array.from(im2.options).some(function (o) { return o.value === curMonth2; });
-    if (hasOpt2) {
-      im2.value = curMonth2;
-      Array.from(im2.options).forEach(function (o) { o.selected = (o.value === curMonth2); });
-    }
-  }
+  // 模拟人生总收入 / 自媒体更新记录 面板：月份下拉已删除，永远用当月（无需初始化）
 } catch (e) {}
 try { renderAccount(); } catch(e) { console.log('renderAccount error:', e.message); }
 try { renderReminder(); } catch(e) { console.log('renderReminder error:', e.message); }
 try { renderMovie(); } catch(e) { console.log('renderMovie error:', e.message); }
-try { renderUserMovies(); } catch(e) { console.log('renderUserMovies error:', e.message); }
+// 电影收藏功能已删除
 try { renderQuotes(); } catch(e) { console.log('renderQuotes error:', e.message); }
 try { initSettingsPanel(); } catch(e) { console.log('initSettingsPanel error:', e.message); }
 try { checkCheckinAlerts(); } catch(e) { console.log('checkCheckinAlerts error:', e.message); }
