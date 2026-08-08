@@ -3389,7 +3389,20 @@ function showSaveFailedBanner(err) {
   if (btn) btn.onclick = function () { el.remove(); _saveFailedNotified = false; };
 }
 
+var _loadBroken = false;
+function showLoadBrokenBanner() {
+  let el = document.getElementById('load-broken-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'load-broken-banner';
+    el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#993556;color:#fff;padding:12px 16px;font-size:14px;font-weight:700;line-height:1.6;box-shadow:0 2px 12px rgba(0,0,0,.22);';
+    document.body.appendChild(el);
+  }
+  el.textContent = '本地存档读取失败（可能已损坏）。已停止自动保存，避免用空白覆盖您的数据。请去「设置 → 数据备份 → 从备份恢复」选一份备份文件。';
+}
+
 function saveData() {
+  if (_loadBroken) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     if (_saveFailedNotified) {
@@ -4785,7 +4798,11 @@ function loadData() {
     }
     // 八月份体重种子：仅当本地缺失对应日期时一次性补入（本地优先、绝不覆盖主人真实记录）
     try { applyWeightSeedV1(); } catch (e) {}
-  } catch(e) {}
+  } catch(e) {
+    _loadBroken = true;
+    console.error('[loadData] 本地存档解析失败，已停止自动保存以免用默认值覆盖您的数据', e);
+    try { showLoadBrokenBanner(); } catch (e2) {}
+  }
 }
 
 // 八月份体重种子（从主人 8/8 截图中精确提取）：仅当本地缺失对应日期时一次性补入，
