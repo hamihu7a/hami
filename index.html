@@ -892,6 +892,42 @@
   .co-save { background: linear-gradient(90deg, #ff9eb5, #ff7f9e); color: #fff; box-shadow: 0 4px 14px rgba(209,75,115,0.28); }
   .co-save:active { transform: scale(0.97); }
 
+  /* 自媒体「记一条」按钮（与记一笔同款配色，紧凑） */
+  .media-add-btn {
+    margin-left: auto;
+    border: none; border-radius: 12px;
+    background: linear-gradient(90deg, #ff9eb5, #ff7f9e);
+    color: #fff; font-size: 13px; font-weight: 700;
+    padding: 8px 14px; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(209,75,115,0.22);
+    transition: transform 0.12s ease;
+  }
+  .media-add-btn:active { transform: scale(0.97); }
+
+  /* 洗头/如厕/面膜：选日期记录一行（日期输入 + 记录此日按钮） */
+  .date-log-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px;
+  }
+  .date-log-input {
+    flex: 1; min-width: 0;
+    border: 1.5px solid #ffd0dc; border-radius: 12px;
+    padding: 9px 12px; font-size: 13px; font-family: inherit;
+    outline: none; background: rgba(255,255,255,0.85); color: #5a3a48;
+    box-sizing: border-box;
+  }
+  .date-log-input:focus { border-color: #e58aa3; box-shadow: 0 0 0 2px rgba(229,138,163,0.18); }
+  .date-log-btn {
+    flex-shrink: 0;
+    border: none; border-radius: 12px;
+    background: #f3e8ed; color: #7d4a5a;
+    font-size: 13px; font-weight: 700; padding: 9px 14px;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    transition: transform 0.12s ease;
+  }
+  .date-log-btn:active { transform: scale(0.97); }
+
   /* 弹窗头部 */
   .arm-head {
     display: flex; align-items: center;
@@ -2041,13 +2077,14 @@
     <div class="month-selector">
       <label>📅 选择月份：</label>
       <select id="media-month" onchange="renderMedia()">
-        <option value="2026-07" selected>2026年7月</option>
+        <option value="2026-07">2026年7月</option>
         <option value="2026-08">2026年8月</option>
         <option value="2026-09">2026年9月</option>
         <option value="2026-10">2026年10月</option>
         <option value="2026-11">2026年11月</option>
         <option value="2026-12">2026年12月</option>
       </select>
+      <button class="media-add-btn" onclick="openMediaRecordModal()">➕ 记一条</button>
     </div>
 
     <div class="stats-grid" id="media-stats"></div>
@@ -2077,6 +2114,53 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ==================== 自媒体记一条 弹窗 ==================== -->
+  <div id="media-record-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeMediaRecordModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeMediaRecordModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记一条更新</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>选择账号</label>
+          <div style="display:flex;gap:10px;">
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="mr-account" value="big" checked style="display:none;">
+              <span class="co-status-opt active" data-mr-acc="big" onclick="mrPickAccount('big')">🎨 美化档大号</span>
+            </label>
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="mr-account" value="small" style="display:none;">
+              <span class="co-status-opt" data-mr-acc="small" onclick="mrPickAccount('small')">👤 定制人物小号</span>
+            </label>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>时期（日期）</label>
+          <input type="date" id="mr-date">
+        </div>
+        <div class="co-field">
+          <label>更新了多少条</label>
+          <input type="number" id="mr-count" min="1" step="1" value="1" inputmode="numeric" placeholder="如 3">
+        </div>
+        <div class="co-field">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
+            <input type="checkbox" id="mr-douyin" style="width:18px;height:18px;"> 🎵 是否同步抖音
+          </label>
+        </div>
+        <div class="co-field">
+          <label>备注（可选）</label>
+          <input type="text" id="mr-note" placeholder="如：新人物二套服装">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeMediaRecordModal()">取消</button>
+        <button class="co-save" onclick="submitMediaRecord()">保存</button>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== 模拟人生更新推荐 ==================== -->
@@ -2135,6 +2219,10 @@
       <div class="card-title"><span>🧴</span> 洗头提醒</div>
       <div id="wash-remind"></div>
       <button onclick="logWash()" style="width:100%;margin-top:12px;padding:13px;border:none;border-radius:12px;background:#d14b73;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">🧴 今天洗了头</button>
+      <div class="date-log-row">
+        <input type="date" id="wash-date-input" class="date-log-input">
+        <button class="date-log-btn" onclick="logWashForDate()">📅 记录此日</button>
+      </div>
     </div>
 
     <div class="card">
@@ -2162,6 +2250,10 @@
       <div class="card-title"><span>🚽</span> 今日如厕</div>
       <div id="toilet-today"></div>
       <button onclick="logToilet()" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:#d14b73;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">🚽 我今天上了厕所</button>
+      <div class="date-log-row">
+        <input type="date" id="toilet-date-input" class="date-log-input">
+        <button class="date-log-btn" onclick="logToiletForDate()">📅 记录此日</button>
+      </div>
     </div>
 
     <div class="card">
@@ -2180,6 +2272,10 @@
       <div class="card-title"><span>🧖</span> 本周面膜进度</div>
       <div id="mask-progress"></div>
       <button onclick="logMask()" style="width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:#d14b73;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">🧖 我今天敷了面膜</button>
+      <div class="date-log-row">
+        <input type="date" id="mask-date-input" class="date-log-input">
+        <button class="date-log-btn" onclick="logMaskForDate()">📅 记录此日</button>
+      </div>
     </div>
 
     <div class="card">
@@ -4188,6 +4284,8 @@ function loadData() {
       if (p.travelPlans && p.travelPlans.length > 0) store.travelPlans = p.travelPlans;
       if (p.movieData && p.movieData.recommendList && p.movieData.recommendList.length > 0) store.movieData = p.movieData;
       if (p.userMovies && p.userMovies.length > 0) store.userMovies = p.userMovies;
+      // 目标体重：必须显式恢复，否则刷新后 renderWeightGoal 读到默认 null 而"消失"
+      if (p.weightGoal != null) store.weightGoal = p.weightGoal;
     }
   } catch(e) {}
 }
@@ -4623,6 +4721,20 @@ function switchPanel(name, navEl) {
       renderIncome();
     } catch (e) {}
   }
+  // 每次点开「自媒体更新记录」面板，强制月份回到当前月（满足主人"点开显示当月"诉求）
+  if (name === 'media') {
+    try {
+      const mm = document.getElementById('media-month');
+      if (mm) {
+        const cur = todayStr().substring(0, 7);
+        if (Array.from(mm.options).some(o => o.value === cur)) {
+          mm.value = cur;
+          Array.from(mm.options).forEach(o => { o.selected = (o.value === cur); });
+        }
+      }
+      renderMedia();
+    } catch (e) {}
+  }
   // 切到任意面板时，对所有 key 检查；若对应元素已在 DOM 且 localStorage 有图，则强制再 apply 一次。
   // 说明：BG_ELS 里部分 key 指向主页日历缩略组件（如 #home-weight-cal），不与 panel id 一一对应，
   // 所以直接按"元素存在与否"判定更稳妥。
@@ -4968,10 +5080,10 @@ function renderMedia() {
   const monthRecords = store.mediaRecords.filter(r => r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
 
   // 大号小号分别统计
-  const bigCount = monthRecords.filter(r => r.account === 'big').length;
-  const smallCount = monthRecords.filter(r => r.account === 'small').length;
-  const totalCount = monthRecords.length;
-  const douyinCount = monthRecords.filter(r => r.douyin).length;
+  const bigCount = monthRecords.filter(r => r.account === 'big').reduce((s,r)=>s+(r.count||1),0);
+  const smallCount = monthRecords.filter(r => r.account === 'small').reduce((s,r)=>s+(r.count||1),0);
+  const totalCount = monthRecords.reduce((s,r)=>s+(r.count||1),0);
+  const douyinCount = monthRecords.filter(r => r.douyin).reduce((s,r)=>s+(r.count||1),0);
   const douyinRate = totalCount > 0 ? ((douyinCount / totalCount) * 100).toFixed(0) : 0;
 
   // 计算周数和目标
@@ -5020,7 +5132,7 @@ function renderMedia() {
     monthRecords.forEach(r => {
       const accName = r.account === 'big' ? '🎨 美化档大号' : '👤 定制人物小号';
       const dyMark = r.douyin ? '<span class="check-yes">✓ 是</span>' : '<span class="check-no">✗ 否</span>';
-      html += `<tr><td>${r.date}</td><td>${accName}</td><td>${r.content}</td><td>${dyMark}</td><td>${r.note||'—'}</td></tr>`;
+      html += `<tr><td>${r.date}</td><td>${accName}</td><td>${r.content}${(r.count&&r.count>1)?' ('+r.count+'条)':''}</td><td>${dyMark}</td><td>${r.note||'—'}</td></tr>`;
     });
     document.getElementById('media-table').innerHTML = html;
   }
@@ -5030,12 +5142,60 @@ function renderMedia() {
   let histHtml = '';
   months.forEach(m => {
     const recs = store.mediaRecords.filter(r => r.date.startsWith(m));
-    const bc = recs.filter(r => r.account === 'big').length;
-    const sc = recs.filter(r => r.account === 'small').length;
-    const dc = recs.filter(r => r.douyin).length;
+    const bc = recs.filter(r => r.account === 'big').reduce((s,r)=>s+(r.count||1),0);
+    const sc = recs.filter(r => r.account === 'small').reduce((s,r)=>s+(r.count||1),0);
+    const dc = recs.filter(r => r.douyin).reduce((s,r)=>s+(r.count||1),0);
     histHtml += `<tr><td>${m}</td><td>${bc} 条</td><td>${sc} 条</td><td>${dc} 条</td><td><b>${bc+sc} 条</b></td></tr>`;
   });
   document.getElementById('media-history').innerHTML = histHtml;
+}
+
+// ==================== 自媒体「记一条」弹窗 ====================
+let mrAccount = 'big';
+function mrPickAccount(acc) {
+  mrAccount = acc;
+  document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
+    el.classList.toggle('active', el.getAttribute('data-mr-acc') === acc);
+  });
+}
+function openMediaRecordModal() {
+  mrAccount = 'big';
+  document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
+    el.classList.toggle('active', el.getAttribute('data-mr-acc') === 'big');
+  });
+  const dEl = document.getElementById('mr-date');
+  if (dEl) dEl.value = todayStr();
+  const cEl = document.getElementById('mr-count');
+  if (cEl) cEl.value = '1';
+  const dyEl = document.getElementById('mr-douyin');
+  if (dyEl) dyEl.checked = false;
+  const nEl = document.getElementById('mr-note');
+  if (nEl) nEl.value = '';
+  const modal = document.getElementById('media-record-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeMediaRecordModal() {
+  const modal = document.getElementById('media-record-modal');
+  if (modal) modal.style.display = 'none';
+}
+function submitMediaRecord() {
+  const date = (document.getElementById('mr-date').value || todayStr());
+  const count = Math.max(1, parseInt(document.getElementById('mr-count').value) || 1);
+  const douyin = !!document.getElementById('mr-douyin').checked;
+  const note = (document.getElementById('mr-note').value || '').trim();
+  const accName = mrAccount === 'big' ? '🎨 美化档大号' : '👤 定制人物小号';
+  store.mediaRecords.push({
+    date: date,
+    account: mrAccount,
+    content: '更新' + count + '条',
+    douyin: douyin,
+    note: note,
+    count: count
+  });
+  saveData();
+  closeMediaRecordModal();
+  renderMedia();
+  alert('✅ 已记录：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
 }
 
 // ==================== 模拟人生更新推荐 ====================
@@ -5758,6 +5918,7 @@ function bindFinanceEvents() {
 
 // ==================== 经期与洗头 ====================
 function renderPeriod() {
+  fillDateInputDefault('wash-date-input');
   const today = todayStr();
   const todayDate = new Date(today);
   const periods = [...store.periodRecords].sort((a,b) => a.start.localeCompare(b.start));
@@ -5868,6 +6029,7 @@ function renderPeriod() {
 
 // ==================== 如厕记录 ====================
 function renderToilet() {
+  fillDateInputDefault('toilet-date-input');
   const info = getNextToiletInfo();
   const stateMap = {
     healthy: { color:'#1a9e4f', bg:'#e7f7ec', icon:'😊', label:'健康', sub:'正常，继续保持~' },
@@ -5904,6 +6066,7 @@ function renderToilet() {
 
 // ==================== 敷面膜记录 ====================
 function renderMask() {
+  fillDateInputDefault('mask-date-input');
   const info = getNextMaskInfo();
   const wn = ['日','一','二','三','四','五','六'];
   const pct = Math.min(100, Math.round(info.count / info.goal * 100));
@@ -7060,6 +7223,56 @@ function logMask() {
   const info = getNextMaskInfo();
   try { playSound('task'); } catch (e) {}
   alert('🧖 已记录：今天敷了面膜~ 本周 ' + info.count + '/' + info.goal);
+}
+
+// 选日期记录：洗头（指定日期，当天只记一次）
+function logWashForDate() {
+  const el = document.getElementById('wash-date-input');
+  const date = (el && el.value) ? el.value : todayStr();
+  if (!store.washRecords.some(w => w.date === date)) {
+    store.washRecords.push({ date: date });
+    saveData();
+  }
+  renderPeriod();
+  renderCountdown();
+  try { playSound('task'); } catch (e) {}
+  alert('🧴 已记录：' + date + ' 洗了头~');
+}
+
+// 选日期记录：上厕所（指定日期，可累加）
+function logToiletForDate() {
+  const el = document.getElementById('toilet-date-input');
+  const date = (el && el.value) ? el.value : todayStr();
+  __recordToiletCore(date);
+  saveData();
+  renderToilet();
+  renderCountdown();
+  try { checkCheckinAlerts(); } catch (e) {}
+  try { playSound('task'); } catch (e) {}
+  alert('🚽 已记录：' + date + ' 上了厕所~');
+}
+
+// 选日期记录：敷面膜（指定日期，当天只记一次）
+function logMaskForDate() {
+  const el = document.getElementById('mask-date-input');
+  const date = (el && el.value) ? el.value : todayStr();
+  if (!store.maskRecords.some(m => m.date === date)) {
+    store.maskRecords.push({ date: date });
+    saveData();
+  }
+  renderMask();
+  renderCountdown();
+  try { checkCheckinAlerts(); } catch (e) {}
+  try { playSound('task'); } catch (e) {}
+  alert('🧖 已记录：' + date + ' 敷了面膜~');
+}
+
+// 给"选日期记录"的日期输入回填今天（仅当为空时，避免覆盖用户已选日期）
+function fillDateInputDefault(id) {
+  try {
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = todayStr();
+  } catch (e) {}
 }
 
 // ==================== 倒计时组件（2×2：左=日期提醒，右=日常记录）====================
