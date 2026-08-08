@@ -328,6 +328,23 @@
     background: #ffb05e; color: #fff; font-size: 12px; font-weight: 700;
   }
   .goal-row .goal-info b { color: var(--c-pink-deep); }
+  .goal-save-btn {
+    border: none; border-radius: 10px; cursor: pointer;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #ff7e9c, #ff6b9e);
+    color: #fff; font-size: 13px; font-weight: 700;
+    box-shadow: 0 3px 10px rgba(255,107,158,0.32);
+    transition: transform .12s ease, box-shadow .2s ease;
+  }
+  .goal-save-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(255,107,158,0.42); }
+  .goal-save-btn:active { transform: scale(0.96); }
+  .goal-clear-btn {
+    border: 1px solid #ffd0dc; border-radius: 10px; cursor: pointer;
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.7);
+    color: #d14b73; font-size: 12px; font-weight: 600;
+  }
+  .goal-clear-btn:hover { background: #fff0f5; }
   .fitness-ring { flex: 0 0 auto; }
 
   .desktop-hero {
@@ -898,6 +915,32 @@
     transition: transform 0.12s ease;
   }
   .media-add-btn:active { transform: scale(0.97); }
+
+  /* 日期/出游面板：「➕ 新增日期 / 记一次」按钮（与 media-add-btn 同款） */
+  .date-add-btn {
+    margin-left: auto;
+    border: none; border-radius: 12px;
+    background: linear-gradient(90deg, #ff9eb5, #ff7f9e);
+    color: #fff; font-size: 13px; font-weight: 700;
+    padding: 6px 14px; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(209,75,115,0.22);
+    transition: transform 0.12s ease, box-shadow 0.2s ease;
+  }
+  .date-add-btn:hover { box-shadow: 0 4px 16px rgba(209,75,115,0.34); }
+  .date-add-btn:active { transform: scale(0.97); }
+  /* 列表行内的小操作按钮（编辑 / 删除） */
+  .row-edit-btn, .row-del-btn {
+    border: none; border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    padding: 3px 8px; margin-top: 4px; margin-right: 4px;
+    transition: transform 0.1s ease;
+  }
+  .row-edit-btn { background: #fff0f5; color: #d14b73; border: 1px solid #ffd0dc; }
+  .row-edit-btn:hover { background: #ffe4ec; }
+  .row-del-btn  { background: #fff0f0; color: #c43e3e; border: 1px solid #ffd4d4; }
+  .row-del-btn:hover  { background: #ffe4e4; }
+  .row-edit-btn:active, .row-del-btn:active { transform: scale(0.95); }
 
   /* 洗头/如厕/面膜：选日期记录一行（日期输入 + 记录此日按钮） */
   .date-log-row {
@@ -1653,11 +1696,11 @@
     }
     .cat-coin {
       position: fixed;
-      width: 28px; height: 28px;
+      width: 18px; height: 18px;             /* 元宝图标改小一圈（主人要求） */
       pointer-events: none;
       z-index: 10000;
-      font-size: 24px;
-      line-height: 28px;
+      font-size: 14px;
+      line-height: 18px;
       text-align: center;
       animation: cat-coin-fly 1.4s ease-out forwards;
       will-change: transform, opacity;
@@ -1696,7 +1739,7 @@
     @keyframes cat-bubble-rise {
       0%   { opacity: 0; transform: translate(-50%, 8px) scale(0.4); }
       18%  { opacity: 1; transform: translate(-50%, -10px) scale(1.08); }
-      100% { opacity: 0; transform: translate(-50%, -120px) scale(0.95); }
+      100% { opacity: 0; transform: translate(-50%, -60px) scale(0.95); }   /* 气泡上飘幅度收紧（主人要求：贴近招财猫、不超出屏幕） */
     }
     @media (max-width: 768px) {
       @media (max-width: 720px) {
@@ -2024,6 +2067,8 @@
           <label for="weight-goal-input">🎯 目标体重</label>
           <input type="number" id="weight-goal-input" step="0.1" min="30" max="200" placeholder="如 65" inputmode="decimal">
           <span style="font-size:13px;color:var(--c-muted);">kg</span>
+          <button id="weight-goal-save" class="goal-save-btn" type="button">✓ 确定</button>
+          <button id="weight-goal-clear" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
         </div>
         <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
       </div>
@@ -2439,16 +2484,102 @@
 
     <!-- 重要日期预览（Days Matter 风格） -->
     <div class="card">
-      <div class="card-title"><span>🎂</span> 重要日期</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:6px;">
+        <span>🎂</span> 重要日期
+        <button class="date-add-btn" onclick="openDateModal()" type="button">➕ 新增日期</button>
+      </div>
       <div id="important-dates"></div>
     </div>
 
     <!-- 外出游玩提醒（表格形式） -->
     <div class="card">
-      <div class="card-title"><span>✈️</span> 外出游玩提醒</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:6px;">
+        <span>✈️</span> 外出游玩提醒
+        <button class="date-add-btn" onclick="openTravelModal()" type="button">➕ 记一次</button>
+      </div>
       <div id="travel-reminders"></div>
     </div>
 
+  </div>
+
+  <!-- ==================== 重要日期 新增/编辑 弹窗 ==================== -->
+  <div id="date-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeDateModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeDateModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;" id="date-modal-title">新增日期</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📛 名称（生日 / 纪念日 / 提醒等）</label>
+          <input type="text" id="dm-name" placeholder="如：和庄梓岗在一起 / 妈妈生日 / 还花呗日" maxlength="40">
+        </div>
+        <div class="co-field">
+          <label>📅 具体日期</label>
+          <input type="date" id="dm-date">
+        </div>
+        <div class="co-field">
+          <label>类型</label>
+          <div class="co-status" id="dm-type-status">
+            <span class="co-status-opt active" data-t="birthday" onclick="dmPickType('birthday')">🎂 生日</span>
+            <span class="co-status-opt" data-t="anniversary" onclick="dmPickType('anniversary')">💕 纪念日</span>
+            <span class="co-status-opt" data-t="other" onclick="dmPickType('other')">🔔 其他提醒</span>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>历法</label>
+          <div class="co-status" id="dm-calendar-status">
+            <span class="co-status-opt active" data-c="solar" onclick="dmPickCalendar('solar')">📅 新历</span>
+            <span class="co-status-opt" data-c="lunar" onclick="dmPickCalendar('lunar')">🌙 农历</span>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>📝 备注（可选）</label>
+          <input type="text" id="dm-remark" placeholder="如：恋爱纪念日 / 农历九月初九 / 别忘了还款" maxlength="40">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeDateModal()">取消</button>
+        <button class="co-save" onclick="submitDateRecord()">保存日期</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 外出游玩 新增/编辑 弹窗 ==================== -->
+  <div id="travel-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeTravelModal()">
+    <div class="modal-card" style="max-width:460px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeTravelModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;" id="travel-modal-title">添加出游计划</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="tm-date">
+        </div>
+        <div class="co-field">
+          <label>📍 目的地</label>
+          <input type="text" id="tm-dest" placeholder="如：上海迪士尼 / 老家" maxlength="40">
+        </div>
+        <div class="co-field">
+          <label>🏨 酒店</label>
+          <div class="co-status" id="tm-hotel-status">
+            <span class="co-status-opt" data-h="0" onclick="tmPickHotel(0)">✗ 未订</span>
+            <span class="co-status-opt active" data-h="1" onclick="tmPickHotel(1)">✓ 已订</span>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>📦 准备清单（每行一条，如：充电器 / 防晒霜 / 身份证）</label>
+          <textarea id="tm-checklist" rows="3" placeholder="充电器&#10;防晒霜&#10;身份证" style="border:1.5px solid #ffd0dc;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;background:rgba(255,255,255,0.85);color:#5a3a48;width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeTravelModal()">取消</button>
+        <button class="co-save" onclick="submitTravelRecord()">保存计划</button>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== 电影推荐 ==================== -->
@@ -4472,8 +4603,6 @@ const DAILY_INSPIRE_POOL = [
     detail: { copy: '把整套脸部滑块数值截图发出来，从颧骨、鼻梁到唇形一步步对照调，再附一张「调前vs调后」对比图。新手照着抄就能捏出干净舒服的颜值脸，评论区还能让人点单捏指定风格。', tags: '#模拟人生4 #捏脸 #sims4捏脸 #神颜 #模拟人生教程', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '参数图+前后对比是爆点，结尾引导「想捏谁评论区点单」拉互动', link: '' } },
   { type: 'web', platform: '小红书', topic: '秘籍大全', title: '模拟人生4作弊码大全｜30个必收藏神级指令', traffic: '爆款',
     detail: { copy: '按场景分类整理：加钱（motherlode / kaching）、锁定需求（sims.fill_all_commodities）、快速升职、解锁全部物品。每条配「怎么打开控制台+粘贴什么」，收藏率极高，适合置顶当长尾引流。', tags: '#模拟人生4 #作弊码 #秘籍 #sims4攻略 #模拟人生', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '清单/合集类收藏率最高，做成图文长图更易存', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '房屋建造', title: 'Sims4 ins风别墅建造｜从0到1全流程', traffic: '爆款',
-    detail: { copy: '用分段录像+关键步骤截图讲清楚：地基规划→动线→软装配色→灯光氛围。结尾甩「家具清单+配色hex」，方便抄作业。建造类极易做成系列，每期一个风格（原木/法式/极简）。', tags: '#模拟人生4 #房屋建造 #sims4装修 #ins风 #模拟人生建筑', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '系列化更新，固定「XX风建造」栏目，粉丝追更', link: '' } },
   { type: 'web', platform: '抖音', topic: '治愈日常', title: '把模拟人生当电子宠物养｜我的治愈日常', traffic: '爆款',
     detail: { copy: '不追求技术，主打情绪价值：清晨遛狗、煮咖啡、看Sims发呆的慢镜头+轻音乐。文案走「今天也辛苦啦」的陪伴感，戳中打工人的电子陪伴需求，完播率高。', tags: '#模拟人生 #sims4 #治愈系 #游戏vlog #电子陪伴', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '抖音重BGM与情绪，前3秒放最治愈画面锁完播', link: '' } },
   { type: 'web', platform: '小红书', topic: 'MOD清单', title: 'Sims4必装MOD清单｜UI+玩法+美化一次搞定', traffic: '爆款',
@@ -4493,10 +4622,17 @@ const DAILY_INSPIRE_POOL = [
   { type: 'web', platform: '抖音', topic: '剧情连载', title: '三代家族恩怨EP.1｜比剧还上头', traffic: '爆款',
     detail: { copy: '用游戏画面+旁白讲一个家族三代的爱恨情仇，第一集埋矛盾（遗产/私生子/破产），钩子拉满。剧情向完播和关注转化都高。', tags: '#模拟人生4 #剧情 #家族故事 #sims4 #模拟人生故事', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '剧本式分集，每集留反转，引导关注看下集', link: '' } },
   { type: 'web', platform: '小红书', topic: 'Legacy玩法', title: 'Royalty & Legacy贵族开局｜王朝Legacy这样玩才上头', traffic: '爆款',
-    detail: { copy: '2026 最火扩张包 Royalty & Legacy 真的上头：王室家族、爵位继承、王朝声望、政治丑闻一套齐全。笔记讲「平民→贵族→王朝」三阶段开局，配家族树截图+继承冲突名场面，钩子拉满。', tags: '#模拟人生4 #RoyaltyLegacy #legacy #王朝玩法 #模拟人生剧情', stats: '趋势参考：公开搜索 2026-08（真实热点：Royalty&Legacy 扩张包爆火）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '蹭扩张包热度，做「开局设定→继承危机→王朝崛起」连载', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '应季热点', title: 'Bridgerton摄政风｜舞会捏脸+城堡建造一条龙', traffic: '爆款',
-    detail: { copy: 'EA×Netflix Bridgerton 联动引爆摄政风热潮：华丽礼服、面具、舞厅、贵族发型。笔记做「摄政风捏脸参数+舞厅建造+穿搭CC」三合一，借热点流量最快。', tags: '#模拟人生4 #Bridgerton #摄政风 #舞会 #模拟人生建造', stats: '趋势参考：公开搜索 2026-08（真实热点：Bridgerton 联动）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '热点窗口期发布，标题带 Bridgerton 吃搜索流量', link: '' } }
+    detail: { copy: '2026 最火扩张包 Royalty & Legacy 真的上头：王室家族、爵位继承、王朝声望、政治丑闻一套齐全。笔记讲「平民→贵族→王朝」三阶段开局，配家族树截图+继承冲突名场面，钩子拉满。', tags: '#模拟人生4 #RoyaltyLegacy #legacy #王朝玩法 #模拟人生剧情', stats: '趋势参考：公开搜索 2026-08（真实热点：Royalty&Legacy 扩张包爆火）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '蹭扩张包热度，做「开局设定→继承危机→王朝崛起」连载', link: '' } }
 ];
+
+// 笔记推荐黑名单（主人要求：规避 房屋 / 别墅 / 建造 类内容）
+const INSPIRE_BLACKLIST = ['房屋', '别墅', '建造', '城堡'];
+function inspireAllowed(p) {
+  if (!p) return false;
+  const hay = (p.title || '') + ' ' + (p.topic || '') + ' ' + ((p.detail && p.detail.tags) || '') + ' ' + ((p.detail && p.detail.copy) || '');
+  return !INSPIRE_BLACKLIST.some(kw => hay.indexOf(kw) >= 0);
+}
+const INSPIRE_POOL = DAILY_INSPIRE_POOL.filter(inspireAllowed);   // 过滤后池
 
 // 计算两个 YYYY-MM-DD 相差的天数（b - a），统一按 UTC 基准解析，避免时区偏差
 function ymdDiffDays(a, b) {
@@ -4513,7 +4649,7 @@ function ensureDailyInspire() {
   let existing = store.inspireRecords || [];
   // 若今天的推荐已不在当前池中（池已升级），则移除，重新取一条，保证刷新后展示新内容
   const todayRec = existing.find(r => r.date === today);
-  const inPool = todayRec && DAILY_INSPIRE_POOL.some(p => p.title === todayRec.title);
+  const inPool = todayRec && INSPIRE_POOL.some(p => p.title === todayRec.title);   // 用过滤后的池
   if (todayRec && !inPool) {
     existing = existing.filter(r => r.date !== today);
     store.inspireRecords = existing;
@@ -4525,8 +4661,8 @@ function ensureDailyInspire() {
     const lastDate = sorted.length ? sorted[0].date : null;
     const needNew = !lastDate || ymdDiffDays(lastDate, today) >= INSPIRE_REFRESH_DAYS;
     if (needNew) {
-      const dayIndex = (store.inspireRecords || []).length % DAILY_INSPIRE_POOL.length;
-      const newInspire = { ...DAILY_INSPIRE_POOL[dayIndex], date: today };
+      const dayIndex = (store.inspireRecords || []).length % INSPIRE_POOL.length;
+      const newInspire = { ...INSPIRE_POOL[dayIndex], date: today };              // 从过滤池抽
       store.inspireRecords.push(newInspire);
       saveData();
     }
@@ -4538,8 +4674,8 @@ function ensureDailyInspire() {
 window.refreshInspireToday = function () {
   const today = todayStr();
   store.inspireRecords = (store.inspireRecords || []).filter(r => r.date !== today);
-  const dayIndex = (store.inspireRecords || []).length % DAILY_INSPIRE_POOL.length;
-  store.inspireRecords.push({ ...DAILY_INSPIRE_POOL[dayIndex], date: today });
+  const dayIndex = (store.inspireRecords || []).length % INSPIRE_POOL.length;
+  store.inspireRecords.push({ ...INSPIRE_POOL[dayIndex], date: today });          // 从过滤池抽
   saveData();
   try { renderInspire(); } catch (e) {}
 };
@@ -4820,16 +4956,32 @@ function renderWeightGoal(startWeight, latestAfter) {
 
 function bindWeightGoalInput() {
   const input = document.getElementById('weight-goal-input');
+  const saveBtn = document.getElementById('weight-goal-save');
+  const clearBtn = document.getElementById('weight-goal-clear');
   if (!input || input.dataset.bound) return;
   input.dataset.bound = '1';
+  // 关键：边输入不立刻保存，必须点「✓ 确定」才生效，避免设错难复位（主人要求）
   const save = () => {
     const v = parseFloat(input.value);
-    store.weightGoal = (!isNaN(v) && v > 0) ? v : null;
+    if (isNaN(v) || v <= 0) { finToast('请填写有效的目标体重（30-200）'); return; }
+    store.weightGoal = v;
     saveData();
     try { renderFitness(); } catch(e) {}
+    try { finToast && finToast('🎯 目标体重已设为 ' + v.toFixed(1) + ' kg'); } catch(e) {}
   };
-  input.addEventListener('change', save);
-  input.addEventListener('blur', save);
+  const clear = () => {
+    input.value = '';
+    store.weightGoal = null;
+    saveData();
+    try { renderFitness(); } catch(e) {}
+    try { finToast && finToast('已清除目标体重'); } catch(e) {}
+  };
+  if (saveBtn) saveBtn.addEventListener('click', save);
+  if (clearBtn) clearBtn.addEventListener('click', clear);
+  // 也支持回车直接保存，但失焦/change 不保存（防止误触）
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+  });
 }
 
 // ==================== 减肥记录 ====================
@@ -6030,7 +6182,8 @@ function calcDateInfo(d, today) {
   const isBirthday = d.type === 'birthday';
   const parts = d.date.split('-');
   const hasYear = parts.length === 3;
-  const isLunar = (d.remark || '').indexOf('农历') >= 0;
+  // 农历标记优先使用显式字段 d.isLunar（旧数据无字段时回退到备注里"农历"字样）
+  const isLunar = d.isLunar === true || (d.isLunar == null && (d.remark || '').indexOf('农历') >= 0);
 
   if (isBirthday) {
     if (!hasYear) {
@@ -6166,24 +6319,26 @@ function renderReminder() {
   // ========== 重要日期（Days Matter 风格列表）==========
   const dates = store.importantDates || [];
   if (dates.length === 0) {
-    document.getElementById('important-dates').innerHTML = `<div class="empty-state"><div class="big-icon">🎂</div><p>暂无重要日期</p><p style="font-size:12px;margin-top:6px;">告诉我你的生日、纪念日、在一起日期~</p></div>`;
+    document.getElementById('important-dates').innerHTML = `<div class="empty-state"><div class="big-icon">🎂</div><p>暂无重要日期</p><p style="font-size:12px;margin-top:6px;">告诉我你的生日/纪念日/其他提醒，或点「➕ 新增日期」自己加~</p></div>`;
   } else {
-    // 计算每个日期的信息并排序（按距今最近排列）
-    const dateList = dates.map(d => {
+    // 计算每个日期的信息并排序（按距今最近排列）；保留原始 store 索引 d._idx 用于编辑/删除
+    const dateList = dates.map((d, i) => {
       const info = calcDateInfo(d, today);
-      return { ...d, ...info };
+      return { ...d, ...info, _idx: i };
     });
     dateList.sort((a, b) => a.sortKey - b.sortKey);
 
     let html = '';
     dateList.forEach(d => {
       const isBirthday = d.type === 'birthday';
-      const icon = isBirthday ? '🎂' : '💕';
-      const typeLabel = isBirthday ? '生日' : '纪念日';
-      const typeColor = isBirthday ? '#ff7f9e' : '#e878a6';
+      const isAnniversary = d.type === 'anniversary';
+      const isOther = !isBirthday && !isAnniversary;
+      const icon = isBirthday ? '🎂' : (isAnniversary ? '💕' : '🔔');
+      const typeLabel = isBirthday ? '生日' : (isAnniversary ? '纪念日' : '其他提醒');
+      const typeColor = isBirthday ? '#ff7f9e' : (isAnniversary ? '#e878a6' : '#a08fc4');
       const lunarTag = d.isLunar ? '<span style="font-size:10px;padding:1px 6px;border-radius:6px;background:#fff0d6;color:#c08020;">农历</span>' : '<span style="font-size:10px;padding:1px 6px;border-radius:6px;background:#e8f4fd;color:#2080c0;">公历</span>';
 
-      // 倒计时显示
+      // 倒计时显示（支持 生日/纪念日/其他提醒 三类）
       let countText, countNum, countLabel, countColor;
       if (d.isToday) {
         countNum = '🎉';
@@ -6195,11 +6350,16 @@ function renderReminder() {
         countLabel = '天后生日';
         countColor = '#ff7f9e';
         countText = d.hasYear && d.totalDays ? `🌟 已来这个世界 ${d.totalDays} 天` : '';
-      } else {
+      } else if (isAnniversary) {
         countNum = d.daysLeft;
         countLabel = '天后纪念日';
         countColor = '#e878a6';
         countText = `💕 在一起第 ${d.totalDays} 天`;
+      } else {
+        countNum = d.daysLeft;
+        countLabel = '天后提醒';
+        countColor = '#a08fc4';
+        countText = '';
       }
 
       // 显示日期
@@ -6219,11 +6379,16 @@ function renderReminder() {
             </div>
             <div style="font-size:12px;color:#7d4a5a;">📅 ${dateDisplay}</div>
             ${countText ? `<div style="font-size:11px;color:#9a6a7e;margin-top:3px;">${countText}</div>` : ''}
+            ${d.remark ? `<div style="font-size:11px;color:#9a6a7e;margin-top:2px;">📝 ${d.remark}</div>` : ''}
           </div>
           <div style="text-align:center;min-width:64px;padding-left:8px;">
             <div style="font-size:22px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
             <div style="font-size:10px;color:#7d4a5a;margin-top:2px;">${countLabel}</div>
           </div>
+        </div>
+        <div style="margin-top:8px;text-align:right;">
+          <button class="row-edit-btn" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
+          <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
         </div>
       </div>`;
     });
@@ -6246,6 +6411,7 @@ function renderReminder() {
             <th style="padding:10px 8px;text-align:center;font-weight:700;">🏨 酒店</th>
             <th style="padding:10px 8px;text-align:left;font-weight:700;">📦 准备清单</th>
             <th style="padding:10px 8px;text-align:center;font-weight:700;">⏰ 状态</th>
+            <th style="padding:10px 6px;text-align:center;font-weight:700;">操作</th>
           </tr>
         </thead>
         <tbody>`;
@@ -6295,19 +6461,153 @@ function renderReminder() {
         <td style="padding:10px 8px;text-align:center;">
           <span style="padding:4px 8px;border-radius:8px;background:${statusBg};color:${statusColor};font-size:11px;font-weight:600;white-space:nowrap;">${statusText}</span>
         </td>
+        <td style="padding:10px 6px;text-align:center;white-space:nowrap;">
+          <button class="row-edit-btn" onclick="openTravelModal(${idx})" type="button">✏️</button>
+          <button class="row-del-btn" onclick="deleteTravelRecord(${idx})" type="button">🗑</button>
+        </td>
       </tr>`;
     });
 
     html += `</tbody></table></div>`;
 
     // 操作提示
-    html += `<div style="margin-top:10px;font-size:11px;color:#9a6a7e;text-align:center;">💡 点击准备清单项可勾选/取消勾选</div>`;
+    html += `<div style="margin-top:10px;font-size:11px;color:#9a6a7e;text-align:center;">💡 点击准备清单项可勾选/取消勾选；表格右侧可编辑/删除</div>`;
 
     document.getElementById('travel-reminders').innerHTML = html;
   }
 
   // 显示提醒横幅
   showReminderBanners();
+}
+
+// ==================== 重要日期弹窗（新增/编辑/删除）====================
+let dmType = 'birthday';
+let dmCalendar = 'solar';
+let dmEditIdx = -1;   // -1=新增，>=0=编辑 store.importantDates[dmEditIdx]
+function dmPickType(t) {
+  dmType = t;
+  document.querySelectorAll('#dm-type-status .co-status-opt').forEach(el => el.classList.toggle('active', el.getAttribute('data-t') === t));
+}
+function dmPickCalendar(c) {
+  dmCalendar = c;
+  document.querySelectorAll('#dm-calendar-status .co-status-opt').forEach(el => el.classList.toggle('active', el.getAttribute('data-c') === c));
+}
+function openDateModal(idx) {
+  dmEditIdx = (typeof idx === 'number') ? idx : -1;
+  document.getElementById('date-modal-title').textContent = dmEditIdx >= 0 ? '编辑日期' : '新增日期';
+  if (!store.importantDates) store.importantDates = [];
+  const d = dmEditIdx >= 0 ? store.importantDates[dmEditIdx] : null;
+  document.getElementById('dm-name').value  = d ? d.name  : '';
+  document.getElementById('dm-date').value  = d ? d.date  : todayStr();
+  document.getElementById('dm-remark').value= d ? (d.remark || '') : '';
+  dmType = d ? (d.type || 'birthday') : 'birthday';
+  dmCalendar = (d && d.isLunar) ? 'lunar' : 'solar';
+  dmPickType(dmType);
+  dmPickCalendar(dmCalendar);
+  const m = document.getElementById('date-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  setTimeout(function () { try { document.getElementById('dm-name').focus(); } catch (e) {} }, 50);
+}
+function closeDateModal() {
+  const m = document.getElementById('date-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function submitDateRecord() {
+  const name   = (document.getElementById('dm-name').value  || '').trim();
+  const date   = (document.getElementById('dm-date').value  || '').trim();
+  const remark = (document.getElementById('dm-remark').value|| '').trim();
+  if (!name) { finToast('请填写名称'); return; }
+  if (!date) { finToast('请选择日期'); return; }
+  if (!store.importantDates) store.importantDates = [];
+  const obj = { name: name, date: date, type: dmType, isLunar: dmCalendar === 'lunar' };
+  if (remark) obj.remark = remark;
+  if (dmEditIdx >= 0) store.importantDates[dmEditIdx] = obj;
+  else store.importantDates.push(obj);
+  try { saveData(); } catch (e) {}
+  renderReminder();
+  closeDateModal();
+  try { finToast('🎉 已保存日期「' + name + '」'); } catch (e) {}
+}
+function deleteDateRecord(idx) {
+  if (!store.importantDates || !store.importantDates[idx]) return;
+  const name = store.importantDates[idx].name || '这条';
+  if (!confirm('确定删除「' + name + '」吗？')) return;
+  store.importantDates.splice(idx, 1);
+  try { saveData(); } catch (e) {}
+  renderReminder();
+  try { finToast('已删除「' + name + '」'); } catch (e) {}
+}
+// ESC 关闭（用现有 ESC 监听 keydown，已绑到 closeAddModal 等；额外绑一个 closeDate/closeTravel 安全）
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    const dm = document.getElementById('date-modal');
+    const tm = document.getElementById('travel-modal');
+    if (dm && dm.style.display !== 'none') { closeDateModal(); e.preventDefault(); }
+    else if (tm && tm.style.display !== 'none') { closeTravelModal(); e.preventDefault(); }
+  }
+});
+
+// ==================== 外出游玩 弹窗（新增/编辑/删除）====================
+let tmHotel = 1;
+let tmEditIdx = -1;
+function tmPickHotel(v) {
+  tmHotel = v;
+  document.querySelectorAll('#tm-hotel-status .co-status-opt').forEach(el => el.classList.toggle('active', parseInt(el.getAttribute('data-h'), 10) === v));
+}
+function openTravelModal(idx) {
+  tmEditIdx = (typeof idx === 'number') ? idx : -1;
+  document.getElementById('travel-modal-title').textContent = tmEditIdx >= 0 ? '编辑出游计划' : '添加出游计划';
+  if (!store.travelPlans) store.travelPlans = [];
+  const t = tmEditIdx >= 0 ? store.travelPlans[tmEditIdx] : null;
+  document.getElementById('tm-date').value = t ? t.date : todayStr();
+  document.getElementById('tm-dest').value = t ? t.destination : '';
+  document.getElementById('tm-checklist').value = (t && t.checklist) ? t.checklist.map(i => i.name).join('\n') : '';
+  tmHotel = t ? (t.hotel ? 1 : 0) : 1;
+  tmPickHotel(tmHotel);
+  const m = document.getElementById('travel-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  setTimeout(function () { try { document.getElementById('tm-dest').focus(); } catch (e) {} }, 50);
+}
+function closeTravelModal() {
+  const m = document.getElementById('travel-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function submitTravelRecord() {
+  const date = (document.getElementById('tm-date').value || todayStr()).trim();
+  const dest = (document.getElementById('tm-dest').value || '').trim();
+  const list = (document.getElementById('tm-checklist').value || '').trim();
+  if (!dest) { finToast('请填写目的地'); return; }
+  if (!date) { finToast('请选择日期'); return; }
+  const checklist = list
+    ? list.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(name => ({ name: name, done: false }))
+    : [];
+  const obj = { date: date, destination: dest, hotel: tmHotel === 1, checklist: checklist };
+  if (!store.travelPlans) store.travelPlans = [];
+  if (tmEditIdx >= 0) {
+    const old = store.travelPlans[tmEditIdx];
+    if (old && old.checklist) {
+      const oldMap = {}; old.checklist.forEach(i => oldMap[i.name] = i.done);
+      checklist.forEach(i => { if (oldMap[i.name]) i.done = true; });
+    }
+    store.travelPlans[tmEditIdx] = obj;
+  } else {
+    store.travelPlans.push(obj);
+  }
+  try { saveData(); } catch (e) {}
+  renderReminder();
+  closeTravelModal();
+  try { finToast('✈️ 已保存出游计划「' + dest + '」'); } catch (e) {}
+}
+function deleteTravelRecord(idx) {
+  if (!store.travelPlans || !store.travelPlans[idx]) return;
+  const name = store.travelPlans[idx].destination || '这条';
+  if (!confirm('确定删除出游计划「' + name + '」吗？')) return;
+  store.travelPlans.splice(idx, 1);
+  try { saveData(); } catch (e) {}
+  renderReminder();
+  try { finToast('已删除出游计划「' + name + '」'); } catch (e) {}
 }
 
 // 勾选准备清单
@@ -7791,9 +8091,9 @@ setInterval(updateClock, 1000);
         c.className = 'cat-coin';
         c.innerHTML = CAT_COINS[Math.floor(Math.random() * CAT_COINS.length)];
         var ang = Math.random() * Math.PI * 2;
-        var dist = 55 + Math.random() * 85;
-        c.style.left = (x - 14) + 'px';
-        c.style.top = (y - 14) + 'px';
+        var dist = 30 + Math.random() * 50;                                  /* 元宝改小，散落半径同步收紧 */
+        c.style.left = (x - 9) + 'px';                                       /* 中心对齐（half of 18） */
+        c.style.top = (y - 9) + 'px';
         c.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(1) + 'px');
         c.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(1) + 'px');
         c.style.animationDelay = (i * 0.045) + 's';
@@ -7808,7 +8108,7 @@ setInterval(updateClock, 1000);
     b.className = 'cat-bubble';
     b.textContent = text || CAT_BUBBLES[catSpeakIndex % CAT_BUBBLES.length];
     b.style.left = x + 'px';
-    b.style.top = (y - 64) + 'px';
+    b.style.top = (y + 18) + 'px';                                          /* 气泡起点：从猫顶往下 18px（贴近招财猫，不会超出屏幕） */
     document.body.appendChild(b);
     setTimeout(function(){ try { b.remove(); } catch(e){} }, 2000);
   }
