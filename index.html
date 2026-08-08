@@ -4882,11 +4882,11 @@ function renderIncome() {
     document.getElementById('custom-orders-table').innerHTML = `<div class="empty-state"><div class="big-icon">📝</div><p>本月暂无定制单</p></div>`;
   } else {
     let html = `<div style="overflow-x:auto;"><table><thead><tr><th>下单</th><th>截止</th><th>金额</th><th>描述</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
-    monthOrders.forEach(o => {
+    store.customOrders.forEach((o, idx) => {
+      if (!o.date.startsWith(month)) return;
       const overdue = o.status === 'pending' && new Date(o.deadline) < new Date(today);
       const badge = o.status === 'done' ? '<span class="badge done">已完成</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待完成</span>');
-      const oid = o.id || '';
-      html += `<tr><td>${o.date}</td><td>${o.deadline}</td><td>¥${o.amount}</td><td>${o.desc||'—'}</td><td>${badge}</td><td><button class="row-edit-btn" onclick="openCustomOrderModal('${oid}')">✏️ 修改</button></td></tr>`;
+      html += `<tr><td>${o.date}</td><td>${o.deadline}</td><td>¥${o.amount}</td><td>${o.desc||'—'}</td><td>${badge}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openCustomOrderModal(${idx})">✏️ 修改</button> <button class="row-del-btn" onclick="deleteCustomOrder(${idx})">🗑</button></td></tr>`;
     });
     html += '</tbody></table></div>';
     document.getElementById('custom-orders-table').innerHTML = html;
@@ -4917,27 +4917,25 @@ function setCoStatus(st) {
     el.classList.toggle('active', el.getAttribute('data-st') === st);
   });
 }
-let editingCoId = null;
-function openCustomOrderModal(editId) {
-  editingCoId = (editId && editId !== 'undefined') ? editId : null;
+let editingCoIdx = -1;
+function openCustomOrderModal(idx) {
+  editingCoIdx = (typeof idx === 'number' && idx >= 0 && store.customOrders && store.customOrders[idx]) ? idx : -1;
   const elDate = document.getElementById('co-date');
   const elDead = document.getElementById('co-deadline');
   const amt = document.getElementById('co-amount');
   const desc = document.getElementById('co-desc');
   const titleEl = document.getElementById('co-modal-title');
-  if (editingCoId && store.customOrders) {
-    const o = store.customOrders.find(x => x.id === editingCoId);
-    if (o) {
-      if (elDate) elDate.value = o.date;
-      if (elDead) elDead.value = o.deadline;
-      if (amt) amt.value = o.amount;
-      if (desc) desc.value = o.desc || '';
-      setCoStatus(o.status || 'pending');
-      if (titleEl) titleEl.textContent = '修改定制单';
-      const m = document.getElementById('custom-order-modal');
-      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-      return;
-    }
+  if (editingCoIdx >= 0) {
+    const o = store.customOrders[editingCoIdx];
+    if (elDate) elDate.value = o.date;
+    if (elDead) elDead.value = o.deadline;
+    if (amt) amt.value = o.amount;
+    if (desc) desc.value = o.desc || '';
+    setCoStatus(o.status || 'pending');
+    if (titleEl) titleEl.textContent = '✏️ 修改定制单';
+    const m = document.getElementById('custom-order-modal');
+    if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    return;
   }
   const d = todayStr();
   if (elDate) elDate.value = d;
@@ -4947,7 +4945,7 @@ function openCustomOrderModal(editId) {
   if (amt) amt.value = '';
   if (desc) desc.value = '';
   setCoStatus('pending');
-  if (titleEl) titleEl.textContent = '记定制单';
+  if (titleEl) titleEl.textContent = '➕ 记定制单';
   const m = document.getElementById('custom-order-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
@@ -4955,7 +4953,7 @@ function closeCustomOrderModal() {
   const m = document.getElementById('custom-order-modal');
   if (m) m.style.display = 'none';
   document.body.style.overflow = '';
-  editingCoId = null;
+  editingCoIdx = -1;
 }
 function submitCustomOrder() {
   const dateEl = document.getElementById('co-date');
@@ -4969,19 +4967,31 @@ function submitCustomOrder() {
   if (isNaN(amount) || amount <= 0) { finToast('请填写有效金额'); return; }
   if (!deadline) { finToast('请选择截止时间'); return; }
   if (!store.customOrders) store.customOrders = [];
-  if (editingCoId) {
-    const idx = store.customOrders.findIndex(x => x.id === editingCoId);
-    if (idx >= 0) {
-      store.customOrders[idx] = Object.assign({}, store.customOrders[idx], { date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
-    }
-    editingCoId = null;
+  if (editingCoIdx >= 0 && store.customOrders[editingCoIdx]) {
+    // 原地修改：保留原 id，仅更新字段
+    const orig = store.customOrders[editingCoIdx];
+    store.customOrders[editingCoIdx] = Object.assign({}, orig, {
+      date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc
+    });
   } else {
-    store.customOrders.push({ id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+    if (!store.customOrders[editingCoIdx]) {
+      store.customOrders.push({ id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+    }
   }
+  editingCoIdx = -1;
   saveData();
   closeCustomOrderModal();
   try { renderIncome(); } catch (e) {}
   finToast('✅ 已更新定制单 ¥' + amount.toFixed(2));
+}
+function deleteCustomOrder(idx) {
+  if (!store.customOrders || !store.customOrders[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
+  const o = store.customOrders[idx];
+  if (!confirm('确定删除定制单「' + (o.desc || o.date) + ' ¥' + o.amount + '」吗？删除后不可恢复哦~')) return;
+  store.customOrders.splice(idx, 1);
+  saveData();
+  try { renderIncome(); } catch (e) {}
+  finToast('🗑️ 已删除定制单');
 }
 // ESC 关闭记定制单弹窗
 document.addEventListener('keydown', e => {
@@ -5146,16 +5156,17 @@ function renderFitness() {
   // 运动详细记录（记一项）
   const itemsEl = document.getElementById('exercise-items-table');
   if (itemsEl) {
-    const items = (store.exerciseItems || []).filter(it => it.date && it.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date));
+    if (!store.exerciseItems) store.exerciseItems = [];
+    const items = store.exerciseItems.filter(it => it.date && it.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date));
     if (items.length === 0) {
       itemsEl.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="big-icon">🏋️</div><p>本月暂无详细记录</p><p style="font-size:12px;margin-top:6px;">点「记一项」记录具体器械/有氧明细</p></div></td></tr>`;
     } else {
       let ih = '';
       items.forEach(it => {
-        const iid = it.id || '';
+        const idx = store.exerciseItems.indexOf(it);  // 真实 store 索引
         const typeName = it.type || '器械';
         const dur = (it.duration != null && !isNaN(it.duration)) ? (it.duration + '分') : '—';
-        ih += `<tr><td>${it.date}</td><td>${typeName}</td><td>${it.name||'—'}</td><td>${dur}</td><td>${it.sets||'—'}</td><td>${it.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseItemModal('${iid}')">✏️</button> <button class="row-del-btn" onclick="deleteExerciseItem('${iid}')">🗑</button></td></tr>`;
+        ih += `<tr><td>${it.date}</td><td>${typeName}</td><td>${it.name||'—'}</td><td>${dur}</td><td>${it.sets||'—'}</td><td>${it.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseItemModal(${idx})">✏️</button> <button class="row-del-btn" onclick="deleteExerciseItem(${idx})">🗑</button></td></tr>`;
       });
       itemsEl.innerHTML = ih;
     }
@@ -5290,11 +5301,11 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="big-icon">📱</div><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后告诉我：哪个号、发了什么、是否同步抖音</p></div></td></tr>`;
   } else {
     let html = '';
-    monthRecords.forEach(r => {
+    store.mediaRecords.forEach((r, idx) => {
+      if (!r.date.startsWith(month)) return;
       const accName = r.account === 'big' ? '🎨 美化档大号' : '👤 定制人物小号';
       const dyMark = r.douyin ? '<span class="check-yes">✓ 是</span>' : '<span class="check-no">✗ 否</span>';
-      const rid = r.id || '';
-      html += `<tr><td>${r.date}</td><td>${accName}</td><td>${r.content}${(r.count&&r.count>1)?' ('+r.count+'条)':''}</td><td>${dyMark}</td><td>${r.note||'—'}</td><td><button class="row-edit-btn" onclick="openMediaRecordModal('${rid}')">✏️ 修改</button></td></tr>`;
+      html += `<tr><td>${r.date}</td><td>${accName}</td><td>${r.content}${(r.count&&r.count>1)?' ('+r.count+'条)':''}</td><td>${dyMark}</td><td>${r.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openMediaRecordModal(${idx})">✏️ 修改</button> <button class="row-del-btn" onclick="deleteMediaRecord(${idx})">🗑</button></td></tr>`;
     });
     document.getElementById('media-table').innerHTML = html;
   }
@@ -5320,9 +5331,9 @@ function mrPickAccount(acc) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === acc);
   });
 }
-let editingMrId = null;
-function openMediaRecordModal(editId) {
-  editingMrId = (editId && editId !== 'undefined') ? editId : null;
+let editingMrIdx = -1;
+function openMediaRecordModal(idx) {
+  editingMrIdx = (typeof idx === 'number' && idx >= 0 && store.mediaRecords && store.mediaRecords[idx]) ? idx : -1;
   mrAccount = 'big';
   document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === 'big');
@@ -5331,21 +5342,20 @@ function openMediaRecordModal(editId) {
   const cEl = document.getElementById('mr-count');
   const dyEl = document.getElementById('mr-douyin');
   const nEl = document.getElementById('mr-note');
-  if (editingMrId && store.mediaRecords) {
-    const r = store.mediaRecords.find(x => x.id === editingMrId);
-    if (r) {
-      mrAccount = r.account || 'big';
-      document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
-        el.classList.toggle('active', el.getAttribute('data-mr-acc') === mrAccount);
-      });
-      if (dEl) dEl.value = r.date;
-      if (cEl) cEl.value = r.count || 1;
-      if (dyEl) dyEl.checked = !!r.douyin;
-      if (nEl) nEl.value = r.note || '';
-      const modal = document.getElementById('media-record-modal');
-      if (modal) modal.style.display = 'flex';
-      return;
-    }
+  const title = document.querySelector('#media-record-modal .modal-title, #media-record-modal [data-title]');
+  if (editingMrIdx >= 0) {
+    const r = store.mediaRecords[editingMrIdx];
+    mrAccount = r.account || 'big';
+    document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-mr-acc') === mrAccount);
+    });
+    if (dEl) dEl.value = r.date;
+    if (cEl) cEl.value = r.count || 1;
+    if (dyEl) dyEl.checked = !!r.douyin;
+    if (nEl) nEl.value = r.note || '';
+    const modal = document.getElementById('media-record-modal');
+    if (modal) modal.style.display = 'flex';
+    return;
   }
   if (dEl) dEl.value = todayStr();
   if (cEl) cEl.value = '1';
@@ -5357,7 +5367,7 @@ function openMediaRecordModal(editId) {
 function closeMediaRecordModal() {
   const modal = document.getElementById('media-record-modal');
   if (modal) modal.style.display = 'none';
-  editingMrId = null;
+  editingMrIdx = -1;
 }
 function submitMediaRecord() {
   const date = (document.getElementById('mr-date').value || todayStr());
@@ -5366,12 +5376,12 @@ function submitMediaRecord() {
   const note = (document.getElementById('mr-note').value || '').trim();
   const accName = mrAccount === 'big' ? '🎨 美化档大号' : '👤 定制人物小号';
   if (!store.mediaRecords) store.mediaRecords = [];
-  if (editingMrId) {
-    const idx = store.mediaRecords.findIndex(x => x.id === editingMrId);
-    if (idx >= 0) {
-      store.mediaRecords[idx] = Object.assign({}, store.mediaRecords[idx], { date: date, account: mrAccount, content: '更新' + count + '条', douyin: douyin, note: note, count: count });
-    }
-    editingMrId = null;
+  if (editingMrIdx >= 0 && store.mediaRecords[editingMrIdx]) {
+    // 原地修改：保留原 id，仅更新字段
+    const orig = store.mediaRecords[editingMrIdx];
+    store.mediaRecords[editingMrIdx] = Object.assign({}, orig, {
+      date: date, account: mrAccount, content: '更新' + count + '条', douyin: douyin, note: note, count: count
+    });
   } else {
     store.mediaRecords.push({
       id: 'mr_' + Date.now(),
@@ -5383,43 +5393,51 @@ function submitMediaRecord() {
       count: count
     });
   }
+  editingMrIdx = -1;
   saveData();
   closeMediaRecordModal();
   renderMedia();
-  alert('✅ 已记录：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
+  alert('✅ 已更新：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
+}
+function deleteMediaRecord(idx) {
+  if (!store.mediaRecords || !store.mediaRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
+  const r = store.mediaRecords[idx];
+  if (!confirm('确定删除 ' + (r.account==='big'?'美化档大号':'定制人物小号') + ' 的更新记录吗？')) return;
+  store.mediaRecords.splice(idx, 1);
+  saveData();
+  try { renderMedia(); } catch (e) {}
+  finToast('🗑️ 已删除更新记录');
 }
 
 // ==================== 运动详细记录「记一项」 ====================
 let eiType = '健身操';
-let editingEiId = null;
+let editingEiIdx = -1;
 function setEiType(t) {
   eiType = t;
   document.querySelectorAll('#exercise-item-modal [data-t]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-t') === t);
   });
 }
-function openExerciseItemModal(editId) {
-  editingEiId = (editId && editId !== 'undefined') ? editId : null;
+function openExerciseItemModal(idx) {
+  editingEiIdx = (typeof idx === 'number' && idx >= 0 && store.exerciseItems && store.exerciseItems[idx]) ? idx : -1;
   const dEl = document.getElementById('ei-date');
   const nEl = document.getElementById('ei-name');
   const durEl = document.getElementById('ei-duration');
   const sEl = document.getElementById('ei-sets');
   const noteEl = document.getElementById('ei-note');
   const title = document.getElementById('ei-modal-title');
-  if (editingEiId && store.exerciseItems) {
-    const it = store.exerciseItems.find(x => x.id === editingEiId);
-    if (it) {
-      if (dEl) dEl.value = it.date;
-      if (nEl) nEl.value = it.name || '';
-      if (durEl) durEl.value = (it.duration != null ? it.duration : '');
-      if (sEl) sEl.value = it.sets || '';
-      if (noteEl) noteEl.value = it.note || '';
-      setEiType(it.type || '健身操');
-      if (title) title.textContent = '修改运动记录';
-      const m = document.getElementById('exercise-item-modal');
-      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-      return;
-    }
+  if (editingEiIdx >= 0) {
+    const it = store.exerciseItems[editingEiIdx];
+    if (dEl) dEl.value = it.date;
+    if (nEl) nEl.value = it.name || '';
+    if (durEl) durEl.value = (it.duration != null ? it.duration : '');
+    if (sEl) sEl.value = it.sets || '';
+    if (noteEl) noteEl.value = it.note || '';
+    setEiType(it.type || '健身操');
+    if (title) title.textContent = '✏️ 修改运动记录';
+    const m = document.getElementById('exercise-item-modal');
+    if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    return;
   }
   if (dEl) dEl.value = todayStr();
   if (nEl) nEl.value = '';
@@ -5427,7 +5445,7 @@ function openExerciseItemModal(editId) {
   if (sEl) sEl.value = '';
   if (noteEl) noteEl.value = '';
   setEiType('健身操');
-  if (title) title.textContent = '记一项运动';
+  if (title) title.textContent = '➕ 记一项运动';
   const m = document.getElementById('exercise-item-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
@@ -5435,7 +5453,7 @@ function closeExerciseItemModal() {
   const m = document.getElementById('exercise-item-modal');
   if (m) m.style.display = 'none';
   document.body.style.overflow = '';
-  editingEiId = null;
+  editingEiIdx = -1;
 }
 function submitExerciseItem() {
   const dateEl = document.getElementById('ei-date');
@@ -5447,12 +5465,12 @@ function submitExerciseItem() {
   const note = (document.getElementById('ei-note').value || '').trim();
   if (!name) { finToast('请填写项目名'); return; }
   if (!store.exerciseItems) store.exerciseItems = [];
-  if (editingEiId) {
-    const idx = store.exerciseItems.findIndex(x => x.id === editingEiId);
-    if (idx >= 0) {
-      store.exerciseItems[idx] = Object.assign({}, store.exerciseItems[idx], { date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
-    }
-    editingEiId = null;
+  if (editingEiIdx >= 0 && store.exerciseItems[editingEiIdx]) {
+    // 原地修改：保留原 id，仅更新字段
+    const orig = store.exerciseItems[editingEiIdx];
+    store.exerciseItems[editingEiIdx] = Object.assign({}, orig, {
+      date: date, type: eiType, name: name, duration: duration, sets: sets, note: note
+    });
   } else {
     store.exerciseItems.push({ id: 'ei_' + Date.now(), date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
   }
@@ -5461,11 +5479,14 @@ function submitExerciseItem() {
   try { renderFitness(); } catch(e) {}
   finToast('✅ 已记录运动明细');
 }
-function deleteExerciseItem(id) {
-  if (!store.exerciseItems) return;
-  store.exerciseItems = store.exerciseItems.filter(x => x.id !== id);
+function deleteExerciseItem(idx) {
+  if (!store.exerciseItems || !store.exerciseItems[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
+  const it = store.exerciseItems[idx];
+  if (!confirm('确定删除「' + (it.name || it.date) + '」这条运动记录吗？')) return;
+  store.exerciseItems.splice(idx, 1);
   saveData();
   try { renderFitness(); } catch(e) {}
+  finToast('🗑️ 已删除运动记录');
 }
 
 // ==================== 模拟人生更新推荐 ====================
@@ -5658,32 +5679,30 @@ function finToast(text) {
 }
 
 // 打开记一笔弹窗
-let addModalEditingId = null;
-function openAddModal(presetType, presetDate, editId) {
-  if (editId) {
-    const rec = (store.accountRecords || []).find(r => r.id === editId);
-    if (rec) {
-      if (rec.account && ACCOUNT_LIST.indexOf(rec.account) >= 0) accountIdx = ACCOUNT_LIST.indexOf(rec.account);
-      addModalState = {
-        type: rec.type || 'expense',
-        category: rec.category,
-        amount: (rec.amount != null ? String(rec.amount) : ''),
-        date: rec.date,
-        time: rec.time || new Date().toTimeString().substring(0,5),
-        note: rec.note || '', reimburse: rec.reimburse || '', discount: rec.discount || '', image: rec.image || '', tag: rec.tag || '',
-        account: rec.account || ACCOUNT_LIST[accountIdx]
-      };
-      addModalEditingId = editId;
-      const modal = document.getElementById('add-record-modal');
-      if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        refreshAddModal();
-      }
-      return;
+let addModalEditingIdx = -1;
+function openAddModal(presetType, presetDate, editIdx) {
+  if (typeof editIdx === 'number' && editIdx >= 0 && store.accountRecords && store.accountRecords[editIdx]) {
+    const rec = store.accountRecords[editIdx];
+    if (rec.account && ACCOUNT_LIST.indexOf(rec.account) >= 0) accountIdx = ACCOUNT_LIST.indexOf(rec.account);
+    addModalState = {
+      type: rec.type || 'expense',
+      category: rec.category,
+      amount: (rec.amount != null ? String(rec.amount) : ''),
+      date: rec.date,
+      time: rec.time || new Date().toTimeString().substring(0,5),
+      note: rec.note || '', reimburse: rec.reimburse || '', discount: rec.discount || '', image: rec.image || '', tag: rec.tag || '',
+      account: rec.account || ACCOUNT_LIST[accountIdx]
+    };
+    addModalEditingIdx = editIdx;
+    const modal = document.getElementById('add-record-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      refreshAddModal();
     }
+    return;
   }
-  addModalEditingId = null;
+  addModalEditingIdx = -1;
   addModalState = {
     type: presetType || 'expense',
     category: null,
@@ -5704,7 +5723,7 @@ function closeAddModal() {
   const modal = document.getElementById('add-record-modal');
   if (modal) modal.style.display = 'none';
   document.body.style.overflow = '';
-  addModalEditingId = null;
+  addModalEditingIdx = -1;
   if (addModalSaveAndContinue) {
     addModalSaveAndContinue = false;
     setTimeout(() => openAddModal(), 80);
@@ -5839,16 +5858,15 @@ function commitRecord(closeIt) {
     ts: Date.now()
   };
   if (!store.accountRecords) store.accountRecords = [];
-  if (addModalEditingId) {
-    const idx = store.accountRecords.findIndex(r => r.id === addModalEditingId);
-    if (idx >= 0) {
-      rec.id = addModalEditingId;
-      rec.ts = store.accountRecords[idx].ts || rec.ts;
-      store.accountRecords[idx] = rec;
-    }
-    addModalEditingId = null;
+  if (addModalEditingIdx >= 0 && store.accountRecords[addModalEditingIdx]) {
+    // 原地修改：保留原 id + ts，仅覆盖业务字段
+    rec.id = store.accountRecords[addModalEditingIdx].id;
+    rec.ts = store.accountRecords[addModalEditingIdx].ts || rec.ts;
+    store.accountRecords[addModalEditingIdx] = rec;
   } else {
+    if (!rec.id) rec.id = 'fr_' + Date.now();
     store.accountRecords.push(rec);
+    addModalEditingIdx = -1;
   }
   try { saveData(); } catch(e) {}
   renderAccount();
@@ -5991,6 +6009,7 @@ function renderAccount() {
     flowHtml = `<div class="empty-state"><div class="big-icon"></div><p style="color:#9a6a7e;margin-top:8px;">暂无记录</p><p style="font-size:12px;margin-top:6px;">点「记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
   } else {
     inMonth.slice(0, 30).forEach(r => {
+      const realIdx = store.accountRecords.indexOf(r);  // 真实 store 索引（r 是 store 里同一对象引用）
       const c = getCategoryInfo(r.category, r.type);
       const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
       const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
@@ -6005,7 +6024,7 @@ function renderAccount() {
           </div>
           <span class="fin-flow-time">${timeStr}</span>
           <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
-          <button class="row-edit-btn" onclick="openAddModal(null,null,'${r.id}')">✏️</button>
+          <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})">✏️</button>
         </div>
       `;
     });
