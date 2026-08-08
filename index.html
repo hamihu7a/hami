@@ -2303,6 +2303,12 @@
           <button id="weight-goal-save" class="goal-save-btn" type="button">✓ 确定</button>
           <button id="weight-goal-clear" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <label for="start-weight-input">⚖️ 起始体重</label>
+          <input type="number" id="start-weight-input" step="0.1" min="30" max="300" placeholder="如 90" inputmode="decimal">
+          <span style="font-size:13px;color:var(--c-muted);">kg</span>
+          <button id="start-weight-save" class="goal-save-btn" type="button">✓ 确定</button>
+        </div>
         <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
       </div>
     </div>
@@ -3013,6 +3019,7 @@ let store = {
   modSales: {},
   beautyRecords: [],   // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
   weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
+  startWeight: 90.0,    // 起始体重（kg）基准线，主人可改；减肥累计减重的起点
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
     { date: "2026-07-31", aerobics: false, cardio: false, weights: false, cardioType: "", weightsContent: "", sets: "", duration: "休息日" },
@@ -4587,6 +4594,8 @@ function loadData() {
       if (p.movieData && p.movieData.recommendList && p.movieData.recommendList.length > 0) store.movieData = p.movieData;
       // 目标体重：必须显式恢复，否则刷新后 renderWeightGoal 读到默认 null 而"消失"
       if (p.weightGoal != null) store.weightGoal = p.weightGoal;
+      // 起始体重：同理显式恢复
+      if (p.startWeight != null) store.startWeight = p.startWeight;
     }
   } catch(e) {}
 }
@@ -5366,11 +5375,28 @@ function bindWeightGoalInput() {
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); save(); }
   });
+  // 起始体重：默认90，主人可改；减肥累计减重从它算
+  const swInput = document.getElementById('start-weight-input');
+  const swSaveBtn = document.getElementById('start-weight-save');
+  if (swInput && !swInput.dataset.bound) {
+    swInput.dataset.bound = '1';
+    if (store.startWeight != null) swInput.value = store.startWeight;
+    const swSave = () => {
+      const v = parseFloat(swInput.value);
+      if (isNaN(v) || v <= 0) { finToast('请填写有效的起始体重（30-300）'); return; }
+      store.startWeight = v;
+      saveData();
+      try { renderFitness(); } catch(e) {}
+      try { finToast && finToast('⚖️ 起始体重已设为 ' + v.toFixed(1) + ' kg'); } catch(e) {}
+    };
+    if (swSaveBtn) swSaveBtn.addEventListener('click', swSave);
+    swInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); swSave(); } });
+  }
 }
 
 // ==================== 减肥记录 ====================
 // 与主页「体重记录与变化日历」完全同步同源：永远按"今天所在月"算，
-// 不再读 #fitness-month 选择器（删除后）。起始体重 = weightRecords 中最早一条的 after。
+// 不再读 #fitness-month 选择器（删除后）。起始体重 = store.startWeight（默认90，可改）；最新体重取全部记录最新一条。
 function renderFitness() {
   const month = todayStr().substring(0, 7);   // 关键：与 renderDesktopWeight 同一份 month 来源
   const today = todayStr();
@@ -5380,16 +5406,18 @@ function renderFitness() {
   const monthExercises = store.exerciseRecords.filter(e => e.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
   const restDays = store.periodRestDays[month] || [];
 
-  // 起始体重 = weightRecords 中按 date 升序最早一条（与日历同源；无记录则用 START_WEIGHT 兜底 90.0）
+  // 起始体重 = store.startWeight（主人可设，默认90），否则取最早一条记录兜底
   const allSorted = [...store.weightRecords]
     .map(w => ({ date: w.date, v: getW(w) }))
     .filter(w => w.v != null)
     .sort((a, b) => a.date.localeCompare(b.date));
-  const startWeight = allSorted.length > 0 ? allSorted[0].v : START_WEIGHT;
+  const startWeight = (store.startWeight != null) ? store.startWeight : (allSorted.length > 0 ? allSorted[0].v : START_WEIGHT);
 
-  const lastWithVal = [...monthWeights].reverse().find(w => getW(w) != null);
-  const latestAfter = lastWithVal ? getW(lastWithVal) : null;
+  // 最新体重 = 全部记录中 date 最大的一条（不限月份，确保跨月仍正确）
+  const lastRecord = allSorted.length > 0 ? allSorted[allSorted.length - 1] : null;
+  const latestAfter = lastRecord ? lastRecord.v : null;
   const latestAfterText = latestAfter != null ? latestAfter.toFixed(1) : '—';
+  const fitnessLastMD = lastRecord ? lastUpdateMD([{ date: lastRecord.date }]) : '—';
   const totalLost = latestAfter != null ? (startWeight - latestAfter).toFixed(1) : '—';
   const exerciseDays = monthExercises.length;
   const totalDays = new Date(2026, parseInt(month.split('-')[1]), 0).getDate();
@@ -5399,7 +5427,6 @@ function renderFitness() {
   const cardioCount = monthExercises.filter(e=>e.cardio).length;
   const weightsCount = monthExercises.filter(e=>e.weights).length;
 
-  const fitnessLastMD = lastUpdateMD([...monthWeights, ...monthExercises]);
   document.getElementById('fitness-stats').innerHTML = `
     <div class="stat-card"><div class="label">起始体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${startWeight.toFixed(1)}</div><div class="unit">kg</div></div>
     <div class="stat-card"><div class="label">最新体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${latestAfterText}</div><div class="unit">kg</div></div>
@@ -5411,13 +5438,19 @@ function renderFitness() {
 
   renderWeightChart(monthWeights);
 
-  if (monthWeights.length === 0) {
-    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="big-icon">⚖️</div><p>本月暂无体重记录</p></div></td></tr>`;
+  // 体重记录表：显示全部历史记录（不限月份，按日期倒序），确保"之前的记录"都能看到
+  const allWeightsDesc = [...store.weightRecords]
+    .map(w => ({ rec: w, v: getW(w) }))
+    .filter(w => w.v != null)
+    .sort((a, b) => b.rec.date.localeCompare(a.rec.date));
+  if (allWeightsDesc.length === 0) {
+    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="big-icon">⚖️</div><p>还没有体重记录，今天记一笔吧～</p></div></td></tr>`;
   } else {
     let html = '';
-    monthWeights.forEach(w => {
+    allWeightsDesc.forEach(it => {
+      const w = it.rec;
       const idx = store.weightRecords.indexOf(w);  // 真实 store 索引（避免 id 缺失导致 bug）
-      const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
+      const v = it.v;
       html += `<tr><td>${w.date}</td><td>${v != null ? v.toFixed(1) : '—'}</td><td>${w.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openWeightEditModal(${idx})">✏️</button> <button class="row-del-btn" onclick="deleteWeightRecord(${idx})">🗑</button></td></tr>`;
     });
     document.getElementById('weight-table').innerHTML = html;
