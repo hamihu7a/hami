@@ -863,6 +863,35 @@
   }
   @keyframes finSlideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
 
+  /* ====== 记定制单弹窗（模拟人生总收入面板专用） ====== */
+  #custom-order-modal .modal-card { max-height: calc(100vh - 56px - 24px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .co-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .co-field { display: flex; flex-direction: column; gap: 6px; }
+  .co-field > label { font-size: 13px; font-weight: 700; color: #7d4a5a; }
+  .co-field input {
+    border: 1.5px solid #ffd0dc; border-radius: 12px;
+    padding: 10px 12px; font-size: 14px; font-family: inherit;
+    outline: none; background: rgba(255,255,255,0.85); color: #5a3a48;
+    width: 100%; box-sizing: border-box;
+  }
+  .co-field input:focus { border-color: #e58aa3; box-shadow: 0 0 0 2px rgba(229,138,163,0.18); }
+  .co-status { display: inline-flex; background: rgba(0,0,0,0.05); border-radius: 14px; padding: 3px; gap: 0; width: fit-content; }
+  .co-status-opt {
+    padding: 7px 20px; font-size: 13px; font-weight: 700; color: #9a6a7e;
+    border-radius: 11px; cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap;
+  }
+  .co-status-opt.active { background: #fff; color: #d14b73; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .co-actions { display: flex; gap: 10px; padding: 4px 18px 18px; }
+  .co-cancel, .co-save {
+    flex: 1; border: none; border-radius: 14px; padding: 12px;
+    font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
+  }
+  .co-cancel { background: #f3e8ed; color: #7d4a5a; }
+  .co-cancel:active { transform: scale(0.97); }
+  .co-save { background: linear-gradient(90deg, #ff9eb5, #ff7f9e); color: #fff; box-shadow: 0 4px 14px rgba(209,75,115,0.28); }
+  .co-save:active { transform: scale(0.97); }
+
   /* 弹窗头部 */
   .arm-head {
     display: flex; align-items: center;
@@ -1128,6 +1157,10 @@
     .arm-cat-name { font-size: 10px; }
     #panel-account .todo-card { padding: 14px 12px !important; }
     #panel-account .rank-row { padding: 8px 0; }
+    #custom-order-modal.modal-mask { align-items: flex-end; padding: 0; }
+    #custom-order-modal .modal-card { max-width: 100%; max-height: 88vh; border-radius: 22px 22px 0 0; }
+    .co-field input { padding: 9px 10px; font-size: 15px; }
+    .co-status-opt { padding: 7px 16px; }
   }
 
   /* ============ 通用 ============ */
@@ -1866,13 +1899,14 @@
     <div class="month-selector">
       <label>📅 选择月份：</label>
       <select id="income-month" onchange="renderIncome()">
-        <option value="2026-07" selected>2026年7月</option>
+        <option value="2026-07">2026年7月</option>
         <option value="2026-08">2026年8月</option>
         <option value="2026-09">2026年9月</option>
         <option value="2026-10">2026年10月</option>
         <option value="2026-11">2026年11月</option>
         <option value="2026-12">2026年12月</option>
       </select>
+      <button class="fin-add-btn" style="margin-left:auto;" onclick="openCustomOrderModal()">➕ 记定制单</button>
     </div>
 
     <div class="stats-grid" id="income-stats"></div>
@@ -1902,6 +1936,46 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ==================== 记定制单 弹窗 ==================== -->
+  <div id="custom-order-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeCustomOrderModal()">
+    <div class="modal-card">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeCustomOrderModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记定制单</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 下单时间</label>
+          <input type="date" id="co-date" />
+        </div>
+        <div class="co-field">
+          <label>⏰ 截止时间</label>
+          <input type="date" id="co-deadline" />
+        </div>
+        <div class="co-field">
+          <label>💰 金额（元）</label>
+          <input type="number" id="co-amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="co-field">
+          <label>📝 备注</label>
+          <input type="text" id="co-desc" placeholder="如：人物+二套服装 / 美化档×3" />
+        </div>
+        <div class="co-field">
+          <label>状态</label>
+          <div class="co-status">
+            <span class="co-status-opt active" data-st="pending" onclick="setCoStatus('pending')">待完成</span>
+            <span class="co-status-opt" data-st="done" onclick="setCoStatus('done')">已完成</span>
+          </div>
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeCustomOrderModal()">取消</button>
+        <button class="co-save" onclick="submitCustomOrder()">保存定制单</button>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== 减肥记录 ==================== -->
@@ -4535,6 +4609,20 @@ function switchPanel(name, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (navEl) navEl.classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
+  // 每次点开「模拟人生总收入」面板，强制月份回到当前月（满足主人"点开显示当月"诉求）
+  if (name === 'income') {
+    try {
+      const im = document.getElementById('income-month');
+      if (im) {
+        const cur = todayStr().substring(0, 7);
+        if (Array.from(im.options).some(o => o.value === cur)) {
+          im.value = cur;
+          Array.from(im.options).forEach(o => { o.selected = (o.value === cur); });
+        }
+      }
+      renderIncome();
+    } catch (e) {}
+  }
   // 切到任意面板时，对所有 key 检查；若对应元素已在 DOM 且 localStorage 有图，则强制再 apply 一次。
   // 说明：BG_ELS 里部分 key 指向主页日历缩略组件（如 #home-weight-cal），不与 panel id 一一对应，
   // 所以直接按"元素存在与否"判定更稳妥。
@@ -4609,6 +4697,61 @@ function renderIncome() {
   });
   document.getElementById('monthly-summary-table').innerHTML = sumHtml;
 }
+
+// ==================== 记定制单 弹窗（模拟人生总收入面板） ====================
+let coStatus = 'pending';
+function setCoStatus(st) {
+  coStatus = st;
+  document.querySelectorAll('#custom-order-modal .co-status-opt').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-st') === st);
+  });
+}
+function openCustomOrderModal() {
+  const d = todayStr();
+  const elDate = document.getElementById('co-date');
+  const elDead = document.getElementById('co-deadline');
+  if (elDate) elDate.value = d;
+  if (elDead) {
+    try { elDead.value = addDaysStr(d, 7); } catch (e) { elDead.value = d; }
+  }
+  const amt = document.getElementById('co-amount');
+  const desc = document.getElementById('co-desc');
+  if (amt) amt.value = '';
+  if (desc) desc.value = '';
+  setCoStatus('pending');
+  const m = document.getElementById('custom-order-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeCustomOrderModal() {
+  const m = document.getElementById('custom-order-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function submitCustomOrder() {
+  const dateEl = document.getElementById('co-date');
+  const deadEl = document.getElementById('co-deadline');
+  const amtEl = document.getElementById('co-amount');
+  const descEl = document.getElementById('co-desc');
+  const date = (dateEl && dateEl.value ? dateEl.value : todayStr()).trim();
+  const deadline = (deadEl && deadEl.value ? deadEl.value : '').trim();
+  const desc = (descEl && descEl.value ? descEl.value : '').trim();
+  const amount = parseFloat(amtEl ? amtEl.value : '');
+  if (isNaN(amount) || amount <= 0) { finToast('请填写有效金额'); return; }
+  if (!deadline) { finToast('请选择截止时间'); return; }
+  if (!store.customOrders) store.customOrders = [];
+  store.customOrders.push({ date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+  saveData();
+  closeCustomOrderModal();
+  try { renderIncome(); } catch (e) {}
+  finToast('✅ 已记录定制单 ¥' + amount.toFixed(2));
+}
+// ESC 关闭记定制单弹窗
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const m = document.getElementById('custom-order-modal');
+    if (m && m.style.display !== 'none') closeCustomOrderModal();
+  }
+});
 
 // ==================== 目标体重 ====================
 // 目标体重存 store.weightGoal，进度 = (起始 - 当前) / (起始 - 目标)
@@ -7162,6 +7305,16 @@ try {
     if (hasOpt) {
       am.value = curMonth;
       Array.from(am.options).forEach(function (o) { o.selected = (o.value === curMonth); });
+    }
+  }
+  // 模拟人生总收入面板：同样默认当月
+  var im2 = document.getElementById('income-month');
+  if (im2) {
+    var curMonth2 = todayStr().substring(0, 7);
+    var hasOpt2 = Array.from(im2.options).some(function (o) { return o.value === curMonth2; });
+    if (hasOpt2) {
+      im2.value = curMonth2;
+      Array.from(im2.options).forEach(function (o) { o.selected = (o.value === curMonth2); });
     }
   }
 } catch (e) {}
