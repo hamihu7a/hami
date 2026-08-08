@@ -2018,7 +2018,7 @@
     <div class="modal-card">
       <div class="arm-head">
         <span class="arm-close" onclick="closeCustomOrderModal()" aria-label="关闭">✕</span>
-        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记定制单</div>
+        <div id="co-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记定制单</div>
         <span style="width:36px;"></span>
       </div>
       <div class="co-body">
@@ -2049,6 +2049,51 @@
       <div class="co-actions">
         <button class="co-cancel" onclick="closeCustomOrderModal()">取消</button>
         <button class="co-save" onclick="submitCustomOrder()">保存定制单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 运动详细记录 记一项 弹窗 ==================== -->
+  <div id="exercise-item-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeExerciseItemModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeExerciseItemModal()" aria-label="关闭">✕</span>
+        <div id="ei-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记一项运动</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="ei-date" />
+        </div>
+        <div class="co-field">
+          <label>类型</label>
+          <div class="co-status" id="ei-type-wrap">
+            <span class="co-status-opt active" data-t="健身操" onclick="setEiType('健身操')">健身操</span>
+            <span class="co-status-opt" data-t="有氧" onclick="setEiType('有氧')">有氧</span>
+            <span class="co-status-opt" data-t="器械" onclick="setEiType('器械')">器械</span>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>🏋️ 项目名</label>
+          <input type="text" id="ei-name" placeholder="如：椭圆机 / 哑铃 / 帕梅拉" />
+        </div>
+        <div class="co-field">
+          <label>⏱️ 时长（分钟）</label>
+          <input type="number" id="ei-duration" inputmode="decimal" min="0" step="1" placeholder="如 30" />
+        </div>
+        <div class="co-field">
+          <label>🔁 组数</label>
+          <input type="text" id="ei-sets" placeholder="如 3组×15" />
+        </div>
+        <div class="co-field">
+          <label>📝 备注</label>
+          <input type="text" id="ei-note" placeholder="如：心率140" />
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeExerciseItemModal()">取消</button>
+        <button class="co-save" onclick="submitExerciseItem()">保存</button>
       </div>
     </div>
   </div>
@@ -2092,12 +2137,23 @@
     </div>
 
     <div class="card">
-      <div class="card-title"><span>🏃‍♀️</span> 每日运动打卡</div>
+      <div class="card-title"><span>🏃‍♀️</span> 每日运动打卡
+        <button class="media-add-btn" style="margin-left:auto;" onclick="openExerciseItemModal()">➕ 记一项</button>
+      </div>
       <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>日期</th><th>健身操</th><th>有氧</th><th>有氧类型</th><th>器械</th><th>内容</th><th>组数</th><th>时长</th><th>状态</th></tr></thead>
           <tbody id="exercise-table"></tbody>
         </table>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:13px;font-weight:700;color:#d14b73;margin-bottom:8px;">📋 详细记录（器械 / 有氧明细）</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>日期</th><th>类型</th><th>项目</th><th>时长</th><th>组数</th><th>备注</th><th>操作</th></tr></thead>
+            <tbody id="exercise-items-table"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -4825,11 +4881,12 @@ function renderIncome() {
   if (monthOrders.length === 0) {
     document.getElementById('custom-orders-table').innerHTML = `<div class="empty-state"><div class="big-icon">📝</div><p>本月暂无定制单</p></div>`;
   } else {
-    let html = `<div style="overflow-x:auto;"><table><thead><tr><th>下单</th><th>截止</th><th>金额</th><th>描述</th><th>状态</th></tr></thead><tbody>`;
+    let html = `<div style="overflow-x:auto;"><table><thead><tr><th>下单</th><th>截止</th><th>金额</th><th>描述</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
     monthOrders.forEach(o => {
       const overdue = o.status === 'pending' && new Date(o.deadline) < new Date(today);
       const badge = o.status === 'done' ? '<span class="badge done">已完成</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待完成</span>');
-      html += `<tr><td>${o.date}</td><td>${o.deadline}</td><td>¥${o.amount}</td><td>${o.desc||'—'}</td><td>${badge}</td></tr>`;
+      const oid = o.id || '';
+      html += `<tr><td>${o.date}</td><td>${o.deadline}</td><td>¥${o.amount}</td><td>${o.desc||'—'}</td><td>${badge}</td><td><button class="row-edit-btn" onclick="openCustomOrderModal('${oid}')">✏️ 修改</button></td></tr>`;
     });
     html += '</tbody></table></div>';
     document.getElementById('custom-orders-table').innerHTML = html;
@@ -4860,19 +4917,37 @@ function setCoStatus(st) {
     el.classList.toggle('active', el.getAttribute('data-st') === st);
   });
 }
-function openCustomOrderModal() {
-  const d = todayStr();
+let editingCoId = null;
+function openCustomOrderModal(editId) {
+  editingCoId = (editId && editId !== 'undefined') ? editId : null;
   const elDate = document.getElementById('co-date');
   const elDead = document.getElementById('co-deadline');
+  const amt = document.getElementById('co-amount');
+  const desc = document.getElementById('co-desc');
+  const titleEl = document.getElementById('co-modal-title');
+  if (editingCoId && store.customOrders) {
+    const o = store.customOrders.find(x => x.id === editingCoId);
+    if (o) {
+      if (elDate) elDate.value = o.date;
+      if (elDead) elDead.value = o.deadline;
+      if (amt) amt.value = o.amount;
+      if (desc) desc.value = o.desc || '';
+      setCoStatus(o.status || 'pending');
+      if (titleEl) titleEl.textContent = '修改定制单';
+      const m = document.getElementById('custom-order-modal');
+      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+      return;
+    }
+  }
+  const d = todayStr();
   if (elDate) elDate.value = d;
   if (elDead) {
     try { elDead.value = addDaysStr(d, 7); } catch (e) { elDead.value = d; }
   }
-  const amt = document.getElementById('co-amount');
-  const desc = document.getElementById('co-desc');
   if (amt) amt.value = '';
   if (desc) desc.value = '';
   setCoStatus('pending');
+  if (titleEl) titleEl.textContent = '记定制单';
   const m = document.getElementById('custom-order-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
@@ -4880,6 +4955,7 @@ function closeCustomOrderModal() {
   const m = document.getElementById('custom-order-modal');
   if (m) m.style.display = 'none';
   document.body.style.overflow = '';
+  editingCoId = null;
 }
 function submitCustomOrder() {
   const dateEl = document.getElementById('co-date');
@@ -4893,11 +4969,19 @@ function submitCustomOrder() {
   if (isNaN(amount) || amount <= 0) { finToast('请填写有效金额'); return; }
   if (!deadline) { finToast('请选择截止时间'); return; }
   if (!store.customOrders) store.customOrders = [];
-  store.customOrders.push({ date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+  if (editingCoId) {
+    const idx = store.customOrders.findIndex(x => x.id === editingCoId);
+    if (idx >= 0) {
+      store.customOrders[idx] = Object.assign({}, store.customOrders[idx], { date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+    }
+    editingCoId = null;
+  } else {
+    store.customOrders.push({ id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+  }
   saveData();
   closeCustomOrderModal();
   try { renderIncome(); } catch (e) {}
-  finToast('✅ 已记录定制单 ¥' + amount.toFixed(2));
+  finToast('✅ 已更新定制单 ¥' + amount.toFixed(2));
 }
 // ESC 关闭记定制单弹窗
 document.addEventListener('keydown', e => {
@@ -5059,6 +5143,24 @@ function renderFitness() {
     document.getElementById('exercise-table').innerHTML = html;
   }
 
+  // 运动详细记录（记一项）
+  const itemsEl = document.getElementById('exercise-items-table');
+  if (itemsEl) {
+    const items = (store.exerciseItems || []).filter(it => it.date && it.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date));
+    if (items.length === 0) {
+      itemsEl.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="big-icon">🏋️</div><p>本月暂无详细记录</p><p style="font-size:12px;margin-top:6px;">点「记一项」记录具体器械/有氧明细</p></div></td></tr>`;
+    } else {
+      let ih = '';
+      items.forEach(it => {
+        const iid = it.id || '';
+        const typeName = it.type || '器械';
+        const dur = (it.duration != null && !isNaN(it.duration)) ? (it.duration + '分') : '—';
+        ih += `<tr><td>${it.date}</td><td>${typeName}</td><td>${it.name||'—'}</td><td>${dur}</td><td>${it.sets||'—'}</td><td>${it.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseItemModal('${iid}')">✏️</button> <button class="row-del-btn" onclick="deleteExerciseItem('${iid}')">🗑</button></td></tr>`;
+      });
+      itemsEl.innerHTML = ih;
+    }
+  }
+
   const weeksInMonth = Math.ceil(activeDays / 7);
   const totalGoal = WEEKLY_GOAL * weeksInMonth;
   const achRate = totalGoal > 0 ? Math.min(100, (exerciseDays/totalGoal)*100).toFixed(0) : 0;
@@ -5185,13 +5287,14 @@ function renderMedia() {
 
   // 明细表
   if (monthRecords.length === 0) {
-    document.getElementById('media-table').innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="big-icon">📱</div><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后告诉我：哪个号、发了什么、是否同步抖音</p></div></td></tr>`;
+    document.getElementById('media-table').innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="big-icon">📱</div><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后告诉我：哪个号、发了什么、是否同步抖音</p></div></td></tr>`;
   } else {
     let html = '';
     monthRecords.forEach(r => {
       const accName = r.account === 'big' ? '🎨 美化档大号' : '👤 定制人物小号';
       const dyMark = r.douyin ? '<span class="check-yes">✓ 是</span>' : '<span class="check-no">✗ 否</span>';
-      html += `<tr><td>${r.date}</td><td>${accName}</td><td>${r.content}${(r.count&&r.count>1)?' ('+r.count+'条)':''}</td><td>${dyMark}</td><td>${r.note||'—'}</td></tr>`;
+      const rid = r.id || '';
+      html += `<tr><td>${r.date}</td><td>${accName}</td><td>${r.content}${(r.count&&r.count>1)?' ('+r.count+'条)':''}</td><td>${dyMark}</td><td>${r.note||'—'}</td><td><button class="row-edit-btn" onclick="openMediaRecordModal('${rid}')">✏️ 修改</button></td></tr>`;
     });
     document.getElementById('media-table').innerHTML = html;
   }
@@ -5217,18 +5320,36 @@ function mrPickAccount(acc) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === acc);
   });
 }
-function openMediaRecordModal() {
+let editingMrId = null;
+function openMediaRecordModal(editId) {
+  editingMrId = (editId && editId !== 'undefined') ? editId : null;
   mrAccount = 'big';
   document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === 'big');
   });
   const dEl = document.getElementById('mr-date');
-  if (dEl) dEl.value = todayStr();
   const cEl = document.getElementById('mr-count');
-  if (cEl) cEl.value = '1';
   const dyEl = document.getElementById('mr-douyin');
-  if (dyEl) dyEl.checked = false;
   const nEl = document.getElementById('mr-note');
+  if (editingMrId && store.mediaRecords) {
+    const r = store.mediaRecords.find(x => x.id === editingMrId);
+    if (r) {
+      mrAccount = r.account || 'big';
+      document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
+        el.classList.toggle('active', el.getAttribute('data-mr-acc') === mrAccount);
+      });
+      if (dEl) dEl.value = r.date;
+      if (cEl) cEl.value = r.count || 1;
+      if (dyEl) dyEl.checked = !!r.douyin;
+      if (nEl) nEl.value = r.note || '';
+      const modal = document.getElementById('media-record-modal');
+      if (modal) modal.style.display = 'flex';
+      return;
+    }
+  }
+  if (dEl) dEl.value = todayStr();
+  if (cEl) cEl.value = '1';
+  if (dyEl) dyEl.checked = false;
   if (nEl) nEl.value = '';
   const modal = document.getElementById('media-record-modal');
   if (modal) modal.style.display = 'flex';
@@ -5236,6 +5357,7 @@ function openMediaRecordModal() {
 function closeMediaRecordModal() {
   const modal = document.getElementById('media-record-modal');
   if (modal) modal.style.display = 'none';
+  editingMrId = null;
 }
 function submitMediaRecord() {
   const date = (document.getElementById('mr-date').value || todayStr());
@@ -5243,18 +5365,107 @@ function submitMediaRecord() {
   const douyin = !!document.getElementById('mr-douyin').checked;
   const note = (document.getElementById('mr-note').value || '').trim();
   const accName = mrAccount === 'big' ? '🎨 美化档大号' : '👤 定制人物小号';
-  store.mediaRecords.push({
-    date: date,
-    account: mrAccount,
-    content: '更新' + count + '条',
-    douyin: douyin,
-    note: note,
-    count: count
-  });
+  if (!store.mediaRecords) store.mediaRecords = [];
+  if (editingMrId) {
+    const idx = store.mediaRecords.findIndex(x => x.id === editingMrId);
+    if (idx >= 0) {
+      store.mediaRecords[idx] = Object.assign({}, store.mediaRecords[idx], { date: date, account: mrAccount, content: '更新' + count + '条', douyin: douyin, note: note, count: count });
+    }
+    editingMrId = null;
+  } else {
+    store.mediaRecords.push({
+      id: 'mr_' + Date.now(),
+      date: date,
+      account: mrAccount,
+      content: '更新' + count + '条',
+      douyin: douyin,
+      note: note,
+      count: count
+    });
+  }
   saveData();
   closeMediaRecordModal();
   renderMedia();
   alert('✅ 已记录：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
+}
+
+// ==================== 运动详细记录「记一项」 ====================
+let eiType = '健身操';
+let editingEiId = null;
+function setEiType(t) {
+  eiType = t;
+  document.querySelectorAll('#exercise-item-modal [data-t]').forEach(function (el) {
+    el.classList.toggle('active', el.getAttribute('data-t') === t);
+  });
+}
+function openExerciseItemModal(editId) {
+  editingEiId = (editId && editId !== 'undefined') ? editId : null;
+  const dEl = document.getElementById('ei-date');
+  const nEl = document.getElementById('ei-name');
+  const durEl = document.getElementById('ei-duration');
+  const sEl = document.getElementById('ei-sets');
+  const noteEl = document.getElementById('ei-note');
+  const title = document.getElementById('ei-modal-title');
+  if (editingEiId && store.exerciseItems) {
+    const it = store.exerciseItems.find(x => x.id === editingEiId);
+    if (it) {
+      if (dEl) dEl.value = it.date;
+      if (nEl) nEl.value = it.name || '';
+      if (durEl) durEl.value = (it.duration != null ? it.duration : '');
+      if (sEl) sEl.value = it.sets || '';
+      if (noteEl) noteEl.value = it.note || '';
+      setEiType(it.type || '健身操');
+      if (title) title.textContent = '修改运动记录';
+      const m = document.getElementById('exercise-item-modal');
+      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+      return;
+    }
+  }
+  if (dEl) dEl.value = todayStr();
+  if (nEl) nEl.value = '';
+  if (durEl) durEl.value = '';
+  if (sEl) sEl.value = '';
+  if (noteEl) noteEl.value = '';
+  setEiType('健身操');
+  if (title) title.textContent = '记一项运动';
+  const m = document.getElementById('exercise-item-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeExerciseItemModal() {
+  const m = document.getElementById('exercise-item-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  editingEiId = null;
+}
+function submitExerciseItem() {
+  const dateEl = document.getElementById('ei-date');
+  const date = (dateEl && dateEl.value ? dateEl.value : todayStr()).trim();
+  const name = (document.getElementById('ei-name').value || '').trim();
+  const durationRaw = document.getElementById('ei-duration').value;
+  const duration = durationRaw !== '' ? parseFloat(durationRaw) : null;
+  const sets = (document.getElementById('ei-sets').value || '').trim();
+  const note = (document.getElementById('ei-note').value || '').trim();
+  if (!name) { finToast('请填写项目名'); return; }
+  if (!store.exerciseItems) store.exerciseItems = [];
+  if (editingEiId) {
+    const idx = store.exerciseItems.findIndex(x => x.id === editingEiId);
+    if (idx >= 0) {
+      store.exerciseItems[idx] = Object.assign({}, store.exerciseItems[idx], { date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
+    }
+    editingEiId = null;
+  } else {
+    store.exerciseItems.push({ id: 'ei_' + Date.now(), date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
+  }
+  saveData();
+  closeExerciseItemModal();
+  try { renderFitness(); } catch(e) {}
+  finToast('✅ 已记录运动明细');
+}
+function deleteExerciseItem(id) {
+  if (!store.exerciseItems) return;
+  store.exerciseItems = store.exerciseItems.filter(x => x.id !== id);
+  saveData();
+  try { renderFitness(); } catch(e) {}
 }
 
 // ==================== 模拟人生更新推荐 ====================
@@ -5447,7 +5658,32 @@ function finToast(text) {
 }
 
 // 打开记一笔弹窗
-function openAddModal(presetType, presetDate) {
+let addModalEditingId = null;
+function openAddModal(presetType, presetDate, editId) {
+  if (editId) {
+    const rec = (store.accountRecords || []).find(r => r.id === editId);
+    if (rec) {
+      if (rec.account && ACCOUNT_LIST.indexOf(rec.account) >= 0) accountIdx = ACCOUNT_LIST.indexOf(rec.account);
+      addModalState = {
+        type: rec.type || 'expense',
+        category: rec.category,
+        amount: (rec.amount != null ? String(rec.amount) : ''),
+        date: rec.date,
+        time: rec.time || new Date().toTimeString().substring(0,5),
+        note: rec.note || '', reimburse: rec.reimburse || '', discount: rec.discount || '', image: rec.image || '', tag: rec.tag || '',
+        account: rec.account || ACCOUNT_LIST[accountIdx]
+      };
+      addModalEditingId = editId;
+      const modal = document.getElementById('add-record-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        refreshAddModal();
+      }
+      return;
+    }
+  }
+  addModalEditingId = null;
   addModalState = {
     type: presetType || 'expense',
     category: null,
@@ -5468,6 +5704,7 @@ function closeAddModal() {
   const modal = document.getElementById('add-record-modal');
   if (modal) modal.style.display = 'none';
   document.body.style.overflow = '';
+  addModalEditingId = null;
   if (addModalSaveAndContinue) {
     addModalSaveAndContinue = false;
     setTimeout(() => openAddModal(), 80);
@@ -5602,10 +5839,20 @@ function commitRecord(closeIt) {
     ts: Date.now()
   };
   if (!store.accountRecords) store.accountRecords = [];
-  store.accountRecords.push(rec);
+  if (addModalEditingId) {
+    const idx = store.accountRecords.findIndex(r => r.id === addModalEditingId);
+    if (idx >= 0) {
+      rec.id = addModalEditingId;
+      rec.ts = store.accountRecords[idx].ts || rec.ts;
+      store.accountRecords[idx] = rec;
+    }
+    addModalEditingId = null;
+  } else {
+    store.accountRecords.push(rec);
+  }
   try { saveData(); } catch(e) {}
   renderAccount();
-  finToast(closeIt ? '已记一笔 ✨' : '已记，再来一笔 ~');
+  finToast(closeIt ? '已修改 ✨' : '已修改，再来一笔 ~');
 }
 
 // 打开统计弹窗
@@ -5758,6 +6005,7 @@ function renderAccount() {
           </div>
           <span class="fin-flow-time">${timeStr}</span>
           <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
+          <button class="row-edit-btn" onclick="openAddModal(null,null,'${r.id}')">✏️</button>
         </div>
       `;
     });
@@ -7733,6 +7981,14 @@ loadData();
       return !(r.type === 'income' && r.category === 'custom' && (r.note || '') === '模拟人生定制单（3单）');
     });
   }
+  // 给旧记录补 id（定制单 / 自媒体明细），便于编辑时精准定位；并初始化运动详细记录数组
+  if (store.customOrders && store.customOrders.length) {
+    store.customOrders.forEach(function (o) { if (!o.id) o.id = 'co_' + Math.random().toString(36).slice(2, 10); });
+  }
+  if (store.mediaRecords && store.mediaRecords.length) {
+    store.mediaRecords.forEach(function (r) { if (!r.id) r.id = 'mr_' + Math.random().toString(36).slice(2, 10); });
+  }
+  if (!store.exerciseItems) store.exerciseItems = [];
   try { saveData(); } catch (e) {}
 })();
 
