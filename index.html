@@ -4557,11 +4557,10 @@ document.addEventListener('keydown', function(e) {
 });
 function loadData() {
   try {
-    // 版本号检测：版本不匹配则清掉旧数据，强制使用新默认值
+    // 版本号检测：仅用于记录日志，绝不在版本不匹配时清空 localStorage（否则主人的真实数据会被删除，例如八月份体重记录）
     const savedVersion = localStorage.getItem('hami_data_version');
     if (savedVersion !== DATA_VERSION) {
-      console.log('数据版本已升级，清除旧localStorage');
-      localStorage.removeItem(STORAGE_KEY);
+      console.log('数据版本变化，将兼容合并旧数据（不清除本地）');
     }
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
