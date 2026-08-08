@@ -3676,7 +3676,34 @@ async function _flushPush() {
   };
 })();
 
-// 从云端拉取全部同步键，覆盖本地（云端为跨设备事实源），并重新初始化内存 + 渲染
+// 按日期合并两个 store 的用户数据数组（本地优先，云端只补本地缺失的日期），用于云端拉取时保护本地完整记录不被残缺云端覆盖
+function mergeStoreData(local, cloud) {
+  if (!local || !cloud) return;
+  const dateArrays = ['weightRecords','exerciseRecords','accountRecords','customOrders','mediaRecords','washRecords','toiletRecords','maskRecords','importantDates','travelPlans','beautyRecords','exerciseItems','inspireRecords'];
+  dateArrays.forEach(function (key) {
+    const la = Array.isArray(local[key]) ? local[key] : [];
+    const ca = Array.isArray(cloud[key]) ? cloud[key] : [];
+    if (!la.length && !ca.length) return;
+    const map = {};
+    la.forEach(function (it) { if (it && it.date) map[it.date] = it; });
+    ca.forEach(function (it) { if (it && it.date && !map[it.date]) map[it.date] = it; });
+    local[key] = Object.values(map);
+  });
+  const lp = Array.isArray(local.periodRecords) ? local.periodRecords : [];
+  const cp = Array.isArray(cloud.periodRecords) ? cloud.periodRecords : [];
+  if (lp.length || cp.length) {
+    const mp = {};
+    lp.forEach(function (it) { if (it && it.startDate) mp[it.startDate] = it; });
+    cp.forEach(function (it) { if (it && it.startDate && !mp[it.startDate]) mp[it.startDate] = it; });
+    local.periodRecords = Object.values(mp);
+  }
+  ['weightGoal','startWeight'].forEach(function (k) {
+    if ((local[k] == null || local[k] === '') && cloud[k] != null && cloud[k] !== '') local[k] = cloud[k];
+  });
+  if ((!local.modSales || !Object.keys(local.modSales).length) && cloud.modSales && Object.keys(cloud.modSales).length) local.modSales = cloud.modSales;
+}
+
+// 从云端拉取全部同步键，按日期合并到本地（本地优先，绝不直接覆盖本地用户数据），并重新初始化内存 + 渲染
 async function pullCloudToLocal() {
   if (!cloudEnabled()) return false;
   try {
@@ -3689,7 +3716,19 @@ async function pullCloudToLocal() {
     // 如厕/体重等记录整份覆盖掉，表现为「记录无效、每次都要重记」。
     // 之后下面的 loadData() 会用内存里的本地数据 + 云端数据做合并（按日期去重保留），本地记录得以保留。
     try { loadData(); } catch (e) {}
-    (rows || []).forEach(row => { try { if (row.k && !_isLocalOnlyKey(row.k)) localStorage.setItem(row.k, row.v); } catch (e) {} });
+    (rows || []).forEach(row => {
+      if (!row.k || _isLocalOnlyKey(row.k)) return;
+      if (row.k === STORAGE_KEY) {
+        try {
+          const cloudStore = JSON.parse(row.v);
+          mergeStoreData(store, cloudStore);
+        } catch (e) {}
+      } else {
+        try { localStorage.setItem(row.k, row.v); } catch (e) {}
+      }
+    });
+    // 把合并后的内存 store 写回本地存档（_applyingRemote=true 不回推云端）
+    try { saveData(); } catch (e) {}
     _pendingPush.clear(); _pendingDelete.clear();   // 取消 pull 前排队的本地推送，避免把旧值推回云端
     // 云端拉取后重放布局宽度/锁定状态：宽度 IIFE 在脚本解析时已用「旧」localStorage 初始化，
     // 必须在此用云端同步回来的最新值重新应用，否则每次打开都会回退到未锁定/默认尺寸。
@@ -3697,7 +3736,7 @@ async function pullCloudToLocal() {
     try { if (window.__syncSidebarLock) window.__syncSidebarLock(); } catch (e) {}
     try { if (window.__applyMainWidth) window.__applyMainWidth(); } catch (e) {}
     try { if (window.__syncMainLock) window.__syncMainLock(); } catch (e) {}
-    try { loadData(); } catch (e) {}
+    // 注意：删掉原 line 3700 的 loadData()——store 已是合并结果且 localStorage 已 saveData 写入，无需再 loadData
     try { applyAllBgs(); } catch (e) {}
     try { rerenderSynced(); } catch (e) {}
     // 关键修复：把云端 + 本地合并后的结果写回本地存档，确保本地记录不会因云端旧数据被覆盖而再丢失
