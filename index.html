@@ -1182,6 +1182,27 @@
   }
   .fin-flow-row:last-child { border-bottom: none; }
   .fin-flow-date { font-size: 12px; color: #9a6a7e; min-width: 60px; }
+  .fin-flow-type {
+    flex: 0 0 auto;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 6px; border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+  .fin-flow-type.type-income  { background: #e7f7ec; color: #1a9e4f; }
+  .fin-flow-type.type-expense { background: #ffe4ec; color: #d14b73; }
+  .fin-flow-type.type-transfer { background: #e8f4fd; color: #2080c0; }
+  .income-breakdown {
+    margin-top: 8px; padding: 10px 12px;
+    background: #fff8fa; border-radius: 10px;
+    border: 1px dashed #ffd0dc;
+    font-size: 12px; color: #7d4a5a;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .income-breakdown b { color: #d14b73; }
+  .income-breakdown .ord-chip {
+    background: #fff0d6; color: #c08020;
+    padding: 1px 8px; border-radius: 8px; font-weight: 700;
+  }
   .fin-flow-cat {
     display: flex; align-items: center; gap: 6px;
     font-size: 13px; color: #5a3a48; font-weight: 600;
@@ -2098,6 +2119,134 @@
     </div>
   </div>
 
+  <!-- 体重修改弹窗 -->
+  <div id="weight-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeWeightEditModal()">
+    <div class="modal-card" style="max-width:380px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeWeightEditModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">⚖️ 修改体重记录</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="we-date">
+        </div>
+        <div class="co-field">
+          <label>⚖️ 体重 (kg)</label>
+          <input type="number" id="we-value" step="0.1" min="30" max="200" inputmode="decimal" placeholder="如 65.5">
+        </div>
+        <div class="co-field">
+          <label>📝 备注</label>
+          <input type="text" id="we-note" placeholder="如 早起空腹">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeWeightEditModal()">取消</button>
+        <button class="co-save" onclick="submitWeightEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 运动打卡修改弹窗 -->
+  <div id="exercise-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeExerciseEditModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeExerciseEditModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">🏃‍♀️ 修改运动打卡</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="ee-date">
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+            <input type="checkbox" id="ee-aerobics" style="display:none;">
+            <span class="co-status-opt" data-ee="aerobics" onclick="eePick('aerobics')">🤸 健身操</span>
+          </label>
+          <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+            <input type="checkbox" id="ee-cardio" style="display:none;">
+            <span class="co-status-opt" data-ee="cardio" onclick="eePick('cardio')">🚴 有氧</span>
+          </label>
+          <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+            <input type="checkbox" id="ee-weights" style="display:none;">
+            <span class="co-status-opt" data-ee="weights" onclick="eePick('weights')">🏋️ 器械</span>
+          </label>
+        </div>
+        <div class="co-field">
+          <label>🚴 有氧类型（可选）</label>
+          <input type="text" id="ee-cardioType" placeholder="如 跑步 / 跳绳">
+        </div>
+        <div class="co-field">
+          <label>🏋️ 器械内容</label>
+          <input type="text" id="ee-weightsContent" placeholder="如 哑铃 / 划船机">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="co-field" style="flex:1;">
+            <label>🔁 组数</label>
+            <input type="text" id="ee-sets" placeholder="如 3组×15">
+          </div>
+          <div class="co-field" style="flex:1;">
+            <label>⏱️ 时长</label>
+            <input type="text" id="ee-duration" placeholder="如 30分钟">
+          </div>
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeExerciseEditModal()">取消</button>
+        <button class="co-save" onclick="submitExerciseEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 如厕修改弹窗 -->
+  <div id="toilet-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeToiletEditModal()">
+    <div class="modal-card" style="max-width:340px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeToiletEditModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">🚽 修改如厕记录</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="te-date">
+        </div>
+        <div class="co-field">
+          <label>🔢 次数</label>
+          <input type="number" id="te-count" min="1" max="20" step="1" inputmode="numeric" placeholder="如 1">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeToiletEditModal()">取消</button>
+        <button class="co-save" onclick="submitToiletEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 面膜修改弹窗 -->
+  <div id="mask-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeMaskEditModal()">
+    <div class="modal-card" style="max-width:340px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeMaskEditModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">🧖 修改面膜记录</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="me-date">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeMaskEditModal()">取消</button>
+        <button class="co-save" onclick="submitMaskEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 减肥记录 ==================== -->
   <div id="panel-fitness" class="panel">
 
@@ -2130,7 +2279,7 @@
       <div class="card-title"><span>📋</span> 每日体重</div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>日期</th><th>体重 (kg)</th><th>备注</th></tr></thead>
+          <thead><tr><th>日期</th><th>体重 (kg)</th><th>备注</th><th>操作</th></tr></thead>
           <tbody id="weight-table"></tbody>
         </table>
       </div>
@@ -2142,7 +2291,7 @@
       </div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>日期</th><th>健身操</th><th>有氧</th><th>有氧类型</th><th>器械</th><th>内容</th><th>组数</th><th>时长</th><th>状态</th></tr></thead>
+          <thead><tr><th>日期</th><th>健身操</th><th>有氧</th><th>有氧类型</th><th>器械</th><th>内容</th><th>组数</th><th>时长</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="exercise-table"></tbody>
         </table>
       </div>
@@ -2366,7 +2515,7 @@
       <div class="card-title"><span>📋</span> 如厕记录</div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>日期</th><th>次数</th><th>距上次</th></tr></thead>
+          <thead><tr><th>日期</th><th>次数</th><th>距上次</th><th>操作</th></tr></thead>
           <tbody id="toilet-table"></tbody>
         </table>
       </div>
@@ -2388,7 +2537,7 @@
       <div class="card-title"><span>📋</span> 敷面膜记录</div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>日期</th><th>星期</th></tr></thead>
+          <thead><tr><th>日期</th><th>星期</th><th>操作</th></tr></thead>
           <tbody id="mask-table"></tbody>
         </table>
       </div>
@@ -5122,21 +5271,23 @@ function renderFitness() {
   renderWeightChart(monthWeights);
 
   if (monthWeights.length === 0) {
-    document.getElementById('weight-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="big-icon">⚖️</div><p>本月暂无体重记录</p></div></td></tr>`;
+    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="big-icon">⚖️</div><p>本月暂无体重记录</p></div></td></tr>`;
   } else {
     let html = '';
     monthWeights.forEach(w => {
+      const idx = store.weightRecords.indexOf(w);  // 真实 store 索引（避免 id 缺失导致 bug）
       const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
-      html += `<tr><td>${w.date}</td><td>${v != null ? v.toFixed(1) : '—'}</td><td>${w.note||'—'}</td></tr>`;
+      html += `<tr><td>${w.date}</td><td>${v != null ? v.toFixed(1) : '—'}</td><td>${w.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openWeightEditModal(${idx})">✏️</button> <button class="row-del-btn" onclick="deleteWeightRecord(${idx})">🗑</button></td></tr>`;
     });
     document.getElementById('weight-table').innerHTML = html;
   }
 
   if (monthExercises.length === 0) {
-    document.getElementById('exercise-table').innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="big-icon">🏃‍♀️</div><p>本月暂无运动记录</p></div></td></tr>`;
+    document.getElementById('exercise-table').innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="big-icon">🏃‍♀️</div><p>本月暂无运动记录</p></div></td></tr>`;
   } else {
     let html = '';
     monthExercises.forEach(e => {
+      const idx = store.exerciseRecords.indexOf(e);  // 真实 store 索引
       const isRest = restDays.includes(e.date);
       html += `<tr>
         <td>${e.date}</td>
@@ -5148,6 +5299,7 @@ function renderFitness() {
         <td>${e.sets||'—'}</td>
         <td>${e.duration||'—'}</td>
         <td>${isRest?'<span class="badge rest">经期</span>':'<span class="badge done">✓</span>'}</td>
+        <td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseEditModal(${idx})">✏️</button> <button class="row-del-btn" onclick="deleteExerciseRecord(${idx})">🗑</button></td>
       </tr>`;
     });
     document.getElementById('exercise-table').innerHTML = html;
@@ -5489,6 +5641,241 @@ function deleteExerciseItem(idx) {
   finToast('🗑️ 已删除运动记录');
 }
 
+// ==================== 体重记录 修改/删除 ====================
+let weightEditIdx = -1;
+function openWeightEditModal(idx) {
+  const w = store.weightRecords && store.weightRecords[idx];
+  if (!w) { finToast('记录不存在'); return; }
+  weightEditIdx = idx;
+  const dEl = document.getElementById('we-date');
+  const vEl = document.getElementById('we-value');
+  const nEl = document.getElementById('we-note');
+  const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
+  if (dEl) dEl.value = w.date || '';
+  if (vEl) vEl.value = v != null ? v : '';
+  if (nEl) nEl.value = w.note || '';
+  const m = document.getElementById('weight-edit-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeWeightEditModal() {
+  const m = document.getElementById('weight-edit-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  weightEditIdx = -1;
+}
+function submitWeightEdit() {
+  if (weightEditIdx < 0 || !store.weightRecords || !store.weightRecords[weightEditIdx]) { finToast('记录不存在'); return; }
+  const dEl = document.getElementById('we-date');
+  const vEl = document.getElementById('we-value');
+  const nEl = document.getElementById('we-note');
+  const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const v = parseFloat(vEl ? vEl.value : '');
+  if (isNaN(v) || v <= 0) { finToast('请填写有效体重'); return; }
+  const note = (nEl && nEl.value ? nEl.value : '').trim();
+  // 按新日期查冲突：如果改了日期且已有同日期记录，则合并到原索引上覆盖（不创建新记录）
+  const w = store.weightRecords[weightEditIdx];
+  w.date = date;
+  w.value = parseFloat(v.toFixed(1));
+  w.after = parseFloat(v.toFixed(1));  // 兼容旧字段
+  w.note = note;
+  // 删除原日期已被替换产生的可能重复（同日期其他记录）
+  store.weightRecords = store.weightRecords.filter((r, i) => i === weightEditIdx || r.date !== date);
+  saveData();
+  closeWeightEditModal();
+  try { renderFitness(); } catch(e) {}
+  try { renderDesktopWeight(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('✅ 已更新体重 ' + v.toFixed(1) + ' kg');
+}
+function deleteWeightRecord(idx) {
+  const w = store.weightRecords && store.weightRecords[idx];
+  if (!w) { finToast('记录不存在'); return; }
+  if (!confirm('确定删除 ' + w.date + ' 的体重记录吗？')) return;
+  store.weightRecords.splice(idx, 1);
+  saveData();
+  try { renderFitness(); } catch(e) {}
+  try { renderDesktopWeight(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('🗑 已删除体重记录');
+}
+
+// ==================== 运动打卡 修改/删除 ====================
+let exerciseEditIdx = -1;
+function eePick(key) {
+  const ids = { aerobics: 'ee-aerobics', cardio: 'ee-cardio', weights: 'ee-weights' };
+  const el = document.getElementById(ids[key]);
+  if (!el) return;
+  el.checked = !el.checked;
+  document.querySelectorAll('#exercise-edit-modal [data-ee]').forEach(function (s) {
+    const k = s.getAttribute('data-ee');
+    const cb = document.getElementById(ids[k]);
+    s.classList.toggle('active', cb && cb.checked);
+  });
+}
+function openExerciseEditModal(idx) {
+  const e = store.exerciseRecords && store.exerciseRecords[idx];
+  if (!e) { finToast('记录不存在'); return; }
+  exerciseEditIdx = idx;
+  const setCb = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+  };
+  setCb('ee-aerobics', e.aerobics);
+  setCb('ee-cardio', e.cardio);
+  setCb('ee-weights', e.weights);
+  ['ee-aerobics','ee-cardio','ee-weights'].forEach(function(id){
+    const k = id.replace('ee-','');
+    const s = document.querySelector('#exercise-edit-modal [data-ee="'+k+'"]');
+    if (s) s.classList.toggle('active', !!document.getElementById(id).checked);
+  });
+  const dEl = document.getElementById('ee-date');
+  const ctEl = document.getElementById('ee-cardioType');
+  const wcEl = document.getElementById('ee-weightsContent');
+  const stEl = document.getElementById('ee-sets');
+  const duEl = document.getElementById('ee-duration');
+  if (dEl) dEl.value = e.date || '';
+  if (ctEl) ctEl.value = e.cardioType || '';
+  if (wcEl) wcEl.value = e.weightsContent || '';
+  if (stEl) stEl.value = e.sets || '';
+  if (duEl) duEl.value = e.duration || '';
+  const m = document.getElementById('exercise-edit-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeExerciseEditModal() {
+  const m = document.getElementById('exercise-edit-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  exerciseEditIdx = -1;
+}
+function submitExerciseEdit() {
+  if (exerciseEditIdx < 0 || !store.exerciseRecords || !store.exerciseRecords[exerciseEditIdx]) { finToast('记录不存在'); return; }
+  const dEl = document.getElementById('ee-date');
+  const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const aerobics = document.getElementById('ee-aerobics').checked;
+  const cardio = document.getElementById('ee-cardio').checked;
+  const weights = document.getElementById('ee-weights').checked;
+  const cardioType = (document.getElementById('ee-cardioType').value || '').trim();
+  const weightsContent = (document.getElementById('ee-weightsContent').value || '').trim();
+  const sets = (document.getElementById('ee-sets').value || '').trim();
+  const duration = (document.getElementById('ee-duration').value || '').trim();
+  if (!aerobics && !cardio && !weights) { finToast('请至少勾选一种运动类型'); return; }
+  const e = store.exerciseRecords[exerciseEditIdx];
+  e.date = date;
+  e.aerobics = aerobics;
+  e.cardio = cardio;
+  e.weights = weights;
+  e.cardioType = cardioType;
+  e.weightsContent = weightsContent;
+  e.sets = sets;
+  e.duration = duration;
+  // 若改了日期且已有同日期记录，删掉重复（同 idx 保留，其余过滤）
+  store.exerciseRecords = store.exerciseRecords.filter((r, i) => i === exerciseEditIdx || r.date !== date);
+  saveData();
+  closeExerciseEditModal();
+  try { renderFitness(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('✅ 已更新 ' + date + ' 的运动打卡');
+}
+function deleteExerciseRecord(idx) {
+  const e = store.exerciseRecords && store.exerciseRecords[idx];
+  if (!e) { finToast('记录不存在'); return; }
+  if (!confirm('确定删除 ' + e.date + ' 的运动打卡吗？')) return;
+  store.exerciseRecords.splice(idx, 1);
+  saveData();
+  try { renderFitness(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('🗑 已删除运动打卡');
+}
+
+// ==================== 如厕记录 修改/删除 ====================
+let toiletEditIdx = -1;
+function openToiletEditModal(idx) {
+  const r = store.toiletRecords && store.toiletRecords[idx];
+  if (!r) { finToast('记录不存在'); return; }
+  toiletEditIdx = idx;
+  const dEl = document.getElementById('te-date');
+  const cEl = document.getElementById('te-count');
+  if (dEl) dEl.value = r.date || '';
+  if (cEl) cEl.value = r.count || 1;
+  const m = document.getElementById('toilet-edit-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeToiletEditModal() {
+  const m = document.getElementById('toilet-edit-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  toiletEditIdx = -1;
+}
+function submitToiletEdit() {
+  if (toiletEditIdx < 0 || !store.toiletRecords || !store.toiletRecords[toiletEditIdx]) { finToast('记录不存在'); return; }
+  const dEl = document.getElementById('te-date');
+  const cEl = document.getElementById('te-count');
+  const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const count = parseInt(cEl ? cEl.value : '1') || 1;
+  if (count < 1) { finToast('次数需≥1'); return; }
+  const r = store.toiletRecords[toiletEditIdx];
+  r.date = date;
+  r.count = count;
+  // 若改了日期且已有同日期记录，删掉重复（同 idx 保留）
+  store.toiletRecords = store.toiletRecords.filter((x, i) => i === toiletEditIdx || x.date !== date);
+  saveData();
+  closeToiletEditModal();
+  try { renderToilet(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('✅ 已更新 ' + date + ' 的如厕记录');
+}
+function deleteToiletRecord(idx) {
+  const r = store.toiletRecords && store.toiletRecords[idx];
+  if (!r) { finToast('记录不存在'); return; }
+  if (!confirm('确定删除 ' + r.date + ' 的如厕记录吗？')) return;
+  store.toiletRecords.splice(idx, 1);
+  saveData();
+  try { renderToilet(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('🗑 已删除如厕记录');
+}
+
+// ==================== 面膜记录 修改/删除 ====================
+let maskEditIdx = -1;
+function openMaskEditModal(idx) {
+  const r = store.maskRecords && store.maskRecords[idx];
+  if (!r) { finToast('记录不存在'); return; }
+  maskEditIdx = idx;
+  const dEl = document.getElementById('me-date');
+  if (dEl) dEl.value = r.date || '';
+  const m = document.getElementById('mask-edit-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeMaskEditModal() {
+  const m = document.getElementById('mask-edit-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  maskEditIdx = -1;
+}
+function submitMaskEdit() {
+  if (maskEditIdx < 0 || !store.maskRecords || !store.maskRecords[maskEditIdx]) { finToast('记录不存在'); return; }
+  const dEl = document.getElementById('me-date');
+  const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const r = store.maskRecords[maskEditIdx];
+  r.date = date;
+  store.maskRecords = store.maskRecords.filter((x, i) => i === maskEditIdx || x.date !== date);
+  saveData();
+  closeMaskEditModal();
+  try { renderMask(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('✅ 已更新面膜记录到 ' + date);
+}
+function deleteMaskRecord(idx) {
+  const r = store.maskRecords && store.maskRecords[idx];
+  if (!r) { finToast('记录不存在'); return; }
+  if (!confirm('确定删除 ' + r.date + ' 的面膜记录吗？')) return;
+  store.maskRecords.splice(idx, 1);
+  saveData();
+  try { renderMask(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('🗑 已删除面膜记录');
+}
+
 // ==================== 模拟人生更新推荐 ====================
 function renderInspire() {
   const sorted = [...store.inspireRecords].sort((a,b) => b.date.localeCompare(a.date));
@@ -5676,6 +6063,20 @@ function finToast(text) {
     document.body.appendChild(el);
     setTimeout(() => { try { el.remove(); } catch(e){} }, 1800);
   } catch(e) {}
+}
+
+// 删除记账（按真实 store 索引）
+function deleteAccountRecord(idx) {
+  const r = store.accountRecords && store.accountRecords[idx];
+  if (!r) { finToast('记录不存在'); return; }
+  const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+  const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
+  const tip = '确定删除这条记账吗？\n' + dateStr + ' ' + sign + '¥' + (r.amount || 0).toFixed(2);
+  if (!confirm(tip)) return;
+  store.accountRecords.splice(idx, 1);
+  try { saveData(); } catch(e) {}
+  try { renderAccount(); } catch(e) {}
+  finToast('🗑 已删除');
 }
 
 // 打开记一笔弹窗
@@ -5975,13 +6376,20 @@ function renderAccount() {
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
   const records = (store.accountRecords || []).slice().sort((a,b) => (b.ts||0) - (a.ts||0));
   const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
-  const totalIncome = inMonth.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+
+  // 手动收入（不含旧"模拟人生定制单"分类——历史迁移已删，不重复计入）
+  const manualIncome = inMonth.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+  // 联动：定制单明细金额自动计入收入（所有金额，不分状态）
+  const ordersAll = (store.customOrders || []).filter(o => o.date && (month === 'all' || o.date.startsWith(month)));
+  const customOrdersIncome = ordersAll.reduce((s,o) => s + (parseFloat(o.amount) || 0), 0);
+  const totalIncome = manualIncome + customOrdersIncome;
   const totalExpense = inMonth.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
   const balance = totalIncome - totalExpense;
 
   const lastMD = (function(){
-    if (inMonth.length === 0) return '暂无记录';
-    const dates = inMonth.map(r => r.date).filter(Boolean).sort().reverse();
+    const pool = [...records, ...ordersAll];
+    if (pool.length === 0) return '暂无记录';
+    const dates = pool.map(x => x.date).filter(Boolean).sort().reverse();
     return dates[0] || '暂无记录';
   })();
   const isAll = month === 'all';
@@ -5994,6 +6402,12 @@ function renderAccount() {
     <div class="stat-card"><div class="label">💸 ${periodLabel}支出</div><div class="label">最后更新：${lastMD}</div><div class="value red">¥${fmtMoney(totalExpense)}</div></div>
     <div class="stat-card"><div class="label">📊 ${periodLabel}结余</div><div class="label">最后更新：${lastMD}</div><div class="value ${balance >= 0 ? 'green' : 'red'}">¥${fmtMoney(balance)}</div></div>
     <div class="stat-card"><div class="label">📝 记账笔数</div><div class="label">最后更新：${lastMD}</div><div class="value">${inMonth.length}</div><div class="unit">笔</div></div>
+    <div class="income-breakdown" style="grid-column:1/-1;">
+      <span>📦 <b>定制单自动联动</b>（来自【模拟人生总收入】）</span>
+      <span class="ord-chip">¥${fmtMoney(customOrdersIncome)}</span>
+      <span style="color:#9a6a7e;">共 ${ordersAll.length} 单</span>
+      <span style="margin-left:auto;color:#9a6a7e;">手动记录 ¥${fmtMoney(manualIncome)} + 定制单 ¥${fmtMoney(customOrdersIncome)} = <b>¥${fmtMoney(totalIncome)}</b></span>
+    </div>
   `;
 
   // 分类明细榜
@@ -6012,12 +6426,14 @@ function renderAccount() {
       const realIdx = store.accountRecords.indexOf(r);  // 真实 store 索引（r 是 store 里同一对象引用）
       const c = getCategoryInfo(r.category, r.type);
       const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
+      const typeLabel = r.type === 'income' ? '💰收' : (r.type === 'transfer' ? '⇄转' : '💸支');
       const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
       const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       const timeStr = (r.time || '').substring(0, 5);
       flowHtml += `
         <div class="fin-flow-row">
           <span class="fin-flow-date">${dateStr}</span>
+          <span class="fin-flow-type type-${typeCls}">${typeLabel}</span>
           <div class="fin-flow-cat">
             <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
             <span class="fin-flow-cat-name">${c.name}</span>
@@ -6025,6 +6441,7 @@ function renderAccount() {
           <span class="fin-flow-time">${timeStr}</span>
           <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
           <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})">✏️</button>
+          <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})">🗑</button>
         </div>
       `;
     });
@@ -6315,7 +6732,7 @@ function renderPeriod() {
   document.getElementById('period-predict').innerHTML = predictHtml;
 
   if (periods.length === 0) {
-    document.getElementById('period-table').innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="big-icon">🌸</div><p>暂无经期记录</p><p style="font-size:12px;margin-top:6px;">来月经时告诉我开始日期</p></div></td></tr>`;
+    document.getElementById('period-table').innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="big-icon">🌸</div><p>暂无经期记录</p><p style="font-size:12px;margin-top:6px;">来月经时告诉我开始日期</p></div></td></tr>`;
   } else {
     let html = '';
     periods.forEach((p, i) => {
@@ -6332,7 +6749,7 @@ function renderPeriod() {
         status = '<span class="badge rest">进行中</span>';
       }
       const pIdx = store.periodRecords.indexOf(p);
-      html += `<tr style="cursor:pointer;" onclick="editPeriod(${pIdx})" title="点击修改开始/结束日期"><td>${p.start}</td><td>${p.end || '—'}</td><td>${duration}${p.end?'天':''}</td><td>${cycle}</td><td>${status}</td></tr>`;
+      html += `<tr><td>${p.start}</td><td>${p.end || '—'}</td><td>${duration}${p.end?'天':''}</td><td>${cycle}</td><td>${status}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="editPeriod(${pIdx})" type="button">✏️</button> <button class="row-del-btn" onclick="deletePeriodRecord(${pIdx})" type="button">🗑</button></td></tr>`;
     });
     document.getElementById('period-table').innerHTML = html;
   }
@@ -6350,13 +6767,14 @@ function renderPeriod() {
 
   const allWashes = [...store.washRecords].sort((a,b) => b.date.localeCompare(a.date));
   if (allWashes.length === 0) {
-    document.getElementById('wash-table').innerHTML = `<tr><td colspan="2"><div class="empty-state"><p>暂无洗头记录</p></div></td></tr>`;
+    document.getElementById('wash-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>暂无洗头记录</p></div></td></tr>`;
   } else {
     let html = '';
     allWashes.forEach((w, i) => {
       let gap = '—';
       if (i < allWashes.length - 1) gap = Math.round((new Date(w.date) - new Date(allWashes[i+1].date)) / 86400000) + '天';
-      html += `<tr><td>${w.date}</td><td>${gap}</td></tr>`;
+      const wIdx = store.washRecords.indexOf(w);
+      html += `<tr><td>${w.date}</td><td>${gap}</td><td style="white-space:nowrap;"><button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" type="button">🗑</button></td></tr>`;
     });
     document.getElementById('wash-table').innerHTML = html;
   }
@@ -6387,13 +6805,14 @@ function renderToilet() {
 
   const recs = [...store.toiletRecords].sort((a,b)=>b.date.localeCompare(a.date));
   if (recs.length === 0) {
-    document.getElementById('toilet-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>暂无如厕记录</p></div></td></tr>`;
+    document.getElementById('toilet-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>暂无如厕记录</p></div></td></tr>`;
   } else {
     let html = '';
     recs.forEach((r, i) => {
       let gap = '—';
       if (i < recs.length - 1) gap = Math.round((new Date(r.date) - new Date(recs[i+1].date)) / 86400000) + '天';
-      html += `<tr><td>${r.date}</td><td>${r.count || 1}</td><td>${gap}</td></tr>`;
+      const tIdx = store.toiletRecords.indexOf(r);
+      html += `<tr><td>${r.date}</td><td>${r.count || 1}</td><td>${gap}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openToiletEditModal(${tIdx})">✏️</button> <button class="row-del-btn" onclick="deleteToiletRecord(${tIdx})">🗑</button></td></tr>`;
     });
     document.getElementById('toilet-table').innerHTML = html;
   }
@@ -6431,12 +6850,13 @@ function renderMask() {
 
   const recs = [...store.maskRecords].sort((a,b)=>b.date.localeCompare(a.date));
   if (recs.length === 0) {
-    document.getElementById('mask-table').innerHTML = `<tr><td colspan="2"><div class="empty-state"><p>暂无敷面膜记录</p></div></td></tr>`;
+    document.getElementById('mask-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>暂无敷面膜记录</p></div></td></tr>`;
   } else {
     let html = '';
     recs.forEach(m => {
       const d = new Date(m.date + 'T00:00:00');
-      html += `<tr><td>${m.date}</td><td>周${wn[d.getDay()]}</td></tr>`;
+      const mIdx = store.maskRecords.indexOf(m);
+      html += `<tr><td>${m.date}</td><td>周${wn[d.getDay()]}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openMaskEditModal(${mIdx})">✏️</button> <button class="row-del-btn" onclick="deleteMaskRecord(${mIdx})">🗑</button></td></tr>`;
     });
     document.getElementById('mask-table').innerHTML = html;
   }
@@ -7738,6 +8158,33 @@ function editPeriod(i) {
   const btn = document.getElementById('period-log-btn');
   if (btn) btn.textContent = '💾 保存修改';
   try { document.getElementById('period-start-input').scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e2) {}
+}
+
+function deletePeriodRecord(i) {
+  const p = store.periodRecords && store.periodRecords[i];
+  if (!p) { finToast('记录不存在'); return; }
+  if (!confirm('确定删除 ' + p.start + ' 的经期记录吗？')) return;
+  store.periodRecords.splice(i, 1);
+  saveData();
+  try { renderPeriod(); } catch(e) {}
+  try { renderFitness(); } catch(e) {}  // 经期会影响"健身天数"和运动状态
+  try { rerenderSynced(); } catch(e) {}
+  // 重置编辑态
+  editingPeriodIdx = -1;
+  const btn = document.getElementById('period-log-btn');
+  if (btn) btn.textContent = '🌸 记录开始日期';
+  finToast('🗑 已删除经期记录');
+}
+
+function deleteWashRecord(i) {
+  const w = store.washRecords && store.washRecords[i];
+  if (!w) { finToast('记录不存在'); return; }
+  if (!confirm('确定删除 ' + w.date + ' 的洗头记录吗？')) return;
+  store.washRecords.splice(i, 1);
+  saveData();
+  try { renderPeriod(); } catch(e) {}
+  try { rerenderSynced(); } catch(e) {}
+  finToast('🗑 已删除洗头记录');
 }
 
 // 选日期记录：上厕所（指定日期，可累加）
