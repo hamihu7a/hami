@@ -769,6 +769,313 @@
   .todo-btn.del { background: #ffe0e0; color: #c25f5f; }
   .todo-btn.del:hover { background: #f3b4b4; color: #fff; }
 
+  /* ============ 财务记录（支出/收入/转账） ============ */
+  .fin-topbar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .fin-topbar .fin-month {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.7); border:1px solid #ffd0dc;
+    border-radius: 12px; padding: 6px 12px;
+  }
+  .fin-topbar .fin-month select {
+    border: none; background: transparent; outline: none;
+    font-size: 13px; color: #7d4a5a; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+  }
+  .fin-add-btn, .fin-stats-btn {
+    border: none; padding: 8px 16px; border-radius: 12px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: transform .15s ease, box-shadow .2s ease;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .fin-add-btn {
+    background: linear-gradient(135deg, #ff7e9c, #ff6b9e);
+    color: #fff; box-shadow: 0 4px 12px rgba(255,107,158,0.35);
+    margin-left: auto;
+  }
+  .fin-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,107,158,0.5); }
+  .fin-stats-btn {
+    background: rgba(255,255,255,0.8); color: #d14b73;
+    border: 1px solid #ffd0dc;
+  }
+  .fin-stats-btn:hover { background: #fff5f9; }
+  .fin-tab { transition: background .2s ease, color .2s ease; }
+
+  /* 分类排行榜条（图4样式） */
+  .rank-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 4px;
+    border-bottom: 1px dashed #ffe4ec;
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #f5e8ed;
+  }
+  .rank-name { font-size: 13px; font-weight: 700; color: #5a3a48; min-width: 56px; }
+  .rank-pct { font-size: 12px; color: #9a6a7e; min-width: 38px; }
+  .rank-bar {
+    flex: 1; height: 6px; border-radius: 3px; background: #fff0f5;
+    overflow: hidden; position: relative; margin: 0 8px;
+  }
+  .rank-bar-fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    border-radius: 3px; transition: width 0.6s ease;
+  }
+  .rank-amount { font-size: 14px; font-weight: 700; color: #d14b73; min-width: 84px; text-align: right; font-family: 'Baloo 2', monospace; }
+
+  /* 弹窗遮罩 */
+  .modal-mask {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(40, 22, 35, 0.45);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    animation: finFadeIn 0.2s ease;
+  }
+  @keyframes finFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  .modal-card {
+    background: rgba(255, 250, 252, 0.97);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: 0 24px 64px rgba(60, 20, 45, 0.3);
+    max-width: 460px; width: 100%;
+    max-height: 92vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: finSlideUp 0.25s ease;
+  }
+  @keyframes finSlideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+  /* 弹窗头部 */
+  .arm-head {
+    display: flex; align-items: center;
+    padding: 14px 16px; gap: 10px;
+    border-bottom: 1px solid #ffe4ec;
+  }
+  .arm-close {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: #7d4a5a; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; border: 1px solid #ffd0dc;
+    transition: transform 0.2s ease; flex-shrink: 0;
+  }
+  .arm-close:hover { transform: rotate(90deg); }
+  .arm-tabs { display: flex; gap: 2px; flex: 1; justify-content: center; }
+  .arm-tab {
+    border: none; background: transparent; padding: 8px 14px;
+    font-size: 13px; font-weight: 700; color: #9a6a7e; cursor: pointer;
+    font-family: inherit; border-radius: 18px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .arm-tab.active { background: rgba(0,0,0,0.06); color: #5a3a48; }
+  .arm-account {
+    font-size: 13px; color: #d14b73; cursor: pointer; font-weight: 600;
+    padding: 4px 10px; border-radius: 10px;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  .arm-account:hover { background: rgba(255, 107, 158, 0.08); }
+
+  /* 分类网格 */
+  .arm-grid {
+    padding: 14px 16px; overflow-y: auto;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 10px; max-height: 36vh;
+    scrollbar-width: thin;
+  }
+  .arm-cat {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; padding: 6px 2px; border-radius: 14px;
+    cursor: pointer; transition: transform 0.15s ease;
+    position: relative;
+  }
+  .arm-cat:hover { transform: translateY(-2px); }
+  .arm-cat-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: #f5e8ed; color: #9a6a7e;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.04);
+  }
+  .arm-cat-icon svg { width: 22px; height: 22px; }
+  .arm-cat-name { font-size: 11px; color: #5a3a48; font-weight: 600; }
+  .arm-cat.selected .arm-cat-icon {
+    background: linear-gradient(135deg, #ff7e9c, #ff6b9e);
+    color: #fff;
+    transform: scale(1.06);
+    box-shadow: 0 4px 14px rgba(255, 107, 158, 0.45);
+  }
+  .arm-cat.selected::after {
+    content: '✓'; position: absolute; top: 2px; right: 6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #d14b73; color: #fff;
+    font-size: 10px; line-height: 16px; text-align: center;
+    font-weight: 800;
+  }
+
+  /* 工具栏 */
+  .arm-toolbar {
+    display: flex; gap: 6px; padding: 8px 16px;
+    border-top: 1px solid #ffe4ec;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .arm-toolbar::-webkit-scrollbar { display: none; }
+  .arm-tool {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 12px; border-radius: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid #ffd0dc;
+    color: #7d4a5a; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    font-family: inherit;
+    transition: background 0.2s, color 0.2s;
+  }
+  .arm-tool:hover { background: #fff5f9; }
+  .arm-tool.active { background: #d14b73; color: #fff; border-color: #d14b73; }
+
+  /* 金额显示 */
+  .arm-amount-row {
+    padding: 12px 20px 8px;
+    border-top: 1px solid #ffe4ec;
+    display: flex; align-items: baseline; gap: 4px;
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .arm-amount-currency {
+    font-size: 16px; font-weight: 700; color: #d14b73;
+  }
+  .arm-amount-value {
+    font-size: 32px; font-weight: 800; color: #d14b73;
+    letter-spacing: 0.5px;
+    line-height: 1.1; flex: 1;
+    font-family: 'Baloo 2', monospace;
+    word-break: break-all;
+  }
+  .arm-amount-value.empty { color: #c8b0bb; font-weight: 400; }
+  .arm-meta-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 20px 10px;
+    font-size: 12px; color: #9a6a7e;
+  }
+  .arm-meta-row > span { display: inline-flex; align-items: center; gap: 4px; }
+
+  /* 数字键盘 */
+  .arm-keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px; padding: 10px 12px 16px;
+  }
+  .arm-key {
+    aspect-ratio: 1.6 / 1;
+    border: none; border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #5a3a48; font-size: 20px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Baloo 2', monospace;
+  }
+  .arm-key:hover { background: #fff5f9; }
+  .arm-key:active { transform: scale(0.95); background: #ffe4ec; }
+  .arm-key.op { font-size: 14px; color: #d14b73; }
+  .arm-key.bs {
+    background: rgba(255, 200, 215, 0.6); color: #a03e62;
+    font-size: 16px;
+  }
+  .arm-key.bs:hover { background: rgba(255, 200, 215, 0.85); }
+  .arm-key.save {
+    background: rgba(255, 255, 255, 0.5); color: #d14b73;
+    font-size: 10px;
+  }
+  .arm-key.done {
+    background: linear-gradient(135deg, #ff7e9c, #ff6b9e);
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 4px 14px rgba(255, 107, 158, 0.4);
+  }
+  .arm-key.done:hover { box-shadow: 0 6px 20px rgba(255, 107, 158, 0.55); }
+
+  /* 子面板输入 */
+  .arm-subinput {
+    padding: 8px 16px 4px;
+    display: none;
+  }
+  .arm-subinput.show { display: block; }
+  .arm-subinput-inner {
+    display: flex; gap: 6px; align-items: center;
+    background: #fff5f9; border-radius: 10px;
+    padding: 6px 10px;
+  }
+  .arm-subinput-inner input {
+    flex: 1; border: none; background: transparent;
+    outline: none; font-size: 13px; color: #5a3a48;
+    font-family: inherit;
+  }
+
+  /* 统计弹窗 - 环形图 */
+  .ring-wrap {
+    position: relative; width: 220px; height: 220px;
+    margin: 16px auto 10px;
+  }
+  .ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .ring-center-label { font-size: 12px; color: #9a6a7e; margin-bottom: 2px; }
+  .ring-center-value { font-size: 22px; font-weight: 800; color: #5a3a48; font-family: 'Baloo 2', monospace; }
+
+  /* 记录列表（流水） */
+  .fin-flow-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 4px;
+    border-bottom: 1px dashed #ffe4ec;
+  }
+  .fin-flow-row:last-child { border-bottom: none; }
+  .fin-flow-date { font-size: 12px; color: #9a6a7e; min-width: 60px; }
+  .fin-flow-cat {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: #5a3a48; font-weight: 600;
+    flex: 1; min-width: 0;
+  }
+  .fin-flow-cat .rank-icon { width: 24px; height: 24px; }
+  .fin-flow-cat .rank-icon svg { width: 14px; height: 14px; }
+  .fin-flow-cat-name {
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .fin-flow-time { font-size: 11px; color: #9a6a7e; }
+  .fin-flow-amt { font-size: 14px; font-weight: 700; min-width: 72px; text-align: right; font-family: 'Baloo 2', monospace; }
+  .fin-flow-amt.expense { color: #d14b73; }
+  .fin-flow-amt.income { color: #34c759; }
+  .fin-flow-amt.transfer { color: #8a72e0; }
+
+  /* toast */
+  .fin-toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(60, 20, 45, 0.88); color: #fff;
+    padding: 10px 20px; border-radius: 22px;
+    font-size: 13px; font-weight: 600;
+    z-index: 99999;
+    box-shadow: 0 8px 24px rgba(60, 20, 45, 0.3);
+    animation: finToast 0.3s ease;
+  }
+  @keyframes finToast {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  }
+
+  @media (max-width: 480px) {
+    .modal-mask { padding: 0; }
+    .modal-card { max-height: 100vh; border-radius: 0; max-width: 100vw; height: 100vh; }
+    .arm-grid { grid-template-columns: repeat(5, 1fr); padding: 12px; max-height: 38vh; }
+    .arm-cat-icon { width: 40px; height: 40px; }
+    .arm-cat-icon svg { width: 20px; height: 20px; }
+  }
+
   /* ============ 通用 ============ */
   .panel-header {
     display: flex;
@@ -1763,53 +2070,143 @@
   <div id="panel-account" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用方法</b>：跟我说"午饭花了25"、"打车12块"、"收了定制单800"、"庄子转了500"就行，我帮你记~
+      💕 <b>使用方法</b>：跟我说"午饭花了25"、"打车12块"、"收了定制单800"就行，我帮你记。
+      也可以点右上「记一笔」按分类图标选着填，颜值更高、数据更整齐~
     </div>
 
-    <div class="month-selector">
-      <label>📅 选择月份：</label>
-      <select id="account-month" onchange="renderAccount()">
-        <option value="2026-07" selected>2026年7月</option>
-        <option value="2026-08">2026年8月</option>
-        <option value="2026-09">2026年9月</option>
-        <option value="2026-10">2026年10月</option>
-        <option value="2026-11">2026年11月</option>
-        <option value="2026-12">2026年12月</option>
-      </select>
+    <div class="fin-topbar">
+      <div class="fin-month">
+        <span style="font-size:14px;">📅</span>
+        <select id="account-month" onchange="renderAccount()">
+          <option value="2026-07">2026年7月</option>
+          <option value="2026-08" selected>2026年8月</option>
+          <option value="2026-09">2026年9月</option>
+          <option value="2026-10">2026年10月</option>
+          <option value="2026-11">2026年11月</option>
+          <option value="2026-12">2026年12月</option>
+          <option value="all">全部</option>
+        </select>
+      </div>
+      <button class="fin-stats-btn" onclick="openStatsModal()">📊 统计</button>
+      <button class="fin-add-btn" onclick="openAddModal()">➕ 记一笔</button>
     </div>
 
     <div class="stats-grid" id="account-stats"></div>
 
-    <div class="card">
-      <div class="card-title"><span>📊</span> 支出分类统计</div>
-      <div id="account-pie-chart"></div>
+    <div class="todo-card" style="margin-bottom:var(--space-block);padding:18px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <span>📋</span> 分类明细
+        <span id="account-rank-tab" style="margin-left:auto;display:inline-flex;background:#fff0f5;border-radius:12px;padding:3px;gap:0;">
+          <span class="fin-tab active" data-tab="expense" style="font-size:11px;padding:4px 12px;border-radius:9px;cursor:pointer;color:#7d4a5a;font-weight:700;">支出</span>
+          <span class="fin-tab" data-tab="income" style="font-size:11px;padding:4px 12px;border-radius:9px;cursor:pointer;color:#7d4a5a;font-weight:700;">收入</span>
+        </span>
+      </h3>
+      <div id="account-ranking"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span>📈</span> 收支趋势</div>
-      <div id="account-trend-chart"></div>
+    <div class="todo-card" style="padding:18px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <span>📒</span> 近期记录
+      </h3>
+      <div id="account-flow-table"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span>📋</span> 分类明细</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>分类</th><th>笔数</th><th>金额</th><th>占比</th></tr></thead>
-          <tbody id="account-category-table"></tbody>
-        </table>
+  </div>
+
+  <!-- ==================== 记一笔 弹窗 ==================== -->
+  <div id="add-record-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeAddModal()">
+    <div class="modal-card">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeAddModal()" aria-label="关闭">✕</span>
+        <div class="arm-tabs">
+          <button class="arm-tab active" data-type="expense">支出</button>
+          <button class="arm-tab" data-type="income">收入</button>
+          <button class="arm-tab" data-type="transfer">转账</button>
+        </div>
+        <span class="arm-account" id="arm-account-name" onclick="cycleAccount()">默认账本 ▾</span>
+      </div>
+      <div class="arm-grid" id="arm-cat-grid"></div>
+      <div class="arm-toolbar" id="arm-toolbar">
+        <button class="arm-tool" data-tool="account" title="点击切换账户">⚙️ 选择账户</button>
+        <button class="arm-tool" data-tool="reimburse">💸 报销</button>
+        <button class="arm-tool" data-tool="discount">🏷️ 优惠</button>
+        <button class="arm-tool" data-tool="image">🖼️ 图片</button>
+        <button class="arm-tool" data-tool="tag">🔖 标签</button>
+      </div>
+      <div class="arm-subinput" id="arm-subinput">
+        <div class="arm-subinput-inner">
+          <span id="arm-sub-label" style="font-size:12px;color:#d14b73;font-weight:600;"></span>
+          <input id="arm-sub-text" type="text" placeholder="填写说明..." />
+          <button class="arm-tool" style="padding:4px 10px;font-size:11px;cursor:pointer;" onclick="document.getElementById('arm-subinput').classList.remove('show'); document.getElementById('arm-sub-text').value='';">✕</button>
+        </div>
+      </div>
+      <div class="arm-amount-row">
+        <span class="arm-amount-currency">¥</span>
+        <span class="arm-amount-value empty" id="arm-amount">0.00</span>
+      </div>
+      <div class="arm-meta-row">
+        <span>⏰ <input type="time" id="arm-time" value="00:48" style="border:none;background:transparent;color:#7d4a5a;font-family:inherit;font-weight:600;outline:none;width:54px;font-size:12px;" /></span>
+        <span id="arm-date-display" style="font-size:11px;"></span>
+        <span id="arm-note-toggle" onclick="openNoteInput()" style="cursor:pointer;color:#d14b73;font-weight:600;">点击填写备注 ✏️</span>
+      </div>
+      <div class="arm-keypad" id="arm-keypad">
+        <button class="arm-key" data-k="1">1</button>
+        <button class="arm-key" data-k="2">2</button>
+        <button class="arm-key" data-k="3">3</button>
+        <button class="arm-key op" data-k="plus">+×</button>
+        <button class="arm-key" data-k="4">4</button>
+        <button class="arm-key" data-k="5">5</button>
+        <button class="arm-key" data-k="6">6</button>
+        <button class="arm-key op" data-k="minus">−÷</button>
+        <button class="arm-key" data-k="7">7</button>
+        <button class="arm-key" data-k="8">8</button>
+        <button class="arm-key" data-k="9">9</button>
+        <button class="arm-key save" data-k="save">保存再记</button>
+        <button class="arm-key" data-k="dot">.</button>
+        <button class="arm-key" data-k="0">0</button>
+        <button class="arm-key bs" data-k="bs" title="退格">⌫</button>
+        <button class="arm-key done" data-k="done">完成</button>
       </div>
     </div>
+  </div>
 
-    <div class="card">
-      <div class="card-title"><span>📒</span> 每日收支流水</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>日期</th><th>类型</th><th>分类</th><th>金额</th><th>备注</th></tr></thead>
-          <tbody id="account-flow-table"></tbody>
-        </table>
+  <!-- ==================== 统计弹窗 ==================== -->
+  <div id="stats-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeStatsModal()">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="arm-head">
+        <span class="arm-close" onclick="closeStatsModal()" aria-label="关闭">✕</span>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">统计</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div style="padding:10px 18px 6px;border-bottom:1px solid #ffe4ec;background:rgba(255,255,255,0.4);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7d4a5a;">
+            <span style="width:22px;height:22px;border-radius:50%;background:#ffe0a0;color:#b07000;display:inline-flex;align-items:center;justify-content:center;font-size:11px;">📋</span>
+            支出分类详情
+          </div>
+          <div style="font-size:11px;color:#9a6a7e;">
+            <span id="stats-display-mode" onclick="toggleStatsMode()" style="cursor:pointer;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.6);">显示环比金额 ▾</span>
+            <span style="margin-left:4px;color:#9a6a7e;">一级分类 ▾</span>
+          </div>
+        </div>
+      </div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 220 220" id="ring-svg" style="width:100%;height:100%;"></svg>
+        <div class="ring-center">
+          <div class="ring-center-label" id="ring-center-label">总支出</div>
+          <div class="ring-center-value" id="ring-center-value">¥0.00</div>
+        </div>
+      </div>
+      <div style="padding:0 16px 16px;overflow-y:auto;max-height:36vh;">
+        <div style="display:flex;justify-content:center;margin-bottom:10px;">
+          <div style="display:inline-flex;background:rgba(0,0,0,0.06);border-radius:14px;padding:3px;">
+            <span class="arm-tab active" data-stype="expense" style="padding:5px 20px;font-size:12px;">支出</span>
+            <span class="arm-tab" data-stype="income" style="padding:5px 20px;font-size:12px;">收入</span>
+          </div>
+        </div>
+        <div id="stats-ranking"></div>
       </div>
     </div>
-
   </div>
 
   <!-- ==================== 日期提醒 ==================== -->
@@ -4527,207 +4924,537 @@ function renderDesktopInspire() {
   }
 }
 
-// ==================== 记账（支出与总收入） ====================
+// ==================== 记账（支出与总收入）- 全新版本 ====================
+// 22个支出分类的SVG图标库（参考图1/图2）
+const ICON_SVGS = {
+  egg: '<svg viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="20" rx="13" ry="10" fill="none" stroke="#fff" stroke-width="2"/><circle cx="22" cy="16" r="3.5" fill="#fff"/></svg>',
+  bowl: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M7 16 Q7 28 18 28 Q29 28 29 16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 16 L31 16" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M11 14 Q13 16 14 18 M25 14 Q23 16 22 18" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  cart: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 11 L13 11 L15.5 22 L26 22 L29 14 L14 14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="26" r="2" fill="#fff"/><circle cx="25" cy="26" r="2" fill="#fff"/></svg>',
+  tshirt: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M11 9 L8 12 L11 15 L13 13 L13 27 L23 27 L23 13 L25 15 L28 12 L25 9 Q23 11 18 11 Q13 11 11 9 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+  bag: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M14 12 Q14 8 18 8 Q22 8 22 12" fill="none" stroke="#fff" stroke-width="2"/><rect x="9" y="13" width="18" height="14" rx="2" fill="none" stroke="#fff" stroke-width="2"/><line x1="14" y1="17" x2="22" y2="17" stroke="#fff" stroke-width="1.5"/></svg>',
+  phone: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="14" y="7" width="8" height="22" rx="1.5" fill="none" stroke="#fff" stroke-width="2"/><line x1="14" y1="10" x2="22" y2="10" stroke="#fff" stroke-width="1.5"/><circle cx="18" cy="26" r="0.9" fill="#fff"/></svg>',
+  lip: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M14 12 L22 12 L22 20 L18 24 L14 20 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><line x1="14" y1="15" x2="22" y2="15" stroke="#fff" stroke-width="2"/><line x1="14" y1="18" x2="22" y2="18" stroke="#fff" stroke-width="1.5"/></svg>',
+  bottle: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M16 8 L20 8 L20 12 L22 14 L22 27 Q22 29 18 29 Q14 29 14 27 L14 14 L16 12 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="18" cy="20" r="2" fill="none" stroke="#fff" stroke-width="1.5"/></svg>',
+  aicon: '<svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="11" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 25 L18 11 L24 25 M14 21 L22 21" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  house: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M8 16 L18 8 L28 16 L28 27 L21 27 L21 20 L15 20 L15 27 L8 27 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+  car: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 20 Q9 14 13 13 L23 13 Q27 14 27 20 L27 24 L9 24 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="13" cy="24" r="2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="23" cy="24" r="2" fill="none" stroke="#fff" stroke-width="2"/><line x1="13" y1="20" x2="23" y2="20" stroke="#fff" stroke-width="1.5"/></svg>',
+  gamepad: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M10 14 Q10 11 13 11 L23 11 Q26 11 26 14 L28 21 Q29 27 24 27 Q22 27 21 25 L15 25 Q14 27 12 27 Q7 27 8 21 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="14" cy="17" r="1.4" fill="#fff"/><circle cx="22" cy="17" r="1.4" fill="#fff"/><line x1="16" y1="14" x2="20" y2="18" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="20" y1="14" x2="16" y2="18" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  heart: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M5 13 L11 13 L13 10 L16 22 L19 13 L23 17 L25 13 L31 13" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  phone2: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M12 9 Q12 7.5 13.5 7.5 L15.5 7.5 L17 13 L14.5 14.5 Q17 19 21.5 21.5 L23 19 L28.5 20.5 L28.5 22.5 Q28.5 24 27 24 Q17.5 24 12 14.5 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+  book: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 12 L9 26 L17 26 L18 24 L19 26 L27 26 L27 12 L18 13 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><line x1="18" y1="13" x2="18" y2="26" stroke="#fff" stroke-width="1.5"/><line x1="12" y1="16" x2="16" y2="16" stroke="#fff" stroke-width="1"/><line x1="20" y1="16" x2="24" y2="16" stroke="#fff" stroke-width="1"/></svg>',
+  printer: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="11" y="17" width="14" height="9" fill="none" stroke="#fff" stroke-width="2"/><path d="M13 17 L13 11 L23 11 L23 17" fill="none" stroke="#fff" stroke-width="2"/><rect x="8" y="20" width="20" height="4" rx="0.5" fill="none" stroke="#fff" stroke-width="2"/><line x1="14" y1="22" x2="22" y2="22" stroke="#fff" stroke-width="1.5"/><circle cx="16" cy="14" r="0.8" fill="#fff"/><circle cx="20" cy="14" r="0.8" fill="#fff"/></svg>',
+  sofa: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 17 L9 22 L27 22 L27 17 Q27 13 23 13 L13 13 Q9 13 9 17 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><line x1="9" y1="24" x2="9" y2="27" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="27" y1="24" x2="27" y2="27" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="13" x2="13" y2="17" stroke="#fff" stroke-width="1.5"/><line x1="23" y1="13" x2="23" y2="17" stroke="#fff" stroke-width="1.5"/></svg>',
+  people: '<svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="13" cy="13" r="3.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="23" cy="13" r="3.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M6 27 Q6 19 13 19 Q18 19 19 23 M17 27 Q17 19 23 19 Q30 19 30 27" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+  baby: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="15" y="10" width="6" height="3" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M15 13 Q12 14 12 18 L12 26 Q12 29 15 29 L21 29 Q24 29 24 26 L24 18 Q24 14 21 13" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="18" cy="22" r="2.5" fill="#fff"/></svg>',
+  suitcase: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="9" y="12" width="18" height="17" rx="1" fill="none" stroke="#fff" stroke-width="2"/><path d="M14 12 L14 8 Q14 7 15 7 L21 7 Q22 7 22 8 L22 12" fill="none" stroke="#fff" stroke-width="2"/><line x1="9" y1="18" x2="27" y2="18" stroke="#fff" stroke-width="1.5"/><circle cx="14" cy="21" r="0.8" fill="#fff"/><circle cx="22" cy="21" r="0.8" fill="#fff"/></svg>',
+  juice: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="13" y="11" width="10" height="18" rx="1" fill="none" stroke="#fff" stroke-width="2"/><line x1="13" y1="15" x2="23" y2="15" stroke="#fff" stroke-width="1.5"/><rect x="16" y="8" width="4" height="3" fill="none" stroke="#fff" stroke-width="2"/><line x1="18" y1="8" x2="18" y2="6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+  burger: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M8 17 Q8 10 18 10 Q28 10 28 17" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="20" x2="27" y2="20" stroke="#fff" stroke-width="1.5"/><path d="M9 25 Q9 27 13 27 L23 27 Q27 27 27 25" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  wallet: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 14 Q9 11 12 11 L24 11 Q27 11 27 14 L27 23 Q27 26 24 26 L12 26 Q9 26 9 23 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="22" cy="19" r="1.6" fill="#fff"/><path d="M9 14 L27 14" stroke="#fff" stroke-width="1.5"/></svg>',
+  mod: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="9" y="14" width="18" height="12" rx="1" fill="none" stroke="#fff" stroke-width="2"/><circle cx="14" cy="20" r="1.5" fill="#fff"/><circle cx="18" cy="20" r="1.5" fill="#fff"/><circle cx="22" cy="20" r="1.5" fill="#fff"/><line x1="9" y1="14" x2="9" y2="26" stroke="#fff" stroke-width="2"/></svg>',
+  palette: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 9 Q9 9 9 18 Q9 27 18 27 Q21 27 21 24 Q21 22 23 22 L25 22 Q27 22 27 20 Q27 9 18 9 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="13" cy="14" r="1.5" fill="#fff"/><circle cx="18" cy="13" r="1.5" fill="#fff"/><circle cx="23" cy="15" r="1.5" fill="#fff"/><circle cx="14" cy="19" r="1.5" fill="#fff"/></svg>',
+  gift: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="9" y="13" width="18" height="14" fill="none" stroke="#fff" stroke-width="2"/><line x1="9" y1="17" x2="27" y2="17" stroke="#fff" stroke-width="2"/><line x1="18" y1="13" x2="18" y2="27" stroke="#fff" stroke-width="2"/><path d="M14 13 Q14 9 17 9 Q19 9 18 13 M22 13 Q22 9 19 9 Q17 9 18 13" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  undo: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M11 18 Q11 12 18 12 Q25 12 25 18 Q25 24 18 24 L13 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="11,18 14,15 13,21" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  chart: '<svg viewBox="0 0 36 36" aria-hidden="true"><polyline points="9,24 14,18 19,21 26,11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="18" r="1.5" fill="#fff"/><circle cx="19" cy="21" r="1.5" fill="#fff"/><circle cx="26" cy="11" r="1.5" fill="#fff"/><line x1="8" y1="27" x2="28" y2="27" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  star: '<svg viewBox="0 0 36 36" aria-hidden="true"><polygon points="18,8 21,15 28,15 22,20 25,27 18,23 11,27 14,20 8,15 15,15" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+  transfer: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M10 13 L26 13 L26 9 L31 14 L26 19 L26 15 L10 15 Z M26 23 L10 23 L10 27 L5 22 L10 17 L10 21 L26 21 Z" fill="#fff" stroke="#fff" stroke-width="0.5"/></svg>'
+};
+
+// 支出分类 (22个)
 const EXPENSE_CATEGORIES = [
-  { key: 'food',     icon: '🍜', name: '餐饮',     color: '#ff9eb5', subs: ['餐饮'] },
-  { key: 'snack',    icon: '🍪', name: '零食',     color: '#ffb3c6', subs: ['零食'] },
-  { key: 'drink',    icon: '🧃', name: '饮料',     color: '#a8d8ea', subs: ['饮料'] },
-  { key: 'takeout',  icon: '🛵', name: '外卖',     color: '#ffc8d8', subs: ['外卖'] },
-  { key: 'clothing', icon: '👗', name: '服饰',     color: '#c8a2c8', subs: ['衣服','鞋子','包包','配饰','美妆护肤'] },
-  { key: 'transport',icon: '🚗', name: '交通',     color: '#b8d8b8', subs: ['公交地铁','打车','加油','停车费','共享单车'] },
-  { key: 'home',     icon: '🏠', name: '居家',     color: '#f0d0a0', subs: ['房租','水电燃气','网费','家居用品','清洁'] },
-  { key: 'digital',  icon: '📱', name: '数码',     color: '#a0c8e8', subs: ['手机','电脑','配件','软件订阅','充值'] },
-  { key: 'medical',  icon: '🏥', name: '医疗',     color: '#e8b8b8', subs: ['门诊','药品','体检','保健品'] },
-  { key: 'fun',      icon: '🎮', name: '娱乐',     color: '#d8b8e8', subs: ['游戏','电影','音乐','视频会员','旅游'] },
-  { key: 'social',   icon: '🎁', name: '人情',     color: '#e8c8b8', subs: ['礼物','红包','请客','份子钱'] },
-  { key: 'study',    icon: '📚', name: '学习',     color: '#b8c8e8', subs: ['课程','书籍','考试','培训'] },
-  { key: 'other',    icon: '💡', name: '其他',     color: '#c0c0c0', subs: ['其他'] }
+  { key: 'buy_vege',  icon: 'bowl',     name: '买菜',     color: '#FF8FA3' },
+  { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61' },
+  { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7' },
+  { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8' },
+  { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
+  { key: 'beauty',    icon: 'lip',      name: '美妆',     color: '#FFC4D6' },
+  { key: 'skincare',  icon: 'bottle',   name: '护肤',     color: '#FF7E9C' },
+  { key: 'apps',      icon: 'aicon',    name: '应用软件', color: '#F08080' },
+  { key: 'housing',   icon: 'house',    name: '住房',     color: '#A0D8B3' },
+  { key: 'transport', icon: 'car',      name: '交通',     color: '#F8B88B' },
+  { key: 'fun',       icon: 'gamepad',  name: '娱乐',     color: '#FF9EBC' },
+  { key: 'medical',   icon: 'heart',    name: '医疗',     color: '#FFA07A' },
+  { key: 'call',      icon: 'phone2',   name: '通讯',     color: '#FF8551' },
+  { key: 'study',     icon: 'book',     name: '学习',     color: '#FFD580' },
+  { key: 'office',    icon: 'printer',  name: '办公',     color: '#F0C9B6' },
+  { key: 'home',      icon: 'sofa',     name: '家居',     color: '#C9B6E4' },
+  { key: 'social',    icon: 'people',   name: '人情',     color: '#FFB997' },
+  { key: 'sibling',   icon: 'baby',     name: '弟妹',     color: '#FFC2D6' },
+  { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3' },
+  { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4' },
+  { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
+  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' }
 ];
 
+// 收入分类
 const INCOME_CATEGORIES = [
-  { key: 'mod',      icon: '💰', name: '美化档收入', color: '#34c759' },
-  { key: 'custom',   icon: '🎨', name: '定制单收入', color: '#30b0e0' },
-  { key: 'side',     icon: '💼', name: '其他副业',   color: '#ff9eb5' },
-  { key: 'gift',     icon: '🎀', name: '红包礼品',   color: '#e8a0c0' },
-  { key: 'zhuangzi', icon: '💕', name: '庄子红包',   color: '#ff6b9e' },
-  { key: 'other_in', icon: '💡', name: '其他收入',   color: '#c0c0c0' }
+  { key: 'salary',    icon: 'wallet',  name: '工资',       color: '#34c759' },
+  { key: 'mod',       icon: 'mod',     name: '美化档收入', color: '#ff9eb5' },
+  { key: 'custom',    icon: 'palette', name: '定制单收入', color: '#30b0e0' },
+  { key: 'side',      icon: 'gamepad', name: '其他副业',   color: '#FF9EBC' },
+  { key: 'redpacket', icon: 'gift',    name: '红包',       color: '#e85f7a' },
+  { key: 'refund',    icon: 'undo',    name: '退款',       color: '#9b8aff' },
+  { key: 'invest',    icon: 'chart',   name: '理财',       color: '#ffb84d' },
+  { key: 'other_in',  icon: 'star',    name: '其他收入',   color: '#c0c0c0' }
 ];
+
+// 转账分类
+const TRANSFER_CATEGORIES = [
+  { key: 'transfer', icon: 'transfer', name: '账户互转', color: '#8a72e0' }
+];
+
+// 账户列表
+const ACCOUNT_LIST = ['默认账本', '微信', '支付宝', '现金', '银行卡'];
+let accountIdx = 0;
+
+// 模态对话框状态
+let addModalState = null;
+let addModalSaveAndContinue = false;
 
 function getCategoryInfo(key, type) {
-  const cats = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-  for (const c of cats) {
-    if (c.key === key) return c;
-    if (c.subs && c.subs.includes(key)) return c;
-  }
-  return { icon: '❓', name: key, color: '#ccc' };
+  let cats;
+  if (type === 'income') cats = INCOME_CATEGORIES;
+  else if (type === 'transfer') cats = TRANSFER_CATEGORIES;
+  else cats = EXPENSE_CATEGORIES;
+  for (const c of cats) if (c.key === key) return c;
+  // 旧数据兼容
+  const oldMap = {
+    food: 'food3meal', takeout: 'food3meal', snack: 'snack', drink: 'drink',
+    transport: 'transport', home: 'home', digital: 'digital',
+    fun: 'fun', other: 'social', clothing: 'clothing', medical: 'medical', study: 'study'
+  };
+  const mapped = oldMap[key];
+  if (mapped) for (const c of cats) if (c.key === mapped) return c;
+  return { key: key, icon: 'star', name: key, color: '#c0c0c0' };
 }
 
-function renderAccount() {
+// toast
+function finToast(text) {
+  try {
+    const old = document.getElementById('fin-toast-single');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'fin-toast-single';
+    el.className = 'fin-toast';
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => { try { el.remove(); } catch(e){} }, 1800);
+  } catch(e) {}
+}
+
+// 打开记一笔弹窗
+function openAddModal(presetType, presetDate) {
+  addModalState = {
+    type: presetType || 'expense',
+    category: null,
+    amount: '',
+    date: presetDate || todayStr(),
+    time: new Date().toTimeString().substring(0,5),
+    note: '', reimburse: '', discount: '', image: '', tag: '',
+    account: ACCOUNT_LIST[accountIdx]
+  };
+  const modal = document.getElementById('add-record-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    refreshAddModal();
+  }
+}
+function closeAddModal() {
+  const modal = document.getElementById('add-record-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+  if (addModalSaveAndContinue) {
+    addModalSaveAndContinue = false;
+    setTimeout(() => openAddModal(), 80);
+  }
+}
+function cycleAccount() {
+  accountIdx = (accountIdx + 1) % ACCOUNT_LIST.length;
+  if (addModalState) {
+    addModalState.account = ACCOUNT_LIST[accountIdx];
+    refreshAddModal();
+  }
+}
+function openNoteInput() {
+  const sub = document.getElementById('arm-subinput');
+  if (!sub || !addModalState) return;
+  sub.classList.add('show');
+  document.getElementById('arm-sub-label').textContent = '📝 备注：';
+  document.getElementById('arm-sub-text').placeholder = '点击填写备注...';
+  document.getElementById('arm-sub-text').dataset.tool = 'note';
+  document.getElementById('arm-sub-text').value = addModalState.note || '';
+  document.getElementById('arm-sub-text').focus();
+}
+
+function refreshAddModal() {
+  if (!addModalState) return;
+  // Tab 高亮
+  document.querySelectorAll('#add-record-modal .arm-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === addModalState.type);
+  });
+  // 分类网格
+  let cats;
+  if (addModalState.type === 'income') cats = INCOME_CATEGORIES;
+  else if (addModalState.type === 'transfer') cats = TRANSFER_CATEGORIES;
+  else cats = EXPENSE_CATEGORIES;
+
+  const grid = document.getElementById('arm-cat-grid');
+  if (grid) {
+    let html = '';
+    cats.forEach(c => {
+      const sel = addModalState.category === c.key;
+      html += `<div class="arm-cat ${sel?'selected':''}" data-key="${c.key}" style="--cat-color:${c.color};"><div class="arm-cat-icon" style="${sel?'':('background:#f5e8ed;color:'+c.color+';')}">${ICON_SVGS[c.icon] || ''}</div><div class="arm-cat-name">${c.name}</div></div>`;
+    });
+    grid.innerHTML = html;
+    grid.querySelectorAll('.arm-cat').forEach(el => {
+      el.onclick = () => {
+        addModalState.category = el.dataset.key;
+        refreshAddModal();
+      };
+    });
+  }
+  // 账户名
+  const accEl = document.getElementById('arm-account-name');
+  if (accEl) accEl.textContent = addModalState.account + ' ▾';
+  // 金额
+  const amtEl = document.getElementById('arm-amount');
+  if (amtEl) {
+    if (addModalState.amount) {
+      amtEl.textContent = addModalState.amount;
+      amtEl.classList.remove('empty');
+    } else {
+      amtEl.textContent = '0.00';
+      amtEl.classList.add('empty');
+    }
+  }
+  // 时间
+  const timeEl = document.getElementById('arm-time');
+  if (timeEl) timeEl.value = addModalState.time;
+  const dateEl = document.getElementById('arm-date-display');
+  if (dateEl) dateEl.textContent = addModalState.date.replace(/^\d{4}-/, '').replace(/-/g, '/');
+}
+
+function handleKey(k) {
+  if (!addModalState) return;
+  if (k === 'bs') {
+    addModalState.amount = addModalState.amount.slice(0, -1);
+  } else if (k === 'save') {
+    if (!addModalState.amount || !addModalState.category) { finToast('请先选分类和金额'); return; }
+    commitRecord(false);
+    addModalSaveAndContinue = true;
+    closeAddModal();
+    return;
+  } else if (k === 'done') {
+    if (!addModalState.amount || !addModalState.category) { finToast('请先选分类和金额'); return; }
+    commitRecord(true);
+    closeAddModal();
+    return;
+  } else if (k === 'dot') {
+    if (!addModalState.amount.includes('.')) addModalState.amount += '.';
+  } else if (k === 'plus' || k === 'minus') {
+    finToast('加减号仅用于多笔计算，此处可忽略');
+    return;
+  } else {
+    if (addModalState.amount.length > 10) return;
+    addModalState.amount += k;
+  }
+  refreshAddModal();
+}
+
+function commitRecord(closeIt) {
+  const amt = parseFloat(addModalState.amount);
+  if (isNaN(amt) || amt <= 0) { finToast('请输入有效金额'); return; }
+  if (!addModalState.category) { finToast('请先选择分类'); return; }
+  const rec = {
+    id: 'fr_' + Date.now(),
+    date: addModalState.date,
+    time: addModalState.time,
+    type: addModalState.type,
+    category: addModalState.category,
+    amount: amt,
+    account: addModalState.account,
+    reimburse: addModalState.reimburse || '',
+    discount: addModalState.discount || '',
+    image: addModalState.image || '',
+    tag: addModalState.tag || '',
+    note: addModalState.note || '',
+    ts: Date.now()
+  };
+  if (!store.accountRecords) store.accountRecords = [];
+  store.accountRecords.push(rec);
+  try { saveData(); } catch(e) {}
+  renderAccount();
+  finToast(closeIt ? '已记一笔 ✨' : '已记，再来一笔 ~');
+}
+
+// 打开统计弹窗
+function openStatsModal() {
+  const m = document.getElementById('stats-modal');
+  if (!m) return;
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderStatsModal('expense');
+}
+function closeStatsModal() {
+  const m = document.getElementById('stats-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderStatsModal(type) {
+  type = type || 'expense';
+  document.querySelectorAll('#stats-modal .arm-tab').forEach(b => {
+    const t = b.dataset.stype;
+    b.classList.toggle('active', t === type);
+  });
+  const records = store.accountRecords || [];
   const monthEl = document.getElementById('account-month');
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
-  const records = store.accountRecords.filter(r => r.date.startsWith(month)).sort((a,b) => b.date.localeCompare(a.date));
-
-  const incomeRecords = records.filter(r => r.type === 'income');
-  const expenseRecords = records.filter(r => r.type === 'expense');
-  const totalIncome = fmtMoney(incomeRecords.reduce((s,r) => s + r.amount, 0));
-  const totalExpense = fmtMoney(expenseRecords.reduce((s,r) => s + r.amount, 0));
-  const balance = fmtMoney(totalIncome - totalExpense);
-
-  const accountLastMD = lastUpdateMD(records);
-  // 统计卡片
-  document.getElementById('account-stats').innerHTML = `
-    <div class="stat-card"><div class="label">💰 本月收入</div><div class="label">最后更新：${accountLastMD}</div><div class="value green">¥${totalIncome}</div></div>
-    <div class="stat-card"><div class="label">💸 本月支出</div><div class="label">最后更新：${accountLastMD}</div><div class="value red">¥${totalExpense}</div></div>
-    <div class="stat-card"><div class="label">📊 本月结余</div><div class="label">最后更新：${accountLastMD}</div><div class="value ${balance >= 0 ? 'green' : 'red'}">¥${balance}</div></div>
-    <div class="stat-card"><div class="label">📝 记账笔数</div><div class="label">最后更新：${accountLastMD}</div><div class="value">${records.length}</div><div class="unit">笔</div></div>
-  `;
-
-  // 支出分类饼图
-  renderAccountPie(expenseRecords);
-
-  // 收支趋势柱状图
-  renderAccountTrend();
-
-  // 分类明细表
+  const filtered = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
   const catMap = {};
-  records.forEach(r => {
-    const cat = getCategoryInfo(r.category, r.type);
-    const k = r.type + ':' + cat.key;
-    if (!catMap[k]) catMap[k] = { type: r.type, icon: cat.icon, name: cat.name, color: cat.color, count: 0, amount: 0 };
-    catMap[k].count++;
-    catMap[k].amount = fmtMoney(catMap[k].amount + r.amount);
-  });
-  const catList = Object.values(catMap).sort((a,b) => b.amount - a.amount);
-  const grandTotal = fmtMoney(catList.reduce((s,c) => s + c.amount, 0));
-
-  if (catList.length === 0) {
-    document.getElementById('account-category-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>暂无记录</p></div></td></tr>`;
-  } else {
-    let html = '';
-    catList.forEach(c => {
-      const pct = grandTotal > 0 ? ((c.amount/grandTotal)*100).toFixed(1) : 0;
-      const typeLabel = c.type === 'income' ? '🟢' : '🔴';
-      html += `<tr><td>${typeLabel} ${c.icon} ${c.name}</td><td>${c.count}笔</td><td style="color:${c.type==='income'?'#34c759':'#e85f7a'};font-weight:600;">${c.type==='income'?'+':'-'}¥${fmtMoney(c.amount)}</td><td>${pct}%</td></tr>`;
-    });
-    document.getElementById('account-category-table').innerHTML = html;
-  }
-
-  // 每日流水
-  if (records.length === 0) {
-    document.getElementById('account-flow-table').innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="big-icon">📒</div><p>暂无记录</p><p style="font-size:12px;margin-top:6px;">跟我说"午饭花了25"就开始记账啦~</p></div></td></tr>`;
-  } else {
-    let html = '';
-    records.forEach(r => {
-      const cat = getCategoryInfo(r.category, r.type);
-      const typeColor = r.type === 'income' ? '#34c759' : '#e85f7a';
-      const typeLabel = r.type === 'income' ? '收入' : '支出';
-      html += `<tr><td>${r.date}</td><td style="color:${typeColor};">${typeLabel}</td><td>${cat.icon} ${cat.name}</td><td style="color:${typeColor};font-weight:600;">${r.type==='income'?'+':'-'}¥${r.amount}</td><td>${r.note||'—'}</td></tr>`;
-    });
-    document.getElementById('account-flow-table').innerHTML = html;
-  }
-}
-
-// 支出分类饼图（SVG）
-function renderAccountPie(expenseRecords) {
-  const catMap = {};
-  expenseRecords.forEach(r => {
-    const cat = getCategoryInfo(r.category, 'expense');
-    if (!catMap[cat.key]) catMap[cat.key] = { name: cat.name, color: cat.color, amount: 0 };
-    catMap[cat.key].amount = fmtMoney(catMap[cat.key].amount + r.amount);
+  filtered.filter(r => r.type === type).forEach(r => {
+    const c = getCategoryInfo(r.category, type);
+    if (!catMap[c.key]) catMap[c.key] = { name: c.name, color: c.color, icon: c.icon, amount: 0, count: 0 };
+    catMap[c.key].amount += r.amount;
+    catMap[c.key].count++;
   });
   const cats = Object.values(catMap).sort((a,b) => b.amount - a.amount);
-  const total = fmtMoney(cats.reduce((s,c) => s + c.amount, 0));
+  const total = cats.reduce((s,c) => s + c.amount, 0);
+  const label = type === 'income' ? '总收入' : '总支出';
 
-  if (total === 0) {
-    document.getElementById('account-pie-chart').innerHTML = `<div class="empty-state"><p>暂无支出数据</p></div>`;
-    return;
+  // 环形图 SVG
+  let svg = '';
+  const cx = 110, cy = 110, R = 90;
+  if (cats.length > 0 && total > 0) {
+    let currentAngle = -Math.PI / 2;
+    cats.forEach((c, idx) => {
+      const angle = (c.amount / total) * Math.PI * 2;
+      const x1 = cx + R * Math.cos(currentAngle);
+      const y1 = cy + R * Math.sin(currentAngle);
+      const x2 = cx + R * Math.cos(currentAngle + angle);
+      const y2 = cy + R * Math.sin(currentAngle + angle);
+      const large = angle > Math.PI ? 1 : 0;
+      svg += `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${c.color}" stroke="#fff" stroke-width="2"/>`;
+      currentAngle += angle;
+    });
+  } else {
+    svg = `<text x="${cx}" y="${cy}" text-anchor="middle" font-size="13" fill="#c8b0bb">暂无${type==='income'?'收入':'支出'}数据</text>`;
   }
+  // 中心挖空白
+  svg += `<circle cx="${cx}" cy="${cy}" r="60" fill="rgba(255,250,252,0.96)"/>`;
+  const ring = document.getElementById('ring-svg');
+  if (ring) ring.innerHTML = svg;
+  const cv = document.getElementById('ring-center-value');
+  if (cv) cv.textContent = '¥' + fmtMoney(total);
+  const cl = document.getElementById('ring-center-label');
+  if (cl) cl.textContent = label;
 
-  const cx = 120, cy = 120, r = 90;
-  let currentAngle = -Math.PI / 2;
-  let svg = `<svg width="340" height="260" viewBox="0 0 340 260" style="max-width:100%;">`;
-
-  cats.forEach(c => {
-    const angle = (c.amount / total) * Math.PI * 2;
-    const x1 = cx + r * Math.cos(currentAngle);
-    const y1 = cy + r * Math.sin(currentAngle);
-    const x2 = cx + r * Math.cos(currentAngle + angle);
-    const y2 = cy + r * Math.sin(currentAngle + angle);
-    const largeArc = angle > Math.PI ? 1 : 0;
-    svg += `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${largeArc} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${c.color}" stroke="#fff" stroke-width="2"/>`;
-    currentAngle += angle;
-  });
-
-  // 中心白色圆
-  svg += `<circle cx="${cx}" cy="${cy}" r="45" fill="#fff"/>`;
-  svg += `<text x="${cx}" y="${cy-5}" text-anchor="middle" font-size="12" fill="#8a6270">总支出</text>`;
-  svg += `<text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="18" font-weight="700" fill="#d14b73">¥${fmtMoney(total)}</text>`;
-
-  // 图例
-  let legendY = 20;
-  cats.forEach(c => {
-    const pct = ((c.amount/total)*100).toFixed(1);
-    svg += `<rect x="230" y="${legendY}" width="12" height="12" fill="${c.color}" rx="2"/>`;
-    svg += `<text x="248" y="${legendY+10}" font-size="11" fill="#5a3a48">${c.name} ¥${fmtMoney(c.amount)} (${pct}%)</text>`;
-    legendY += 20;
-  });
-
-  svg += '</svg>';
-  document.getElementById('account-pie-chart').innerHTML = svg;
+  // 排行榜
+  const listHtml = (function() {
+    if (cats.length === 0) {
+      return '<div style="text-align:center;color:#9a6a7e;padding:30px;font-size:13px;">暂无记录</div>';
+    }
+    let h = '';
+    cats.forEach(c => {
+      const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
+      const sign = type === 'income' ? '+' : '-';
+      h += `
+        <div class="rank-row">
+          <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
+          <span class="rank-name">${c.name}</span>
+          <span style="font-size:11px;color:#9a6a7e;min-width:36px;text-align:left;">${pct}%</span>
+          <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
+          <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${sign}¥${fmtMoney(c.amount)}</span>
+        </div>
+        <div style="text-align:right;font-size:11px;color:#9a6a7e;padding:0 16px 8px;">${c.count}笔</div>
+      `;
+    });
+    return h;
+  })();
+  const srEl = document.getElementById('stats-ranking');
+  if (srEl) srEl.innerHTML = listHtml;
 }
 
-// 收支趋势柱状图
-function renderAccountTrend() {
-  const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
-  const data = months.map(m => {
-    const recs = store.accountRecords.filter(r => r.date.startsWith(m));
-    return {
-      month: m,
-      income: fmtMoney(recs.filter(r => r.type === 'income').reduce((s,r) => s+r.amount, 0)),
-      expense: fmtMoney(recs.filter(r => r.type === 'expense').reduce((s,r) => s+r.amount, 0))
-    };
-  });
+function toggleStatsMode() {
+  const el = document.getElementById('stats-display-mode');
+  if (!el) return;
+  if (el.dataset.mode === 'count') { el.dataset.mode = ''; el.textContent = '显示环比金额 ▾'; }
+  else { el.dataset.mode = 'count'; el.textContent = '显示笔数 ▾'; }
+}
 
-  const maxVal = Math.max(...data.flatMap(d => [d.income, d.expense]), 100);
-  const barW = 30, gap = 16, groupW = (barW * 2 + 6);
-  const width = months.length * groupW + gap * 2 + 40;
-  const height = 220;
-  const chartH = 160;
-  const baseY = 190;
+// —— 主渲染函数 ——
+function renderAccount() {
+  try { bindFinanceEvents(); } catch(e) {}
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const records = (store.accountRecords || []).slice().sort((a,b) => (b.ts||0) - (a.ts||0));
+  const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
+  const totalIncome = inMonth.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+  const totalExpense = inMonth.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
+  const balance = totalIncome - totalExpense;
 
-  let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="max-width:100%;">`;
+  const lastMD = (function(){
+    if (inMonth.length === 0) return '暂无记录';
+    const dates = inMonth.map(r => r.date).filter(Boolean).sort().reverse();
+    return dates[0] || '暂无记录';
+  })();
+  const isAll = month === 'all';
+  const periodLabel = isAll ? '总' : '本月';
 
-  // Y轴网格
-  for (let i = 0; i <= 4; i++) {
-    const y = baseY - (i/4) * chartH;
-    const val = Math.round((i/4) * maxVal);
-    svg += `<line x1="30" y1="${y}" x2="${width-10}" y2="${y}" stroke="#ffe4ec" stroke-width="1"/>`;
-    svg += `<text x="26" y="${y+4}" text-anchor="end" font-size="9" fill="#9a6a7e">${val}</text>`;
+  // 4 个统计卡片
+  const statsEl = document.getElementById('account-stats');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="stat-card"><div class="label">💰 ${periodLabel}收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(totalIncome)}</div></div>
+    <div class="stat-card"><div class="label">💸 ${periodLabel}支出</div><div class="label">最后更新：${lastMD}</div><div class="value red">¥${fmtMoney(totalExpense)}</div></div>
+    <div class="stat-card"><div class="label">📊 ${periodLabel}结余</div><div class="label">最后更新：${lastMD}</div><div class="value ${balance >= 0 ? 'green' : 'red'}">¥${fmtMoney(balance)}</div></div>
+    <div class="stat-card"><div class="label">📝 记账笔数</div><div class="label">最后更新：${lastMD}</div><div class="value">${inMonth.length}</div><div class="unit">笔</div></div>
+  `;
+
+  // 分类明细榜
+  renderAccountRanking('expense');
+
+  // 流水
+  const flowEl = document.getElementById('account-flow-table');
+  if (!flowEl) return;
+  let flowHtml = '';
+  if (inMonth.length === 0) {
+    flowHtml = `<div class="empty-state"><div class="big-icon"></div><p style="color:#9a6a7e;margin-top:8px;">暂无记录</p><p style="font-size:12px;margin-top:6px;">点「记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
+  } else {
+    inMonth.slice(0, 30).forEach(r => {
+      const c = getCategoryInfo(r.category, r.type);
+      const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
+      const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
+      const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+      const timeStr = (r.time || '').substring(0, 5);
+      flowHtml += `
+        <div class="fin-flow-row">
+          <span class="fin-flow-date">${dateStr}</span>
+          <div class="fin-flow-cat">
+            <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
+            <span class="fin-flow-cat-name">${c.name}</span>
+          </div>
+          <span class="fin-flow-time">${timeStr}</span>
+          <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
+        </div>
+      `;
+    });
+  }
+  flowEl.innerHTML = flowHtml;
+}
+
+function renderAccountRanking(type) {
+  type = type || 'expense';
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const records = (store.accountRecords || []);
+  const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
+
+  const tabWrap = document.getElementById('account-rank-tab');
+  if (tabWrap) {
+    tabWrap.querySelectorAll('.fin-tab').forEach(t => {
+      const isActive = t.dataset.tab === type;
+      t.classList.toggle('active', isActive);
+      t.style.background = isActive ? '#d14b73' : 'transparent';
+      t.style.color = isActive ? '#fff' : '#7d4a5a';
+    });
   }
 
-  // 柱子
-  data.forEach((d, i) => {
-    const x = 35 + i * groupW + gap;
-    const incH = (d.income / maxVal) * chartH;
-    const expH = (d.expense / maxVal) * chartH;
-    // 收入柱（绿色）
-    svg += `<rect x="${x}" y="${baseY-incH}" width="${barW}" height="${incH}" fill="#34c759" rx="3"/>`;
-    svg += `<text x="${x+barW/2}" y="${baseY-incH-4}" text-anchor="middle" font-size="9" fill="#34c759">${d.income>0?'¥'+fmtMoney(d.income):''}</text>`;
-    // 支出柱（红色）
-    svg += `<rect x="${x+barW+6}" y="${baseY-expH}" width="${barW}" height="${expH}" fill="#e85f7a" rx="3"/>`;
-    svg += `<text x="${x+barW+6+barW/2}" y="${baseY-expH-4}" text-anchor="middle" font-size="9" fill="#e85f7a">${d.expense>0?'¥'+fmtMoney(d.expense):''}</text>`;
-    // 月份
-    svg += `<text x="${x+barW+3}" y="${baseY+14}" text-anchor="middle" font-size="10" fill="#8a6270">${d.month.substring(5)}</text>`;
+  const catMap = {};
+  inMonth.filter(r => r.type === type).forEach(r => {
+    const c = getCategoryInfo(r.category, type);
+    if (!catMap[c.key]) catMap[c.key] = { name: c.name, icon: c.icon, color: c.color, amount: 0, count: 0 };
+    catMap[c.key].amount += r.amount;
+    catMap[c.key].count++;
   });
+  const cats = Object.values(catMap).sort((a,b) => b.amount - a.amount);
+  const total = cats.reduce((s,c) => s + c.amount, 0);
 
-  // 图例
-  svg += `<rect x="35" y="4" width="10" height="10" fill="#34c759" rx="2"/>`;
-  svg += `<text x="50" y="13" font-size="10" fill="#5a3a48">收入</text>`;
-  svg += `<rect x="90" y="4" width="10" height="10" fill="#e85f7a" rx="2"/>`;
-  svg += `<text x="105" y="13" font-size="10" fill="#5a3a48">支出</text>`;
+  let html = '';
+  if (cats.length === 0) {
+    html = `<div class="empty-state" style="padding:20px 0;"><p style="color:#9a6a7e;font-size:13px;">暂无${type === 'income' ? '收入' : '支出'}记录</p><p style="font-size:11px;margin-top:6px;color:#c4889a;">点「记一笔」选分类填金额~</p></div>`;
+  } else {
+    cats.forEach(c => {
+      const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
+      const sign = type === 'income' ? '+' : '-';
+      html += `
+        <div class="rank-row">
+          <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
+          <span class="rank-name">${c.name}</span>
+          <span style="font-size:11px;color:#9a6a7e;min-width:38px;text-align:left;">${pct}%</span>
+          <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
+          <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${sign}¥${fmtMoney(c.amount)}</span>
+        </div>
+        <div style="text-align:right;font-size:11px;color:#9a6a7e;padding:0 16px 8px;">${c.count}笔</div>
+      `;
+    });
+  }
+  const el = document.getElementById('account-ranking');
+  if (el) el.innerHTML = html;
+}
 
-  svg += '</svg>';
-  document.getElementById('account-trend-chart').innerHTML = svg;
+// Tab 切换 + 事件绑定（页面初始化时挂载）
+function bindFinanceEvents() {
+  // 财务面板内 Tab 切换（支出/收入）
+  const tab = document.getElementById('account-rank-tab');
+  if (tab && !tab.dataset.bound) {
+    tab.dataset.bound = '1';
+    tab.querySelectorAll('.fin-tab').forEach(t => {
+      t.addEventListener('click', () => renderAccountRanking(t.dataset.tab));
+    });
+  }
+  // 统计弹窗内 Tab 切换（支出/收入）
+  const statsModal = document.getElementById('stats-modal');
+  if (statsModal && !statsModal.dataset.bound) {
+    statsModal.dataset.bound = '1';
+    statsModal.querySelectorAll('[data-stype]').forEach(t => {
+      t.addEventListener('click', () => renderStatsModal(t.dataset.stype));
+    });
+  }
+  // 记一笔弹窗：键盘 + tab + 工具栏
+  const armModal = document.getElementById('add-record-modal');
+  if (armModal && !armModal.dataset.bound) {
+    armModal.dataset.bound = '1';
+    armModal.querySelectorAll('.arm-key').forEach(k => {
+      k.addEventListener('click', () => handleKey(k.dataset.k));
+    });
+    armModal.querySelectorAll('.arm-tab').forEach(b => {
+      b.addEventListener('click', () => {
+        if (!addModalState) return;
+        addModalState.type = b.dataset.type;
+        addModalState.category = null;
+        refreshAddModal();
+      });
+    });
+    armModal.querySelectorAll('.arm-tool').forEach(b => {
+      b.addEventListener('click', () => {
+        if (b.dataset.tool === 'account') { cycleAccount(); return; }
+        const sub = document.getElementById('arm-subinput');
+        const map = { reimburse: '报销金额', discount: '优惠说明', image: '图片URL', tag: '标签' };
+        if (!sub || !addModalState) return;
+        sub.classList.add('show');
+        document.getElementById('arm-sub-label').textContent = (map[b.dataset.tool] || b.dataset.tool) + '：';
+        document.getElementById('arm-sub-text').placeholder = map[b.dataset.tool] || '...';
+        document.getElementById('arm-sub-text').dataset.tool = b.dataset.tool;
+        document.getElementById('arm-sub-text').value = addModalState[b.dataset.tool] || '';
+        document.getElementById('arm-sub-text').focus();
+      });
+    });
+    const subInput = document.getElementById('arm-sub-text');
+    if (subInput) {
+      subInput.addEventListener('input', e => {
+        const tool = e.target.dataset.tool;
+        if (tool && addModalState) addModalState[tool] = e.target.value;
+      });
+    }
+    const timeInput = document.getElementById('arm-time');
+    if (timeInput) {
+      timeInput.addEventListener('change', e => {
+        if (addModalState) {
+          addModalState.time = e.target.value;
+        }
+      });
+    }
+  }
 }
 
 // ==================== 经期与洗头 ====================
