@@ -4337,6 +4337,7 @@ let store = {
   beautyRecords: [],   // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
   weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
   weightSeedV1Applied: false,  // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
+  screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
   startWeight: 90.0,    // 起始体重（kg）基准线，主人可改；减肥累计减重的起点
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
@@ -6632,12 +6633,14 @@ function loadData() {
       if (p.startWeight != null) store.startWeight = p.startWeight;
       // 体重种子一次性标记恢复（避免删记录后下次又复活）
       if (p.weightSeedV1Applied) store.weightSeedV1Applied = p.weightSeedV1Applied;
+      if (p.screenshotSeedV1Applied) store.screenshotSeedV1Applied = p.screenshotSeedV1Applied;
       // 【止血·第零批】恢复这两个字段：否则记进去的数据读不回来，还会被初始化空值覆盖销毁
       if (p.exerciseItems !== undefined) store.exerciseItems = p.exerciseItems;
       if (p.userTodos !== undefined) store.userTodos = p.userTodos;
     }
     // 八月份体重种子：仅当本地缺失对应日期时一次性补入（本地优先、绝不覆盖主人真实记录）
     try { applyWeightSeedV1(); } catch (e) {}
+    try { applyScreenshotSeedV1(); } catch (e) {}
     // 工作代办初始事项（主人指定 4 条）：仅首次运行时补入
     try { applyWorkTodoSeedV1(); } catch (e) {}
     // 未来图文旧数据迁移：没有 account 字段的默认 big，确保后续联动正常
@@ -6751,6 +6754,71 @@ function applyWorkTodoSeedV1() {
   store.workTodosSeedV1Applied = true;
   try { saveData(); } catch (e) {}
   try { console.log('[Hami] 已补入工作代办初始事项'); } catch (e) {}
+}
+
+// 从主人截图（2026-08-12）一次性同步的数据：仅补齐本地缺失的日期、并修正旧种子误差，
+// 绝不删除主人可能已记的其他日期；标记 screenshotSeedV1Applied 后不再重复。
+function applyScreenshotSeedV1() {
+  if (store.screenshotSeedV1Applied) return;
+  // 体重（覆盖同日期，确保与截图一致）
+  const weights = [
+    { date: '2026-08-01', value: 88.9 },
+    { date: '2026-08-02', value: 88.5 },
+    { date: '2026-08-03', value: 88.2 },
+    { date: '2026-08-04', value: 88.2 },
+    { date: '2026-08-05', value: 88.3 },
+    { date: '2026-08-06', value: 88.9 },
+    { date: '2026-08-07', value: 88.9 },
+    { date: '2026-08-08', value: 89.8 },
+    { date: '2026-08-09', value: 89.3 },
+    { date: '2026-08-10', value: 88.5 },
+    { date: '2026-08-11', value: 88.6 },
+    { date: '2026-08-12', value: 89.3 }
+  ];
+  if (!store.weightRecords) store.weightRecords = [];
+  weights.forEach(function (s) {
+    const ex = store.weightRecords.findIndex(function (r) { return r && r.date === s.date; });
+    const rec = { date: s.date, value: s.value, after: s.value, before: s.value, note: '已称' };
+    if (ex >= 0) store.weightRecords[ex] = rec; else store.weightRecords.push(rec);
+  });
+  // 洗头（按日期去重）
+  const wash = ['2026-08-11', '2026-08-08', '2026-08-03', '2026-07-29'];
+  if (!store.washRecords) store.washRecords = [];
+  wash.forEach(function (d) {
+    if (!store.washRecords.some(function (r) { return r && r.date === d; })) store.washRecords.push({ date: d });
+  });
+  // 经期（覆盖同 start）
+  const periods = [
+    { start: '2026-08-11', end: '2026-08-16' },
+    { start: '2026-07-14', end: '2026-07-19' }
+  ];
+  if (!store.periodRecords) store.periodRecords = [];
+  periods.forEach(function (p) {
+    const ex = store.periodRecords.findIndex(function (r) { return r && r.start === p.start; });
+    if (ex >= 0) store.periodRecords[ex] = p; else store.periodRecords.push(p);
+  });
+  // 如厕（覆盖同日期）
+  const toilet = [
+    { date: '2026-08-12', count: 1 },
+    { date: '2026-08-10', count: 1 },
+    { date: '2026-08-09', count: 1 },
+    { date: '2026-08-08', count: 2 },
+    { date: '2026-08-07', count: 1 }
+  ];
+  if (!store.toiletRecords) store.toiletRecords = [];
+  toilet.forEach(function (t) {
+    const ex = store.toiletRecords.findIndex(function (r) { return r && r.date === t.date; });
+    if (ex >= 0) store.toiletRecords[ex] = { date: t.date, count: t.count }; else store.toiletRecords.push({ date: t.date, count: t.count });
+  });
+  // 面膜（按日期去重）
+  const mask = ['2026-08-12', '2026-08-04'];
+  if (!store.maskRecords) store.maskRecords = [];
+  mask.forEach(function (d) {
+    if (!store.maskRecords.some(function (r) { return r && r.date === d; })) store.maskRecords.push({ date: d });
+  });
+  store.screenshotSeedV1Applied = true;
+  try { saveData(); } catch (e) {}
+  try { console.log('[Hami] 已从截图一次性同步体重/洗头/经期/如厕/面膜数据'); } catch (e) {}
 }
 
 // 默认值保护：只对字段完全缺失（undefined）的首次用户补默认数据；用户"主动清空"=[]≠"未播种",
