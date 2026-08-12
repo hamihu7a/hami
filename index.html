@@ -48,6 +48,7 @@
     --shadow-xs: 0 2px 8px rgba(255, 158, 181, 0.08);
     --shadow-hover: 0 8px 24px rgba(209, 75, 115, 0.16);
     --c-pink: #ff8aa6;
+    --c-pink-main: #ff8aa6;
     --c-pink-deep: #d14b73;
     --c-pink-soft: #ffe4ec;
     --c-pink-tint: rgba(255, 158, 181, 0.12);
@@ -2017,31 +2018,33 @@
     padding: 2px 10px; font-size: 13px; font-weight: 800;
   }
   .trip-day-date { font-size: 13px; font-weight: 800; color: #8a6270; }
-  /* 超小屏（iPhone 17 等）游玩计划专项排版：内容横向撑满，右侧不留大空白 */
+  /* 超小屏（iPhone 17 等）游玩计划专项排版：文字贯穿整行，右侧不留空白，操作按钮移到文字下方 */
   @media (max-width: 420px) {
-    .trip-day-block { padding: 10px 10px 8px; }
-    .trip-day-idx, .trip-day-date { font-size: 13px; }
-    .trip-timeline { padding-left: 18px; }
-    .trip-timeline::before { left: 4px; }
+    .trip-day-block { padding: 12px 12px 8px; }
+    .trip-day-idx { font-size: 16px; padding: 4px 14px; background: var(--c-pink-deep); }
+    .trip-day-date { font-size: 15px; }
+    .trip-timeline { padding-left: 16px; }
+    .trip-timeline::before { left: 3px; }
     .trip-item {
       display: block; position: relative;
-      padding-right: 68px; /* 给右上角操作按钮留空间 */
+      padding-right: 0;            /* 文字贯穿整行，不再右侧留白 */
       margin-bottom: 16px;
     }
     .trip-item:last-child { margin-bottom: 8px; }
-    .trip-item-dot { left: -16px; top: 5px; width: 8px; height: 8px; border-width: 2px; }
+    .trip-item-dot { left: -15px; top: 6px; width: 9px; height: 9px; border-width: 2px; }
     .trip-item-main { width: 100%; }
-    .trip-item-top { margin-bottom: 4px; gap: 4px; }
-    .trip-item-type { font-size: 10px; padding: 1px 5px; }
-    .trip-item-dur { font-size: 10px; }
-    .trip-item-time { font-size: 11px; margin-bottom: 0; }
-    .trip-item-title { font-size: 14px; line-height: 1.35; }
-    .trip-item-place, .trip-item-trans, .trip-item-note { font-size: 12px; line-height: 1.45; }
+    .trip-item-top { margin-bottom: 4px; gap: 6px; flex-wrap: wrap; }
+    .trip-item-type { font-size: 12px; padding: 2px 8px; }
+    .trip-item-dur { font-size: 12px; }
+    .trip-item-time { font-size: 13px; margin-bottom: 0; }
+    .trip-item-title { font-size: 16px; line-height: 1.4; }
+    .trip-item-place, .trip-item-trans, .trip-item-note { font-size: 14px; line-height: 1.5; }
+    /* 操作按钮移到每条内容下方，不挤占右侧空间 */
     .trip-item-actions {
-      position: absolute; top: 0; right: 0;
-      display: flex; gap: 4px; margin-top: 0;
+      position: static; margin-top: 8px; gap: 8px;
+      display: flex; justify-content: flex-end;
     }
-    .trip-item-actions button { padding: 2px 5px; font-size: 10px; border-radius: 6px; }
+    .trip-item-actions button { padding: 4px 12px; font-size: 13px; border-radius: 8px; }
   }
 
   @media (max-width: 420px) {
