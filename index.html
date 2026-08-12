@@ -2622,14 +2622,22 @@
   }
 
   /* ============ 确认浮层（替代原生 confirm，淡雅毛玻璃 + 确定/取消） ============ */
-  .hami-confirm { pointer-events: auto; cursor: default; padding: 14px 16px; border-radius: 14px;
-    background: rgba(255, 250, 252, 0.92); backdrop-filter: blur(14px) saturate(150%);
+  .hami-confirm { pointer-events: auto; cursor: default; position: fixed; left: 50%; top: 50%;
+    z-index: 100300; transform: translate(-50%,-50%) scale(0.96);
+    padding: 16px 18px; border-radius: 14px;
+    background: rgba(255, 250, 252, 0.96); backdrop-filter: blur(14px) saturate(150%);
     -webkit-backdrop-filter: blur(14px) saturate(150%);
-    border: 1px solid rgba(160,112,128,0.18); box-shadow: 0 8px 28px rgba(122,80,104,0.18);
-    color: var(--c-text-2); font-size: 13.5px; line-height: 1.6; text-align: center; text-wrap: balance;
-    max-width: 320px; opacity: 0; transform: translateY(-8px) scale(0.97);
-    animation: hami-toast-in 0.24s cubic-bezier(0.22,1,0.36,1) forwards; }
-  .hami-confirm.out { animation: hami-toast-out 0.22s ease forwards; }
+    border: 1px solid rgba(160,112,128,0.22); box-shadow: 0 12px 36px rgba(122,80,104,0.28);
+    color: var(--c-text-2); font-size: 14px; line-height: 1.6; text-align: center; text-wrap: balance;
+    max-width: 320px; min-width: 240px; opacity: 0;
+    animation: hami-confirm-in 0.24s cubic-bezier(0.22,1,0.36,1) forwards; }
+  @keyframes hami-confirm-in { to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+  .hami-confirm.out { animation: hami-confirm-out 0.2s ease forwards; }
+  @keyframes hami-confirm-out { to { opacity: 0; transform: translate(-50%,-50%) scale(0.96); } }
+  .hami-confirm-backdrop { position: fixed; inset: 0; z-index: 100290; background: rgba(50,25,38,0.32); animation: hami-confirm-bg-in 0.2s ease forwards; }
+  .hami-confirm-backdrop.out { animation: hami-confirm-bg-out 0.2s ease forwards; }
+  @keyframes hami-confirm-bg-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes hami-confirm-bg-out { from { opacity: 1; } to { opacity: 0; } }
   .hami-confirm-msg { white-space: pre-wrap; word-break: break-word; margin-bottom: 12px; }
   .hami-confirm-btns { display: flex; gap: 10px; justify-content: center; }
   .hami-confirm-btns button { flex: 1; min-height: 38px; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
@@ -7160,10 +7168,14 @@ function applyTripSeedV1() {
   };
   const gzTrip = store.trips.find(function (t) { return t && ('' + (t.city || '')).indexOf('广州') >= 0; });
   if (gzTrip) {
-    // 仅当仍是旧占位日期(2026-08-15~17)时才自动更新为真实内容；
-    // 若主人已自行改过日期，则保留主人的改动，不覆盖。
+    // 自愈：仅当检测到"旧占位日期(8.15~17) / 被旧时区bug污染(混进8.13) / 缺天"时，
+    // 才用标准真实内容重建；主人自行改过安排文字或日期的，保留其改动不覆盖。
     const isOldPlaceholder = gzTrip.start === '2026-08-15' && gzTrip.end === '2026-08-17';
-    if (isOldPlaceholder) {
+    const hasBadDate = Array.isArray(gzTrip.days) && gzTrip.days.some(function (d) { return (d.date || '').indexOf('2026-08-13') >= 0; });
+    const missingDays = !Array.isArray(gzTrip.days) || gzTrip.days.length < 3
+      || !gzTrip.days.some(function (d) { return d.date === '2026-08-14'; })
+      || !gzTrip.days.some(function (d) { return d.date === '2026-08-16'; });
+    if (isOldPlaceholder || hasBadDate || missingDays) {
       gzTrip.start = '2026-08-14';
       gzTrip.end = '2026-08-16';
       gzTrip.days = buildGzDays();
@@ -7236,18 +7248,23 @@ function hamiConfirm(message) {
     try {
       var text = String(message == null ? '' : message);
       if (!text) { resolve(false); return; }
-      var layer = document.getElementById('hami-toast-layer');
-      if (!layer) { layer = document.createElement('div'); layer.id = 'hami-toast-layer'; document.body.appendChild(layer); }
+      var backdrop = document.createElement('div'); backdrop.className = 'hami-confirm-backdrop';
       var box = document.createElement('div'); box.className = 'hami-confirm';
       var msgEl = document.createElement('div'); msgEl.className = 'hami-confirm-msg'; msgEl.textContent = text;
       var btns = document.createElement('div'); btns.className = 'hami-confirm-btns';
       var noBtn = document.createElement('button'); noBtn.className = 'hami-confirm-no'; noBtn.textContent = '取消';
       var yesBtn = document.createElement('button'); yesBtn.className = 'hami-confirm-yes'; yesBtn.textContent = '确定';
       btns.appendChild(noBtn); btns.appendChild(yesBtn);
-      box.appendChild(msgEl); box.appendChild(btns); layer.appendChild(box);
-      function close(v) { box.classList.add('out'); setTimeout(function(){ if(box.parentNode) box.parentNode.removeChild(box); }, 240); resolve(v); }
+      box.appendChild(msgEl); box.appendChild(btns);
+      document.body.appendChild(backdrop); document.body.appendChild(box);
+      function close(v) {
+        backdrop.classList.add('out'); box.classList.add('out');
+        setTimeout(function(){ if(backdrop.parentNode) backdrop.parentNode.removeChild(backdrop); if(box.parentNode) box.parentNode.removeChild(box); }, 240);
+        resolve(v);
+      }
       yesBtn.addEventListener('click', function(){ close(true); });
       noBtn.addEventListener('click', function(){ close(false); });
+      backdrop.addEventListener('click', function(){ close(false); });
     } catch (e) { resolve(false); }
   });
 }
@@ -11149,12 +11166,18 @@ function renderTripPlans() {
 function generateTripDays(start, end) {
   const res = [];
   if (!start) return res;
-  // 按北京时间解析，避免 UTC 时差导致日期提前一天
-  const s = new Date(start + 'T00:00:00+08:00');
-  const e = end ? new Date(end + 'T00:00:00+08:00') : new Date(s);
-  for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
-    const iso = d.toISOString().slice(0,10);
-    res.push({ date: iso, items: [] });
+  // 完全用本地字符串日期做加法，绕开任何 UTC/时区偏移，避免"日期提前/延后一天"的错位
+  let cur = start;
+  while (cur <= end) {
+    res.push({ date: cur, items: [] });
+    const parts = cur.split('-');
+    const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + 1);
+    const ny = dt.getFullYear();
+    const nm = String(dt.getMonth() + 1).padStart(2, '0');
+    const nd = String(dt.getDate()).padStart(2, '0');
+    cur = ny + '-' + nm + '-' + nd;
   }
   return res;
 }
