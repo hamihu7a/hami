@@ -3147,25 +3147,37 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     </button>
   </div>
 
-  <!-- 四·待办事项（日常代办 + 工作代办 合一入口） -->
+  <!-- 四·待办事项：日常代办 / 工作代办 独立两点 -->
   <div class="nav-group">
     <div class="nav-group-title">四·待办事项</div>
-    <button class="nav-item" type="button" onclick="switchPanel('todo', this)">
-      <span class="nav-icon">📝</span>
-      <span class="nav-text">日常代办<br>工作代办</span>
+    <button class="nav-item" type="button" onclick="switchPanel('todo-daily', this)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-text">日常代办</span>
+    </button>
+    <button class="nav-item" type="button" onclick="switchPanel('todo-work', this)">
+      <span class="nav-icon">💼</span>
+      <span class="nav-text">工作代办</span>
     </button>
   </div>
 
-  <!-- 五·日常记录 -->
+  <!-- 五·日常记录：经期 / 洗头 / 如厕 / 面膜 独立四点 -->
   <div class="nav-group">
     <div class="nav-group-title">五·日常记录</div>
     <button class="nav-item" type="button" onclick="switchPanel('period', this)">
       <span class="nav-icon">🌸</span>
-      <span class="nav-text">经期与<br>洗头</span>
+      <span class="nav-text">经期记录</span>
     </button>
-    <button class="nav-item" type="button" onclick="switchPanel('toiletmask', this)">
+    <button class="nav-item" type="button" onclick="switchPanel('wash', this)">
+      <span class="nav-icon">🧴</span>
+      <span class="nav-text">洗头记录</span>
+    </button>
+    <button class="nav-item" type="button" onclick="switchPanel('toilet', this)">
       <span class="nav-icon">🚽</span>
-      <span class="nav-text">如厕与<br>敷面膜</span>
+      <span class="nav-text">如厕记录</span>
+    </button>
+    <button class="nav-item" type="button" onclick="switchPanel('mask', this)">
+      <span class="nav-icon">🧖</span>
+      <span class="nav-text">敷面膜</span>
     </button>
   </div>
 
@@ -3186,12 +3198,16 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     </button>
   </div>
 
-  <!-- 七·电影推荐 -->
+  <!-- 七·电影推荐：优质电影 / 院线热映 独立两点 -->
   <div class="nav-group">
     <div class="nav-group-title">七·电影推荐</div>
-    <button class="nav-item" type="button" onclick="switchPanel('movie', this)">
+    <button class="nav-item" type="button" onclick="switchPanel('movie-good', this)">
       <span class="nav-icon">🎬</span>
-      <span class="nav-text">优质电影<br>院线热映</span>
+      <span class="nav-text">优质电影</span>
+    </button>
+    <button class="nav-item" type="button" onclick="switchPanel('movie-now', this)">
+      <span class="nav-icon">🎫</span>
+      <span class="nav-text">院线热映</span>
     </button>
   </div>
 
@@ -3309,12 +3325,12 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     <!-- 电影推荐：左右两个面板 -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <!-- 左：每日电影推荐（高分好电影） -->
-      <div class="todo-card" style="flex:1;min-width:200px;cursor:pointer;padding:16px;" onclick="switchPanel('movie', this)">
+      <div class="todo-card" style="flex:1;min-width:200px;cursor:pointer;padding:16px;" onclick="switchPanel('movie-good', this)">
         <h3 style="font-size:14px;margin-bottom:10px;">🎬 每日电影推荐</h3>
         <div id="desktop-movie-daily"></div>
       </div>
       <!-- 右：近期上映电影预览 -->
-      <div class="todo-card" style="flex:1;min-width:200px;cursor:pointer;padding:16px;" onclick="switchPanel('movie', this)">
+      <div class="todo-card" style="flex:1;min-width:200px;cursor:pointer;padding:16px;" onclick="switchPanel('movie-now', this)">
         <h3 style="font-size:14px;margin-bottom:10px;">🎫 近期上映电影</h3>
         <div id="desktop-movie-preview"></div>
       </div>
@@ -3323,8 +3339,8 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
   </div>
 
   <!-- ==================== 代办事项（日常 / 工作 分类 + 打卡） ==================== -->
-  <div id="panel-todo" class="panel">
-    <!-- 日常代办 区域 -->
+  <!-- ==================== 日常代办 ==================== -->
+  <div id="panel-todo-daily" class="panel">
     <div class="card todo-section">
       <div class="todo-section-head">
         <div class="card-title">🏠 日常代办</div>
@@ -3337,8 +3353,10 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       </div>
       <div id="todo-list-daily"></div>
     </div>
+  </div>
 
-    <!-- 工作代办 区域 -->
+  <!-- ==================== 工作代办 ==================== -->
+  <div id="panel-todo-work" class="panel">
     <div class="card todo-section">
       <div class="todo-section-head">
         <div class="card-title">💼 工作代办</div>
@@ -3869,11 +3887,11 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
 
   </div>
 
-  <!-- ==================== 经期与洗头 ==================== -->
+  <!-- ==================== 经期记录 ==================== -->
   <div id="panel-period" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：来月经告诉我开始/结束日期；洗头了点一下「今天洗了头」。经期自动同步到减肥工作台设为休息日~
+      💕 <b>使用说明</b>：来月经告诉我开始/结束日期。经期自动同步到减肥工作台设为休息日~
     </div>
 
     <div class="stats-grid" id="period-stats"></div>
@@ -3907,6 +3925,15 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div id="period-table" style="margin-top:14px;"></div>
     </div>
 
+  </div>
+
+  <!-- ==================== 洗头记录 ==================== -->
+  <div id="panel-wash" class="panel">
+
+    <div class="tip-box">
+      💕 <b>使用说明</b>：洗头了点一下「今天洗了头」。超过 3 天没洗头会提醒你该洗啦~
+    </div>
+
     <div class="card">
       <div class="card-title"><span>🧴</span> 洗头提醒</div>
       <div id="wash-remind"></div>
@@ -3929,11 +3956,11 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
 
   </div>
 
-  <!-- ==================== 如厕与敷面膜记录 ==================== -->
-  <div id="panel-toiletmask" class="panel">
+  <!-- ==================== 如厕记录 ==================== -->
+  <div id="panel-toilet" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：上厕所点「我今天上了厕所」→ 当天😊健康；第二天没上→😐观察；第三天还没上→😣异常。面膜每周2次，到周三没敷就提醒，做完2次才停。
+      💕 <b>使用说明</b>：上厕所点「我今天上了厕所」→ 当天😊健康；第二天没上→😐观察；第三天还没上→😣异常。
     </div>
 
     <div class="stats-grid" id="toilet-stats"></div>
@@ -3956,6 +3983,15 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
           <tbody id="toilet-table"></tbody>
         </table>
       </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== 敷面膜记录 ==================== -->
+  <div id="panel-mask" class="panel">
+
+    <div class="tip-box">
+      💕 <b>使用说明</b>：面膜每周2次，到周三没敷就提醒，做完2次才停。
     </div>
 
     <div class="stats-grid" id="mask-stats"></div>
@@ -4343,33 +4379,36 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
   </div>
 
   <!-- ==================== 电影推荐 ==================== -->
-  <div id="panel-movie" class="panel">
+  <!-- ==================== 优质电影 ==================== -->
+  <div id="panel-movie-good" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：左侧「今日推荐」每天自动推荐一部电影，含海报、评分、导演及推荐理由。右侧「近期上映」以票根设计展示当前热映和即将上映影片。数据每日自动更新~
+      💕 <b>使用说明</b>：每日自动推荐一部电影，含海报、评分、导演及推荐理由。数据每日自动更新~
     </div>
 
-    <!-- 左右并排布局 -->
-    <div style="display:flex;gap:16px;flex-wrap:wrap;">
-
-      <!-- ===== 左侧：电影推荐（3天更新一次） ===== -->
-      <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
-        <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
-          🎯 电影推荐
-          <span id="movie-recommend-date" style="margin-left:auto;font-size:12px;font-weight:400;color:#8a6270;background:#fff0f5;padding:2px 8px;border-radius:10px;"></span>
-        </div>
-        <div id="movie-daily-recommend"></div>
+    <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
+      <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
+        🎯 电影推荐
+        <span id="movie-recommend-date" style="margin-left:auto;font-size:12px;font-weight:400;color:#8a6270;background:#fff0f5;padding:2px 8px;border-radius:10px;"></span>
       </div>
+      <div id="movie-daily-recommend"></div>
+    </div>
 
-      <!-- ===== 右侧：近期上映（票根设计） ===== -->
-      <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
-        <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
-          🎫 近期上映
-          <span style="margin-left:auto;font-size:12px;font-weight:400;color:#8a6270;background:#fff0f5;padding:2px 8px;border-radius:10px;">热映中</span>
-        </div>
-        <div id="movie-now-playing"></div>
+  </div>
+
+  <!-- ==================== 院线热映 ==================== -->
+  <div id="panel-movie-now" class="panel">
+
+    <div class="tip-box">
+      💕 <b>使用说明</b>：以票根设计展示当前热映和即将上映影片。数据每日自动更新~
+    </div>
+
+    <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
+      <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
+        🎫 近期上映
+        <span style="margin-left:auto;font-size:12px;font-weight:400;color:#8a6270;background:#fff0f5;padding:2px 8px;border-radius:10px;">热映中</span>
       </div>
-
+      <div id="movie-now-playing"></div>
     </div>
 
   </div>
@@ -8188,8 +8227,21 @@ function switchPanel(name, navEl) {
   if (name === 'benchmark') {
     try { renderFuturePosts(); } catch (e) {}
   }
-  if (name === 'todo') {
+  if (name === 'todo' || name === 'todo-daily' || name === 'todo-work') {
     try { renderTodoPanel(); } catch (e) {}
+  }
+  // 切到「经期记录 / 洗头记录」面板，强制重渲（renderPeriod 会同时刷新经期与洗头两块，按 id 落地到各自面板）
+  if (name === 'period' || name === 'wash') {
+    try { renderPeriod(); } catch (e) {}
+  }
+  // 切到「如厕记录 / 敷面膜」面板，强制重渲（两块各自独立，id 互不冲突）
+  if (name === 'toilet' || name === 'mask') {
+    try { renderToilet(); } catch (e) {}
+    try { renderMask(); } catch (e) {}
+  }
+  // 切到「优质电影 / 院线热映」面板，强制重渲（renderMovie 会同时刷新两块，按 id 落地到各自面板）
+  if (name === 'movie' || name === 'movie-good' || name === 'movie-now') {
+    try { renderMovie(); } catch (e) {}
   }
   // 切到「游玩清单 / 游玩计划」面板，强制重渲（重要日期/游玩清单/游玩计划三块都会刷新，与所在面板无关）
   if (name === 'travel' || name === 'trip') {
