@@ -422,6 +422,13 @@
     position:fixed;top:0;left:0;right:0;width:100%;height:56px;z-index:2000;
     box-sizing:border-box;
   }
+  .hami-cmd-bar .cmd-label {
+    font-size:13px;color:var(--c-muted);font-weight:600;
+    white-space:nowrap;display:flex;align-items:center;gap:4px;
+    flex-shrink:0;cursor:pointer;user-select:none;
+    padding:2px 4px;border-radius:8px;transition:background .2s;
+  }
+  .hami-cmd-bar .cmd-label:hover { background:#fbe6ee; }
   /* 移动端：所有输入字号≥16px，避免 iOS 自动放大页面 */
   input, textarea, select { font-size: 16px; }
 
@@ -3107,8 +3114,9 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
 
 <!-- ============ 顶部全局指令栏（最顶端，所有面板通用） ============ -->
 <div class="hami-cmd-bar" id="hami-cmd-bar">
+  <span class="cmd-label" id="hami-cmd-label" title="点我查看怎么用" aria-label="指令用法" onclick="showCmdHelp()">💬 跟小助理说</span>
   <input class="cmd-input" id="hami-cmd-input" type="text"
-    placeholder="输入指令，例如：体重 88.5 / 洗头了 / 上厕所"
+    placeholder=""
     autocomplete="off">
   <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
   <button class="cmd-refresh" id="hami-cmd-refresh" title="刷新同步云数据" aria-label="刷新同步云数据" onclick="refreshCloudData()">
@@ -6767,91 +6775,15 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ==================== 顶部指令栏：应用内语音输入（点「语音」按钮说话 → 自动识别并记账）====================
-// 教程入口：点 💬 标签弹出（原独立「用法」入口已合并进 💬）
+// 教程入口：点 💬 标签弹出
 function showCmdHelp() {
   hamiToast('💬 跟小助理说 — 用法\n\n'
-    + '【打字】在框里输入指令，点「记一下」：\n'
+    + '在框里输入指令，点「记一下」：\n'
     + '· 体重 88.5 / 洗头了 / 上厕所 / 敷面膜\n'
     + '· 午饭花了25 / 打车18 / 工资到账8000\n'
     + '· 运动有氧30分钟 / 8月2日体重88\n\n'
-    + '【语音】点左边的「语音」按钮（声波图标）说话，自动识别并记账；\n'
-    + '没听清就再点一次重说。\n'
-    + '（语音需允许麦克风权限；\n 部分旧浏览器不支持，可改用打字）');
+    + '我会自动识别并帮你记录到对应位置~');
 }
-(function () {
-  var micBtn = document.getElementById('hami-cmd-mic');
-  var input = document.getElementById('hami-cmd-input');
-  if (!micBtn || !input) return;
-
-  // —— 浏览器不支持语音识别则隐藏🎤，不影响打字 ——
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { micBtn.style.display = 'none'; return; }
-  var recog = new SR();
-  recog.lang = 'zh-CN';
-  recog.interimResults = true;     // 边说边显示
-  recog.continuous = false;        // 单句模式（iOS 最稳）
-  recog.maxAlternatives = 1;
-
-  var listening = false, timer = null, lastText = '', retry = 0, startTs = 0;
-
-  function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
-
-  recog.onstart = function () {
-    listening = true; startTs = Date.now();
-    micBtn.classList.add('listening');
-    input.placeholder = '聆听中…请说话';
-    showCmdToast('我在听，说完自动记录~');
-  };
-  recog.onresult = function (ev) {
-    var interim = '';
-    for (var i = ev.resultIndex; i < ev.results.length; i++) {
-      if (ev.results[i].isFinal) lastText += ev.results[i][0].transcript;
-      else interim += ev.results[i][0].transcript;
-    }
-    input.value = (lastText + interim).trim();
-  };
-  recog.onerror = function (ev) {
-    if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')
-      showCmdToast('🎤 麦克风被禁止，请到手机「设置→浏览器→麦克风」开启');
-    else if (ev.error === 'no-speech')
-      showCmdToast('🎤 没听到声音，请再试一次');
-    else if (ev.error === 'audio-capture')
-      showCmdToast('🎤 没找到麦克风设备');
-    else if (ev.error === 'network')
-      showCmdToast('🎤 网络异常，识别失败，请重试或打字');
-    else if (ev.error !== 'aborted')
-      showCmdToast('🎤 识别出错，请重试或打字');
-  };
-  recog.onend = function () {
-    listening = false;
-    micBtn.classList.remove('listening');
-    input.placeholder = ''; clearTimer();
-    var finalTxt = (lastText || '').trim();
-    // iOS 偶发「假结束」：无结果且整体耗时短 → 自动续听一次（自愈，不用主人重点）
-    if (!finalTxt && retry < 2 && startTs && (Date.now() - startTs) < 6000) {
-      retry++;
-      setTimeout(function () { try { recog.start(); } catch (e) {} }, 120);
-      return;
-    }
-    retry = 0;
-    if (finalTxt) {
-      input.value = finalTxt;
-      showCmdToast('✅ 识别：「' + finalTxt + '」，正在记录…');
-      setTimeout(function () { sendHamiCmd(); }, 60);   // 自动记账
-    } else {
-      showCmdToast('没听清，请再点一次「语音」按钮重说');
-    }
-  };
-
-  micBtn.addEventListener('click', function () {
-    if (listening) { try { recog.stop(); } catch (e) {} return; }   // 再点一次 = 停止
-    lastText = input.value ? (input.value.trim() + ' ') : '';       // 续接框里已有文字
-    retry = 0;
-    try { recog.start(); } catch (e) {}
-    clearTimer();
-    timer = setTimeout(function () { if (listening) { try { recog.stop(); } catch (e) {} } }, 8000); // 8秒超时
-  });
-})();
 function loadData() {
   try {
     // 版本号检测：仅用于记录日志，绝不在版本不匹配时清空 localStorage（否则主人的真实数据会被删除，例如八月份体重记录）
