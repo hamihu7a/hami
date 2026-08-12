@@ -2576,6 +2576,19 @@
     color: #d14b73;
     padding-left: 4px;
     border-left: 1.5px solid rgba(209,75,115,.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .weather-title-lines {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+  }
+  .weather-title-lines .title-line {
+    display: block;
+    white-space: nowrap;
   }
   .home-card-row {
     display: flex;
@@ -11357,6 +11370,14 @@ function fetchWeather(onDone) {
   });
 }
 
+// 标题右侧文字转行：4 字在第 2 字后转行（如 六月/三十），3 字按 1+2，5 字按 2+3，保持上下均衡
+function splitTitleText(text) {
+  const s = String(text || '');
+  if (s.length <= 2) return s;
+  const mid = s.length === 4 ? 2 : Math.floor(s.length / 2);
+  return '<span class="title-line">' + s.slice(0, mid) + '</span><span class="title-line">' + s.slice(mid) + '</span>';
+}
+
 // 渲染天气（接受归一化对象：name / icon / temp / humidity / hi / lo / tomorrowName）
 function renderWeatherFromApi(d) {
   const el = document.getElementById('desktop-weather');
@@ -11370,7 +11391,7 @@ function renderWeatherFromApi(d) {
         <div class="home-card-body">
           <div class="weather-title-row">
             <div class="weather-title-text"><div>今日</div><div>天气</div></div>
-            <div class="weather-title-weather">${guessWeatherIcon(d.name)} ${d.name}</div>
+            <div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div>
           </div>
           <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
           <div class="home-card-row"><span>湿度</span><b>${d.humidity}%</b></div>
@@ -11403,7 +11424,7 @@ function renderWeatherFallback() {
       <div class="home-card-body">
         <div class="weather-title-row">
           <div class="weather-title-text"><div>今日</div><div>天气</div></div>
-          <div class="weather-title-weather">${icon} ${weather}</div>
+          <div class="weather-title-weather">${icon} <span class="weather-title-lines">${splitTitleText(weather)}</span></div>
         </div>
         <div class="home-card-row"><span>位置</span><b>${WEATHER_CITY_CN}</b></div>
         <div class="home-card-row"><span>湿度</span><b>—</b></div>
@@ -11438,7 +11459,7 @@ function renderWeatherFortune() {
       <div class="home-card-body">
         <div class="weather-title-row">
           <div class="weather-title-text"><div>今日</div><div>黄历</div></div>
-          <div class="weather-title-weather">${moonEmoji(hl.day)} ${hl.lunar}</div>
+          <div class="weather-title-weather">${moonEmoji(hl.day)} <span class="weather-title-lines">${splitTitleText(hl.lunar)}</span></div>
         </div>
         <div class="home-card-row"><span>五行</span><b>${hl.dayWx}</b></div>
         <div class="home-card-row"><span>冲煞</span><b>${hl.chong} · ${hl.sha}</b></div>
