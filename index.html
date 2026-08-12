@@ -3186,16 +3186,16 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     <!-- 三张打卡卡片 -->
     <div class="checkin-grid" id="desktop-checkin"></div>
 
-    <!-- 日常代办（纯展示，修改请进左侧四·待办事项） -->
-    <div class="todo-card">
-      <h3>🏠 日常代办</h3>
-      <div id="desktop-todo-daily"></div>
-    </div>
-
     <!-- 体重记录与变化日历（主页日历缩略组件，对应镜像 panel-fitness 板块） -->
     <div id="home-weight-cal" class="todo-card" style="cursor:pointer;" onclick="switchPanel('fitness', this)">
       <h3>⚖️ 体重记录与变化日历</h3>
       <div id="desktop-weight"></div>
+    </div>
+
+    <!-- 日常代办（纯展示，修改请进左侧四·待办事项；只显示用户手动添加的待办） -->
+    <div class="todo-card" id="home-daily-todo-card">
+      <h3>🏠 日常代办</h3>
+      <div id="desktop-todo-daily"></div>
     </div>
 
     <!-- 工作代办（纯展示，修改请进左侧四·待办事项） -->
@@ -7545,13 +7545,6 @@ function sortTodos(items) {
 function renderHomeTodo() {
   const today = todayStr();
   const pendingOrders = (store.customOrders || []).filter(o => o.status === 'pending');
-  const todayWeight = (store.weightRecords || []).some(w => w.date === today);
-  const todayExercise = (store.exerciseRecords || []).some(e => e.date === today);
-
-  // 系统健康打卡（未完成）→ 归「日常」
-  const sysDaily = [];
-  if (!todayWeight) sysDaily.push({ icon: '⚖️', text: '量体重', jump: 'fitness' });
-  if (!todayExercise) sysDaily.push({ icon: '🏃‍♀️', text: '运动打卡', jump: 'fitness' });
 
   // 定制单（pending）→ 归「工作」
   const orders = pendingOrders.map(o => {
@@ -7569,7 +7562,7 @@ function renderHomeTodo() {
     if ((ut.category || 'daily') === 'work') userWork.push(item); else userDaily.push(item);
   });
 
-  const daily = sysDaily.concat(userDaily);
+  const daily = userDaily;   // 日常代办只显示用户手动输入的内容，不含系统打卡提醒
   const work = orders.concat(userWork);
 
   const catHtml = (title, items) => {
