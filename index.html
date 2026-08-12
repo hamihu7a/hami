@@ -2667,7 +2667,7 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    margin: 0 0 4px;
+    margin: 0 0 2px;
     line-height: 1.05;
   }
   .weather-title-text {
@@ -2706,18 +2706,18 @@
     align-items: center;
     font-size: 12px;
     color: #7d4a5a;
-    line-height: 1.4;
-    margin-bottom: 2px;
+    line-height: 1.35;
+    margin-bottom: 1px;
   }
   .home-card-row b { color: #4a3340; font-weight: 700; }
   .home-card-note {
     font-size: 12px;
     color: #7d4a5a;
-    line-height: 1.5;
+    line-height: 1.4;
     background: rgba(255,255,255,0.45);
     border-radius: 8px;
-    padding: 6px 8px;
-    margin-top: 4px;
+    padding: 3px 5px;
+    margin-top: 2px;
   }
   .home-card-pill {
     display: inline-block;
@@ -2743,21 +2743,21 @@
   .home-card-flex > .home-card-foot {
     margin-top: auto;
     text-align: center;
-    padding-top: 8px;
+    padding-top: 4px;
   }
-  /* 宜/忌：默认各显示 2 行，超出用省略号，点击展开查看完整内容 */
+  /* 宜/忌：默认各显示 1 行，超出用省略号，点击展开查看完整内容 */
   .home-card-note.yi-ji {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-break: break-word;
     cursor: pointer;
     user-select: none;
-    max-height: 48px; /* 12px*1.5*2 + 6px*2，防止第三行露出一半 */
+    max-height: 24px; /* 12px*1.5 + 6px，防止第二行露出一半 */
     background: transparent;
     margin-top: 0;
-    padding: 4px 2px;
+    padding: 2px 2px;
   }
   .home-card-note.yi-ji.expanded {
     display: block;
@@ -2769,13 +2769,13 @@
   .yi-ji-wrap {
     background: rgba(255,255,255,0.55);
     border-radius: 10px;
-    padding: 6px 8px;
-    margin-top: 6px;
+    padding: 4px 6px;
+    margin-top: 3px;
   }
   .yi-ji-wrap .yi-ji + .yi-ji {
     border-top: 1px dashed rgba(209, 75, 115, 0.18);
-    margin-top: 4px;
-    padding-top: 4px;
+    margin-top: 2px;
+    padding-top: 2px;
   }
   .yi-label { color: #b83557; font-weight: 700; }
 
@@ -3137,11 +3137,11 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
 
     <!-- 天气 + 运势 并排 -->
     <div id="home-weather-fortune" style="display:flex;gap:8px;margin-bottom:var(--space-block);">
-      <div id="home-weather" style="flex:1;padding:7px 10px;border-radius:10px;background:linear-gradient(135deg,#ffd6e0,#ffc0d4);border:1px solid #ffb3c6;">
-        <div id="desktop-weather" style="font-size:12px;color:var(--c-text-2);line-height:1.4;">加载中...</div>
+      <div id="home-weather" style="flex:1;padding:5px 7px;border-radius:10px;background:linear-gradient(135deg,#ffd6e0,#ffc0d4);border:1px solid #ffb3c6;">
+        <div id="desktop-weather" style="font-size:12px;color:var(--c-text-2);line-height:1.35;">加载中...</div>
       </div>
-      <div id="home-fortune" style="flex:1;padding:7px 10px;border-radius:10px;background:linear-gradient(135deg,#ffd6e0,#ffc0d4);border:1px solid #ffb3c6;">
-        <div id="desktop-fortune" style="font-size:12px;color:var(--c-text-2);line-height:1.4;">加载中...</div>
+      <div id="home-fortune" style="flex:1;padding:5px 7px;border-radius:10px;background:linear-gradient(135deg,#ffd6e0,#ffc0d4);border:1px solid #ffb3c6;">
+        <div id="desktop-fortune" style="font-size:12px;color:var(--c-text-2);line-height:1.35;">加载中...</div>
       </div>
     </div>
 
