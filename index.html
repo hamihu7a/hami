@@ -12914,7 +12914,7 @@ function renderCountdown() {
     }
   });
 
-  // 3. 经期：没记录过→一直展示提醒；有记录→来的前3天(倒数3天)+倒数2/1天+当天+进行中
+  // 3. 经期：没记录过→一直展示提醒；有记录→仅在「还没来、即将来的前3天(倒数3天)+倒数2/1天+当天」提醒；已来或正在来(inProgress)不再提醒
   const periodRecords = store.periodRecords || [];
   if (periodRecords.length === 0) {
     // 没记录过任何经期：无法预测，一直展示提醒主人记录，便于后续自动预测
@@ -12928,15 +12928,8 @@ function renderCountdown() {
     });
   } else {
     const periodInfo = getNextPeriodInfo();
-    if (periodInfo && periodInfo.inProgress) {
-      alerts.push({
-        icon: '💕',
-        label: '经期进行中',
-        days: 0,
-        targetDate: todayDate,
-        kind: 'period'
-      });
-    } else if (periodInfo && periodInfo.daysUntilStart >= 0 && periodInfo.daysUntilStart <= 3) {
+    // 已来/正在来→不提醒；只在「还没来、即将来的前3天」提醒（daysUntilStart 0~3 且非进行中）
+    if (periodInfo && !periodInfo.inProgress && periodInfo.daysUntilStart >= 0 && periodInfo.daysUntilStart <= 3) {
       const days = periodInfo.daysUntilStart;
       const txt = days === 0 ? '经期今天报到啦' : (days === 1 ? '经期明天来' : (days === 2 ? '经期后天来' : '经期快来了'));
       alerts.push({
