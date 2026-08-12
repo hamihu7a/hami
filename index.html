@@ -337,9 +337,6 @@
     border: 1px solid #ffd591; border-radius: 14px;
     font-size: 13px; color: #a06a2c; line-height: 1.5;
   }
-  /* 今日打卡提醒横幅：跟其他块统一 16px 间距；hero 已 margin-bottom:0 与之紧贴为一组 */
-  #checkin-alert-banner { margin-bottom: var(--space-block); }
-  #checkin-alert-banner:empty { margin-bottom: 0; }   /* 空时不留空白带 */
   .backup-tip b { color: var(--c-pink-deep); }
   .backup-tip .backup-dismiss {
     margin-left: auto; flex: none; padding: 6px 12px;
@@ -2435,13 +2432,13 @@
 
       /* ---------- 第二批补齐：以下模块之前在超小屏没做适配 ---------- */
 
-      /* 三个自媒体账号卡：小屏字看不清，改成每张独占一行 */
-      .accounts-grid { flex-direction: column; gap: 8px; }
-      .account-card { max-width: 100%; padding: 12px 14px; }
-      .account-card .ac-header { font-size: 14px; }
-      .account-card .ac-followers { font-size: 22px; margin-bottom: 4px; }
-      .account-card .ac-follower-change { font-size: 13px; margin-bottom: 4px; }
-      .account-card .ac-detail { font-size: 13px; flex-wrap: wrap; gap: 4px 16px; justify-content: flex-start; }
+      /* 三个自媒体账号卡：左右并排（恢复主人偏好的原始设计） */
+      .accounts-grid { display: flex; gap: 6px; min-width: 0; }
+      .account-card { flex: 1; min-width: 0; overflow: hidden; padding: 8px 4px; }
+      .account-card .ac-header { font-size: 11px; }
+      .account-card .ac-followers { font-size: 16px; margin-bottom: 0; }
+      .account-card .ac-follower-change { font-size: 11px; margin-bottom: 0; }
+      .account-card .ac-detail { font-size: 11px; flex-wrap: wrap; gap: 2px 4px; justify-content: flex-start; }
       .account-card .ac-detail b { font-weight: 700; }
 
       /* 体重记录与变化日历：收窄内边距，把宽度让给格子 */
@@ -3232,10 +3229,7 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div class="desktop-quote" id="desktop-quote"></div>
       </div>
 
-    <!-- 今日打卡提醒横幅：位于时间与激励语板块下方，所有提示统一显示在此处 -->
-    <div id="checkin-alert-banner"></div>
-
-    <!-- 倒计时组件：2×2 四点（左=日期提醒，右=日常记录） -->
+    <!-- 倒计时组件：所有提醒统一在卡片轮播中轮番展示 -->
     <div id="desktop-countdown" style="display:flex;gap:4px;margin-bottom:var(--space-block);"></div>
 
     <!-- 天气 + 运势 并排 -->
@@ -7417,7 +7411,8 @@ function fireCheckinNotifications(alerts) {
   } catch (e) {}
 }
 
-function checkCheckinAlerts() {
+// 收集所有打卡类提醒（统一用于倒计时卡片轮播、弹窗、系统通知）
+function collectCheckinAlerts() {
   const now = new Date();
   const hour = now.getHours();
   const today = todayStr();
@@ -7430,45 +7425,33 @@ function checkCheckinAlerts() {
 
   // 量体重提醒：早上8点起到13点前温柔提醒（每天打开都能看到）
   if (!hasWeight && hour >= 8 && hour < 13) {
-    alerts.push({ icon: '⚖️', text: '该量体重啦！记得记录今天的体重~', color: '#856404', bg: '#fff3cd', action: 'fitness' });
+    alerts.push({ icon: '⚖️', text: '该量体重啦！记得记录今天的体重~' });
   }
   // 运动打卡提醒：19:00-20:00 之间
   if (!hasExercise && hour >= 19 && hour < 20) {
-    alerts.push({ icon: '🏃‍♀️', text: '该运动打卡啦！加油~', color: '#856404', bg: '#fff3cd', action: 'fitness' });
+    alerts.push({ icon: '🏃‍♀️', text: '该运动打卡啦！加油~' });
   }
   // 量体重未完成超时提醒：13:00 以后还没量（持续提醒，直到量了为止）
   if (!hasWeight && hour >= 13) {
-    alerts.push({ icon: '⚖️', text: '今天还没量体重！别忘了~', color: '#721c24', bg: '#f8d7da', action: 'fitness' });
+    alerts.push({ icon: '⚖️', text: '今天还没量体重！别忘了~' });
   }
   // 运动未完成超时提醒：20:00 以后还没打卡
   if (!hasExercise && hour >= 20) {
-    alerts.push({ icon: '🏃‍♀️', text: '今天还没运动打卡！', color: '#721c24', bg: '#f8d7da', action: 'fitness' });
+    alerts.push({ icon: '🏃‍♀️', text: '今天还没运动打卡！' });
   }
   // 如厕异常提醒：仅第3天没上厕所才提醒，前两天（健康/观察）不提醒
   if (toiletInfo.has && toiletInfo.state === 'alert') {
-    alerts.push({ icon: '😣', text: '已' + toiletInfo.daysSince + '日没上厕所（异常），务必注意！', color: '#721c24', bg: '#f8d7da', action: 'toiletmask' });
+    alerts.push({ icon: '😣', text: '已' + toiletInfo.daysSince + '日没上厕所（异常），务必注意！' });
   }
   // 敷面膜提醒：本周未满2次
   if (maskInfo.needRemind) {
-    alerts.push({ icon: '🧖', text: '本周面膜还差' + (maskInfo.goal - maskInfo.count) + '次（' + maskInfo.count + '/' + maskInfo.goal + '）', color: '#a03e62', bg: 'rgba(255, 198, 215, 0.5)', action: 'toiletmask' });
+    alerts.push({ icon: '🧖', text: '该敷面膜 ' + maskInfo.count + '/' + maskInfo.goal });
   }
+  return alerts;
+}
 
-  // 显示横幅
-  const container = document.getElementById('checkin-alert-banner');
-  if (container) {
-    if (alerts.length === 0) {
-      container.innerHTML = '';
-    } else {
-      let html = '';
-      alerts.forEach(a => {
-        html += `<div style="padding:10px 14px;border-radius:12px;margin-bottom:8px;background:${a.bg};color:${a.color};font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="switchPanel('${a.action}', this)">
-          <span style="font-size:16px;">${a.icon}</span>
-          <span>${a.text}</span>
-        </div>`;
-      });
-      container.innerHTML = html;
-    }
-  }
+function checkCheckinAlerts() {
+  const alerts = collectCheckinAlerts();
 
   // 首次打开弹窗（每个提醒只弹一次）
   if (!sessionStorage.getItem('checkinAlertShown')) {
@@ -11680,18 +11663,7 @@ function checkWeeklyUpdateAlert() {
         hamiToast('📊 周一提醒：\n该更新三个账号的数据啦！\n\n• 小红书大号：sims哈弥老师\n• 小红书小号：sims哈弥（定制版）\n• 抖音：sims哈弥老师\n\n请打开小红书/抖音后台看一眼粉丝数和获赞数，报给小助理（Hami的），我来帮您写进工作台~');
       }, 1200);
     }
-    // 横幅常驻
-    const banner = document.getElementById('checkin-alert-banner');
-    if (banner) {
-      const existing = banner.innerHTML;
-      const weeklyBanner = `<div style="padding:10px 14px;border-radius:12px;margin-bottom:8px;background:#e8e0f0;color:#6a3a8a;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="switchPanel('media', this)">
-        <span style="font-size:16px;">📊</span>
-        <span>周一提醒：去后台看一眼账号数据，报给小助理更新~</span>
-      </div>`;
-      if (existing.indexOf('周一提醒') < 0) {
-        banner.innerHTML = weeklyBanner + existing;
-      }
-    }
+    // 提醒内容已合并到倒计时卡片轮播，不再显示横幅
   }
 }
 
@@ -13007,28 +12979,27 @@ function renderCountdown() {
     }
   }
 
-  // 4. 敷面膜：最后快完不成一周两次时
-  const maskInfo = getNextMaskInfo();
-  if (maskInfo.needRemind) {
+  // 4. 打卡类提醒（量体重/运动/如厕/敷面膜）统一合并到倒计时卡片轮播，轮番播放
+  collectCheckinAlerts().forEach(a => {
     alerts.push({
-      icon: '🧖',
-      label: `该敷面膜 ${maskInfo.count}/${maskInfo.goal}`,
+      icon: a.icon,
+      label: a.text,
       days: 0,
       targetDate: todayDate,
-      kind: 'mask',
+      kind: 'checkin',
       hideDays: true
     });
-  }
+  });
 
-  // 5. 如厕：第3天还没上厕所
-  const toiletInfo = getNextToiletInfo();
-  if (toiletInfo.has && toiletInfo.state === 'alert') {
+  // 5. 周一晚21点账号数据更新提醒，也走卡片轮播
+  const now = new Date();
+  if (now.getDay() === 1 && now.getHours() >= 21 && now.getHours() < 22) {
     alerts.push({
-      icon: '🚽',
-      label: `异常 · 已${toiletInfo.daysSince}日没上厕所`,
+      icon: '📊',
+      label: '周一提醒：去后台看一眼账号数据，报给小助理更新~',
       days: 0,
       targetDate: todayDate,
-      kind: 'toilet',
+      kind: 'weekly',
       hideDays: true
     });
   }
