@@ -2725,7 +2725,7 @@
     text-align: center;
     padding-top: 8px;
   }
-  /* 宜：默认 2 行，超出用省略号，点击整行展开 */
+  /* 宜/忌：默认各显示 2 行，超出用省略号，点击展开查看完整内容 */
   .home-card-note.yi-ji {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -2735,6 +2735,9 @@
     cursor: pointer;
     user-select: none;
     max-height: 48px; /* 12px*1.5*2 + 6px*2，防止第三行露出一半 */
+    background: transparent;
+    margin-top: 0;
+    padding: 4px 2px;
   }
   .home-card-note.yi-ji.expanded {
     display: block;
@@ -2743,6 +2746,18 @@
     cursor: pointer;
     max-height: none;
   }
+  .yi-ji-wrap {
+    background: rgba(255,255,255,0.55);
+    border-radius: 10px;
+    padding: 6px 8px;
+    margin-top: 6px;
+  }
+  .yi-ji-wrap .yi-ji + .yi-ji {
+    border-top: 1px dashed rgba(209, 75, 115, 0.18);
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+  .yi-label { color: #b83557; font-weight: 700; }
 
 </style>
 <style>
@@ -11820,7 +11835,6 @@ function renderWeatherFromApi(d) {
             <div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div>
           </div>
           <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
-          <div class="home-card-row"><span>湿度</span><b>${d.humidity}%</b></div>
           <div class="home-card-row"><span>体感</span><b>${feelsLike}</b></div>
           <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
           <div class="home-card-row"><span>建议</span><b>${advice}</b></div>
@@ -11853,7 +11867,6 @@ function renderWeatherFallback() {
           <div class="weather-title-weather">${icon} <span class="weather-title-lines">${splitTitleText(weather)}</span></div>
         </div>
         <div class="home-card-row"><span>位置</span><b>${WEATHER_CITY_CN}</b></div>
-        <div class="home-card-row"><span>湿度</span><b>—</b></div>
         <div class="home-card-row"><span>体感</span><b>${feelsLike}</b></div>
         <div class="home-card-row"><span>温度</span><b>${temp}</b></div>
         <div class="home-card-row"><span>建议</span><b>${advice}</b></div>
@@ -11865,9 +11878,8 @@ function renderWeatherFallback() {
     </div>`;
 }
 
-function toggleYiExpand(e) {
-  if (e) e.stopPropagation();
-  const el = document.getElementById('desktop-yi');
+function toggleYiJiPart(type) {
+  const el = document.getElementById('desktop-yi-' + type);
   if (!el) return;
   el.classList.toggle('expanded');
 }
@@ -11889,8 +11901,10 @@ function renderWeatherFortune() {
         </div>
         <div class="home-card-row"><span>五行</span><b>${hl.dayWx}</b></div>
         <div class="home-card-row"><span>冲煞</span><b>${hl.chong} · ${hl.sha}</b></div>
-        <div class="home-card-note yi-ji yi-ji-main" id="desktop-yi" onclick="toggleYiExpand(event)" title="点击展开/收起"><b>宜：</b>${yi}</div>
-        <div class="home-card-note yi-ji"><b>忌：</b>${ji}</div>
+        <div class="yi-ji-wrap">
+          <div class="home-card-note yi-ji" id="desktop-yi-yi" onclick="toggleYiJiPart('yi')" title="点击展开查看完整宜事"><b class="yi-label">宜：</b><span>${yi}</span></div>
+          <div class="home-card-note yi-ji" id="desktop-yi-ji" onclick="toggleYiJiPart('ji')" title="点击展开查看完整忌事"><b class="yi-label">忌：</b><span>${ji}</span></div>
+        </div>
       </div>
       <div class="home-card-foot">
         <span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">查看明日黄历</span>
