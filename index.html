@@ -250,6 +250,12 @@
     text-overflow: ellipsis;
     transition: opacity .2s;
   }
+  .nav-item .nav-text.nav-text-wrap {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.35;
+  }
   /* 侧边栏拖窄（nav-wrapped）时菜单文字转行显示 */
   .sidebar.nav-wrapped .nav-text {
     white-space: normal;
@@ -3041,7 +3047,7 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     </button>
     <button class="nav-item" type="button" onclick="switchPanel('reminder', this)">
       <span class="nav-icon">✈️</span>
-      <span class="nav-text">外出游玩</span>
+      <span class="nav-text nav-text-wrap">外出游<br>玩与计划</span>
     </button>
   </div>
 
@@ -3971,7 +3977,7 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     <div id="reminder-banner"></div>
 
     <div class="tip-box">
-      💕 <b>使用方法</b>：告诉我重要的日期（生日/纪念日/在一起的日子）和外出游玩计划，我帮你记录并提醒~
+      💕 <b>使用方法</b>：告诉我重要的日期（生日/纪念日/在一起的日子）和游玩计划，我帮你记录并提醒~
     </div>
 
     <!-- 重要日期预览（Days Matter 风格） -->
@@ -3983,10 +3989,10 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div id="important-dates"></div>
     </div>
 
-    <!-- 外出游玩提醒（表格形式） -->
+    <!-- 游玩清单 -->
     <div class="card">
       <div class="card-title" style="display:flex;align-items:center;gap:6px;">
-        <span>✈️</span> 外出游玩提醒
+        <span>✈️</span> 游玩清单
         <button class="date-add-btn" onclick="openTravelModal()" type="button">➕ 记一次</button>
       </div>
       <div id="travel-reminders"></div>
@@ -10752,7 +10758,7 @@ function showReminderBanners() {
         msg += `  酒店：${hotelTxt}\n`;
         msg += `  准备清单：${checklistDone}/${checklistTotal}\n\n`;
       });
-      msg += '请前往「外出游玩提醒」更新状态~';
+      msg += '请前往「游玩清单」更新状态~';
       hamiToast(msg);
     }, 500);
   }
