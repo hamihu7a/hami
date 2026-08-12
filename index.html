@@ -4324,6 +4324,7 @@ const WEEKLY_GOAL = 6;  // 每周健身目标天数
 
 // ==================== 数据 ====================
 let store = {
+  _lastSavedAt: 0,    // 本地保存时间戳，用于与 IndexedDB 备份比较新旧
   weightGoal: null,   // 目标体重（kg），健康模块可设，用于进度环
   userTodos: [],      // 用户自定义待办 { date, text, done }
   exerciseItems: [],  // 运动详细记录 { id, date, type, name, duration, sets, note }
@@ -4771,6 +4772,8 @@ function showLoadBrokenBanner() {
 function saveData() {
   if (_loadBroken) return;
   let savedOk = false;
+  // 更新时间戳，便于与 IndexedDB 备份比较新旧
+  try { store._lastSavedAt = Date.now(); } catch (e) {}
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     savedOk = true;
@@ -4783,16 +4786,19 @@ function saveData() {
     console.error('[saveData] 本地保存失败', e);
     if (!_saveFailedNotified) { _saveFailedNotified = true; try { showSaveFailedBanner(e); } catch (e2) {} }
   }
-  // 双重保险：账号数据单独备份到 IndexedDB（容量更大、浏览器清理时更不易丢）
+  // 双重保险：全部数据备份到 IndexedDB（容量更大、浏览器清理时更不易丢）
+  try { saveStoreToIDB(); } catch (e) {}
+  // 兼容旧账号备份
   try { saveAccountsToIDB(); } catch (e) {}
   try { renderBackupReminder(); } catch(e) {}
   return savedOk;
 }
 
-// ==================== IndexedDB 双重备份（账号数据防丢）====================
+// ==================== IndexedDB 双重备份（全部数据防丢）====================
 const HAMI_IDB_NAME = 'hami_accounts_db';
 const HAMI_IDB_STORE = 'backups';
-const HAMI_IDB_KEY = 'accounts_v1';
+const HAMI_IDB_KEY_ACCOUNTS = 'accounts_v1';
+const HAMI_IDB_KEY_STORE = 'store_v1';
 function openHamiIDB() {
   return new Promise(function (resolve, reject) {
     if (!window.indexedDB) { resolve(null); return; }
@@ -4807,13 +4813,14 @@ function openHamiIDB() {
     req.onerror = function (e) { reject(e); };
   });
 }
+// 账号数据单独备份（兼容旧兜底恢复逻辑）
 function saveAccountsToIDB() {
   return openHamiIDB().then(function (db) {
     if (!db) return;
     const tx = db.transaction(HAMI_IDB_STORE, 'readwrite');
     const os = tx.objectStore(HAMI_IDB_STORE);
     os.put({
-      key: HAMI_IDB_KEY,
+      key: HAMI_IDB_KEY_ACCOUNTS,
       accounts: store.accounts,
       accountsMeta: store.accountsMeta,
       savedAt: Date.now()
@@ -4826,11 +4833,36 @@ function loadAccountsFromIDB() {
     return new Promise(function (resolve, reject) {
       const tx = db.transaction(HAMI_IDB_STORE, 'readonly');
       const os = tx.objectStore(HAMI_IDB_STORE);
-      const req = os.get(HAMI_IDB_KEY);
+      const req = os.get(HAMI_IDB_KEY_ACCOUNTS);
       req.onsuccess = function (e) { resolve(e.target.result || null); };
       req.onerror = function (e) { reject(e); };
     });
   }).catch(function (e) { console.error('[loadAccountsFromIDB] 失败', e); return null; });
+}
+// 全量 store 备份：localStorage 5MB 配额被背景图占满时，IndexedDB 通常还有几百 MB，可作为兜底
+function saveStoreToIDB() {
+  return openHamiIDB().then(function (db) {
+    if (!db) return;
+    const tx = db.transaction(HAMI_IDB_STORE, 'readwrite');
+    const os = tx.objectStore(HAMI_IDB_STORE);
+    os.put({
+      key: HAMI_IDB_KEY_STORE,
+      store: store,
+      savedAt: store._lastSavedAt || Date.now()
+    });
+  }).catch(function (e) { console.error('[saveStoreToIDB] 失败', e); });
+}
+function loadStoreFromIDB() {
+  return openHamiIDB().then(function (db) {
+    if (!db) return null;
+    return new Promise(function (resolve, reject) {
+      const tx = db.transaction(HAMI_IDB_STORE, 'readonly');
+      const os = tx.objectStore(HAMI_IDB_STORE);
+      const req = os.get(HAMI_IDB_KEY_STORE);
+      req.onsuccess = function (e) { resolve(e.target.result || null); };
+      req.onerror = function (e) { reject(e); };
+    });
+  }).catch(function (e) { console.error('[loadStoreFromIDB] 失败', e); return null; });
 }
 
 // 统计本地数据总条数（数组取长度，对象取键数），用于备份提醒阈值判断
@@ -6642,6 +6674,37 @@ function tryRecoverAccountsFromIDB() {
     try { renderAccount(); } catch (e) {}
     hamiToast('已从浏览器内部备份找回账号数据\n如果仍显示旧数字，请去设置恢复完整备份');
   }).catch(function (e) { console.error('[tryRecoverAccountsFromIDB] 恢复失败', e); });
+}
+
+// IndexedDB 全量兜底恢复：localStorage 写入失败/被清理时，用 IndexedDB 里更新的备份恢复
+function tryRecoverStoreFromIDB() {
+  if (!window.indexedDB) return;
+  loadStoreFromIDB().then(function (rec) {
+    if (!rec || !rec.store) return;
+    const localTs = store._lastSavedAt || 0;
+    const idbTs = rec.savedAt || 0;
+    // IBD 备份比本地新才恢复，避免旧备份覆盖新数据
+    if (idbTs <= localTs) return;
+    // 用 IBD 备份覆盖当前 store（保留当前运行时的默认值结构）
+    const backup = rec.store;
+    for (const key in store) {
+      if (backup[key] !== undefined) store[key] = backup[key];
+    }
+    for (const key in backup) {
+      if (!(key in store)) store[key] = backup[key];
+    }
+    try {
+      saveData();
+      hamiToast('已从浏览器内部备份找回最新数据（体重/打卡等）\n如果仍不对，请去设置恢复完整备份');
+    } catch (e) {}
+    // 重新渲染所有可能受影响的 panels
+    try { renderHome(); } catch (e) {}
+    try { renderWeight(); } catch (e) {}
+    try { renderHealth(); } catch (e) {}
+    try { renderCheckin(); } catch (e) {}
+    try { renderDesktopAccounts(); } catch (e) {}
+    try { renderAccount(); } catch (e) {}
+  }).catch(function (e) { console.error('[tryRecoverStoreFromIDB] 恢复失败', e); });
 }
 
 // 八月份体重种子（从主人 8/8 截图中精确提取）：仅当本地缺失对应日期时一次性补入，
@@ -12275,7 +12338,7 @@ function renderDesktop() {
 
 // ==================== 初始化 ====================
 loadData();
-tryRecoverAccountsFromIDB(); // 从 IndexedDB 兜底恢复账号数据（防 localStorage 被清理）
+tryRecoverStoreFromIDB(); // 从 IndexedDB 兜底恢复全部数据（防 localStorage 5MB 配额写爆）
 
 // ===== 一次性数据更新（哈弥 2026-08-05 指令）=====
 // ===== 直接写入数据（哈弥 2026-08-05 指令）=====
