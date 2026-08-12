@@ -1997,6 +1997,27 @@
     font-size: 12px; padding: 5px 10px; border-radius: 10px; border: 1px solid #ffd0dc;
     background: #fff; color: #5a3a48; cursor: pointer;
   }
+  /* 每日模块：上下排列、清晰分隔、全部展开，不再点标签切换 */
+  .trip-day-block {
+    background: #fff7fa; border: 1.5px solid #ffe4ec; border-radius: 14px;
+    padding: 10px 12px 6px; margin-top: 10px;
+  }
+  .trip-day-block:first-of-type { margin-top: 4px; }
+  .trip-day-head {
+    display: flex; align-items: center; gap: 8px;
+    padding-bottom: 8px; margin-bottom: 8px;
+    border-bottom: 1.5px dashed #ffd0dc;
+  }
+  .trip-day-idx {
+    background: var(--c-pink-main); color: #fff; border-radius: 10px;
+    padding: 2px 10px; font-size: 13px; font-weight: 800;
+  }
+  .trip-day-date { font-size: 13px; font-weight: 800; color: #8a6270; }
+  @media (max-width: 420px) {
+    .trip-day-idx, .trip-day-date { font-size: 14px; }
+    .trip-item-title { font-size: 15px; }
+    .trip-item-place, .trip-item-trans, .trip-item-note, .trip-item-time { font-size: 13px; }
+  }
 
   @media (max-width: 420px) {
     .co-card, .ex-card, .period-card, .wash-card, .travel-card { padding: 10px 12px; padding-right: 64px; }
@@ -10973,57 +10994,58 @@ function renderTripPlans() {
     const end = trip.end || start;
     ensureTripDays(trip);
     const days = trip.days;
-    const activeDay = _tripActiveDay[realIdx] || 0;
-    const safeActive = Math.min(activeDay, Math.max(0, days.length - 1));
 
     let statusClass = 'trip-status-future', statusText = '未开始';
     if (today >= start && today <= end) { statusClass = 'trip-status-today'; statusText = '进行中'; }
     else if (today > end) { statusClass = 'trip-status-past'; statusText = '已结束'; }
     else if (days.length && today >= days[0].date && today <= days[days.length-1].date) { statusClass = 'trip-status-ongoing'; statusText = '进行中'; }
 
-    const dayChips = days.map((d, i) => {
-      const cls = i === safeActive ? 'trip-day-chip active' : 'trip-day-chip';
-      return `<div class="${cls}" onclick="switchTripDay(${realIdx}, ${i})"><div class="trip-day-label">Day ${i+1}</div><div class="trip-day-date">${fmtMD(d.date)}</div></div>`;
-    }).join('');
-
-    const day = days[safeActive];
-    let timelineHtml = '<div class="trip-timeline">';
-    const items = (day && day.items && day.items.slice().sort((a,b) => (a.time||'').localeCompare(b.time||''))) || [];
-    if (items.length === 0) {
-      timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
-    } else {
-      const TYPE_MAP = {
-        play: ['🎡','游玩'], food: ['🍜','餐饮'], traffic: ['🚇','交通'],
-        stay: ['🏨','住宿'], shop: ['🛍️','购物'], other: ['📌','其他']
-      };
-      items.forEach((it, iIdx) => {
-        const itemRealIdx = day.items.indexOf(it);
-        const done = !!it.done;
-        const tm = TYPE_MAP[it.type] || TYPE_MAP.other;
-        const cls = 'trip-item' + (done ? ' done' : '');
-        timelineHtml += `
-          <div class="${cls}">
-            <div class="trip-item-dot"></div>
-            <div class="trip-item-main">
-              <div class="trip-item-top">
-                <span class="trip-item-time">${it.time || '全天'}</span>
-                <span class="trip-item-type">${tm[0]} ${tm[1]}</span>
-                ${it.duration ? `<span class="trip-item-dur">⏱️${escapeHtml(it.duration)}</span>` : ''}
+    // 每个 Day 一个独立模块，纵向排列、全部展开，不再点标签切换
+    const TYPE_MAP = {
+      play: ['🎡','游玩'], food: ['🍜','餐饮'], traffic: ['🚇','交通'],
+      stay: ['🏨','住宿'], shop: ['🛍️','购物'], other: ['📌','其他']
+    };
+    const dayBlocks = (days || []).map((day, di) => {
+      const items = (day.items || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
+      let timelineHtml = '<div class="trip-timeline">';
+      if (items.length === 0) {
+        timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
+      } else {
+        items.forEach((it, iIdx) => {
+          const itemRealIdx = day.items.indexOf(it);
+          const done = !!it.done;
+          const tm = TYPE_MAP[it.type] || TYPE_MAP.other;
+          const cls = 'trip-item' + (done ? ' done' : '');
+          timelineHtml += `
+            <div class="${cls}">
+              <div class="trip-item-dot"></div>
+              <div class="trip-item-main">
+                <div class="trip-item-top">
+                  <span class="trip-item-time">${it.time || '全天'}</span>
+                  <span class="trip-item-type">${tm[0]} ${tm[1]}</span>
+                  ${it.duration ? `<span class="trip-item-dur">⏱️${escapeHtml(it.duration)}</span>` : ''}
+                </div>
+                <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
+                ${it.place ? `<div class="trip-item-place">🗺️ ${escapeHtml(it.place)}</div>` : ''}
+                ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
+                ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
               </div>
-              <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
-              ${it.place ? `<div class="trip-item-place">🗺️ ${escapeHtml(it.place)}</div>` : ''}
-              ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
-              ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
-            </div>
-            <div class="trip-item-actions">
-              <button onclick="toggleTripItemDone(${realIdx}, ${safeActive}, ${itemRealIdx})" title="${done ? '标记未完成' : '标记完成'}">${done ? '✅' : '⬜'}</button>
-              <button onclick="openTripDayModal(${realIdx}, ${safeActive}, ${itemRealIdx})">✏️</button>
-              <button onclick="deleteTripDayItem(${realIdx}, ${safeActive}, ${itemRealIdx})">🗑</button>
-            </div>
-          </div>`;
-      });
-    }
-    timelineHtml += '</div>';
+              <div class="trip-item-actions">
+                <button onclick="toggleTripItemDone(${realIdx}, ${di}, ${itemRealIdx})" title="${done ? '标记未完成' : '标记完成'}">${done ? '✅' : '⬜'}</button>
+                <button onclick="openTripDayModal(${realIdx}, ${di}, ${itemRealIdx})">✏️</button>
+                <button onclick="deleteTripDayItem(${realIdx}, ${di}, ${itemRealIdx})">🗑</button>
+              </div>
+            </div>`;
+        });
+      }
+      timelineHtml += '</div>';
+      return `
+        <div class="trip-day-block">
+          <div class="trip-day-head"><span class="trip-day-idx">Day ${di+1}</span><span class="trip-day-date">${fmtMD(day.date)}</span></div>
+          ${timelineHtml}
+          <div class="trip-actions-row"><button onclick="openTripDayModal(${realIdx}, ${di})">➕ 添加行程</button></div>
+        </div>`;
+    }).join('');
 
     html += `
       <div class="trip-card">
@@ -11037,11 +11059,7 @@ function renderTripPlans() {
             <button class="row-del-btn" onclick="deleteTripRecord(${realIdx})" type="button" aria-label="删除">🗑</button>
           </div>
         </div>
-        <div class="trip-days-bar">${dayChips}</div>
-        ${timelineHtml}
-        <div class="trip-actions-row">
-          <button onclick="openTripDayModal(${realIdx}, ${safeActive})">➕ 添加行程</button>
-        </div>
+        ${dayBlocks}
       </div>`;
   });
 
