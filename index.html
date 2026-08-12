@@ -3196,7 +3196,7 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     placeholder=""
     autocomplete="off">
   <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
-  <button class="cmd-refresh" id="hami-cmd-refresh" title="刷新同步云数据" aria-label="刷新同步云数据" onclick="refreshCloudData()">
+  <button class="cmd-refresh" id="hami-cmd-refresh" title="刷新网页并同步最新数据" aria-label="刷新网页并同步最新数据" onclick="cmdRefreshAction()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="23 4 23 10 17 10"></polyline>
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -5755,6 +5755,18 @@ async function refreshCloudData() {
   } finally {
     if (btn) setTimeout(function () { btn.classList.remove('spinning'); }, 600);
   }
+}
+
+// 顶栏刷新按钮：一次点击 = 同步云数据（已开启时）+ 刷新网页（强制从服务器加载最新版，含小助理刚改好的行程）
+async function cmdRefreshAction() {
+  const btn = document.getElementById('hami-cmd-refresh');
+  if (btn) btn.classList.add('spinning');
+  showCmdToast('🔄 正在刷新网页并同步最新数据…');
+  if (cloudEnabled()) {
+    try { await pullCloudToLocal(); } catch (e) {}
+  }
+  // 强制从服务器重新加载最新页面（绕过缓存），确保看到刚更新的内容
+  setTimeout(function () { location.reload(true); }, 600);
 }
 
 // 安全同步核心：推送 STORAGE_KEY 前，先把云端现有整库拉下来与本地合并（本地优先），
