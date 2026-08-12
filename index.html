@@ -1237,6 +1237,15 @@
   .row-del-btn  { background: #fff0f0; color: #c43e3e; border: 1px solid #ffd4d4; }
   .row-del-btn:hover  { background: #ffe4e4; }
   .row-edit-btn:active, .row-del-btn:active { transform: scale(0.95); }
+  /* 重要日期「展开其余」折叠按钮 */
+  .date-fold-btn {
+    display: inline-block; margin: 4px auto 0; border: 1px solid #ffd0dc;
+    border-radius: 12px; background: #fff0f5; color: var(--c-pink-deep);
+    font-size: 13px; font-weight: 700; padding: 6px 16px; cursor: pointer;
+    white-space: nowrap; transition: transform .1s ease, background .2s ease;
+  }
+  .date-fold-btn:hover { background: var(--c-pink-soft); }
+  .date-fold-btn:active { transform: scale(0.97); }
 
   /* 洗头/如厕/面膜：选日期记录一行（日期输入 + 记录此日按钮） */
   .date-log-row {
@@ -10765,7 +10774,10 @@ function renderReminder() {
     dateList.sort((a, b) => a.sortKey - b.sortKey);
 
     let html = '';
-    dateList.forEach(d => {
+    const VISIBLE = 5;
+    const hasMore = dateList.length > VISIBLE;
+    let moreHtml = '';
+    dateList.forEach((d, idx) => {
       const isBirthday = d.type === 'birthday';
       const isAnniversary = d.type === 'anniversary';
       const isOther = !isBirthday && !isAnniversary;
@@ -10804,7 +10816,7 @@ function renderReminder() {
       // 过期样式（daysLeft > 180 的排到后面灰色显示）
       const isFar = d.sortKey > 180;
 
-      html += `<div style="padding:12px 14px;background:#fff8fa;border-radius:14px;margin-bottom:10px;border:1px solid #ffe4ec;${isFar ? 'opacity:0.55;' : ''}">
+      const itemHtml = `<div style="padding:12px 14px;background:#fff8fa;border-radius:14px;margin-bottom:10px;border:1px solid #ffe4ec;${isFar ? 'opacity:0.55;' : ''}">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
@@ -10827,7 +10839,14 @@ function renderReminder() {
           <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
         </div>
       </div>`;
+      if (hasMore && idx >= VISIBLE) moreHtml += itemHtml; else html += itemHtml;
     });
+    // 超过 5 条则把其余折叠，点击「展开其余 N 条」显示
+    if (hasMore) {
+      html += `<div id="imp-dates-collapsed" style="display:none;">${moreHtml}</div>`;
+      const rest = dateList.length - VISIBLE;
+      html += `<div style="text-align:center;margin-top:8px;"><button class="date-fold-btn" id="imp-dates-toggle" type="button" onclick="toggleImpDates()">▾ 展开其余 ${rest} 条</button></div>`;
+    }
     document.getElementById('important-dates').innerHTML = html;
   }
 
@@ -11194,6 +11213,20 @@ async function deleteDateRecord(idx) {
   try { saveData(); } catch (e) {}
   renderReminder();
   try { finToast('已删除「' + name + '」'); } catch (e) {}
+}
+// 重要日期：展开/收起「其余」折叠区
+function toggleImpDates() {
+  const box = document.getElementById('imp-dates-collapsed');
+  const btn = document.getElementById('imp-dates-toggle');
+  if (!box || !btn) return;
+  const showing = box.style.display !== 'none';
+  if (showing) {
+    box.style.display = 'none';
+    btn.innerHTML = '▾ 展开其余 ' + box.children.length + ' 条';
+  } else {
+    box.style.display = 'block';
+    btn.innerHTML = '▴ 收起';
+  }
 }
 // ESC 关闭（用现有 ESC 监听 keydown，已绑到 closeAddModal 等；额外绑一个 closeDate/closeTravel 安全）
 document.addEventListener('keydown', function (e) {
