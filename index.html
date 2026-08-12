@@ -1868,6 +1868,101 @@
     font-size: 11px; color: #8a6270; margin-top: 8px; text-align: right;
   }
 
+  /* 游玩计划：行程时间轴 */
+  .trip-plans-list { display: flex; flex-direction: column; gap: 14px; }
+  .trip-card {
+    background: rgba(255,255,255,0.72); border: 1px solid #ffe4ec;
+    border-radius: 16px; padding: 12px 14px;
+    box-shadow: 0 2px 10px rgba(255,158,181,0.08);
+  }
+  .trip-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .trip-title {
+    font-size: 16px; font-weight: 800; color: var(--c-pink-deep); line-height: 1.3;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .trip-subtitle {
+    font-size: 12px; color: #8a6270; margin-top: 4px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .trip-status-tag {
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; flex-shrink: 0;
+  }
+  .trip-status-ongoing { background: #d4edda; color: #155724; }
+  .trip-status-today   { background: #f8d7da; color: #721c24; }
+  .trip-status-future  { background: #fff3cd; color: #856404; }
+  .trip-status-past    { background: #e0e0e0; color: #777; }
+  .trip-days-bar {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px;
+    scrollbar-width: none;
+  }
+  .trip-days-bar::-webkit-scrollbar { display: none; }
+  .trip-day-chip {
+    flex-shrink: 0; min-width: 72px; text-align: center;
+    background: #fff; border: 1.5px solid #ffe4ec; border-radius: 12px;
+    padding: 7px 10px; cursor: pointer; user-select: none;
+    transition: transform .12s, border-color .12s, background .12s;
+  }
+  .trip-day-chip.active {
+    background: var(--c-pink-main); border-color: var(--c-pink-main);
+    color: #fff; transform: translateY(-1px);
+  }
+  .trip-day-chip .trip-day-label { font-size: 11px; font-weight: 700; }
+  .trip-day-chip .trip-day-date { font-size: 10px; opacity: .85; margin-top: 2px; }
+  .trip-timeline {
+    position: relative; padding-left: 34px;
+  }
+  .trip-timeline::before {
+    content: ''; position: absolute; left: 9px; top: 6px; bottom: 6px;
+    width: 2px; background: linear-gradient(to bottom, #ffd0dc, #ffe4ec); border-radius: 2px;
+  }
+  .trip-item {
+    position: relative; margin-bottom: 14px;
+  }
+  .trip-item:last-child { margin-bottom: 6px; }
+  .trip-item-dot {
+    position: absolute; left: -29px; top: 4px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #fff; border: 2.5px solid var(--c-pink-main);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+  }
+  .trip-item-time {
+    font-size: 12px; font-weight: 700; color: var(--c-pink-deep);
+    margin-bottom: 2px;
+  }
+  .trip-item-title {
+    font-size: 14px; font-weight: 700; color: #5a3a48; line-height: 1.35;
+  }
+  .trip-item-note {
+    font-size: 12px; color: #8a6270; line-height: 1.45; margin-top: 3px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .trip-item-actions {
+    display: flex; gap: 6px; margin-top: 6px;
+  }
+  .trip-item-actions button {
+    font-size: 11px; padding: 3px 8px; border-radius: 8px; border: 1px solid #ffd0dc;
+    background: #fff; color: #8a6270; cursor: pointer;
+  }
+  .trip-empty {
+    text-align: center; color: #8a6270; font-size: 13px; padding: 18px 0;
+  }
+  .trip-day-add-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--c-pink-deep); background: #fff0f5;
+    border: 1.5px dashed #ffd0dc; border-radius: 10px; padding: 5px 10px;
+    cursor: pointer; margin-top: 4px;
+  }
+  .trip-actions-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .trip-actions-row button {
+    font-size: 12px; padding: 5px 10px; border-radius: 10px; border: 1px solid #ffd0dc;
+    background: #fff; color: #5a3a48; cursor: pointer;
+  }
+
   @media (max-width: 420px) {
     .co-card, .ex-card, .period-card, .wash-card, .travel-card { padding: 10px 12px; padding-right: 64px; }
     .card-actions { top: 8px; right: 8px; gap: 3px; }
@@ -3881,6 +3976,15 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div id="travel-reminders"></div>
     </div>
 
+    <!-- 游玩计划（行程时间轴） -->
+    <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;gap:6px;">
+        <span>🗺️</span> 游玩计划
+        <button class="date-add-btn" onclick="openTripModal()" type="button">➕ 新建行程</button>
+      </div>
+      <div id="trip-plans"></div>
+    </div>
+
   </div>
 
   <!-- ==================== 重要日期 新增/编辑 弹窗 ==================== -->
@@ -3923,6 +4027,68 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div class="co-actions">
         <button class="co-cancel" onclick="closeDateModal()">取消</button>
         <button class="co-save" onclick="submitDateRecord()">保存日期</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 游玩计划 行程弹窗 ==================== -->
+  <div id="trip-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeTripModal()">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeTripModal()" aria-label="关闭">✕</button>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;" id="trip-modal-title">新建行程</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body" id="trip-form">
+        <div class="co-field">
+          <label>📍 行程名称 / 城市</label>
+          <input type="text" id="trip-city" placeholder="如：济南 三天两晚" maxlength="40">
+        </div>
+        <div class="co-field">
+          <label>📅 开始日期</label>
+          <input type="date" id="trip-start">
+        </div>
+        <div class="co-field">
+          <label>📅 结束日期</label>
+          <input type="date" id="trip-end">
+        </div>
+        <div class="co-field">
+          <label>📝 备注（可选）</label>
+          <input type="text" id="trip-remark" placeholder="如：和朋友一起 / 自驾" maxlength="60">
+        </div>
+      </div>
+      <div class="co-actions" id="trip-actions">
+        <button class="co-cancel" onclick="closeTripModal()">取消</button>
+        <button class="co-save" onclick="submitTripRecord()">保存行程</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 游玩计划 每日安排弹窗 ==================== -->
+  <div id="trip-day-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeTripDayModal()">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeTripDayModal()" aria-label="关闭">✕</button>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;" id="trip-day-modal-title">添加行程</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>⏰ 时间</label>
+          <input type="time" id="td-time" style="width:120px;">
+        </div>
+        <div class="co-field">
+          <label>📍 地点 / 活动</label>
+          <input type="text" id="td-title" placeholder="如：中国陶瓷琉璃博物馆" maxlength="40">
+        </div>
+        <div class="co-field">
+          <label>📝 做什么 / 备注</label>
+          <textarea id="td-note" rows="3" placeholder="如：1-3层一般，直接上4层看琉璃；没抢到票也能进" style="border:1.5px solid #ffd0dc;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;background:rgba(255,255,255,0.85);color:#5a3a48;width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeTripDayModal()">取消</button>
+        <button class="co-save" onclick="submitTripDayRecord()">保存</button>
       </div>
     </div>
   </div>
@@ -4445,6 +4611,7 @@ let store = {
       { name: '耳机', done: false }
     ], remark: '' }
   ],
+  trips: [],
   // 电影推荐数据（每日自动更新）
   movieData: {
     lastUpdate: '',
@@ -5271,7 +5438,7 @@ async function _flushPush() {
 // 按日期合并两个 store 的用户数据数组（本地优先，云端只补本地缺失的日期），用于云端拉取时保护本地完整记录不被残缺云端覆盖
 function mergeStoreData(local, cloud) {
   if (!local || !cloud) return;
-  const dateArrays = ['weightRecords','exerciseRecords','accountRecords','customOrders','mediaRecords','washRecords','toiletRecords','maskRecords','importantDates','travelPlans','beautyRecords','exerciseItems','inspireRecords','userTodos'];
+  const dateArrays = ['weightRecords','exerciseRecords','accountRecords','customOrders','mediaRecords','washRecords','toiletRecords','maskRecords','importantDates','travelPlans','trips','beautyRecords','exerciseItems','inspireRecords','userTodos'];
   dateArrays.forEach(function (key) {
     const la = Array.isArray(local[key]) ? local[key] : [];
     const ca = Array.isArray(cloud[key]) ? cloud[key] : [];
@@ -6653,6 +6820,7 @@ function loadData() {
       if (p.accountsMeta) store.accountsMeta = Object.assign({}, store.accountsMeta, p.accountsMeta);
       if (p.importantDates !== undefined) store.importantDates = p.importantDates;
       if (p.travelPlans !== undefined) store.travelPlans = p.travelPlans;
+      if (p.trips !== undefined) store.trips = p.trips;
       if (p.movieData && p.movieData.recommendList !== undefined) store.movieData = p.movieData;
       // 目标体重：必须显式恢复，否则刷新后 renderWeightGoal 读到默认 null 而"消失"
       if (p.weightGoal != null) store.weightGoal = p.weightGoal;
@@ -6913,6 +7081,10 @@ function hamiConfirm(message) {
 }
 
 function todayStr() { try { return new Date().toLocaleDateString('sv-SE'); } catch (e) { return new Date().toISOString().split('T')[0]; } }
+function escapeHtml(text) {
+  if (text == null) return '';
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
 // 统一的公历日期展示：同年显示「M月D日」，跨年显示「Y年M月D日」（消除「8月9日」与「2026-08-09」混用）
 function fmtMD(d) {
   try {
@@ -10696,8 +10868,247 @@ function renderReminder() {
     document.getElementById('travel-reminders').innerHTML = '<div class="travel-card-list">' + travelHtml + '</div><div style="margin-top:10px;font-size:12px;color:#8a6270;text-align:center;">💡 点击准备清单项可勾选/取消勾选</div>';
   }
 
+  // 游玩计划时间轴
+  renderTripPlans();
+
   // 显示提醒横幅
   showReminderBanners();
+}
+
+// ==================== 游玩计划：行程 + 每日安排 ====================
+let _tripActiveDay = {}; // { tripIndex: dayIndex }
+function renderTripPlans() {
+  const el = document.getElementById('trip-plans');
+  if (!el) return;
+  const trips = store.trips || [];
+  if (trips.length === 0) {
+    el.innerHTML = '<div class="trip-empty"><div class="big-icon">🗺️</div><p>暂无游玩行程</p><p style="font-size:12px;margin-top:6px;">点右上角「➕ 新建行程」，记录城市、日期和每天安排~</p></div>';
+    return;
+  }
+
+  // 按开始日期近→远
+  const sorted = trips.slice().sort((a,b) => (a.start||'').localeCompare(b.start||''));
+  const today = todayStr();
+  let html = '<div class="trip-plans-list">';
+
+  sorted.forEach((trip, sortIdx) => {
+    const realIdx = store.trips.indexOf(trip);
+    const start = trip.start || '';
+    const end = trip.end || start;
+    const days = generateTripDays(start, end);
+    const activeDay = _tripActiveDay[realIdx] || 0;
+    const safeActive = Math.min(activeDay, Math.max(0, days.length - 1));
+
+    let statusClass = 'trip-status-future', statusText = '未开始';
+    if (today >= start && today <= end) { statusClass = 'trip-status-today'; statusText = '进行中'; }
+    else if (today > end) { statusClass = 'trip-status-past'; statusText = '已结束'; }
+    else if (days.length && today >= days[0].date && today <= days[days.length-1].date) { statusClass = 'trip-status-ongoing'; statusText = '进行中'; }
+
+    const dayChips = days.map((d, i) => {
+      const cls = i === safeActive ? 'trip-day-chip active' : 'trip-day-chip';
+      return `<div class="${cls}" onclick="switchTripDay(${realIdx}, ${i})"><div class="trip-day-label">Day ${i+1}</div><div class="trip-day-date">${fmtMD(d.date)}</div></div>`;
+    }).join('');
+
+    const day = days[safeActive];
+    let timelineHtml = '<div class="trip-timeline">';
+    const items = (day && day.items && day.items.slice().sort((a,b) => (a.time||'').localeCompare(b.time||''))) || [];
+    if (items.length === 0) {
+      timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
+    } else {
+      items.forEach((it, iIdx) => {
+        const itemRealIdx = day.items.indexOf(it);
+        timelineHtml += `
+          <div class="trip-item">
+            <div class="trip-item-dot"></div>
+            <div class="trip-item-time">${it.time || '全天'}</div>
+            <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
+            ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
+            <div class="trip-item-actions">
+              <button onclick="openTripDayModal(${realIdx}, ${safeActive}, ${itemRealIdx})">✏️ 编辑</button>
+              <button onclick="deleteTripDayItem(${realIdx}, ${safeActive}, ${itemRealIdx})">🗑 删除</button>
+            </div>
+          </div>`;
+      });
+    }
+    timelineHtml += '</div>';
+
+    html += `
+      <div class="trip-card">
+        <div class="trip-header">
+          <div>
+            <div class="trip-title">🗺️ ${escapeHtml(trip.city || '未命名行程')}</div>
+            <div class="trip-subtitle"><span class="trip-status-tag ${statusClass}">${statusText}</span><span>📅 ${start}${end && end !== start ? ' ~ ' + end : ''}</span>${trip.remark ? `<span>📝 ${escapeHtml(trip.remark)}</span>` : ''}</div>
+          </div>
+          <div class="card-actions" style="position:static;flex-direction:row;gap:4px;">
+            <button class="row-edit-btn" onclick="openTripModal(${realIdx})" type="button" aria-label="编辑">✏️</button>
+            <button class="row-del-btn" onclick="deleteTripRecord(${realIdx})" type="button" aria-label="删除">🗑</button>
+          </div>
+        </div>
+        <div class="trip-days-bar">${dayChips}</div>
+        ${timelineHtml}
+        <div class="trip-actions-row">
+          <button onclick="openTripDayModal(${realIdx}, ${safeActive})">➕ 添加行程</button>
+        </div>
+      </div>`;
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function generateTripDays(start, end) {
+  const res = [];
+  if (!start) return res;
+  const s = new Date(start + 'T00:00:00');
+  const e = end ? new Date(end + 'T00:00:00') : new Date(s);
+  for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
+    const iso = d.toISOString().slice(0,10);
+    res.push({ date: iso, items: [] });
+  }
+  return res;
+}
+
+function ensureTripDays(trip) {
+  const days = generateTripDays(trip.start || '', trip.end || trip.start || '');
+  if (!Array.isArray(trip.days)) trip.days = [];
+  // 按日期对齐/补全
+  days.forEach((gen, i) => {
+    const existing = trip.days.find(d => d.date === gen.date);
+    if (!existing) trip.days.splice(i, 0, { date: gen.date, items: [] });
+  });
+  // 删掉不在范围内的天
+  const validDates = days.map(d => d.date);
+  trip.days = trip.days.filter(d => validDates.includes(d.date));
+  // 排序
+  trip.days.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+}
+
+function switchTripDay(tripIdx, dayIdx) {
+  _tripActiveDay[tripIdx] = dayIdx;
+  renderTripPlans();
+}
+
+// ==================== 游玩计划：弹窗逻辑 ====================
+let tripEditIdx = -1;
+let tripDayEditIdx = { tripIdx: -1, dayIdx: -1, itemIdx: -1 };
+function openTripModal(idx) {
+  tripEditIdx = (typeof idx === 'number') ? idx : -1;
+  document.getElementById('trip-modal-title').textContent = tripEditIdx >= 0 ? '编辑行程' : '新建行程';
+  const t = tripEditIdx >= 0 ? store.trips[tripEditIdx] : null;
+  document.getElementById('trip-city').value = t ? (t.city || '') : '';
+  document.getElementById('trip-start').value = t ? (t.start || todayStr()) : todayStr();
+  document.getElementById('trip-end').value = t ? (t.end || '') : '';
+  document.getElementById('trip-remark').value = t ? (t.remark || '') : '';
+
+  // 编辑时把保存按钮改成更新
+  const actions = document.getElementById('trip-actions');
+  if (actions) actions.innerHTML = '<button class="co-cancel" onclick="closeTripModal()">取消</button><button class="co-save" onclick="submitTripRecord()">' + (tripEditIdx >= 0 ? '更新行程' : '保存行程') + '</button>';
+
+  const m = document.getElementById('trip-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  setTimeout(function () { try { document.getElementById('trip-city').focus(); } catch (e) {} }, 50);
+}
+function closeTripModal() {
+  const m = document.getElementById('trip-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function submitTripRecord() {
+  const city = (document.getElementById('trip-city').value || '').trim();
+  const start = document.getElementById('trip-start').value || '';
+  const end = document.getElementById('trip-end').value || '';
+  const remark = (document.getElementById('trip-remark').value || '').trim();
+  if (!city) { finToast('请填写行程名称/城市'); return; }
+  if (!start) { finToast('请选择开始日期'); return; }
+  if (end && end < start) { finToast('结束日期不能早于开始日期'); return; }
+
+  if (!store.trips) store.trips = [];
+  const obj = { city: city, start: start, end: end || start, remark: remark, days: [] };
+
+  if (tripEditIdx >= 0) {
+    const old = store.trips[tripEditIdx];
+    obj.days = old.days || [];
+    store.trips[tripEditIdx] = obj;
+    ensureTripDays(obj);
+    finToast('🗺️ 行程已更新');
+  } else {
+    store.trips.push(obj);
+    ensureTripDays(obj);
+    finToast('🗺️ 行程已创建');
+  }
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
+  closeTripModal();
+}
+async function deleteTripRecord(idx) {
+  if (!store.trips || !store.trips[idx]) return;
+  const city = store.trips[idx].city || '这个行程';
+  if (!await hamiConfirm('确定删除「' + city + '」吗？会一起删掉所有每日安排。')) return;
+  store.trips.splice(idx, 1);
+  delete _tripActiveDay[idx];
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
+  try { finToast('已删除「' + city + '」'); } catch (e) {}
+}
+
+function openTripDayModal(tripIdx, dayIdx, itemIdx) {
+  tripDayEditIdx = { tripIdx: tripIdx, dayIdx: dayIdx, itemIdx: (typeof itemIdx === 'number') ? itemIdx : -1 };
+  document.getElementById('trip-day-modal-title').textContent = tripDayEditIdx.itemIdx >= 0 ? '编辑安排' : '添加安排';
+
+  let it = null;
+  if (tripDayEditIdx.itemIdx >= 0) {
+    const trip = store.trips[tripIdx];
+    if (trip && trip.days && trip.days[dayIdx] && trip.days[dayIdx].items) {
+      it = trip.days[dayIdx].items[itemIdx];
+    }
+  }
+  document.getElementById('td-time').value = it ? (it.time || '') : '';
+  document.getElementById('td-title').value = it ? (it.title || '') : '';
+  document.getElementById('td-note').value = it ? (it.note || '') : '';
+
+  const m = document.getElementById('trip-day-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  setTimeout(function () { try { document.getElementById('td-title').focus(); } catch (e) {} }, 50);
+}
+function closeTripDayModal() {
+  const m = document.getElementById('trip-day-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function submitTripDayRecord() {
+  const { tripIdx, dayIdx, itemIdx } = tripDayEditIdx;
+  const trip = store.trips[tripIdx];
+  if (!trip) { closeTripDayModal(); return; }
+  ensureTripDays(trip);
+
+  const time = document.getElementById('td-time').value || '';
+  const title = (document.getElementById('td-title').value || '').trim();
+  const note = (document.getElementById('td-note').value || '').trim();
+  if (!title) { finToast('请填写地点/活动'); return; }
+
+  if (!trip.days[dayIdx]) trip.days[dayIdx] = { date: (generateTripDays(trip.start, trip.end)[dayIdx] || {}).date || '', items: [] };
+  if (!Array.isArray(trip.days[dayIdx].items)) trip.days[dayIdx].items = [];
+
+  const obj = { time: time, title: title };
+  if (note) obj.note = note;
+
+  if (itemIdx >= 0) trip.days[dayIdx].items[itemIdx] = obj;
+  else trip.days[dayIdx].items.push(obj);
+
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
+  closeTripDayModal();
+  try { finToast(itemIdx >= 0 ? '安排已更新' : '安排已添加'); } catch (e) {}
+}
+async function deleteTripDayItem(tripIdx, dayIdx, itemIdx) {
+  const trip = store.trips[tripIdx];
+  if (!trip || !trip.days || !trip.days[dayIdx] || !trip.days[dayIdx].items[itemIdx]) return;
+  const title = trip.days[dayIdx].items[itemIdx].title || '这条安排';
+  if (!await hamiConfirm('确定删除「' + title + '」吗？')) return;
+  trip.days[dayIdx].items.splice(itemIdx, 1);
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
+  try { finToast('已删除「' + title + '」'); } catch (e) {}
 }
 
 // ==================== 重要日期弹窗（新增/编辑/删除）====================
@@ -10763,7 +11174,11 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     const dm = document.getElementById('date-modal');
     const tm = document.getElementById('travel-modal');
-    if (dm && dm.style.display !== 'none') { closeDateModal(); e.preventDefault(); }
+    const tripModal = document.getElementById('trip-modal');
+    const tripDayModal = document.getElementById('trip-day-modal');
+    if (tripDayModal && tripDayModal.style.display !== 'none') { closeTripDayModal(); e.preventDefault(); }
+    else if (tripModal && tripModal.style.display !== 'none') { closeTripModal(); e.preventDefault(); }
+    else if (dm && dm.style.display !== 'none') { closeDateModal(); e.preventDefault(); }
     else if (tm && tm.style.display !== 'none') { closeTravelModal(); e.preventDefault(); }
   }
 });
