@@ -703,6 +703,19 @@
     margin-bottom: 8px;
   }
   .account-card .ac-followers .ac-unit { font-size: 12px; color: var(--c-text-2); font-weight: 400; }
+  .account-card .ac-follower-change {
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    white-space: nowrap;
+  }
+  .account-card .ac-follower-change .ac-change-label { color: #8a6270; }
+  .account-card .ac-follower-change .ac-change-value.up { color: #e74c3c; }
+  .account-card .ac-follower-change .ac-change-value.down { color: #27ae60; }
+  .account-card .ac-follower-change .ac-change-value.same { color: #8a6270; }
   .account-card .ac-detail {
     display: flex;
     justify-content: space-between;
@@ -717,6 +730,7 @@
     .account-card { flex: 1; min-width: 0; overflow: hidden; padding: 8px 4px; }
     .account-card .ac-header { font-size:12px; }
     .account-card .ac-followers { font-size: 18px; }
+    .account-card .ac-follower-change { font-size: 12px; }
     .account-card .ac-detail { font-size:12px; flex-wrap: wrap; gap: 2px 6px; justify-content: flex-start; }
   .checkin-card {
     flex: 1;
@@ -4369,21 +4383,21 @@ let store = {
   accounts: {
     big: {
       name: 'sims哈弥老师', platform: '小红书', accountId: 'hamihami1998',
-      followers: 2813, following: 85, posts: 85, likes: 34000, weekly: 0,
+      followers: 2813, prevFollowers: null, following: 85, posts: 85, likes: 34000, weekly: 0,
       intro: 'sim4 EA风捏人博主｜每月分享免费人物',
       tags: ['美化档人物', '人物定制', 'mod分享'],
       link: 'https://xhslink.cn/m/22yurpdUfyZ'
     },
     small: {
       name: 'sims哈弥定制版', platform: '小红书', accountId: '18609934171',
-      followers: 107, following: 7, posts: 7, likes: 806, weekly: 0,
+      followers: 107, prevFollowers: null, following: 7, posts: 7, likes: 806, weekly: 0,
       intro: '疯狂接人物定制中ING...',
       tags: ['mod分享', '人物定制'],
       link: 'https://xhslink.cn/m/5amTW4hpyz1'
     },
     douyin: {
       name: 'sims哈弥老师', platform: '抖音', accountId: '38967046377',
-      followers: 769, following: 65, posts: 65, likes: 13000, weekly: 0,
+      followers: 769, prevFollowers: null, following: 65, posts: 65, likes: 13000, weekly: 0,
       intro: 'sim4 模拟人生究极爱好者',
       tags: ['作品', '日常', '特效', '推荐', '收藏'],
       link: 'https://v.douyin.com/W6Pxj2TJcNQ/'
@@ -10812,6 +10826,22 @@ function toggleChecklist(travelIdx, itemIdx) {
   }
 }
 
+// 渲染粉丝涨跌（涨红跌绿，字体与获赞行一致）
+function renderFollowerChange(data) {
+  const prev = data.prevFollowers;
+  const cur = data.followers;
+  if (prev == null || isNaN(prev) || cur == null || isNaN(cur)) {
+    return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value same">—</span></div>';
+  }
+  const diff = cur - prev;
+  if (diff > 0) {
+    return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value up">+' + diff + '</span></div>';
+  } else if (diff < 0) {
+    return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value down">' + diff + '</span></div>';
+  }
+  return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value same">0</span></div>';
+}
+
 // 主页自媒体账号概览
 function renderDesktopAccounts() {
   const a = store.accounts;
@@ -10832,6 +10862,7 @@ function renderDesktopAccounts() {
         </div>
       </div>
       <div style="text-align:center;font-size:18px;font-weight:800;color:#ff7f9e;margin:4px 0;white-space:nowrap;">${c.data.followers}<span style="font-size:12px;color:#8a6270;font-weight:400;"> 粉丝</span></div>
+      ${renderFollowerChange(c.data)}
       <div style="font-size:12px;display:flex;justify-content:space-between;color:#8a6270;margin-bottom:2px;white-space:nowrap;"><span>❤️获赞</span><b>${c.data.likes}</b></div>
       <div style="font-size:12px;display:flex;justify-content:space-between;color:#8a6270;white-space:nowrap;"><span>📅本周</span><b>${c.data.weekly}</b></div>
     </div>`;
@@ -10853,7 +10884,12 @@ function formatAccountUpdateTime(d) {
 // 真正刷新了粉丝/点赞才更新时间戳
 function updateAccountData(key, followers, likes, weekly) {
   if (!store.accounts[key]) return;
-  if (followers != null && !isNaN(followers)) store.accounts[key].followers = followers;
+  if (followers != null && !isNaN(followers)) {
+    // 保存上一次粉丝数，用于计算涨跌
+    const oldFollowers = store.accounts[key].followers;
+    if (oldFollowers != null && !isNaN(oldFollowers)) store.accounts[key].prevFollowers = oldFollowers;
+    store.accounts[key].followers = followers;
+  }
   if (likes != null && !isNaN(likes)) store.accounts[key].likes = likes;
   if (weekly != null && !isNaN(weekly)) store.accounts[key].weekly = weekly;
   store.accountsMeta = store.accountsMeta || {};
