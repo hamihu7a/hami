@@ -7126,49 +7126,60 @@ function applyScreenshotSeedV1() {
 // 广州三天游玩行程（主人 2026-08 提供）：仅当本地还没有「广州」行程时一次性补入，
 // 标记 tripSeedV1Applied 后不再重复覆盖。每条安排用新字段（分类/地点/交通/时长）记录细节。
 function applyTripSeedV1() {
-  if (store.tripSeedV1Applied) return;
   if (!store.trips) store.trips = [];
-  // 避免重复补入：只要已有城市含「广州」的行程就跳过新增（但可补空标题）
-  const gzTrip = store.trips.find(function (t) { return t && ('' + (t.city || '')).indexOf('广州') >= 0; });
-  if (gzTrip) {
-    const titles = ['广州GAF看展·保利世贸2号馆', '公园前 citywalk', '五羊邨美食 + 三水南返程'];
-    if (Array.isArray(gzTrip.days)) {
-      gzTrip.days.forEach(function (d, i) { if (d && !d.title) d.title = titles[i] || ''; });
-    }
-    store.tripSeedV1Applied = true; return;
-  }
-  const gz = {
-    city: '广州',
-    start: '2026-08-15',
-    end: '2026-08-17',
-    remark: '三天行程 · 具体日期可在编辑里修改',
-    days: [
-      { date: '2026-08-15', title: '广州GAF看展·保利世贸2号馆', items: [
+  // 广州三天行程的真实内容（主人 2026-08 提供，真实日期 8.14~8.16）
+  const buildGzDays = function () {
+    return [
+      { date: '2026-08-14', title: 'GAF插画展·保利世贸2号馆', items: [
         { type: 'traffic', title: '高铁抵达广州东站 → 地铁到昌岗站', transport: '地铁（广州东站→昌岗站）', duration: '约30min', note: '高铁到广州东站后换乘地铁前往昌岗站' },
-        { type: 'stay', title: '美度美居(昌岗地铁站店) 寄存/入住', place: '海珠区昌岗街道晓园路晓园新村1-3号', note: '未入住可先寄存行李，贵重物品随身' },
+        { type: 'stay', title: '酒店前台寄存行李', note: '未入住可先寄存，贵重物品随身' },
         { type: 'traffic', title: '昌岗 → 琶洲站(看展)', transport: '地铁8号线(万胜围方向)→琶洲站D口', duration: '约12min' },
-        { type: 'food', title: '六元素体验天地 吃午饭', transport: '步行' },
-        { type: 'play', title: '保利世贸2号馆 看展', place: '保利世贸2号馆', transport: '步行 约7-8min', note: '六元素体验天地饭后步行前往' },
-        { type: 'stay', title: '返回昌岗 办理入住休息', transport: '地铁8号线返回昌岗' }
+        { type: 'food', title: '酒店附近 或 六元素体验天地 吃午饭', note: '可在酒店附近，或前往六元素体验天地' },
+        { type: 'play', title: '保利世贸2号馆 看展', place: '保利世贸2号馆', transport: '步行 约7-8min', note: '饭后步行前往' },
+        { type: 'stay', title: '返回酒店休息', transport: '地铁8号线返回昌岗' }
       ]},
-      { date: '2026-08-16', title: '公园前 citywalk', items: [
-        { type: 'play', title: '昌岗 → 公园前 citywalk', transport: '地铁2号线(嘉禾望岗方向)→公园前站', duration: '约10min' },
+      { date: '2026-08-15', title: '公园前站 citywalk', items: [
+        { type: 'play', title: '昌岗 → 公园前站 citywalk', transport: '地铁2号线(嘉禾望岗方向)→公园前站', duration: '约10min' },
         { type: 'traffic', title: '公园前 → 昌岗酒店', transport: '地铁2号线返回昌岗' }
       ]},
-      { date: '2026-08-17', title: '五羊邨美食 + 三水南返程', items: [
+      { date: '2026-08-16', title: '五羊邨美食 + 聚餐 + 回佛山', items: [
         { type: 'traffic', title: '昌岗 → 五羊邨站', transport: '地铁2号线→杨箕站换乘5号线(文冲方向)→五羊邨站', duration: '约18min' },
         { type: 'food', title: '寺右新马路、东兴南路 吃美食', note: 'A/C出口出，逛吃' },
         { type: 'food', title: '和陈寻吃晚饭', note: '地点待定' },
         { type: 'stay', title: '返回昌岗酒店取全部行李', note: '可提前拿' },
         { type: 'traffic', title: '昌岗 → 广州南站', transport: '地铁2号线直达', duration: '约22min' },
-        { type: 'traffic', title: '广州南站 → 三水南站', transport: '高铁', note: '乘高铁前往三水南' }
+        { type: 'traffic', title: '广州南站 → 佛山三水南站', transport: '高铁', note: '乘高铁前往佛山三水南' }
       ]}
-    ]
+    ];
   };
-  store.trips.push(gz);
+  const gzTrip = store.trips.find(function (t) { return t && ('' + (t.city || '')).indexOf('广州') >= 0; });
+  if (gzTrip) {
+    // 仅当仍是旧占位日期(2026-08-15~17)时才自动更新为真实内容；
+    // 若主人已自行改过日期，则保留主人的改动，不覆盖。
+    const isOldPlaceholder = gzTrip.start === '2026-08-15' && gzTrip.end === '2026-08-17';
+    if (isOldPlaceholder) {
+      gzTrip.start = '2026-08-14';
+      gzTrip.end = '2026-08-16';
+      gzTrip.days = buildGzDays();
+      gzTrip.seedVer = 2;
+      if (!gzTrip.remark || gzTrip.remark === '三天行程 · 具体日期可在编辑里修改') {
+        gzTrip.remark = '三天行程 · 真实日期 8.14~8.16';
+      }
+      try { saveData(); } catch (e) {}
+      try { console.log('[Hami] 已把广州行程更新为真实日期与内容(8.14~8.16)'); } catch (e) {}
+    }
+    store.tripSeedV1Applied = true;
+    return;
+  }
+  // 本地还没有「广州」行程：全新注入真实内容
+  store.trips.push({
+    city: '广州', start: '2026-08-14', end: '2026-08-16',
+    remark: '三天行程 · 真实日期 8.14~8.16',
+    seedVer: 2, days: buildGzDays()
+  });
   store.tripSeedV1Applied = true;
   try { saveData(); } catch (e) {}
-  try { console.log('[Hami] 已一次性补入广州三天游玩行程'); } catch (e) {}
+  try { console.log('[Hami] 已补入广州三天游玩行程(真实日期 8.14~8.16)'); } catch (e) {}
 }
 
 // 默认值保护：只对字段完全缺失（undefined）的首次用户补默认数据；用户"主动清空"=[]≠"未播种",
