@@ -416,13 +416,6 @@
     position:fixed;top:0;left:0;right:0;width:100%;height:56px;z-index:2000;
     box-sizing:border-box;
   }
-  .hami-cmd-bar .cmd-label {
-    font-size:13px;color:var(--c-muted);font-weight:600;
-    white-space:nowrap;display:flex;align-items:center;gap:4px;
-    flex-shrink:0;cursor:pointer;user-select:none;
-    padding:2px 4px;border-radius:8px;transition:background .2s;
-  }
-  .hami-cmd-bar .cmd-label:hover { background:#fbe6ee; }
   /* 移动端：所有输入字号≥16px，避免 iOS 自动放大页面 */
   input, textarea, select { font-size: 16px; }
 
@@ -445,18 +438,20 @@
   }
   .hami-cmd-bar .cmd-send:hover { transform:scale(1.04); box-shadow:0 2px 8px rgba(209,75,115,0.25); }
   .hami-cmd-bar .cmd-send:active { transform:scale(0.97); }
-  /* 语音输入按钮（左侧「语音」图标，SVG 声波）：聆听中脉冲高亮 */
-  .hami-cmd-bar .cmd-mic {
-    flex-shrink:0;border:none;background:transparent;cursor:pointer;
-    color:#b83557;line-height:0;padding:5px 7px;border-radius:50%;
+  /* 刷新按钮：纯图标，位于「记一下」右侧 */
+  .hami-cmd-bar .cmd-refresh {
+    flex-shrink:0;border:none;border-radius:50%;
+    width:34px;height:34px;
+    background:#fff0f4;color:#b83557;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
-    transition:background .2s, transform .15s;
+    transition:background .2s, transform .15s, box-shadow .15s;
+    box-shadow:0 2px 6px rgba(184,53,87,0.12);
   }
-  .hami-cmd-bar .cmd-mic svg { display:block; }
-  .hami-cmd-bar .cmd-mic.listening {
-    background:#ffe0e8;animation:hami-mic-pulse 1.1s ease-in-out infinite;
-  }
-  @keyframes hami-mic-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.18);} }
+  .hami-cmd-bar .cmd-refresh svg { display:block; }
+  .hami-cmd-bar .cmd-refresh:hover { background:#ffe4ec; transform:scale(1.06); }
+  .hami-cmd-bar .cmd-refresh:active { transform:scale(0.95); }
+  .hami-cmd-bar .cmd-refresh.spinning svg { animation:hami-refresh-spin 1s linear infinite; }
+  @keyframes hami-refresh-spin { 100% { transform:rotate(360deg); } }
   .hami-cmd-toast {
     position:fixed;top:64px;left:50%;transform:translateX(-50%);
     background:var(--c-text-2);color:#fff;font-size:13px;
@@ -2371,7 +2366,7 @@
         flex: 1 1 auto;
         font-size: 13px;
       }
-      #hami-cmd-send, #hami-cmd-mic {
+      #hami-cmd-send, #hami-cmd-refresh {
         flex: 0 0 auto;
         min-height: 34px;
         min-width: 34px;
@@ -3059,19 +3054,16 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
 
 <!-- ============ 顶部全局指令栏（最顶端，所有面板通用） ============ -->
 <div class="hami-cmd-bar" id="hami-cmd-bar">
-  <span class="cmd-label" id="hami-cmd-label" title="点我查看怎么用" aria-label="指令用法" onclick="showCmdHelp()">💬 跟小助理说</span>
   <input class="cmd-input" id="hami-cmd-input" type="text"
+    placeholder="输入指令，例如：体重 88.5 / 洗头了 / 上厕所"
     autocomplete="off">
-  <button class="cmd-mic" id="hami-cmd-mic" title="点我说一句话，自动识别并记录" aria-label="语音输入">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="3" y1="10" x2="3" y2="14"/>
-      <line x1="7.5" y1="6.5" x2="7.5" y2="17.5"/>
-      <line x1="12" y1="3.5" x2="12" y2="20.5"/>
-      <line x1="16.5" y1="6.5" x2="16.5" y2="17.5"/>
-      <line x1="21" y1="10" x2="21" y2="14"/>
+  <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
+  <button class="cmd-refresh" id="hami-cmd-refresh" title="刷新同步云数据" aria-label="刷新同步云数据" onclick="refreshCloudData()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
     </svg>
   </button>
-  <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
   <span class="sync-status" id="sync-status"><span class="dot"></span><span id="sync-status-text">同步中…</span></span>
 </div>
 <div class="hami-cmd-toast" id="hami-cmd-toast"></div>
@@ -5575,6 +5567,25 @@ function updateSyncStatus(ok, forceText) {
   const t = window.__lastSync ? new Date(window.__lastSync) : null;
   const hh = t ? String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0') : '';
   txt.innerHTML = '已同步' + (hh ? '<br>' + hh : '');
+}
+
+// 顶部刷新按钮：手动从云端拉取最新数据并合并到本地
+async function refreshCloudData() {
+  const btn = document.getElementById('hami-cmd-refresh');
+  if (!cloudEnabled()) {
+    showCmdToast('⚠️ 云端同步未开启，请在设置里打开');
+    return;
+  }
+  if (btn) btn.classList.add('spinning');
+  showCmdToast('🔄 正在刷新云数据…');
+  try {
+    const ok = await pullCloudToLocal();
+    showCmdToast(ok ? '✅ 云数据已刷新' : '⚠️ 刷新失败，请重试');
+  } catch (e) {
+    showCmdToast('⚠️ 刷新失败，请重试');
+  } finally {
+    if (btn) setTimeout(function () { btn.classList.remove('spinning'); }, 600);
+  }
 }
 
 // 安全同步核心：推送 STORAGE_KEY 前，先把云端现有整库拉下来与本地合并（本地优先），
