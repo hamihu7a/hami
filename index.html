@@ -1983,6 +1983,25 @@
     font-size: 10px; padding: 2px 6px; border-radius: 7px; border: 1px solid #ffd0dc;
     background: #fff; color: #8a6270; cursor: pointer;
   }
+  /* 修改当天全部安排：每条行程作为独立小卡片 */
+  .tda-item {
+    border: 1.5px solid #ffd9e3; border-radius: 14px; padding: 11px 12px 12px;
+    background: #fff7fa;
+  }
+  .tda-item-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 7px;
+  }
+  .tda-item-no {
+    font-size: 12px; font-weight: 700; color: #c6608a;
+  }
+  .tda-item-del {
+    font-size: 12px; padding: 3px 9px; border-radius: 9px; border: 1px solid #ffc2d2;
+    background: #fff; color: #d14b73; cursor: pointer;
+  }
+  .tda-item-del:hover { background: #ffe9f0; }
+  /* 修改当天弹窗：让内容区整体滚动，避免手机上被裁切 */
+  #trip-day-edit-all-modal .co-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .trip-empty {
     text-align: center; color: #8a6270; font-size: 12px; padding: 10px 0;
   }
@@ -4259,6 +4278,30 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div class="co-actions">
         <button class="co-cancel" onclick="closeTripDayModal()">取消</button>
         <button class="co-save" onclick="submitTripDayRecord()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 游玩计划 修改当天全部安排弹窗 ==================== -->
+  <div id="trip-day-edit-all-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeTripDayEditAll()">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeTripDayEditAll()" aria-label="关闭">✕</button>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;" id="tda-modal-title">修改当天安排</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 当天标题（如：GAF插画展）</label>
+          <input type="text" id="tda-title" placeholder="这一天的主题/标题" maxlength="40">
+        </div>
+        <div style="font-size:13px;color:#a06b7e;margin:4px 2px 8px;">下面是所有具体行程，直接改内容即可；想删某条点它右边的「🗑 删除这条」，想加一条点下方「➕ 添加一条」。</div>
+        <div id="tda-items" style="display:flex;flex-direction:column;gap:12px;padding-right:2px;"></div>
+        <button type="button" class="date-add-btn" id="tda-add" onclick="tdaAddItem()" style="width:100%;margin-top:12px;justify-content:center;">➕ 添加一条</button>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeTripDayEditAll()">取消</button>
+        <button class="co-save" onclick="submitTripDayAll()">保存当天</button>
       </div>
     </div>
   </div>
@@ -11107,8 +11150,7 @@ function renderTripPlans() {
       if (items.length === 0) {
         timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
       } else {
-        items.forEach((it, iIdx) => {
-          const itemRealIdx = day.items.indexOf(it);
+        items.forEach((it) => {
           const done = !!it.done;
           const tm = TYPE_MAP[it.type] || TYPE_MAP.other;
           const cls = 'trip-item' + (done ? ' done' : '');
@@ -11126,10 +11168,6 @@ function renderTripPlans() {
                 ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
                 ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
               </div>
-              <div class="trip-item-actions">
-                <button onclick="openTripDayModal(${realIdx}, ${di}, ${itemRealIdx})" title="编辑">✏️</button>
-                <button onclick="deleteTripDayItem(${realIdx}, ${di}, ${itemRealIdx})" title="删除">🗑</button>
-              </div>
             </div>`;
         });
       }
@@ -11144,7 +11182,7 @@ function renderTripPlans() {
             <div class="trip-day-meta-row">
               <span class="trip-day-date">${fmtMD(day.date)}</span>
               <span class="trip-day-actions">
-                <button onclick="editTripDayTitle(${realIdx}, ${di})" title="修改标题">✏️</button>
+                <button onclick="editTripDayAll(${realIdx}, ${di})" title="修改当天全部">✏️</button>
                 <button onclick="openTripDayModal(${realIdx}, ${di})" title="添加行程">➕</button>
                 <button onclick="deleteTripDay(${realIdx}, ${di})" title="删除当天">🗑</button>
               </span>
@@ -11276,17 +11314,6 @@ async function deleteTripRecord(idx) {
   try { finToast('已删除「' + city + '」'); } catch (e) {}
 }
 
-function editTripDayTitle(tripIdx, dayIdx) {
-  if (!store.trips || !store.trips[tripIdx] || !store.trips[tripIdx].days || !store.trips[tripIdx].days[dayIdx]) return;
-  const day = store.trips[tripIdx].days[dayIdx];
-  const cur = day.title || '';
-  const next = window.prompt('修改 Day ' + (dayIdx + 1) + ' 的标题：', cur);
-  if (next === null) return; // 点取消
-  day.title = next.trim();
-  try { saveData(); } catch (e) {}
-  renderTripPlans();
-}
-
 async function deleteTripDay(tripIdx, dayIdx) {
   if (!store.trips || !store.trips[tripIdx] || !store.trips[tripIdx].days || !store.trips[tripIdx].days[dayIdx]) return;
   const trip = store.trips[tripIdx];
@@ -11385,6 +11412,112 @@ function toggleTripItemDone(tripIdx, dayIdx, itemIdx) {
   renderTripPlans();
 }
 
+// ==================== 游玩计划：修改当天全部安排（一键改当天所有具体行程+时间）====================
+let _tdaCtx = null;   // { tripIdx, dayIdx }
+let _tdaItems = null; // 当天条目的工作副本（编辑中，保存前不动 store）
+const _TDA_TYPES = [['play','🎡 游玩'],['food','🍜 餐饮'],['traffic','🚇 交通'],['stay','🏨 住宿'],['shop','🛍️ 购物'],['other','📌 其他']];
+
+function editTripDayAll(tripIdx, dayIdx) {
+  const trip = store.trips[tripIdx];
+  if (!trip || !trip.days || !trip.days[dayIdx]) return;
+  _tdaCtx = { tripIdx: tripIdx, dayIdx: dayIdx };
+  const day = trip.days[dayIdx];
+  _tdaItems = (day.items || []).map(function (o) { return Object.assign({}, o); });
+  document.getElementById('tda-title').value = day.title || '';
+  document.getElementById('tda-modal-title').textContent = '修改 Day ' + (dayIdx + 1) + ' 全部安排';
+  renderTdaItems();
+  const m = document.getElementById('trip-day-edit-all-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+
+function renderTdaItems() {
+  const box = document.getElementById('tda-items');
+  if (!box) return;
+  if (!_tdaItems || _tdaItems.length === 0) {
+    box.innerHTML = '<div style="padding:18px 0;text-align:center;color:#a06b7e;font-size:13px;">这一天还没有安排，点下方「➕ 添加一条」吧~</div>';
+    return;
+  }
+  box.innerHTML = _tdaItems.map(function (it, i) {
+    const opts = _TDA_TYPES.map(function (t) {
+      return '<option value="' + t[0] + '"' + (it.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+    }).join('');
+    return ''
+      + '<div class="tda-item">'
+      +   '<div class="tda-item-head"><span class="tda-item-no">第 ' + (i + 1) + ' 条</span>'
+      +     '<button type="button" class="tda-item-del" onclick="tdaDeleteItem(' + i + ')">🗑 删除这条</button></div>'
+      +   '<div class="co-field-row">'
+      +     '<div class="co-field" style="flex:0 0 120px;"><label>⏰ 时间</label><input type="time" class="tda-time" value="' + escapeHtml(it.time || '') + '"></div>'
+      +     '<div class="co-field" style="flex:1;min-width:0;"><label>🏷️ 类型</label><select class="tda-type">' + opts + '</select></div>'
+      +   '</div>'
+      +   '<div class="co-field"><label>📍 地点 / 活动</label><input type="text" class="tda-title" value="' + escapeHtml(it.title || '') + '" placeholder="如：保利世贸2号馆看展" maxlength="40"></div>'
+      +   '<div class="co-field-row">'
+      +     '<div class="co-field" style="flex:1;min-width:0;"><label>🗺️ 具体地址（可选）</label><input type="text" class="tda-place" value="' + escapeHtml(it.place || '') + '" placeholder="如：海珠区昌岗" maxlength="80"></div>'
+      +     '<div class="co-field" style="flex:1;min-width:0;"><label>🚇 交通（可选）</label><input type="text" class="tda-transport" value="' + escapeHtml(it.transport || '') + '" placeholder="如：8号线" maxlength="80"></div>'
+      +   '</div>'
+      +   '<div class="co-field-row">'
+      +     '<div class="co-field" style="flex:1;min-width:0;"><label>⏱️ 时长（可选）</label><input type="text" class="tda-duration" value="' + escapeHtml(it.duration || '') + '" placeholder="如：约30min" maxlength="20"></div>'
+      +     '<div class="co-field" style="flex:1;min-width:0;"><label>📝 备注（可选）</label><input type="text" class="tda-note" value="' + escapeHtml(it.note || '') + '" placeholder="想做啥/注意啥" maxlength="120"></div>'
+      +   '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function tdaAddItem() {
+  if (!_tdaItems) _tdaItems = [];
+  _tdaItems.push({ time: '', title: '', type: 'play', place: '', transport: '', duration: '', note: '' });
+  renderTdaItems();
+  try { const box = document.getElementById('tda-items'); if (box) box.scrollTop = box.scrollHeight; } catch (e) {}
+}
+
+function tdaDeleteItem(i) {
+  if (!_tdaItems || !_tdaItems[i]) return;
+  _tdaItems.splice(i, 1);
+  renderTdaItems();
+}
+
+function submitTripDayAll() {
+  if (!_tdaCtx) { closeTripDayEditAll(); return; }
+  const trip = store.trips[_tdaCtx.tripIdx];
+  const di = _tdaCtx.dayIdx;
+  if (!trip || !trip.days || !trip.days[di]) { closeTripDayEditAll(); return; }
+  const day = trip.days[di];
+  const titleVal = (document.getElementById('tda-title').value || '').trim();
+  const rows = document.querySelectorAll('#tda-items .tda-item');
+  const out = [];
+  rows.forEach(function (row) {
+    const title = (row.querySelector('.tda-title').value || '').trim();
+    if (!title) return; // 跳过空白条
+    const obj = {
+      time: row.querySelector('.tda-time').value || '',
+      title: title,
+      type: row.querySelector('.tda-type').value || 'play'
+    };
+    const place = (row.querySelector('.tda-place').value || '').trim();
+    const transport = (row.querySelector('.tda-transport').value || '').trim();
+    const duration = (row.querySelector('.tda-duration').value || '').trim();
+    const note = (row.querySelector('.tda-note').value || '').trim();
+    if (place) obj.place = place;
+    if (transport) obj.transport = transport;
+    if (duration) obj.duration = duration;
+    if (note) obj.note = note;
+    out.push(obj);
+  });
+  day.title = titleVal;
+  day.items = out;
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
+  closeTripDayEditAll();
+  try { finToast('已保存 Day ' + (di + 1) + ' 的全部安排'); } catch (e) {}
+}
+
+function closeTripDayEditAll() {
+  const m = document.getElementById('trip-day-edit-all-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  _tdaCtx = null;
+  _tdaItems = null;
+}
+
 // ==================== 重要日期弹窗（新增/编辑/删除）====================
 let dmType = 'birthday';
 let dmCalendar = 'solar';
@@ -11464,7 +11597,9 @@ document.addEventListener('keydown', function (e) {
     const tm = document.getElementById('travel-modal');
     const tripModal = document.getElementById('trip-modal');
     const tripDayModal = document.getElementById('trip-day-modal');
-    if (tripDayModal && tripDayModal.style.display !== 'none') { closeTripDayModal(); e.preventDefault(); }
+    const tripDayEditAllModal = document.getElementById('trip-day-edit-all-modal');
+    if (tripDayEditAllModal && tripDayEditAllModal.style.display !== 'none') { closeTripDayEditAll(); e.preventDefault(); }
+    else if (tripDayModal && tripDayModal.style.display !== 'none') { closeTripDayModal(); e.preventDefault(); }
     else if (tripModal && tripModal.style.display !== 'none') { closeTripModal(); e.preventDefault(); }
     else if (dm && dm.style.display !== 'none') { closeDateModal(); e.preventDefault(); }
     else if (tm && tm.style.display !== 'none') { closeTravelModal(); e.preventDefault(); }
