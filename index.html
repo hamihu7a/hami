@@ -11939,7 +11939,6 @@ function renderWeatherFromApi(d) {
             <div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div>
           </div>
           <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
-          <div class="home-card-row"><span>体感</span><b>${feelsLike}</b></div>
           <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
           <div class="home-card-row"><span>建议</span><b>${advice}</b></div>
           <div class="home-card-note">${tip}</div>
