@@ -3150,16 +3150,20 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     </button>
   </div>
 
-  <!-- 六·日期提醒 -->
+  <!-- 六·日期与出行 -->
   <div class="nav-group">
-    <div class="nav-group-title">六·日期提醒</div>
+    <div class="nav-group-title">六·日期与出行</div>
     <button class="nav-item" type="button" onclick="switchPanel('reminder', this)">
       <span class="nav-icon">🎂</span>
       <span class="nav-text">重要日期</span>
     </button>
-    <button class="nav-item" type="button" onclick="switchPanel('reminder', this)">
+    <button class="nav-item" type="button" onclick="switchPanel('travel', this)">
       <span class="nav-icon">✈️</span>
-      <span class="nav-text nav-text-wrap">外出游玩<br>与计划</span>
+      <span class="nav-text">游玩清单</span>
+    </button>
+    <button class="nav-item" type="button" onclick="switchPanel('trip', this)">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-text">游玩计划</span>
     </button>
   </div>
 
@@ -4080,14 +4084,14 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
     </div>
   </div>
 
-  <!-- ==================== 日期提醒 ==================== -->
+  <!-- ==================== 重要日期（日期提醒）==================== -->
   <div id="panel-reminder" class="panel">
 
     <!-- 提醒横幅（动态显示） -->
     <div id="reminder-banner"></div>
 
     <div class="tip-box">
-      💕 <b>使用方法</b>：告诉我重要的日期（生日/纪念日/在一起的日子）和游玩计划，我帮你记录并提醒~
+      💕 <b>使用方法</b>：告诉我重要的日期（生日/纪念日/在一起的日子），我帮你记录并提醒~
     </div>
 
     <!-- 重要日期预览（Days Matter 风格） -->
@@ -4099,7 +4103,10 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div id="important-dates"></div>
     </div>
 
-    <!-- 游玩清单 -->
+  </div>
+
+  <!-- ==================== 游玩清单 ==================== -->
+  <div id="panel-travel" class="panel">
     <div class="card">
       <div class="card-title" style="display:flex;align-items:center;gap:6px;">
         <span>✈️</span> 游玩清单
@@ -4107,8 +4114,10 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       </div>
       <div id="travel-reminders"></div>
     </div>
+  </div>
 
-    <!-- 游玩计划（行程时间轴） -->
+  <!-- ==================== 游玩计划（行程时间轴）==================== -->
+  <div id="panel-trip" class="panel">
     <div class="card">
       <div class="card-title" style="display:flex;align-items:center;gap:6px;">
         <span>🗺️</span> 游玩计划
@@ -4116,7 +4125,6 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       </div>
       <div id="trip-plans"></div>
     </div>
-
   </div>
 
   <!-- ==================== 重要日期 新增/编辑 弹窗 ==================== -->
@@ -8139,6 +8147,10 @@ function switchPanel(name, navEl) {
   }
   if (name === 'todo') {
     try { renderTodoPanel(); } catch (e) {}
+  }
+  // 切到「游玩清单 / 游玩计划」面板，强制重渲（重要日期/游玩清单/游玩计划三块都会刷新，与所在面板无关）
+  if (name === 'travel' || name === 'trip') {
+    try { renderReminder(); } catch (e) {}
   }
   // 切到任意面板时，对所有 key 检查；若对应元素已在 DOM 且 localStorage 有图，则强制再 apply 一次。
   // 说明：BG_ELS 里部分 key 指向主页日历缩略组件（如 #home-weight-cal），不与 panel id 一一对应，
