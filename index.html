@@ -2009,20 +2009,32 @@
   }
   .trip-day-block:first-of-type { margin-top: 4px; }
   .trip-day-head {
-    display: flex; align-items: center; gap: 8px;
     padding-bottom: 8px; margin-bottom: 8px;
     border-bottom: 1.5px dashed #ffd0dc;
   }
+  .trip-day-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .trip-day-title {
+    font-size: 16px; font-weight: 800; color: #5a3a48; line-height: 1.35;
+    flex: 1; min-width: 0;
+  }
+  .trip-day-meta-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; gap: 8px; }
   .trip-day-idx {
     background: var(--c-pink-main); color: #fff; border-radius: 10px;
-    padding: 2px 10px; font-size: 13px; font-weight: 800;
+    padding: 2px 10px; font-size: 13px; font-weight: 800; flex-shrink: 0;
   }
   .trip-day-date { font-size: 13px; font-weight: 800; color: #8a6270; }
+  .trip-day-actions { display: flex; gap: 6px; }
+  .trip-day-actions button {
+    font-size: 11px; padding: 3px 8px; border-radius: 8px;
+    border: 1px solid #ffd0dc; background: #fff; color: #8a6270; cursor: pointer;
+  }
   /* 超小屏（iPhone 17 等）游玩计划专项排版：文字贯穿整行，右侧不留空白，操作按钮移到文字下方 */
   @media (max-width: 420px) {
     .trip-day-block { padding: 12px 12px 8px; }
-    .trip-day-idx { font-size: 16px; padding: 4px 14px; background: var(--c-pink-deep); }
-    .trip-day-date { font-size: 15px; }
+    .trip-day-idx { font-size: 14px; padding: 3px 10px; background: var(--c-pink-deep); }
+    .trip-day-title { font-size: 18px; }
+    .trip-day-date { font-size: 13px; }
+    .trip-day-actions button { font-size: 12px; padding: 4px 10px; }
     .trip-timeline { padding-left: 16px; }
     .trip-timeline::before { left: 3px; }
     .trip-item {
@@ -7116,8 +7128,13 @@ function applyScreenshotSeedV1() {
 function applyTripSeedV1() {
   if (store.tripSeedV1Applied) return;
   if (!store.trips) store.trips = [];
-  // 避免重复补入：只要已有城市含「广州」的行程就跳过（让主人改过的优先保留）
-  if (store.trips.some(function (t) { return t && ('' + (t.city || '')).indexOf('广州') >= 0; })) {
+  // 避免重复补入：只要已有城市含「广州」的行程就跳过新增（但可补空标题）
+  const gzTrip = store.trips.find(function (t) { return t && ('' + (t.city || '')).indexOf('广州') >= 0; });
+  if (gzTrip) {
+    const titles = ['广州GAF看展·保利世贸2号馆', '公园前 citywalk', '五羊邨美食 + 三水南返程'];
+    if (Array.isArray(gzTrip.days)) {
+      gzTrip.days.forEach(function (d, i) { if (d && !d.title) d.title = titles[i] || ''; });
+    }
     store.tripSeedV1Applied = true; return;
   }
   const gz = {
@@ -7126,7 +7143,7 @@ function applyTripSeedV1() {
     end: '2026-08-17',
     remark: '三天行程 · 具体日期可在编辑里修改',
     days: [
-      { date: '2026-08-15', items: [
+      { date: '2026-08-15', title: '广州GAF看展·保利世贸2号馆', items: [
         { type: 'traffic', title: '高铁抵达广州东站 → 地铁到昌岗站', transport: '地铁（广州东站→昌岗站）', duration: '约30min', note: '高铁到广州东站后换乘地铁前往昌岗站' },
         { type: 'stay', title: '美度美居(昌岗地铁站店) 寄存/入住', place: '海珠区昌岗街道晓园路晓园新村1-3号', note: '未入住可先寄存行李，贵重物品随身' },
         { type: 'traffic', title: '昌岗 → 琶洲站(看展)', transport: '地铁8号线(万胜围方向)→琶洲站D口', duration: '约12min' },
@@ -7134,11 +7151,11 @@ function applyTripSeedV1() {
         { type: 'play', title: '保利世贸2号馆 看展', place: '保利世贸2号馆', transport: '步行 约7-8min', note: '六元素体验天地饭后步行前往' },
         { type: 'stay', title: '返回昌岗 办理入住休息', transport: '地铁8号线返回昌岗' }
       ]},
-      { date: '2026-08-16', items: [
+      { date: '2026-08-16', title: '公园前 citywalk', items: [
         { type: 'play', title: '昌岗 → 公园前 citywalk', transport: '地铁2号线(嘉禾望岗方向)→公园前站', duration: '约10min' },
         { type: 'traffic', title: '公园前 → 昌岗酒店', transport: '地铁2号线返回昌岗' }
       ]},
-      { date: '2026-08-17', items: [
+      { date: '2026-08-17', title: '五羊邨美食 + 三水南返程', items: [
         { type: 'traffic', title: '昌岗 → 五羊邨站', transport: '地铁2号线→杨箕站换乘5号线(文冲方向)→五羊邨站', duration: '约18min' },
         { type: 'food', title: '寺右新马路、东兴南路 吃美食', note: 'A/C出口出，逛吃' },
         { type: 'food', title: '和陈寻吃晚饭', note: '地点待定' },
@@ -11085,9 +11102,21 @@ function renderTripPlans() {
       timelineHtml += '</div>';
       return `
         <div class="trip-day-block">
-          <div class="trip-day-head"><span class="trip-day-idx">Day ${di+1}</span><span class="trip-day-date">${fmtMD(day.date)}</span></div>
+          <div class="trip-day-head">
+            <div class="trip-day-title-row">
+              <span class="trip-day-idx">Day ${di+1}</span>
+              <span class="trip-day-title">${escapeHtml(day.title || '')}</span>
+            </div>
+            <div class="trip-day-meta-row">
+              <span class="trip-day-date">${fmtMD(day.date)}</span>
+              <span class="trip-day-actions">
+                <button onclick="editTripDayTitle(${realIdx}, ${di})" title="修改标题">✏️</button>
+                <button onclick="openTripDayModal(${realIdx}, ${di})" title="添加行程">➕</button>
+                <button onclick="deleteTripDay(${realIdx}, ${di})" title="删除当天">🗑</button>
+              </span>
+            </div>
+          </div>
           ${timelineHtml}
-          <div class="trip-actions-row"><button onclick="openTripDayModal(${realIdx}, ${di})">➕ 添加行程</button></div>
         </div>`;
     }).join('');
 
@@ -11129,7 +11158,7 @@ function ensureTripDays(trip) {
   // 按日期对齐/补全
   days.forEach((gen, i) => {
     const existing = trip.days.find(d => d.date === gen.date);
-    if (!existing) trip.days.splice(i, 0, { date: gen.date, items: [] });
+    if (!existing) trip.days.splice(i, 0, { date: gen.date, title: '', items: [] });
   });
   // 删掉不在范围内的天
   const validDates = days.map(d => d.date);
@@ -11204,6 +11233,26 @@ async function deleteTripRecord(idx) {
   try { saveData(); } catch (e) {}
   renderTripPlans();
   try { finToast('已删除「' + city + '」'); } catch (e) {}
+}
+
+function editTripDayTitle(tripIdx, dayIdx) {
+  if (!store.trips || !store.trips[tripIdx] || !store.trips[tripIdx].days || !store.trips[tripIdx].days[dayIdx]) return;
+  const day = store.trips[tripIdx].days[dayIdx];
+  const cur = day.title || '';
+  const next = window.prompt('修改 Day ' + (dayIdx + 1) + ' 的标题：', cur);
+  if (next === null) return; // 点取消
+  day.title = next.trim();
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
+}
+
+async function deleteTripDay(tripIdx, dayIdx) {
+  if (!store.trips || !store.trips[tripIdx] || !store.trips[tripIdx].days || !store.trips[tripIdx].days[dayIdx]) return;
+  const day = store.trips[tripIdx].days[dayIdx];
+  if (!await hamiConfirm('确定删除「Day ' + (dayIdx + 1) + '（' + (day.title || '') + '）」吗？这一天的所有安排都会被删掉。')) return;
+  store.trips[tripIdx].days.splice(dayIdx, 1);
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
 }
 
 function openTripDayModal(tripIdx, dayIdx, itemIdx) {
