@@ -1102,6 +1102,9 @@
   .co-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
   .co-field { display: flex; flex-direction: column; gap: 6px; }
   .co-field > label { font-size: 13px; font-weight: 700; color: var(--c-muted); }
+  .co-field-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .co-check-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--c-muted); cursor: pointer; white-space: nowrap; padding-bottom: 10px; }
+  .co-check-label input { width: 18px; height: 18px; accent-color: #d14b73; cursor: pointer; }
   .co-field input {
     border: 1.5px solid #ffd0dc; border-radius: 12px;
     padding: 10px 12px; font-size: 14px; font-family: inherit;
@@ -1930,8 +1933,23 @@
   }
   .trip-item {
     position: relative; margin-bottom: 14px;
+    display: flex; align-items: flex-start; gap: 8px;
   }
   .trip-item:last-child { margin-bottom: 6px; }
+  .trip-item.done .trip-item-dot { background: #27ae60; }
+  .trip-item.done .trip-item-title { text-decoration: line-through; }
+  .trip-item.done .trip-item-main { opacity: 0.55; }
+  .trip-item-main { flex: 1; min-width: 0; }
+  .trip-item-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+  .trip-item-type {
+    font-size: 11px; font-weight: 700; color: #b83557;
+    background: #ffeef3; border-radius: 8px; padding: 1px 7px; line-height: 1.5;
+  }
+  .trip-item-dur { font-size: 11px; font-weight: 600; color: #8a6270; }
+  .trip-item-place, .trip-item-trans {
+    font-size: 12px; color: #8a6270; line-height: 1.4; margin-top: 2px;
+    white-space: pre-wrap; word-break: break-word;
+  }
   .trip-item-dot {
     position: absolute; left: -29px; top: 4px;
     width: 10px; height: 10px; border-radius: 50%;
@@ -4100,13 +4118,43 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
         <span style="width:36px;"></span>
       </div>
       <div class="co-body">
-        <div class="co-field">
-          <label>⏰ 时间</label>
-          <input type="time" id="td-time" style="width:120px;">
+        <div class="co-field-row">
+          <div class="co-field" style="flex:0 0 120px;">
+            <label>⏰ 时间</label>
+            <input type="time" id="td-time" style="width:100%;">
+          </div>
+          <div class="co-field" style="flex:1;min-width:0;">
+            <label>🏷️ 分类</label>
+            <select id="td-type" style="width:100%;border:1.5px solid #ffd0dc;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;background:rgba(255,255,255,0.85);color:#5a3a48;">
+              <option value="play">🎡 游玩</option>
+              <option value="food">🍜 餐饮</option>
+              <option value="traffic">🚇 交通</option>
+              <option value="stay">🏨 住宿</option>
+              <option value="shop">🛍️ 购物</option>
+              <option value="other">📌 其他</option>
+            </select>
+          </div>
         </div>
         <div class="co-field">
           <label>📍 地点 / 活动</label>
-          <input type="text" id="td-title" placeholder="如：中国陶瓷琉璃博物馆" maxlength="40">
+          <input type="text" id="td-title" placeholder="如：保利世贸2号馆看展" maxlength="40">
+        </div>
+        <div class="co-field">
+          <label>🗺️ 具体地址（可选）</label>
+          <input type="text" id="td-place" placeholder="如：海珠区昌岗街道晓园路晓园新村1-3号" maxlength="80">
+        </div>
+        <div class="co-field">
+          <label>🚇 交通方式 / 路线（可选）</label>
+          <input type="text" id="td-transport" placeholder="如：8号线(万胜围方向)→琶洲站D口" maxlength="80">
+        </div>
+        <div class="co-field-row">
+          <div class="co-field" style="flex:1;min-width:0;">
+            <label>⏱️ 时长（可选）</label>
+            <input type="text" id="td-duration" placeholder="如：约30min" maxlength="20">
+          </div>
+          <div class="co-field co-field-check" style="flex:0 0 auto;justify-content:flex-end;">
+            <label class="co-check-label"><input type="checkbox" id="td-done"> 已完成</label>
+          </div>
         </div>
         <div class="co-field">
           <label>📝 做什么 / 备注</label>
@@ -4558,6 +4606,7 @@ let store = {
   weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
   weightSeedV1Applied: false,  // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
   screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
+  tripSeedV1Applied: false,   // 广州三天行程一次性补入标记（true 后不再重复覆盖）
   startWeight: 90.0,    // 起始体重（kg）基准线，主人可改；减肥累计减重的起点
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
@@ -6875,6 +6924,7 @@ function loadData() {
       // 体重种子一次性标记恢复（避免删记录后下次又复活）
       if (p.weightSeedV1Applied) store.weightSeedV1Applied = p.weightSeedV1Applied;
       if (p.screenshotSeedV1Applied) store.screenshotSeedV1Applied = p.screenshotSeedV1Applied;
+      if (p.tripSeedV1Applied) store.tripSeedV1Applied = p.tripSeedV1Applied;
       // 【止血·第零批】恢复这两个字段：否则记进去的数据读不回来，还会被初始化空值覆盖销毁
       if (p.exerciseItems !== undefined) store.exerciseItems = p.exerciseItems;
       if (p.userTodos !== undefined) store.userTodos = p.userTodos;
@@ -6882,6 +6932,8 @@ function loadData() {
     // 八月份体重种子：仅当本地缺失对应日期时一次性补入（本地优先、绝不覆盖主人真实记录）
     try { applyWeightSeedV1(); } catch (e) {}
     try { applyScreenshotSeedV1(); } catch (e) {}
+    // 广州三天游玩行程：仅当本地还没有「广州」行程时一次性补入
+    try { applyTripSeedV1(); } catch (e) {}
     // 工作代办初始事项（主人指定 4 条）：仅首次运行时补入
     try { applyWorkTodoSeedV1(); } catch (e) {}
     // 未来图文旧数据迁移：没有 account 字段的默认 big，确保后续联动正常
@@ -7060,6 +7112,49 @@ function applyScreenshotSeedV1() {
   store.screenshotSeedV1Applied = true;
   try { saveData(); } catch (e) {}
   try { console.log('[Hami] 已从截图一次性同步体重/洗头/经期/如厕/面膜数据'); } catch (e) {}
+}
+
+// 广州三天游玩行程（主人 2026-08 提供）：仅当本地还没有「广州」行程时一次性补入，
+// 标记 tripSeedV1Applied 后不再重复覆盖。每条安排用新字段（分类/地点/交通/时长）记录细节。
+function applyTripSeedV1() {
+  if (store.tripSeedV1Applied) return;
+  if (!store.trips) store.trips = [];
+  // 避免重复补入：只要已有城市含「广州」的行程就跳过（让主人改过的优先保留）
+  if (store.trips.some(function (t) { return t && ('' + (t.city || '')).indexOf('广州') >= 0; })) {
+    store.tripSeedV1Applied = true; return;
+  }
+  const gz = {
+    city: '广州',
+    start: '2026-08-15',
+    end: '2026-08-17',
+    remark: '三天行程 · 具体日期可在编辑里修改',
+    days: [
+      { date: '2026-08-15', items: [
+        { type: 'traffic', title: '高铁抵达广州东站 → 地铁到昌岗站', transport: '地铁（广州东站→昌岗站）', duration: '约30min', note: '高铁到广州东站后换乘地铁前往昌岗站' },
+        { type: 'stay', title: '美度美居(昌岗地铁站店) 寄存/入住', place: '海珠区昌岗街道晓园路晓园新村1-3号', note: '未入住可先寄存行李，贵重物品随身' },
+        { type: 'traffic', title: '昌岗 → 琶洲站(看展)', transport: '地铁8号线(万胜围方向)→琶洲站D口', duration: '约12min' },
+        { type: 'food', title: '六元素体验天地 吃午饭', transport: '步行' },
+        { type: 'play', title: '保利世贸2号馆 看展', place: '保利世贸2号馆', transport: '步行 约7-8min', note: '六元素体验天地饭后步行前往' },
+        { type: 'stay', title: '返回昌岗 办理入住休息', transport: '地铁8号线返回昌岗' }
+      ]},
+      { date: '2026-08-16', items: [
+        { type: 'play', title: '昌岗 → 公园前 citywalk', transport: '地铁2号线(嘉禾望岗方向)→公园前站', duration: '约10min' },
+        { type: 'traffic', title: '公园前 → 昌岗酒店', transport: '地铁2号线返回昌岗' }
+      ]},
+      { date: '2026-08-17', items: [
+        { type: 'traffic', title: '昌岗 → 五羊邨站', transport: '地铁2号线→杨箕站换乘5号线(文冲方向)→五羊邨站', duration: '约18min' },
+        { type: 'food', title: '寺右新马路、东兴南路 吃美食', note: 'A/C出口出，逛吃' },
+        { type: 'food', title: '和陈寻吃晚饭', note: '地点待定' },
+        { type: 'stay', title: '返回昌岗酒店取全部行李', note: '可提前拿' },
+        { type: 'traffic', title: '昌岗 → 广州南站', transport: '地铁2号线直达', duration: '约22min' },
+        { type: 'traffic', title: '广州南站 → 三水南站', transport: '高铁', note: '乘高铁前往三水南' }
+      ]}
+    ]
+  };
+  store.trips.push(gz);
+  store.tripSeedV1Applied = true;
+  try { saveData(); } catch (e) {}
+  try { console.log('[Hami] 已一次性补入广州三天游玩行程'); } catch (e) {}
 }
 
 // 默认值保护：只对字段完全缺失（undefined）的首次用户补默认数据；用户"主动清空"=[]≠"未播种",
@@ -10951,7 +11046,8 @@ function renderTripPlans() {
     const realIdx = store.trips.indexOf(trip);
     const start = trip.start || '';
     const end = trip.end || start;
-    const days = generateTripDays(start, end);
+    ensureTripDays(trip);
+    const days = trip.days;
     const activeDay = _tripActiveDay[realIdx] || 0;
     const safeActive = Math.min(activeDay, Math.max(0, days.length - 1));
 
@@ -10971,17 +11067,33 @@ function renderTripPlans() {
     if (items.length === 0) {
       timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
     } else {
+      const TYPE_MAP = {
+        play: ['🎡','游玩'], food: ['🍜','餐饮'], traffic: ['🚇','交通'],
+        stay: ['🏨','住宿'], shop: ['🛍️','购物'], other: ['📌','其他']
+      };
       items.forEach((it, iIdx) => {
         const itemRealIdx = day.items.indexOf(it);
+        const done = !!it.done;
+        const tm = TYPE_MAP[it.type] || TYPE_MAP.other;
+        const cls = 'trip-item' + (done ? ' done' : '');
         timelineHtml += `
-          <div class="trip-item">
+          <div class="${cls}">
             <div class="trip-item-dot"></div>
-            <div class="trip-item-time">${it.time || '全天'}</div>
-            <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
-            ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
+            <div class="trip-item-main">
+              <div class="trip-item-top">
+                <span class="trip-item-time">${it.time || '全天'}</span>
+                <span class="trip-item-type">${tm[0]} ${tm[1]}</span>
+                ${it.duration ? `<span class="trip-item-dur">⏱️${escapeHtml(it.duration)}</span>` : ''}
+              </div>
+              <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
+              ${it.place ? `<div class="trip-item-place">🗺️ ${escapeHtml(it.place)}</div>` : ''}
+              ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
+              ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
+            </div>
             <div class="trip-item-actions">
-              <button onclick="openTripDayModal(${realIdx}, ${safeActive}, ${itemRealIdx})">✏️ 编辑</button>
-              <button onclick="deleteTripDayItem(${realIdx}, ${safeActive}, ${itemRealIdx})">🗑 删除</button>
+              <button onclick="toggleTripItemDone(${realIdx}, ${safeActive}, ${itemRealIdx})" title="${done ? '标记未完成' : '标记完成'}">${done ? '✅' : '⬜'}</button>
+              <button onclick="openTripDayModal(${realIdx}, ${safeActive}, ${itemRealIdx})">✏️</button>
+              <button onclick="deleteTripDayItem(${realIdx}, ${safeActive}, ${itemRealIdx})">🗑</button>
             </div>
           </div>`;
       });
@@ -11120,6 +11232,11 @@ function openTripDayModal(tripIdx, dayIdx, itemIdx) {
   }
   document.getElementById('td-time').value = it ? (it.time || '') : '';
   document.getElementById('td-title').value = it ? (it.title || '') : '';
+  document.getElementById('td-place').value = it ? (it.place || '') : '';
+  document.getElementById('td-transport').value = it ? (it.transport || '') : '';
+  document.getElementById('td-duration').value = it ? (it.duration || '') : '';
+  document.getElementById('td-type').value = it ? (it.type || 'play') : 'play';
+  document.getElementById('td-done').checked = it ? (!!it.done) : false;
   document.getElementById('td-note').value = it ? (it.note || '') : '';
 
   const m = document.getElementById('trip-day-modal');
@@ -11139,13 +11256,22 @@ function submitTripDayRecord() {
 
   const time = document.getElementById('td-time').value || '';
   const title = (document.getElementById('td-title').value || '').trim();
+  const place = (document.getElementById('td-place').value || '').trim();
+  const transport = (document.getElementById('td-transport').value || '').trim();
+  const duration = (document.getElementById('td-duration').value || '').trim();
+  const type = document.getElementById('td-type').value || 'play';
+  const done = document.getElementById('td-done').checked;
   const note = (document.getElementById('td-note').value || '').trim();
   if (!title) { finToast('请填写地点/活动'); return; }
 
   if (!trip.days[dayIdx]) trip.days[dayIdx] = { date: (generateTripDays(trip.start, trip.end)[dayIdx] || {}).date || '', items: [] };
   if (!Array.isArray(trip.days[dayIdx].items)) trip.days[dayIdx].items = [];
 
-  const obj = { time: time, title: title };
+  const obj = { time: time, title: title, type: type };
+  if (place) obj.place = place;
+  if (transport) obj.transport = transport;
+  if (duration) obj.duration = duration;
+  if (done) obj.done = true;
   if (note) obj.note = note;
 
   if (itemIdx >= 0) trip.days[dayIdx].items[itemIdx] = obj;
@@ -11165,6 +11291,15 @@ async function deleteTripDayItem(tripIdx, dayIdx, itemIdx) {
   try { saveData(); } catch (e) {}
   renderTripPlans();
   try { finToast('已删除「' + title + '」'); } catch (e) {}
+}
+
+function toggleTripItemDone(tripIdx, dayIdx, itemIdx) {
+  const trip = store.trips[tripIdx];
+  if (!trip || !trip.days || !trip.days[dayIdx] || !trip.days[dayIdx].items[itemIdx]) return;
+  const it = trip.days[dayIdx].items[itemIdx];
+  if (it.done) { delete it.done; } else { it.done = true; }
+  try { saveData(); } catch (e) {}
+  renderTripPlans();
 }
 
 // ==================== 重要日期弹窗（新增/编辑/删除）====================
