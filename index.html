@@ -11166,8 +11166,9 @@ function renderTripPlans() {
 function generateTripDays(start, end) {
   const res = [];
   if (!start) return res;
-  const s = new Date(start + 'T00:00:00');
-  const e = end ? new Date(end + 'T00:00:00') : new Date(s);
+  // 按北京时间解析，避免 UTC 时差导致日期提前一天
+  const s = new Date(start + 'T00:00:00+08:00');
+  const e = end ? new Date(end + 'T00:00:00+08:00') : new Date(s);
   for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
     const iso = d.toISOString().slice(0,10);
     res.push({ date: iso, items: [] });
@@ -11271,9 +11272,15 @@ function editTripDayTitle(tripIdx, dayIdx) {
 
 async function deleteTripDay(tripIdx, dayIdx) {
   if (!store.trips || !store.trips[tripIdx] || !store.trips[tripIdx].days || !store.trips[tripIdx].days[dayIdx]) return;
-  const day = store.trips[tripIdx].days[dayIdx];
+  const trip = store.trips[tripIdx];
+  const day = trip.days[dayIdx];
   if (!await hamiConfirm('确定删除「Day ' + (dayIdx + 1) + '（' + (day.title || '') + '）」吗？这一天的所有安排都会被删掉。')) return;
-  store.trips[tripIdx].days.splice(dayIdx, 1);
+  trip.days.splice(dayIdx, 1);
+  // 删除边界日期后同步更新 start/end，避免 ensureTripDays 再次把 deleted day 补回来
+  if (trip.days.length > 0) {
+    if (dayIdx === 0) trip.start = trip.days[0].date;
+    if (dayIdx >= trip.days.length - 1) trip.end = trip.days[trip.days.length - 1].date;
+  }
   try { saveData(); } catch (e) {}
   renderTripPlans();
 }
