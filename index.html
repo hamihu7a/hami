@@ -7270,8 +7270,8 @@ function applyTripSeedV1() {
       gzTrip.end = '2026-08-16';
       gzTrip.days = buildGzDays();
       gzTrip.seedVer = 2;
-      if (!gzTrip.remark || gzTrip.remark === '三天行程 · 具体日期可在编辑里修改') {
-        gzTrip.remark = '三天行程 · 真实日期 8.14~8.16';
+      if (!gzTrip.remark || gzTrip.remark === '三天行程 · 具体日期可在编辑里修改' || /真实日期|8\.14|8\.16/.test(gzTrip.remark)) {
+        gzTrip.remark = '广州三日游';
       }
       try { saveData(); } catch (e) {}
       try { console.log('[Hami] 已把广州行程更新为真实日期与内容(8.14~8.16)'); } catch (e) {}
@@ -7282,7 +7282,7 @@ function applyTripSeedV1() {
   // 本地还没有「广州」行程：全新注入真实内容
   store.trips.push({
     city: '广州', start: '2026-08-14', end: '2026-08-16',
-    remark: '三天行程 · 真实日期 8.14~8.16',
+    remark: '广州三日游',
     seedVer: 2, days: buildGzDays()
   });
   store.tripSeedV1Applied = true;
