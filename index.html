@@ -5494,6 +5494,100 @@ function compressImage(file, cb) {
   reader.readAsDataURL(file);
 }
 
+// ==================== 背景图存储迁移：用 IndexedDB 替代 localStorage ====================
+// 背景（重要）：浏览器给每个网站只有约 5MB 的 localStorage 配额。背景图是 base64 文本，非常占空间，
+// 多张叠加就能吃掉好几 MB。一旦被背景图占满，体重/记账等业务数据就再也写不进去——
+// 表现就是"页面提示已记录，刷新后数据没了"。这正是本次数据丢失的根因之一。
+// 方案：背景图改存 IndexedDB（容量可达几百 MB），localStorage 只留给业务数据；启动时自动迁移旧图。
+const BG_CACHE = {};   // 内存缓存：启动时一次性载入，供各处同步读取，避免改造成异步
+const HAMI_BG_DB = 'hami_bgs_db';
+const HAMI_BG_STORE = 'bgs';
+function openBgIDB() {
+  return new Promise(function (resolve) {
+    if (!window.indexedDB) { resolve(null); return; }
+    let req;
+    try { req = indexedDB.open(HAMI_BG_DB, 1); } catch (e) { resolve(null); return; }
+    req.onupgradeneeded = function (e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(HAMI_BG_STORE)) db.createObjectStore(HAMI_BG_STORE);
+    };
+    req.onsuccess = function (e) { resolve(e.target.result); };
+    req.onerror = function () { resolve(null); };
+  });
+}
+function bgIdbSet(key, val) {
+  return openBgIDB().then(function (db) {
+    if (!db) return false;
+    return new Promise(function (resolve) {
+      const tx = db.transaction(HAMI_BG_STORE, 'readwrite');
+      tx.objectStore(HAMI_BG_STORE).put(val, key);
+      tx.oncomplete = function () { resolve(true); };
+      tx.onerror = function () { resolve(false); };
+    });
+  }).catch(function () { return false; });
+}
+function bgIdbDel(key) {
+  return openBgIDB().then(function (db) {
+    if (!db) return false;
+    return new Promise(function (resolve) {
+      const tx = db.transaction(HAMI_BG_STORE, 'readwrite');
+      tx.objectStore(HAMI_BG_STORE).delete(key);
+      tx.oncomplete = function () { resolve(true); };
+      tx.onerror = function () { resolve(false); };
+    });
+  }).catch(function () { return false; });
+}
+function bgIdbGetAll() {
+  return openBgIDB().then(function (db) {
+    if (!db) return {};
+    return new Promise(function (resolve) {
+      const tx = db.transaction(HAMI_BG_STORE, 'readonly');
+      const os = tx.objectStore(HAMI_BG_STORE);
+      const req = os.getAllKeys();
+      req.onsuccess = function () {
+        const keys = req.result || [];
+        if (!keys.length) { resolve({}); return; }
+        const out = {}; let left = keys.length;
+        keys.forEach(function (k) {
+          const r = os.get(k);
+          r.onsuccess = function () { out[k] = r.result; if (--left <= 0) resolve(out); };
+          r.onerror = function () { if (--left <= 0) resolve(out); };
+        });
+      };
+      req.onerror = function () { resolve({}); };
+    });
+  }).catch(function () { return {}; });
+}
+// 统一写入口：更新内存缓存 + 异步写 IndexedDB（不再占用 localStorage）
+function setBgStored(key, dataUrl) {
+  BG_CACHE[key] = dataUrl;
+  try { bgIdbSet(key, dataUrl); } catch (e) {}
+}
+// 统一删除入口：清缓存 + 清 IndexedDB + 兼容清理 localStorage 旧副本
+function delBgStored(key) {
+  delete BG_CACHE[key];
+  try { bgIdbDel(key); } catch (e) {}
+  try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}
+}
+// 启动时：载入 IndexedDB 里的背景图，并把 localStorage 里的旧背景图迁移过去、立刻腾出 5MB 配额
+async function initBgCacheAndMigrate() {
+  try {
+    const idbBgs = await bgIdbGetAll();
+    Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k]) BG_CACHE[k] = idbBgs[k]; });
+  } catch (e) {}
+  let migrated = 0;
+  Object.keys(BG_KEYS).forEach(function (key) {
+    let old = null;
+    try { old = localStorage.getItem(BG_KEYS[key]); } catch (e) {}
+    if (old && !BG_CACHE[key]) { BG_CACHE[key] = old; try { bgIdbSet(key, old); } catch (e) {} }
+    if (old) { try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}; migrated++; }
+  });
+  if (migrated > 0) {
+    console.log('[背景图迁移] 已把 ' + migrated + ' 张背景图从 localStorage 搬到 IndexedDB，腾出 5MB 配额');
+    try { saveData(); } catch (e) {}   // 空间刚腾出来，立刻把业务数据补写一次
+  }
+}
+
 function applyBg(key, dataUrl) {
   const el = document.querySelector(BG_ELS[key]);
   if (!el) return;
@@ -5507,7 +5601,7 @@ function applyBg(key, dataUrl) {
 function clearBg(key) {
   const el = document.querySelector(BG_ELS[key]);
   if (el) { el.classList.remove('has-custom-bg', 'weakened'); el.style.removeProperty('--bg-img'); }
-  try { localStorage.removeItem(BG_KEYS[key]); localStorage.removeItem('hami_weak_' + key); } catch (e) {}
+  try { delBgStored(key); localStorage.removeItem('hami_weak_' + key); } catch (e) {}
   // 更新内嵌配置：从 bgs/weak 移除，并记入 del（跨源重新烘焙时不把已删的图带回来）
   try {
     const cfg = loadEmbeddedBgConfig();
@@ -5525,16 +5619,14 @@ function onBgFile(key, input) {
   if (!file) return;
   if (file.size > 400 * 1024) { hamiToast('这张图太大（超过 400KB），请先压缩到 400KB 以内再上传，否则会占满存储空间、挤掉你的记账数据'); input.value = ''; return; }
   compressImage(file, dataUrl => {
-    try { localStorage.setItem(BG_KEYS[key], dataUrl); }
-    catch (err) { hamiToast('图片太大，保存失败，请换一张更小的图再试'); return; }
+    setBgStored(key, dataUrl);   // 改存 IndexedDB，不再占用 localStorage 的 5MB 配额
     applyBg(key, dataUrl);
   });
   input.value = '';   // 重置，便于再次选择同一张图
 }
 
 async function openBgPicker(key) {
-  let cur = null;
-  try { cur = localStorage.getItem(BG_KEYS[key]); } catch (e) {}
+  const cur = BG_CACHE[key] || null;   // 背景图改从内存缓存读（数据实际存在 IndexedDB）
   if (cur) {
     if (await hamiConfirm('已设置自定义背景。\n\n确定 = 更换新图片\n取消 = 恢复默认纯色背景')) {
       document.getElementById('bg-file-' + key).click();
@@ -5564,7 +5656,7 @@ function collectBgConfig() {
   const delSet = {}; del.forEach(k => delSet[k] = 1);
   Object.keys(BG_KEYS).forEach(key => {
     try {
-      const d = localStorage.getItem(BG_KEYS[key]);
+      const d = BG_CACHE[key];   // 背景图改从内存缓存读（IndexedDB 持久化）
       if (d) { bgs[key] = d; delete delSet[key]; }
       // localStorage 无值 → 保留内嵌（跨源携带），除非在 del 中
     } catch (e) {}
@@ -5859,7 +5951,7 @@ function applyAllBgs() {
   Object.keys(BG_KEYS).forEach(key => {
     if (delSet[key]) return;
     let d = null, weak = false;
-    try { d = localStorage.getItem(BG_KEYS[key]); weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
+    try { d = BG_CACHE[key] || null; weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
     if (d) { applyBg(key, d); const el = document.querySelector(BG_ELS[key]); if (el && weak) el.classList.add('weakened'); }
     else if (weak) { const el = document.querySelector(BG_ELS[key]); if (el) el.classList.add('weakened'); }
   });
@@ -6142,12 +6234,12 @@ async function initSettingsPanel() {
   const statusEl = document.getElementById('settings-bg-status');
   document.querySelectorAll('.mirror-block').forEach(block => {
     const key = block.getAttribute('data-bgkey');
-    let has = false; try { has = !!localStorage.getItem(BG_KEYS[key]); } catch (e) {}
+    let has = false; try { has = !!BG_CACHE[key]; } catch (e) {}
     if (has) {
       block.classList.add('has-bg');
       // 已设置背景 → 缩略块直接显示图片预览
       try {
-        const d = localStorage.getItem(BG_KEYS[key]);
+        const d = BG_CACHE[key];
         if (d) { block.style.backgroundImage = 'url("' + d + '")'; block.style.backgroundSize = 'cover'; block.style.backgroundPosition = 'center'; }
       } catch (e) {}
     }
@@ -6197,12 +6289,7 @@ async function initSettingsPanel() {
       const f = fileInput.files && fileInput.files[0];
       if (!f || !_settingsActiveKey) return;
       compressImage(f, dataUrl => {
-        try {
-          localStorage.setItem(BG_KEYS[_settingsActiveKey], dataUrl);
-        } catch (err) {
-          if (statusEl) statusEl.textContent = '❌ 图片太大，保存失败';
-          fileInput.value = ''; return;
-        }
+        setBgStored(_settingsActiveKey, dataUrl);   // 改存 IndexedDB，不占 localStorage 配额
         applyBg(_settingsActiveKey, dataUrl);
         setMirrorPreview(_settingsActiveKey, dataUrl);
         if (statusEl) statusEl.textContent = '✅ 已更新「' + _settingsActiveKey + '」背景，正在同步云端…';
@@ -6969,8 +7056,8 @@ function sendHamiCmd() {
     }
   }
 
-  // 保存 + 刷新
-  saveData();
+  // 保存 + 刷新（关键：必须确认真的写进去了。写失败要明确报警，绝不能"显示已记录、刷新却没了"）
+  const savedOk = saveData();
   try { renderDesktop(); } catch (e) {}
   try { renderFitness(); } catch (e) {}
   try { renderDesktopWeight(); } catch (e) {}
@@ -6993,6 +7080,12 @@ function sendHamiCmd() {
   }
 
   if (acted) {
+    if (savedOk === false) {
+      // 保存失败：必须让主人看见，否则会误以为记好了
+      showCmdToast('⚠️ 没能保存到浏览器！请去「设置 → 数据备份」点「下载备份文件」，' +
+        '再到「🚑 数据急救」看看能否找回。先把这条记在别处，别关页面！');
+      return;
+    }
     const where = hints.length ? '  ➜【' + hints.join('、') + '】' : '';
     const dateTip = (date !== today) ? ('（' + date + '）') : '';
     showCmdToast('✅ 已记录' + dateTip + where + '：' + txt);
@@ -8388,7 +8481,7 @@ function switchPanel(name, navEl) {
     Object.keys(BG_KEYS).forEach(k => {
       const el = document.querySelector(BG_ELS[k]);
       if (!el) return;
-      const d = localStorage.getItem(BG_KEYS[k]);
+      const d = BG_CACHE[k];   // 背景图改从内存缓存读（IndexedDB 持久化）
       if (d && !el.classList.contains('has-custom-bg')) applyBg(k, d);
     });
   } catch (e) {}
@@ -13583,7 +13676,12 @@ fillMonthSelect(document.getElementById('income-month'), false);
 fillMonthSelect(document.getElementById('media-month'), false);
 fillMonthSelect(document.getElementById('account-month'), true);
 updateBackupAge();
-initCustomBg();
+// 关键顺序：先把背景图从 IndexedDB 载入内存缓存（并把 localStorage 里的旧图迁移走、腾出 5MB 配额），
+// 再初始化背景图显示。若不先迁移，背景图会读不到，而且 localStorage 仍被占满导致业务数据写不进去。
+try {
+  initBgCacheAndMigrate().then(function () { try { initCustomBg(); } catch (e) {} })
+    .catch(function () { try { initCustomBg(); } catch (e) {} });
+} catch (e) { try { initCustomBg(); } catch (e2) {} }
 initSettingsPanel();
 ensureDefaults();
 ensureDailyInspire();
