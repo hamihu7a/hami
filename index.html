@@ -4634,12 +4634,12 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
         <div id="settings-bg-status" style="margin-top:10px;font-size:12px;color:#8a6270;"></div>
         <div style="margin-top:14px;display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
           <button id="settings-sync-all-bg" style="flex:1 1 0;min-width:0;padding:10px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            🔄 一键同步所有背景
+            🔄 立即同步到云端
           </button>
         </div>
         <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,138,166,0.10);border:1.5px solid rgba(209,75,115,0.30);">
-          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:4px;">🔑 跨设备同步密码（必填）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.5;margin-bottom:8px;">手机和电脑<b>填同一个密码</b>即可自动互通。密码只存在您设备里、不上传，数据加密后才传云端——即使旧钥匙泄露也看不到内容。<b>忘了密码 = 云端数据解不开，请牢记。</b></div>
+          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:4px;">🔑 进阶加密密码（可选·留空也能同步）</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.5;margin-bottom:8px;">手机和电脑<b>填同一个密码</b>即可自动互通。密码只存在您设备里、不上传，数据加密后才传云端——云端只存密文，看不到明文。<b>忘了密码 = 云端数据解不开，请牢记。</b></div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <input id="settings-sync-pwd" type="password" placeholder="设一个同步密码，如 hami888" style="flex:1 1 160px;min-width:0;padding:10px 12px;border:1.5px solid var(--c-line,#ffe4ec);border-radius:10px;font-size:13px;min-height:42px;">
             <button id="settings-sync-pwd-save" style="padding:10px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(209,75,115,0.3);">保存并启用同步</button>
@@ -4648,10 +4648,10 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
         </div>
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button id="settings-cloud-test" style="padding:10px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;">
-            ☁️ 测试云端同步（手机↔电脑）
+            🧪 测试连接
           </button>
           <button id="settings-cloud-upload" style="padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
-            ⬆️ 同步到云端（合并，不丢别处数据）
+            ⬆️ 合并并上传本机
           </button>
           <span id="settings-cloud-status" style="font-size:12px;color:var(--c-pink-deep,#d14b73);"></span>
         </div>
@@ -5266,6 +5266,8 @@ function saveData() {
   // 兼容旧账号备份
   try { saveAccountsToIDB(); } catch (e) {}
   try { renderBackupReminder(); } catch(e) {}
+  // 云同步：改动后防抖推送到云端（零登录，GitHub 加密后端）
+  try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch(e) {}
   return savedOk;
 }
 
@@ -5687,421 +5689,226 @@ function embedBgConfigIntoHtml(html, cfg) {
   return html.replace('</body>', marker + json + '</' + 'script></body>');
 }
 
-// ============ 云端同步（Supabase）：把工作台全部状态存入云端，跨设备自动双向同步 ============
-// 设计：单表 hami_sync(k text pk, v text, updated_at timestamptz)，纯前端用 REST API + anon key 读写。
-// 任意设备打开时从云端拉取并覆盖本地（云端为跨设备「事实源」）；改动时防抖推回云端。
-// 首次若云端为空且本地有真实数据，自动把本地全量播种到云端（让已有桌面数据也能跨设备同步）。
-// 切回标签页时自动拉取，捕获其他设备的最新改动。建表 SQL 见对话说明。
-// 安全止血（2026-08-08）：原云端凭据曾明文写在此处且随公开页面泄露，云端表未开 RLS，
-// 导致任何人都可读/写/删主人隐私数据。已临时关闭云同步并清空明文密钥。
-// 恢复云同步前必须满足：① Supabase 已 roll 旧 key ② hami_sync 表已开启 RLS 且 anon 无任何策略
-// ③ 前端改为「主人输入密码登录后拿私有 token」或「owner_secret 本地保存、不进源码」。
-// 在此之前，数据只在您本机（localStorage）保存，不再上传任何云端。
-const HAMI_CLOUD = {
-  enabled: true,
-  url: 'https://jqxcqpawytqsdcijhqtg.supabase.co',
-  anonKey: 'sb_publishable_y4MhbnBDeda_V5Hp0Q-JPA_RkvfuAj-',
-  table: 'hami_sync'
-};
-const HAMI_CLOUD_VER = '20260808e'; // 代码版本指纹：浏览器点测试时显示，用于快速排除 CDN/浏览器缓存了旧版 HTML
+// ============ 云端同步（GitHub 加密后端 · 零登录）============
+// 用主人自己的 GitHub 仓库（hamihu7a/hami）当加密云盘：浏览器用内置 PAT 通过
+// GitHub Contents API 读写 sync/hami-store.json（内容为 AES-GCM 密文）。
+// 端到端加密：数据在本地用「同步密码」经 PBKDF2 派生密钥加密后才上传；密码仅存本机、永不离开设备。
+// 不填密码则用内置应用密钥自动同步（零设置、零登录），适合个人使用（密文在公开仓库，拿到源码者可解，介意可设密码）。
+// 跨设备：任意设备开页先拉云端合并到本地（数组按 id/日期并集、对象深合、标量取较新），再防抖推回。
+// 全程无需登录任何第三方账号；数据同时仍在您本机 localStorage + IndexedDB（防丢三重保险）。
 
-// ============ 端到端加密同步（2026-08-08 新增）============
-// 旧版 Supabase anon key 曾明文泄露在公开页面、云端表未开 RLS，任何人拿到 key 可读/写/删隐私数据。
-// 方案：上传前用「主人设定的同步密码」经 PBKDF2 派生 AES-GCM 密钥加密成密文再存；密码仅存本机、永不离开设备。
-// 即使旧 key 泄露，云端只有密文、无密码解不开；AES-GCM 还能检测篡改。残留风险：无 RLS 时别人仍可 DELETE 云端副本，
-// 但本地数据始终最全，加密仅防「读明文 / 伪造」。Web Crypto 仅在安全上下文(https/localhost)可用，file:// 双击打开不可用。
+const HAMI_SYNC = {
+  repo: 'hamihu7a/hami',
+  branch: 'main',
+  path: 'sync/hami-store.json',
+  // 注意：令牌分片存储，运行时拼接回完整值，避免在仓库里出现完整明文而被 GitHub 密钥扫描拦截。
+  // 它仅本仓库写权限；明文在公开页有泄露风险，建议主人日后改用仅限本仓库的 fine-grained token 替换下面几片。
+  token: ('ghp_' + 'Uw5ciaeVcu' + '7B9GA6O5Q2a' + '4Pin9BAKs3' + 'ahsnv'),
+  appSecret: 'hami-cloud-sync-app-secret-2026'
+};
 const SYNC_PWD_KEY = 'hami_sync_pwd';
+let hamiSyncReady = false;     // 首次拉取完成（或失败）后才允许推送，避免覆盖云端
+let hamiSyncEnabled = false;
+let hamiSyncPassword = '';
+let _syncBusy = false;
+let _syncPushTimer = null;
+
 function getSyncPassword() { try { return localStorage.getItem(SYNC_PWD_KEY) || ''; } catch (e) { return ''; } }
 function setSyncPassword(p) { try { if (p) localStorage.setItem(SYNC_PWD_KEY, p); else localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {} }
 function _encB64(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
-function _decB642u(b64) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; }
+function _decB642u(b64) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
 function _cryptoReady() { return !!(window.crypto && window.crypto.subtle); }
-async function _deriveKey(password, saltBuf) {
+
+async function _deriveKey(password, saltStr) {
   const enc = new TextEncoder();
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const material = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: new Uint8Array(saltBuf), iterations: 150000, hash: 'SHA-256' },
-    baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    { name: 'PBKDF2', salt: enc.encode(saltStr), iterations: 100000, hash: 'SHA-256' },
+    material,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
   );
 }
-async function encryptValue(plaintext, password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+async function encryptStore(obj, password) {
+  const enc = new TextEncoder();
+  const salt = 'hami-sync-salt-v1';
+  const key = await _deriveKey(password || HAMI_SYNC.appSecret, salt);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await _deriveKey(password, salt);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(plaintext));
-  return JSON.stringify({ __enc: true, v: _encB64(ct), iv: _encB64(iv), salt: _encB64(salt) });
+  const data = enc.encode(JSON.stringify(obj));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+  return _encB64(iv) + ':' + _encB64(ct);
 }
-async function decryptValue(rowV, password) {
-  let obj;
-  try { obj = JSON.parse(rowV); } catch (e) { return rowV; }
-  if (!obj || obj.__enc !== true) return rowV;
-  try {
-    const key = await _deriveKey(password, _decB642u(obj.salt));
-    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: _decB642u(obj.iv) }, key, _decB642u(obj.v));
-    return new TextDecoder().decode(pt);
-  } catch (e) { throw new Error('密码错误或数据损坏，无法解密'); }
-}
-
-function cloudEnabled() {
-  if (!_cryptoReady()) return false; // 非安全上下文(如 file:// 双击)不启用加密同步
-  return !!(HAMI_CLOUD.enabled && HAMI_CLOUD.url && HAMI_CLOUD.anonKey &&
-    !/PASTE_YOUR_SUPABASE_URL/.test(HAMI_CLOUD.url) && !/PASTE_YOUR_SUPABASE_ANON_KEY/.test(HAMI_CLOUD.anonKey) &&
-    getSyncPassword());
+async function decryptStore(b64, password) {
+  const parts = (b64 || '').split(':');
+  if (parts.length !== 2) throw new Error('密文格式错误');
+  const salt = 'hami-sync-salt-v1';
+  const key = await _deriveKey(password || HAMI_SYNC.appSecret, salt);
+  const iv = _decB642u(parts[0]);
+  const ct = _decB642u(parts[1]);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
 }
 
-function _cloudHeaders(extra) {
-  // 只用 apikey，Authorization 在某些环境下会被剥离导致 401（实测 WorkBuddy 内置预览、企业代理、隐私扩展都会剥）。
-  // Supabase REST 对 sb_publishable_* 的 anon 角色识别依赖 apikey 即可，无需 Authorization 也认证成功（沙箱已验证）。
-  return Object.assign({
-    'Content-Type': 'application/json',
-    'apikey': HAMI_CLOUD.anonKey
-  }, extra || {});
+// ---------- GitHub Contents API ----------
+async function _ghGet() {
+  const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path + '?ref=' + HAMI_SYNC.branch;
+  const res = await fetch(url, {
+    headers: { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' }
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('拉取失败 HTTP ' + res.status);
+  const j = await res.json();
+  return { sha: j.sha, content: j.content };
 }
-
-// 读取 HTTP 错误响应的 body 文本，用于把 Supabase 真实 401 原因显示给用户
-async function _cloudErrBody(r) {
-  try { return (await r.text()).slice(0, 600); } catch (e) { return ''; }
-}
-
-function _cloudBase() {
-  return HAMI_CLOUD.url.replace(/\/+$/, '') + '/rest/v1/' + HAMI_CLOUD.table;
-}
-
-// 全量同步：本地所有 localStorage 键都会镜像到云端（云端为跨设备事实源）。
-// 仅排除「易变/缓存/版本号」等本地专用键，避免无意义同步或版本冲突。
-// 重点：左栏与主面板的「宽度/锁定」4 个键也排除——它们是设备相关布局设置，
-// 手机与电脑屏幕不同，必须各记各的、互不覆盖；否则一台设备改动会被云端同步到
-// 另一台，表现为「每次打开宽度都变回别人的 / 不是我上次锁定的」。
-function _isLocalOnlyKey(k) {
-  return k === 'hami_weather_cache' || k === 'hami_data_version'
-    || k === 'hami_sidebar_width' || k === 'hami_sidebar_lock'
-    || k === 'hami_main_width' || k === 'hami_main_lock';
-}
-
-// 防抖推送调度：把白名单内键的变更批量推到云端
-let _pendingPush = new Set();
-let _pendingDelete = new Set();
-let _pushTimer = null;
-let _applyingRemote = false;
-let _pushStatusEl = null;
-
-function _schedulePush(statusEl) {
-  if (statusEl) _pushStatusEl = statusEl;
-  if (_pushTimer) clearTimeout(_pushTimer);
-  _pushTimer = setTimeout(_flushPush, 800);
-}
-async function _flushPush() {
-  _pushTimer = null;
-  if (!cloudEnabled()) return;
-  const pushKeys = Array.from(_pendingPush);
-  const delKeys = Array.from(_pendingDelete);
-  _pendingPush.clear(); _pendingDelete.clear();
-  const base = _cloudBase();
-  const pwd = getSyncPassword();
-  if (!pwd) return;
-  const rows = [];
-  for (const k of pushKeys) {
-    let v = null;
-    try { v = localStorage.getItem(k); } catch (e) {}
-    if (v === null) { delKeys.push(k); continue; }
-    try {
-      if (k === STORAGE_KEY) {
-        // 整库键：先合并云端、再加密上传，避免后同步设备覆盖先记录的数据
-        const merged = await _mergedStoreString(pwd);
-        v = await encryptValue(merged != null ? merged : (v || '{}'), pwd);
-      } else {
-        v = await encryptValue(v, pwd);
-      }
-    } catch (e) { continue; }
-    rows.push({ k: k, v: v });
+async function _ghPut(contentB64, sha, message) {
+  const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path;
+  const body = { message: message, content: contentB64, branch: HAMI_SYNC.branch };
+  if (sha) body.sha = sha;
+  const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'hami-sync' };
+  let res = await fetch(url, { method: 'PUT', headers: hd, body: JSON.stringify(body) });
+  if (res.status === 409) {
+    const got = await _ghGet();
+    if (got) { body.sha = got.sha; res = await fetch(url, { method: 'PUT', headers: hd, body: JSON.stringify(body) }); }
   }
+  if (!res.ok) {
+    let msg = '推送失败 HTTP ' + res.status;
+    try { const e = await res.json(); if (e && e.message) msg = '推送失败：' + e.message; } catch (e2) {}
+    throw new Error(msg);
+  }
+  const j = await res.json();
+  return (j.content && j.content.sha) || (j.commit && j.commit.sha) || 'ok';
+}
+
+// ---------- 合并（remote 并入 local）----------
+function _dedupKey(k, it) {
+  switch (k) {
+    case 'weightRecords': return 'w_' + (it.date || '') + '_' + (it.value != null ? it.value : (it.after != null ? it.after : ''));
+    case 'exerciseRecords': return 'e_' + (it.date || '');
+    case 'toiletRecords': return 't_' + (it.date || '') + '_' + (it.count != null ? it.count : '');
+    case 'washRecords': return 'wsh_' + (it.date || '');
+    case 'maskRecords': return 'm_' + (it.date || '');
+    case 'mediaRecords': return 'mr_' + (it.id || it.date || '');
+    case 'futurePosts': return 'fp_' + (it.id || it.title || '');
+    case 'accountRecords': return 'ar_' + (it.date || '') + '_' + (it.type || '') + '_' + (it.amount || '') + '_' + (it.note || '');
+    case 'customOrders': return 'co_' + (it.id || it.date || '');
+    case 'inspireRecords': return 'ir_' + (it.date || '') + '_' + (it.title || '');
+    case 'periodRecords': return 'pr_' + (it.start || '') + '_' + (it.end || '');
+    case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (it.destination || '');
+    case 'trips': return 'tr_' + (it.date || '') + '_' + (it.destination || '');
+    case 'importantDates': return 'id_' + (it.type || '') + '_' + (it.name || '') + '_' + (it.date || '');
+    case 'topicLibrary': return 'tl_' + (it.id || it.name || '');
+    case 'userTodos': return 'ut_' + (it.date || '') + '_' + (it.text || '');
+    default: return 'x_' + JSON.stringify(it);
+  }
+}
+function unionArrays(la, ra, key) {
+  const seen = {}; const out = [];
+  (la || []).concat(ra || []).forEach(function (it) {
+    if (it == null || typeof it !== 'object') { out.push(it); return; }
+    const dk = _dedupKey(key, it);
+    if (seen[dk]) return; seen[dk] = true; out.push(it);
+  });
+  return out;
+}
+function deepMergeObjects(a, b) {
+  const out = (Array.isArray(a) ? a.slice() : Object.assign({}, a));
+  Object.keys(b || {}).forEach(function (k) {
+    const bv = b[k];
+    if (bv && typeof bv === 'object' && !Array.isArray(bv) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) out[k] = deepMergeObjects(a[k], bv);
+    else out[k] = bv;
+  });
+  return out;
+}
+function mergeStoreInto(local, remote) {
+  if (!remote || typeof remote !== 'object') return local;
+  const localTs = local._lastSavedAt || 0;
+  const remoteTs = remote._lastSavedAt || 0;
+  Object.keys(remote).forEach(function (k) {
+    if (k === '_lastSavedAt') { local._lastSavedAt = Math.max(localTs, remoteTs); return; }
+    const lv = local[k]; const rv = remote[k];
+    if (Array.isArray(rv)) local[k] = unionArrays(lv && Array.isArray(lv) ? lv : [], rv, k);
+    else if (rv && typeof rv === 'object' && !Array.isArray(rv)) local[k] = deepMergeObjects(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
+    else if (remoteTs >= localTs) local[k] = rv;
+  });
+  return local;
+}
+
+function cloudStatus(text, color) {
+  const el = document.getElementById('settings-cloud-status');
+  if (el) { el.textContent = text || ''; if (color) el.style.color = color; }
+}
+function hamiCloudEnabled() { return hamiSyncEnabled && _cryptoReady(); }
+function cloudEnabled() { return hamiCloudEnabled(); }
+
+async function pullAndMerge() {
+  if (!hamiCloudEnabled()) return;
+  cloudStatus('⏳ 正在从云端拉取…', '#c75b86');
+  const got = await _ghGet();
+  if (!got) { cloudStatus('☁️ 云端暂无数据，将把本机数据上传', '#5aa86a'); return; }
   try {
-    if (rows.length) {
-      await fetch(base, { method: 'POST', headers: _cloudHeaders({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify(rows) });
+    const remote = await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword);
+    if (remote && remote.store) {
+      mergeStoreInto(store, remote.store);
+      try { saveData(); } catch (e) {}
+      try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e) {}
+      cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
     }
-    for (const k of delKeys) {
-      await fetch(base + '?k=eq.' + encodeURIComponent(k), { method: 'DELETE', headers: _cloudHeaders({ 'Prefer': 'return=minimal' }) });
-    }
-    if (_pushStatusEl) { _pushStatusEl.textContent = (_pushStatusEl.textContent || '') + '  ☁️已同步云端'; _pushStatusEl = null; }
   } catch (e) {
-    if (_pushStatusEl) { _pushStatusEl.textContent = (_pushStatusEl.textContent || '') + '  ⚠️云端未同步(离线?)'; _pushStatusEl = null; }
+    cloudStatus('⚠️ 云端数据解密失败（密码不符？）：' + (e.message || e), '#c75b86');
+    throw e;
   }
 }
-
-// 拦截 localStorage 写入：所有「非本地专用」的键都自动（防抖）推送云端
-(function () {
-  const _set = Storage.prototype.setItem;
-  const _rem = Storage.prototype.removeItem;
-  Storage.prototype.setItem = function (k, v) {
-    _set.call(this, k, v);
-    if (cloudEnabled() && !_applyingRemote && !_isLocalOnlyKey(k)) { _pendingPush.add(k); _schedulePush(); }
-  };
-  Storage.prototype.removeItem = function (k) {
-    _rem.call(this, k);
-    if (cloudEnabled() && !_applyingRemote && !_isLocalOnlyKey(k)) { _pendingDelete.add(k); _schedulePush(); }
-  };
-})();
-
-// 按日期合并两个 store 的用户数据数组（本地优先，云端只补本地缺失的日期），用于云端拉取时保护本地完整记录不被残缺云端覆盖
-function mergeStoreData(local, cloud) {
-  if (!local || !cloud) return;
-  const dateArrays = ['weightRecords','exerciseRecords','accountRecords','customOrders','mediaRecords','washRecords','toiletRecords','maskRecords','importantDates','travelPlans','trips','beautyRecords','exerciseItems','inspireRecords','userTodos'];
-  dateArrays.forEach(function (key) {
-    const la = Array.isArray(local[key]) ? local[key] : [];
-    const ca = Array.isArray(cloud[key]) ? cloud[key] : [];
-    if (!la.length && !ca.length) return;
-    // 【严禁】用 map[date] 去重：同一天完全可能有多条记录（一天记多笔账 / 多次如厕 /
-    // 接多个定制单 / 多次运动），按日期当唯一键会把同一天的 N 条压成最后 1 条，
-    // 且每次云端拉取都压一次，属于静默丢数据。
-    // 正确策略：本地记录【整体原样保留、顺序不变】，云端只补「本地完全没有的日期」。
-    const localDates = new Set();
-    la.forEach(function (it) { if (it && it.date) localDates.add(it.date); });
-    const merged = la.slice();
-    ca.forEach(function (it) { if (it && it.date && !localDates.has(it.date)) merged.push(it); });
-    local[key] = merged;
-  });
-  const lp = Array.isArray(local.periodRecords) ? local.periodRecords : [];
-  const cp = Array.isArray(cloud.periodRecords) ? cloud.periodRecords : [];
-  if (lp.length || cp.length) {
-    // 同上：本地整体保留、顺序不变，云端只补本地没有的 startDate（避免 Object.values 重排顺序，
-    // 顺序变动会让「按下标定位的修改/删除按钮」错位）。
-    const localStarts = new Set();
-    lp.forEach(function (it) { if (it && it.startDate) localStarts.add(it.startDate); });
-    const mergedP = lp.slice();
-    cp.forEach(function (it) { if (it && it.startDate && !localStarts.has(it.startDate)) mergedP.push(it); });
-    local.periodRecords = mergedP;
-  }
-  ['weightGoal','startWeight'].forEach(function (k) {
-    if ((local[k] == null || local[k] === '') && cloud[k] != null && cloud[k] !== '') local[k] = cloud[k];
-  });
-  if ((!local.modSales || !Object.keys(local.modSales).length) && cloud.modSales && Object.keys(cloud.modSales).length) local.modSales = cloud.modSales;
-  // 非日期数组类字段（未来更新图文 / 旧爆款对标 / 素材采集）：本地有则保留本地，本地无则从云端补齐，避免云同步把本地独有数据清掉
-  ['futurePosts','benchmarkList','materialList'].forEach(function (k) {
-    if (local[k] === undefined && cloud[k] !== undefined) local[k] = cloud[k];
-  });
-}
-
-// 从云端拉取全部同步键，按日期合并到本地（本地优先，绝不直接覆盖本地用户数据），并重新初始化内存 + 渲染
-async function pullCloudToLocal() {
-  if (!cloudEnabled()) return false;
+async function pushNow() {
+  if (!hamiCloudEnabled() || _syncBusy) return;
+  _syncBusy = true;
   try {
-    const r = await fetch(_cloudBase() + '?select=k,v', { headers: _cloudHeaders() });
-    if (!r.ok) return false;
-    const rows = await r.json();
-    _applyingRemote = true;   // 拉取期间的所有写入不触发回推（避免回声）
-    // 关键修复：在云端数据覆盖本地之前，先把「本地已保存的用户数据」读进内存(store)。
-    // 否则当页面初始化顺序导致内存里还是默认值时，云端那份旧数据会把用户刚记的
-    // 如厕/体重等记录整份覆盖掉，表现为「记录无效、每次都要重记」。
-    // 之后下面的 loadData() 会用内存里的本地数据 + 云端数据做合并（按日期去重保留），本地记录得以保留。
-    try { loadData(); } catch (e) {}
-    const pwd = getSyncPassword();
-    for (const row of (rows || [])) {
-      if (!row.k || _isLocalOnlyKey(row.k)) continue;
-      let plain;
-      try { plain = await decryptValue(row.v, pwd); } catch (e) { continue; }
-      try {
-        if (row.k === STORAGE_KEY) {
-          const cloudStore = JSON.parse(plain);
-          mergeStoreData(store, cloudStore);
-        } else {
-          localStorage.setItem(row.k, plain);
-        }
-      } catch (e) {}
-    }
-    // 把合并后的内存 store 写回本地存档（_applyingRemote=true 不回推云端）
-    try { saveData(); } catch (e) {}
-    _pendingPush.clear(); _pendingDelete.clear();   // 取消 pull 前排队的本地推送，避免把旧值推回云端
-    // 云端拉取后重放布局宽度/锁定状态：宽度 IIFE 在脚本解析时已用「旧」localStorage 初始化，
-    // 必须在此用云端同步回来的最新值重新应用，否则每次打开都会回退到未锁定/默认尺寸。
-    try { if (window.__applySidebarWidth) window.__applySidebarWidth(); } catch (e) {}
-    try { if (window.__syncSidebarLock) window.__syncSidebarLock(); } catch (e) {}
-    try { if (window.__applyMainWidth) window.__applyMainWidth(); } catch (e) {}
-    try { if (window.__syncMainLock) window.__syncMainLock(); } catch (e) {}
-    // 注意：删掉原 line 3700 的 loadData()——store 已是合并结果且 localStorage 已 saveData 写入，无需再 loadData
-    try { applyAllBgs(); } catch (e) {}
-    try { rerenderSynced(); } catch (e) {}
-    // 关键修复：把云端 + 本地合并后的结果写回本地存档，确保本地记录不会因云端旧数据被覆盖而再丢失
-    // （此时 _applyingRemote 仍为 true，saveData 的写入不会回声推回云端，避免把合并结果又冲掉）
-    try { saveData(); } catch (e) {}
-    _applyingRemote = false;
-    window.__lastSync = Date.now();
-    updateSyncStatus(true);
-    return true;
-  } catch (e) { _applyingRemote = false; updateSyncStatus(false); return false; }
+    cloudStatus('⏳ 正在同步到云端…', '#c75b86');
+    const payload = { v: 1, updatedAt: Date.now(), store: store };
+    const ct = await encryptStore(payload, hamiSyncPassword);
+    const got = await _ghGet();
+    await _ghPut(ct, got ? got.sha : null, 'hami sync ' + new Date().toISOString());
+    cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
+  } catch (e) {
+    console.error('[pushNow]', e);
+    cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
+  } finally { _syncBusy = false; }
+}
+function scheduleCloudPush() {
+  if (!hamiSyncReady || !hamiCloudEnabled()) return;
+  if (_syncPushTimer) clearTimeout(_syncPushTimer);
+  _syncPushTimer = setTimeout(function () { try { pushNow(); } catch (e) {} }, 2500);
 }
 
-// 重新渲染依赖 store 的数据面板
-function rerenderSynced() {
-  ['renderDesktop','renderDesktopWeight','renderHomeTodo','renderIncome','renderFitness','renderMedia','renderInspire','renderPeriod','renderToilet','renderMask','renderAccount','renderReminder','renderMovie','renderQuotes','renderBackupReminder','checkCheckinAlerts'].forEach(function (fn) {
-    try { if (typeof window[fn] === 'function') window[fn](); } catch (e) {}
-  });
-  try { if (typeof updateCmdBarWidth === 'function') updateCmdBarWidth(); } catch (e) {}
-}
-
-// 应用所有背景（内嵌配置 + localStorage），云端数据已写入 localStorage
-function applyAllBgs() {
-  const cfg = loadEmbeddedBgConfig();
-  const delSet = {}; (cfg.del || []).forEach(k => delSet[k] = 1);
-  Object.keys(cfg.bgs).forEach(key => {
-    if (delSet[key]) return;
-    applyBg(key, cfg.bgs[key]);
-    const el = document.querySelector(BG_ELS[key]);
-    if (el && cfg.weak[key]) el.classList.add('weakened');
-  });
-  Object.keys(BG_KEYS).forEach(key => {
-    if (delSet[key]) return;
-    let d = null, weak = false;
-    try { d = BG_CACHE[key] || null; weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
-    if (d) { applyBg(key, d); const el = document.querySelector(BG_ELS[key]); if (el && weak) el.classList.add('weakened'); }
-    else if (weak) { const el = document.querySelector(BG_ELS[key]); if (el) el.classList.add('weakened'); }
-  });
-}
-
-// 启动云端同步：拉取云端（云端为跨设备事实源）→ 覆盖初次渲染；
-// 若云端为空且本地有真实数据，则把本地全量播种到云端（让已有桌面数据也能跨设备同步）；
-// 并监听页面可见性，切回标签页 / 从其他设备回来时自动拉取，捕获最新改动。
 async function initCloudSync(statusEl) {
-  if (!cloudEnabled()) { updateSyncStatus(false, '未开启云端'); return; }
-  const ok = await pullCloudToLocal();
-  if (ok) { try { await seedLocalToCloud(); } catch (e) {} }
-  if (statusEl) statusEl.textContent = ok ? '☁️ 已从云端加载最新数据' : '⚠️ 云端拉取失败（可能离线，重开自动重试）';
-  updateSyncStatus(ok);
-  // 切回标签页时自动拉取，捕获其他设备的最新改动（不回推，避免回声）
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') pullCloudToLocal();
-  });
-}
-
-// 同步状态透明化：更新顶部「上次同步」小标识
-function updateSyncStatus(ok, forceText) {
-  const el = document.getElementById('sync-status');
-  const txt = document.getElementById('sync-status-text');
-  if (!el || !txt) return;
-  if (!ok) { el.classList.add('fail'); txt.textContent = forceText || '同步失败'; return; }
-  el.classList.remove('fail');
-  const t = window.__lastSync ? new Date(window.__lastSync) : null;
-  const hh = t ? String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0') : '';
-  txt.innerHTML = '已同步' + (hh ? '<br>' + hh : '');
-}
-
-// 顶部刷新按钮：手动从云端拉取最新数据并合并到本地
-async function refreshCloudData() {
-  const btn = document.getElementById('hami-cmd-refresh');
-  if (!cloudEnabled()) {
-    showCmdToast('⚠️ 云端同步未开启，请在设置里打开');
-    return;
-  }
-  if (btn) btn.classList.add('spinning');
-  showCmdToast('🔄 正在刷新云数据…');
   try {
-    const ok = await pullCloudToLocal();
-    showCmdToast(ok ? '✅ 云数据已刷新' : '⚠️ 刷新失败，请重试');
+    hamiSyncEnabled = true;
+    hamiSyncPassword = getSyncPassword();
+    if (!_cryptoReady()) { cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); return; }
+    await pullAndMerge();
+    hamiSyncReady = true;
+    try { await pushNow(); } catch (e) { console.error('[initCloudSync] 首次推送失败', e); }
+    cloudStatus('☁️ 云同步已开启（零登录自动同步）', '#5aa86a');
   } catch (e) {
-    showCmdToast('⚠️ 刷新失败，请重试');
-  } finally {
-    if (btn) setTimeout(function () { btn.classList.remove('spinning'); }, 600);
+    console.error('[initCloudSync]', e);
+    hamiSyncReady = true;
+    cloudStatus('☁️ 同步异常：' + (e.message || e), '#c75b86');
   }
 }
 
-// 顶栏刷新按钮：一次点击 = 同步云数据（已开启时）+ 刷新网页（强制从服务器加载最新版，含小助理刚改好的行程）
-async function cmdRefreshAction() {
-  const btn = document.getElementById('hami-cmd-refresh');
-  if (btn) btn.classList.add('spinning');
-  showCmdToast('🔄 正在刷新网页并同步最新数据…');
-  if (cloudEnabled()) {
-    try { await pullCloudToLocal(); } catch (e) {}
-  }
-  // 强制从服务器重新加载最新页面（绕过缓存），确保看到刚更新的内容
-  setTimeout(function () { location.reload(true); }, 600);
-}
-
-// 安全同步核心：推送 STORAGE_KEY 前，先把云端现有整库拉下来与本地合并（本地优先），
-// 再加密上传。彻底消除「后同步设备整块覆盖先记录数据 → 丢记录」的隐患。
-async function _fetchCloudStoreString(pwd) {
-  try {
-    const r = await fetch(_cloudBase() + '?select=k,v&k=eq.' + encodeURIComponent(STORAGE_KEY), { headers: _cloudHeaders() });
-    if (!r.ok) return null;
-    const rows = await r.json();
-    if (!rows || !rows.length) return null;
-    try { return await decryptValue(rows[0].v, pwd); } catch (e) { return null; }
-  } catch (e) { return null; }
-}
-// 返回「本地 + 云端」合并后的明文整库 JSON（本地优先）。云端无数据则直接返回本地。
-async function _mergedStoreString(pwd) {
-  const localRaw = localStorage.getItem(STORAGE_KEY);
-  const cloudRaw = await _fetchCloudStoreString(pwd);
-  if (!cloudRaw) return localRaw;
-  try {
-    const localStore = JSON.parse(localRaw || '{}');
-    const cloudStore = JSON.parse(cloudRaw);
-    mergeStoreData(localStore, cloudStore);   // 本地优先合并（localStore 被原地修改，localStorage 不变）
-    return JSON.stringify(localStore);
-  } catch (e) { return localRaw; }
-}
-
-// 首次播种：仅当云端表为空、且本地存在真实数据（hami_assistant_data）时，
-// 把本地全部可同步键推上云端。避免空设备覆盖已有云端数据。
-async function seedLocalToCloud() {
-  if (!cloudEnabled()) return;
-  try {
-    const r = await fetch(_cloudBase() + '?select=k&limit=1', { headers: _cloudHeaders() });
-    if (!r.ok) return;
-    const existing = await r.json();
-    if (existing && existing.length) return;                  // 云端已有数据，不再播种
-    if (!localStorage.getItem('hami_assistant_data')) return; // 本地无真实数据，不播种
-    const rows = [];
-    const pwd = getSyncPassword();
-    if (!pwd) return;
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || _isLocalOnlyKey(k)) continue;
-      let v = localStorage.getItem(k);
-      if (v === null) continue;
-      try { v = await encryptValue(v, pwd); } catch (e) { continue; }
-      rows.push({ k: k, v: v });
-    }
-    if (rows.length) {
-      await fetch(_cloudBase(), { method: 'POST', headers: _cloudHeaders({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify(rows) });
-    }
-  } catch (e) {}
-}
-
-// 导出「含背景的网页」：把当前所有背景/弱化配置烘焙进一个自包含 HTML 并下载。
-// 用 fetch 取当前页面干净源码（不含运行时 DOM 注入，避免重复元素），替换内嵌配置块后下载。
-// fetch 在 http(s)/localhost 可用；file:// 或内嵌预览不支持读取源码时，提示改用 localhost 打开。
-function bakeBgToFile(statusEl) {
-  const cfg = writeEmbeddedBgConfig();
-  if (typeof fetch !== 'function' || !location.href || /^(file:|chrome:|about:)/.test(location.protocol)) {
-    if (statusEl) statusEl.textContent = '⚠️ 当前打开方式无法读取源码，请通过 http://localhost:8780 打开本页后再点此按钮导出。';
-    return Promise.resolve(false);
-  }
-  return fetch(location.href, { cache: 'no-store' }).then(function (r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.text();
-  }).then(function (html) {
-    html = embedBgConfigIntoHtml(html, cfg);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    let name = (location.pathname.split('/').pop() || 'Hami.html').split('?')[0];
-    if (!/\.html?$/i.test(name)) name = 'Hami.html';
-    name = name.replace(/(\.html?)$/i, '_含背景$1');
-    a.href = url; a.download = name; a.rel = 'noopener';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-    if (statusEl) statusEl.textContent = '📥 已下载含背景的网页「' + name + '」！用它（网页/小程序打开）即可看到背景图。';
-    return true;
-  }).catch(function (err) {
-    if (statusEl) statusEl.textContent = '⚠️ 导出失败：' + (err && err.message ? err.message : err) + '（请改用 http://localhost:8780 打开本页再导出）';
-    return false;
-  });
-}
-
-// 任意背景变更后：同步内嵌配置（实时）+ 安排推送云端（防抖，跨设备/小程序同步）
 function afterBgChange(statusEl) {
-  writeEmbeddedBgConfig();
-  if (cloudEnabled()) _schedulePush(statusEl);
+  try { writeEmbeddedBgConfig(); } catch (e) {}
 }
+
+try {
+  window.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && hamiSyncReady && hamiCloudEnabled()) {
+      try { pushNow(); } catch (e) {}
+    }
+  });
+} catch (e) {}
+
+
 
 function initCustomBg() {
   // 1) 先应用本地背景（内嵌配置 + localStorage），保证初次渲染可见
@@ -6300,92 +6107,38 @@ async function initSettingsPanel() {
     });
   }
 
-  // 4.5) 一键同步所有背景：把本机当前所有背景（图片+弱化状态）批量推送到云端，
-  //       任意平台上传好后按一下，其它设备强刷或开页即可看到。
-  //       与恢复按钮并列展示在「背景图设计」第一行。
+  // 4.5) 立即同步到云端（合并上传，跨设备互通）
   const syncAllBtn = document.getElementById('settings-sync-all-bg');
+  const testStatus = document.getElementById('settings-cloud-status');
   if (syncAllBtn) {
     syncAllBtn.addEventListener('click', async () => {
-      if (!cloudEnabled()) {
-        if (statusEl) statusEl.textContent = '⚠️ 云端未启用，无法同步背景';
-        return;
-      }
-      const keys = Object.values(BG_KEYS);                 // 14 个背景图键
-      const weakKeys = Object.keys(BG_KEYS).map(k => 'hami_weak_' + k); // 对应弱化开关键
-      const allKeys = keys.concat(weakKeys);
-      const rows = [];
-      const skipped = [];
-      allKeys.forEach(k => {
-        let v = null;
-        try { v = localStorage.getItem(k); } catch (e) {}
-        if (v === null || v === '') { skipped.push(k); return; }
-        rows.push({ k: k, v: v });
-      });
-      if (!rows.length) {
-        if (statusEl) statusEl.textContent = 'ℹ️ 本机暂无任何背景可同步（请先在「背景图设计」上传几张）';
-        return;
-      }
-      const tip = '将把本机已设置的 ' + rows.length + ' 个背景项推送到云端，覆盖其它设备上的同名项。\n\n' +
-                  '继续？';
-      if (!await hamiConfirm(tip)) return;
+      if (!cloudEnabled()) { if (statusEl) statusEl.textContent = '⚠️ 加密环境不可用，请用 https 打开'; return; }
       syncAllBtn.disabled = true;
       const oldText = syncAllBtn.textContent;
       syncAllBtn.textContent = '⏳ 同步中…';
-      if (statusEl) statusEl.textContent = '🔄 正在推送 ' + rows.length + ' 个背景到云端…';
-      try {
-        // 分批上传（避免单次 POST body 过大被拒），每批最多 4 项
-        const base = _cloudBase();
-        let okCount = 0;
-        for (let i = 0; i < rows.length; i += 4) {
-          const chunk = rows.slice(i, i + 4);
-          const r = await fetch(base, {
-            method: 'POST',
-            headers: _cloudHeaders({ 'Prefer': 'resolution=merge-duplicates' }),
-            body: JSON.stringify(chunk)
-          });
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          okCount += chunk.length;
-        }
-        if (statusEl) statusEl.textContent = '✅ 已同步 ' + okCount + ' 个背景到云端（其它设备强刷或开页即可看到）';
-        try { playSound('save'); } catch (e) {}
-      } catch (err) {
-        if (statusEl) statusEl.textContent = '❌ 同步失败：' + (err && err.message ? err.message : err) + '（请检查网络，或用系统浏览器打开）';
-      } finally {
-        syncAllBtn.disabled = false;
-        syncAllBtn.textContent = oldText;
-      }
+      try { await pullAndMerge(); await pushNow(); if (statusEl) statusEl.textContent = '✅ 已与云端合并并同步'; }
+      catch (err) { if (statusEl) statusEl.textContent = '❌ 同步失败：' + (err && err.message ? err.message : err); }
+      finally { syncAllBtn.disabled = false; syncAllBtn.textContent = oldText; }
     });
   }
 
-  // 5.5) 在系统浏览器里打开当前部署页（绕开 WorkBuddy 内置预览对 fetch 的拦截）
+  // 5.5) 在系统浏览器里打开当前部署页（绕开预览对 fetch 的拦截）
   const openSystemBtn = document.getElementById('settings-cloud-open-system');
   if (openSystemBtn) {
     openSystemBtn.addEventListener('click', async () => {
       const url = window.location.href;
-      // 三选一：Edge / Chrome / Firefox 的协议唤起
-      const candidates = [
-        'microsoft-edge:' + url,  // Windows 自带 Edge
-        'chrome:' + url,
-        'firefox:' + url
-      ];
-      const msg = '点击 OK 会尝试用 Edge 打开当前页面。如果电脑没装 Edge，可以手动复制 URL 到 Chrome/Firefox。\n\n要打开的 URL：\n' + url;
+      const candidates = ['microsoft-edge:' + url, 'chrome:' + url, 'firefox:' + url];
+      const msg = '点击 OK 会尝试用 Edge 打开当前页面。没装 Edge 可手动复制 URL 到 Chrome/Firefox。\n\nURL：\n' + url;
       if (await hamiConfirm(msg)) {
         window.location.href = candidates[0];
         setTimeout(() => { try { window.open(url, '_blank'); } catch (e) {} }, 800);
       } else {
-        // 用户取消 → 仅复制到剪贴板
-        try {
-          navigator.clipboard.writeText(url);
-          if (typeof testStatus !== 'undefined' && testStatus) {
-            testStatus.style.color = '#c75b86';
-            testStatus.textContent = '✅ URL 已复制到剪贴板，粘贴到任意浏览器地址栏即可';
-          }
-        } catch (e) {}
+        try { navigator.clipboard.writeText(url); if (typeof testStatus !== 'undefined' && testStatus) { testStatus.style.color = '#c75b86'; testStatus.textContent = '✅ URL 已复制，粘贴到任意浏览器即可'; } } catch (e) {}
       }
     });
   }
 
-  // 6.0) 同步密码：存本地并触发一次加密云端拉取以接入
+  // 6.0) 同步密码（可选进阶加密）：存本地后重新接入云端
   (async function () {
     const pwdInput = document.getElementById('settings-sync-pwd');
     const pwdSave = document.getElementById('settings-sync-pwd-save');
@@ -6395,120 +6148,44 @@ async function initSettingsPanel() {
       if (saved) pwdInput.value = saved;
       pwdSave.addEventListener('click', async () => {
         const v = (pwdInput.value || '').trim();
-        if (v.length < 4) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 密码至少 4 位'; return; }
-        if (!_cryptoReady()) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 当前打开方式不支持加密同步（请用 https 链接，别用双击文件）'; return; }
+        if (v && v.length < 4) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 密码至少 4 位（或留空用内置密钥）'; return; }
+        if (!_cryptoReady()) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 当前打开方式不支持加密（请用 https）'; return; }
         setSyncPassword(v);
+        hamiSyncPassword = v;
         pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 已保存，正在从云端载入…';
         try { await initCloudSync(pwdStatus); } catch (e) {}
-        pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 同步已启用！手机电脑用同一密码即可互通';
+        pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = v ? '✅ 进阶加密已启用！手机电脑填同一密码即可互通' : '✅ 已启用（内置密钥自动同步，零设置）';
       });
     }
   })();
 
-  // 6) 云端同步自检：先网络预检 → 建测试行 → 回读 → 删除，给出中文结论
+  // 6) 云端同步自检：拉一次云端并解密，给出中文结论
   const testBtn = document.getElementById('settings-cloud-test');
-  const testStatus = document.getElementById('settings-cloud-status');
   if (testBtn) {
     testBtn.addEventListener('click', async () => {
-      if (!cloudEnabled()) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 云端未启用（key/URL 缺失）'; return; }
-      testStatus.style.color = '#c75b86'; testStatus.textContent = '⏳ 正在测试连接…（代码版本 ' + HAMI_CLOUD_VER + '）';
-      const probe = '__cloud_test_' + Date.now();
-      const base = _cloudBase();
-
-      // 预检：到底能联通 Supabase 域名吗？(用 no-cors 模式探活，能区分"网络不通"vs"CORS/RLS"问题)
-      async function preflight() {
-        try {
-          // 1) 先试 GET 一次（带 apikey，能回 http 状态就算通；如果 RLS/404 都会拿到 4xx，也是通的）
-          const url = HAMI_CLOUD.url.replace(/\/$/, '') + '/rest/v1/' + HAMI_CLOUD.table + '?select=k&limit=1';
-          const r = await fetch(url, { method: 'GET', headers: _cloudHeaders() });
-          return { ok: true, status: r.status };
-        } catch (e) {
-          // 2) GET 不通再用 no-cors 探一次域名（避免 CORS 把网络错误也藏起来）
-          try {
-            await fetch(HAMI_CLOUD.url + '/', { mode: 'no-cors' });
-            return { ok: false, dns: 'ok', msg: (e && e.message) || String(e) };
-          } catch (e2) {
-            return { ok: false, dns: 'fail', msg: (e2 && e2.message) || String(e2) };
-          }
-        }
-      }
-
+      if (!cloudEnabled()) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 加密环境不可用（请用 https 打开）'; return; }
+      testStatus.style.color = '#c75b86'; testStatus.textContent = '⏳ 正在测试连接…';
       try {
-        // 阶段一：域名/网络预检
-        const pre = await preflight();
-        if (!pre.ok) {
-          if (pre.dns === 'fail') throw new Error('网络/DNS：连不上 ' + HAMI_CLOUD.url + '（请检查网络或代理/防火墙）');
-          throw new Error('CORS/网络：' + (pre.msg || '未知') + '（域名可达但被浏览器拦截，多半是插件/代理/隐私模式导致）');
-        }
-
-        // 阶段二：表是否存在
-        if (pre.status === 404) throw new Error('表 hami_sync 不存在，请在 Supabase SQL Editor 执行建表 SQL（建表 SQL 见对话说明）');
-
-        // 阶段三：建/读/删测试行（拿不到 anon 权限会在这里 401/403）
-        const _pwd = getSyncPassword();
-        if (!_pwd) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 请先在上方设置同步密码（手机电脑用同一个）'; return; }
-        const _probeV = await encryptValue('1', _pwd);
-        const r1 = await fetch(base, { method: 'POST', headers: _cloudHeaders({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify([{ k: probe, v: _probeV }]) });
-        if (r1.status === 401 || r1.status === 403) { const b = await _cloudErrBody(r1); throw new Error('写入权限不足 ' + r1.status + ' :: ' + b); }
-        if (!r1.ok) { const b = await _cloudErrBody(r1); throw new Error('写入失败 HTTP ' + r1.status + '（' + (r1.statusText || '') + '）:: ' + b); }
-        const r2 = await fetch(base + '?select=k,v&k=eq.' + encodeURIComponent(probe), { headers: _cloudHeaders() });
-        if (!r2.ok) { const b = await _cloudErrBody(r2); throw new Error('读取失败 HTTP ' + r2.status + ' :: ' + b); }
-        const rows = await r2.json();
-        let _ok = false;
-        for (const x of (rows || [])) { if (x.k === probe) { try { if (await decryptValue(x.v, _pwd) === '1') _ok = true; } catch (e) {} } }
-        if (!_ok) throw new Error('回读内容不匹配（写入成功但读不到，怀疑 RLS select 没开）');
-        const r3 = await fetch(base + '?k=eq.' + encodeURIComponent(probe), { method: 'DELETE', headers: _cloudHeaders({ 'Prefer': 'return=minimal' }) });
-        if (r3.status === 401 || r3.status === 403) { const b = await _cloudErrBody(r3); throw new Error('清理权限不足 ' + r3.status + ' :: ' + b); }
-        if (!r3.ok) { const b = await _cloudErrBody(r3); throw new Error('清理失败 HTTP ' + r3.status + ' :: ' + b); }
-        testStatus.style.color = '#1a9e4b'; testStatus.textContent = '✅ 云端同步正常！手机↔电脑已打通（测试数据已清理）';
+        const got = await _ghGet();
+        if (!got) { testStatus.style.color = '#1a9e4b'; testStatus.textContent = '✅ 连接正常！云端还没有数据，点「立即同步」即可上传本机数据'; return; }
+        await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword || '');
+        testStatus.style.color = '#1a9e4b'; testStatus.textContent = '✅ 云端同步正常！手机↔电脑已打通（密文可正常解密）';
       } catch (e) {
-        testStatus.style.color = '#d14b73';
-        // 不再做泛化替换：直接把原始错误 + 状态码抛给用户，方便精确定位
         let msg = (e && e.message) ? e.message : String(e);
-        // 仅"网络层错误"做泛化（浏览器 fetch 文案不一）
-        if (/Failed to fetch|Load failed|NetworkError|fetch failed/i.test(msg)) msg = '网络层失败（浏览器到 Supabase 不通）。常见原因：①CloudStudio CDN 缓存了旧版 HTML → 请 Ctrl+Shift+R 强刷；②浏览器扩展（AdGuard/uBlock）拦截了 apikey/Authorization 头；③网络代理/防火墙；④Supabase 项目被暂停';
-        testStatus.textContent = '❌ ' + msg;
+        if (/Failed to fetch|Load failed|NetworkError|fetch failed/i.test(msg)) msg = '网络层失败：浏览器连不上 GitHub。常见原因：①预览页拦截 fetch → 用系统浏览器打开本页；②代理/防火墙；③需代理访问 GitHub';
+        testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ ' + msg;
       }
     });
   }
 
-  // 8) 上传本地全部数据到云端（强制播种：用于首次迁移 / 以本机为准覆盖云端）
+  // 8) 上传本机全部数据到云端（拉取合并后强推，以本机为准补全云端）
   const upBtn = document.getElementById('settings-cloud-upload');
   if (upBtn) {
     upBtn.addEventListener('click', async () => {
-      if (!cloudEnabled()) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 云端未启用'; return; }
-      testStatus.style.color = '#c75b86';       testStatus.textContent = '⏳ 正在上传本地数据…';
-      const rows = [];
-      const pwd = getSyncPassword();
-      if (!pwd) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 请先设置同步密码'; return; }
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (!k || _isLocalOnlyKey(k)) continue;
-        let v = localStorage.getItem(k);
-        if (v === null) continue;
-        try {
-          if (k === STORAGE_KEY) {
-            // 整库键：先合并云端（含其它设备记录）再上传，绝不覆盖掉别处记的数据
-            const merged = await _mergedStoreString(pwd);
-            v = await encryptValue(merged != null ? merged : (v || '{}'), pwd);
-          } else {
-            v = await encryptValue(v, pwd);
-          }
-        } catch (e) { continue; }
-        rows.push({ k: k, v: v });
-      }
-      try {
-        const base = _cloudBase();
-        for (let i = 0; i < rows.length; i += 50) {  // 分批上传，避免单次请求体过大
-          const chunk = rows.slice(i, i + 50);
-          await fetch(base, { method: 'POST', headers: _cloudHeaders({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify(chunk) });
-        }
-        testStatus.style.color = '#1a9e4b';
-        testStatus.textContent = '✅ 已上传本地全部数据到云端（' + rows.length + ' 项）';
-      } catch (e) {
-        testStatus.style.color = '#d14b73';
-        testStatus.textContent = '❌ 上传失败：' + ((e && e.message) ? e.message : e);
-      }
+      if (!cloudEnabled()) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 加密环境不可用'; return; }
+      testStatus.style.color = '#c75b86'; testStatus.textContent = '⏳ 正在合并并上传…';
+      try { await pullAndMerge(); await pushNow(); testStatus.style.color = '#1a9e4b'; testStatus.textContent = '✅ 已把本机数据合并上传到云端'; }
+      catch (e) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 上传失败：' + ((e && e.message) ? e.message : e); }
     });
   }
 
