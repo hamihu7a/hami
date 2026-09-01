@@ -4681,6 +4681,26 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
           <div id="backup-age-hint" style="font-size:12px;margin-bottom:10px;"></div>
           <div id="settings-backup-status" style="margin-top:10px;font-size:12px;color:#c75b86;line-height:1.6;"></div>
         </div>
+
+        <!-- ===== 数据急救：从浏览器内部备份一键找回 ===== -->
+        <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,240,243,0.9);border:1.5px solid #d14b73;">
+          <div style="font-size:14px;font-weight:800;color:#d14b73;margin-bottom:6px;">🚑 数据急救（数据不见了先点这里）</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">
+            工作台每次保存都会自动在浏览器里留一份内部备份。如果哪天打开页面发现记录空了，
+            先来这里看看备份还在不在——只要备份还在，就能一键把数据原样找回来。
+          </div>
+          <div id="data-rescue-info" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">
+            正在检查内部备份…
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="restoreFromIDBBackup()" style="padding:11px 16px;border:none;border-radius:10px;background:#d14b73;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
+              🚑 从内部备份找回
+            </button>
+            <button onclick="checkDataRescue()" style="padding:11px 16px;border:1.5px solid #d14b73;border-radius:10px;background:#fff;color:#d14b73;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;">
+              重新检查
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- ===== 右侧：外观 / 音效 / 弱化 ===== -->
@@ -5294,16 +5314,51 @@ function loadAccountsFromIDB() {
     });
   }).catch(function (e) { console.error('[loadAccountsFromIDB] 失败', e); return null; });
 }
+// 统计一份数据里的"记录条数"，用于判断数据是否忽然变空
+// 说明：只做相对比较（备份 vs 当前），口径一致即可，无需区分内置演示数据
+function countStoreRecords(s) {
+  if (!s || typeof s !== 'object') return 0;
+  let n = 0;
+  const arrKeys = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords',
+    'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'periodRecords', 'washRecords',
+    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords'];
+  arrKeys.forEach(function (k) { if (Array.isArray(s[k])) n += s[k].length; });
+  const objKeys = ['dailyCheckin', 'periodRestDays'];
+  objKeys.forEach(function (k) { if (s[k] && typeof s[k] === 'object') n += Object.keys(s[k]).length; });
+  return n;
+}
+
 // 全量 store 备份：localStorage 5MB 配额被背景图占满时，IndexedDB 通常还有几百 MB，可作为兜底
+// 【止血保护】如果当前数据条数明显少于已有备份（说明本地数据被清空/损坏），
+// 绝不用空数据覆盖掉最后一份完整备份，否则就再也没有可恢复的来源了。
 function saveStoreToIDB() {
   return openHamiIDB().then(function (db) {
     if (!db) return;
     const tx = db.transaction(HAMI_IDB_STORE, 'readwrite');
     const os = tx.objectStore(HAMI_IDB_STORE);
-    os.put({
-      key: HAMI_IDB_KEY_STORE,
-      store: store,
-      savedAt: store._lastSavedAt || Date.now()
+    return new Promise(function (resolve) {
+      let getReq;
+      try { getReq = os.get(HAMI_IDB_KEY_STORE); } catch (e) { resolve(false); return; }
+      getReq.onsuccess = function () {
+        try {
+          const old = getReq.result;
+          const oldCount = (old && old.store) ? countStoreRecords(old.store) : 0;
+          const newCount = countStoreRecords(store);
+          if (oldCount >= 3 && newCount < oldCount * 0.6) {
+            console.warn('[saveStoreToIDB] 数据量骤降（备份 ' + oldCount + ' 条 → 当前 ' + newCount + ' 条），已保护备份不被覆盖');
+            try { window._hamiBackupProtected = { oldCount: oldCount, newCount: newCount, savedAt: old.savedAt }; } catch (e) {}
+            resolve(false);
+            return;
+          }
+          os.put({
+            key: HAMI_IDB_KEY_STORE,
+            store: store,
+            savedAt: store._lastSavedAt || Date.now()
+          });
+          resolve(true);
+        } catch (e) { resolve(false); }
+      };
+      getReq.onerror = function () { resolve(false); };
     });
   }).catch(function (e) { console.error('[saveStoreToIDB] 失败', e); });
 }
@@ -7121,6 +7176,78 @@ function tryRecoverStoreFromIDB() {
     try { renderDesktopAccounts(); } catch (e) {}
     try { renderAccount(); } catch (e) {}
   }).catch(function (e) { console.error('[tryRecoverStoreFromIDB] 恢复失败', e); });
+}
+
+// ==================== 数据急救：内部备份比当前数据更全时，一键找回 ====================
+function restoreFromIDBBackup() {
+  if (!window.indexedDB) { try { hamiToast('当前浏览器不支持内部备份'); } catch (e) {} return; }
+  loadStoreFromIDB().then(async function (rec) {
+    if (!rec || !rec.store) { try { hamiToast('没有找到可用的内部备份'); } catch (e) {} return; }
+    const idbCount = countStoreRecords(rec.store);
+    const curCount = countStoreRecords(store);
+    const when = rec.savedAt ? new Date(rec.savedAt).toLocaleString('zh-CN') : '未知时间';
+    const ok = await hamiConfirm(
+      '要用内部备份恢复数据吗？\n\n备份时间：' + when +
+      '\n备份数据：' + idbCount + ' 条\n当前数据：' + curCount + ' 条\n\n恢复后当前数据会被备份覆盖，完成后页面自动刷新。'
+    );
+    if (!ok) return;
+    const backup = rec.store;
+    for (const key in store) {
+      if (backup[key] !== undefined) store[key] = backup[key];
+    }
+    for (const key in backup) {
+      if (!(key in store)) store[key] = backup[key];
+    }
+    try { saveData(); } catch (e) {}
+    try { hamiToast('已恢复，正在刷新页面…'); } catch (e) {}
+    setTimeout(function () { location.reload(); }, 900);
+  }).catch(function (e) {
+    console.error('[restoreFromIDBBackup] 失败', e);
+    try { hamiToast('恢复失败：' + ((e && e.message) ? e.message : e)); } catch (e2) {}
+  });
+}
+
+// 页面加载后检测：内部备份是否比当前数据更全
+function checkDataRescue() {
+  if (!window.indexedDB) return;
+  loadStoreFromIDB().then(function (rec) {
+    const panel = document.getElementById('data-rescue-info');
+    if (!rec || !rec.store) {
+      if (panel) panel.innerHTML = '<span style="color:#c0392b;">❌ 没找到内部备份（浏览器数据被清干净了，只能用之前下载过的备份文件恢复）</span>';
+      return;
+    }
+    const idbCount = countStoreRecords(rec.store);
+    const curCount = countStoreRecords(store);
+    const when = rec.savedAt ? new Date(rec.savedAt).toLocaleString('zh-CN') : '未知时间';
+    if (panel) {
+      panel.innerHTML = '内部备份：<b>' + idbCount + ' 条</b>（' + when + '）<br>当前数据：<b>' + curCount + ' 条</b>　' +
+        (idbCount > curCount
+          ? '<span style="color:#c0392b;">⚠️ 备份更全，可一键找回</span>'
+          : '<span style="color:#1a9e4b;">✅ 当前是完整数据</span>');
+    }
+    if (idbCount >= 3 && idbCount > curCount + 2) {
+      showDataRescueBanner(idbCount, curCount, when);
+    }
+  }).catch(function (e) { console.error('[checkDataRescue] 失败', e); });
+}
+
+function showDataRescueBanner(idbCount, curCount, when) {
+  if (document.getElementById('data-rescue-banner')) return;
+  const bar = document.createElement('div');
+  bar.id = 'data-rescue-banner';
+  bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#fff0f3;border-bottom:2px solid #d14b73;padding:12px 14px;box-shadow:0 4px 16px rgba(209,75,115,0.25);font-size:13px;color:#5a3a48;line-height:1.6;';
+  bar.innerHTML =
+    '<div style="font-weight:800;color:#d14b73;margin-bottom:4px;">⚠️ 发现内部备份里有更完整的数据</div>' +
+    '<div>备份 <b>' + idbCount + ' 条</b>（' + when + '），当前只剩 <b>' + curCount + ' 条</b>。要用备份把数据找回来吗？</div>' +
+    '<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap;">' +
+    '<button id="data-rescue-yes" style="padding:8px 16px;border:none;border-radius:10px;background:#d14b73;color:#fff;font-weight:700;cursor:pointer;">立即找回</button>' +
+    '<button id="data-rescue-no" style="padding:8px 16px;border:1.5px solid #ffd0dc;border-radius:10px;background:#fff;color:#8a6270;font-weight:700;cursor:pointer;">先不用</button>' +
+    '</div>';
+  document.body.appendChild(bar);
+  const yes = document.getElementById('data-rescue-yes');
+  const no = document.getElementById('data-rescue-no');
+  if (yes) yes.onclick = function () { bar.remove(); restoreFromIDBBackup(); };
+  if (no) no.onclick = function () { bar.remove(); };
 }
 
 // 八月份体重种子（从主人 8/8 截图中精确提取）：仅当本地缺失对应日期时一次性补入，
@@ -13339,6 +13466,8 @@ function renderDesktop() {
 // ==================== 初始化 ====================
 loadData();
 tryRecoverStoreFromIDB(); // 从 IndexedDB 兜底恢复全部数据（防 localStorage 5MB 配额写爆）
+// 数据急救：比对内部备份是否比当前数据更全，是则弹出一键找回提示
+setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e); } }, 1500);
 
 // ===== 一次性数据更新（哈弥 2026-08-05 指令）=====
 // ===== 直接写入数据（哈弥 2026-08-05 指令）=====
