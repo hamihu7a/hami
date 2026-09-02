@@ -5940,21 +5940,34 @@ function scheduleCloudPush() {
 }
 
 async function initCloudSync(statusEl) {
-  try {
-    hamiSyncEnabled = true;
-    hamiSyncPassword = getSyncPassword();
-    syncBadgeShow('同步中…', false);
-    if (!_cryptoReady()) { cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
-    await pullAndMerge();
-    hamiSyncReady = true;
-    try { await pushNow(); } catch (e) { console.error('[initCloudSync] 首次推送失败', e); }
-    cloudStatus('☁️ 云同步已开启（零登录自动同步）', '#5aa86a');
-  } catch (e) {
-    console.error('[initCloudSync]', e);
-    hamiSyncReady = true;
-    cloudStatus('☁️ 同步异常：' + (e.message || e), '#c75b86');
-    syncBadgeShow('同步失败', true);
+  // 自愈：首次同步（拉云端→合并→推回）若因网络抖动失败，最多自动重试 3 次（间隔 15s）。
+  // 关键不变量：只有「成功拉取云端」后才会推送，绝不在没拉到数据时覆盖云端（避免误删别处记录）。
+  let attempt = 0;
+  async function _try() {
+    attempt++;
+    try {
+      hamiSyncEnabled = true;
+      hamiSyncPassword = getSyncPassword();
+      syncBadgeShow('同步中…', false);
+      if (!_cryptoReady()) { cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
+      await pullAndMerge();          // 先成功拉取，失败则进入下方 catch 重试
+      hamiSyncReady = true;
+      try { await pushNow(); } catch (e) { console.error('[initCloudSync] 首次推送失败', e); }
+      cloudStatus('☁️ 云同步已开启（零登录自动同步）', '#5aa86a');
+    } catch (e) {
+      console.error('[initCloudSync] 第' + attempt + '次失败', e);
+      if (attempt < 3) {
+        cloudStatus('☁️ 同步暂未成功，15 秒后自动重试（第 ' + attempt + '/3 次）…', '#c75b86');
+        syncBadgeShow('重试中…', false);
+        setTimeout(_try, 15000);
+      } else {
+        hamiSyncReady = true;
+        cloudStatus('☁️ 同步异常：' + (e.message || e) + '（可点「🔄 立即同步到云端」手动重试）', '#c75b86');
+        syncBadgeShow('同步失败', true);
+      }
+    }
   }
+  _try();
 }
 
 function afterBgChange(statusEl) {
