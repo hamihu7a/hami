@@ -5827,9 +5827,18 @@ function mergeStoreInto(local, remote) {
   Object.keys(remote).forEach(function (k) {
     if (k === '_lastSavedAt') { local._lastSavedAt = Math.max(localTs, remoteTs); return; }
     const lv = local[k]; const rv = remote[k];
-    if (Array.isArray(rv)) local[k] = unionArrays(lv && Array.isArray(lv) ? lv : [], rv, k);
-    else if (rv && typeof rv === 'object' && !Array.isArray(rv)) local[k] = deepMergeObjects(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
-    else if (remoteTs >= localTs) local[k] = rv;
+    if (Array.isArray(rv)) {
+      // 数组：按业务键去重取并集（体重按日期+值等），不因为时间戳丢记录
+      local[k] = unionArrays(lv && Array.isArray(lv) ? lv : [], rv, k);
+    } else if (rv && typeof rv === 'object' && !Array.isArray(rv)) {
+      // 对象：若云端存档比本机旧，保留本机对象，防止旧空数据覆盖新数据
+      // 例如云端 accountsMeta.lastUpdate 仍为空字符串时，不要覆盖本地已记录的时间
+      if (remoteTs >= localTs) {
+        local[k] = deepMergeObjects(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
+      }
+    } else if (remoteTs >= localTs) {
+      local[k] = rv;
+    }
   });
   return local;
 }
@@ -11701,6 +11710,7 @@ function updateAccountData(key, followers, likes, weekly) {
   if (weekly != null && !isNaN(weekly)) store.accounts[key].weekly = weekly;
   store.accountsMeta = store.accountsMeta || {};
   store.accountsMeta.lastUpdate = formatAccountUpdateTime(new Date());
+  store.accountsMeta._lastSavedAt = Date.now();
   const saved = saveData();
   try { renderDesktopAccounts(); } catch(e) {}
   const wText = (weekly != null && !isNaN(weekly)) ? ('，本周 ' + weekly) : '';
