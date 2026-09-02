@@ -323,6 +323,13 @@
   .sync-status-text { white-space: normal; text-align: center; line-height: 1.3; }
   .sync-status.fail .dot { background: #f0a0a0; box-shadow: 0 0 6px rgba(240,160,160,.7); }
   .sync-status.fail { color: #c25f5f; }
+  /* 超小屏（iPhone 17 ≤420px）：缩小同步小标，避免挤掉输入框 */
+  @media (max-width: 420px) {
+    .sync-status { font-size: 10px; margin-left: 4px; gap: 3px; }
+    .hami-cmd-bar { gap: 6px; padding: 9px 10px; }
+    .hami-cmd-bar .cmd-label { font-size: 11px; }
+    .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 9px; }
+  }
   /* 健康·目标体重行 + 进度环 */
   .goal-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px; }
   .goal-row label { font-size: 13px; color: var(--c-pink-deep); font-weight: 600; }
@@ -5712,6 +5719,8 @@ let hamiSyncEnabled = false;
 let hamiSyncPassword = '';
 let _syncBusy = false;
 let _syncPushTimer = null;
+// 上次成功同步的时间戳（持久化，刷新后仍能显示"上次同步：xx"）
+let _lastSyncAt = Number(localStorage.getItem('hami_last_sync') || 0);
 
 function getSyncPassword() { try { return localStorage.getItem(SYNC_PWD_KEY) || ''; } catch (e) { return ''; } }
 function setSyncPassword(p) { try { if (p) localStorage.setItem(SYNC_PWD_KEY, p); else localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {} }
@@ -5860,6 +5869,28 @@ function cloudStatus(text, color) {
   const el = document.getElementById('settings-cloud-status');
   if (el) { el.textContent = text || ''; if (color) el.style.color = color; }
 }
+// 顶部常驻同步小标：同步中转圈、成功显示时间、失败变红
+function syncBadgeShow(text, fail) {
+  const el = document.getElementById('sync-status');
+  const t = document.getElementById('sync-status-text');
+  if (t) t.textContent = text || '';
+  if (el) el.classList.toggle('fail', !!fail);
+}
+function _fmtSyncTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts), now = new Date();
+  const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  return sameDay
+    ? d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function _persistLastSync() {
+  try { if (_lastSyncAt) localStorage.setItem('hami_last_sync', String(_lastSyncAt)); } catch (e) {}
+}
+function _initSyncBadge() {
+  if (_lastSyncAt) syncBadgeShow('上次同步 · ' + _fmtSyncTime(_lastSyncAt), false);
+  else syncBadgeShow('未同步', false);
+}
 function hamiCloudEnabled() { return hamiSyncEnabled && _cryptoReady(); }
 function cloudEnabled() { return hamiCloudEnabled(); }
 
@@ -5874,10 +5905,13 @@ async function pullAndMerge() {
       mergeStoreInto(store, remote.store);
       try { saveData(); } catch (e) {}
       try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e) {}
+      _lastSyncAt = Date.now(); _persistLastSync();
       cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
+      syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
     }
   } catch (e) {
     cloudStatus('⚠️ 云端数据解密失败（密码不符？）：' + (e.message || e), '#c75b86');
+    syncBadgeShow('同步失败', true);
     throw e;
   }
 }
@@ -5890,10 +5924,13 @@ async function pushNow() {
     const ct = await encryptStore(payload, hamiSyncPassword);
     const got = await _ghGet();
     await _ghPut(ct, got ? got.sha : null, 'hami sync ' + new Date().toISOString());
+    _lastSyncAt = Date.now(); _persistLastSync();
     cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
+    syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
   } catch (e) {
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
+    syncBadgeShow('同步失败', true);
   } finally { _syncBusy = false; }
 }
 function scheduleCloudPush() {
@@ -5906,7 +5943,8 @@ async function initCloudSync(statusEl) {
   try {
     hamiSyncEnabled = true;
     hamiSyncPassword = getSyncPassword();
-    if (!_cryptoReady()) { cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); return; }
+    syncBadgeShow('同步中…', false);
+    if (!_cryptoReady()) { cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
     await pullAndMerge();
     hamiSyncReady = true;
     try { await pushNow(); } catch (e) { console.error('[initCloudSync] 首次推送失败', e); }
@@ -5915,6 +5953,7 @@ async function initCloudSync(statusEl) {
     console.error('[initCloudSync]', e);
     hamiSyncReady = true;
     cloudStatus('☁️ 同步异常：' + (e.message || e), '#c75b86');
+    syncBadgeShow('同步失败', true);
   }
 }
 
@@ -13259,6 +13298,7 @@ function renderDesktop() {
 
 // ==================== 初始化 ====================
 loadData();
+try { _initSyncBadge(); } catch (e) {}   // 顶部常驻同步小标：先显示「上次同步·时间」或「未同步」
 tryRecoverStoreFromIDB(); // 从 IndexedDB 兜底恢复全部数据（防 localStorage 5MB 配额写爆）
 // 数据急救：比对内部备份是否比当前数据更全，是则弹出一键找回提示
 setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e); } }, 1500);
