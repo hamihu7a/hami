@@ -5719,6 +5719,8 @@ let hamiSyncEnabled = false;
 let hamiSyncPassword = '';
 let _syncBusy = false;
 let _syncPushTimer = null;
+// 后台定时拉取进行中标记（避免与前一次拉取重叠）
+let _periodicPullBusy = false;
 // 上次成功同步的时间戳（持久化，刷新后仍能显示"上次同步：xx"）
 let _lastSyncAt = Number(localStorage.getItem('hami_last_sync') || 0);
 
@@ -5982,6 +5984,19 @@ try {
     }
   });
 } catch (e) {}
+
+// 后台定时拉取：让手机/电脑「在哪记都同步」更实时——其他设备刚记的内容，约 1 分钟内自动出现在本机，无需手动刷新。
+// 保守策略：仅页面可见、未在做输入/开抽屉、无同步进行时才拉；复用已验证的 pullAndMerge（增量合并、不丢数据）。
+setInterval(function () {
+  if (_periodicPullBusy || _syncBusy) return;
+  if (!hamiSyncReady || !hamiCloudEnabled()) return;
+  if (document.visibilityState !== 'visible') return;
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+  if (document.querySelector('.account-drawer.open')) return;
+  _periodicPullBusy = true;
+  pullAndMerge().then(function () { _periodicPullBusy = false; }).catch(function () { _periodicPullBusy = false; });
+}, 60000);
 
 
 
