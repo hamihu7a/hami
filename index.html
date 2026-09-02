@@ -5979,8 +5979,15 @@ function afterBgChange(statusEl) {
 
 try {
   window.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden' && hamiSyncReady && hamiCloudEnabled()) {
-      try { pushNow(); } catch (e) {}
+    if (document.visibilityState === 'hidden') {
+      // 切走/锁屏时立刻把本机改动推上云端，别处设备随时能拉到
+      if (hamiSyncReady && hamiCloudEnabled()) { try { pushNow(); } catch (e) {} }
+    } else if (document.visibilityState === 'visible') {
+      // 切回标签页立刻拉一次云端：手机刚记的内容，回到电脑页瞬间出现，不用等 60s 轮询。
+      // 复用已验证的 pullAndMerge（增量合并、按时间戳不丢数据）；加忙标记守卫避免与轮询/推送重叠。
+      if (hamiSyncReady && hamiCloudEnabled() && !_periodicPullBusy && !_syncBusy) {
+        pullAndMerge().catch(function () {});
+      }
     }
   });
 } catch (e) {}
