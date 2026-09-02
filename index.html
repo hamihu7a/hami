@@ -5766,17 +5766,21 @@ async function _ghPut(contentB64, sha, message) {
   const body = { message: message, content: contentB64, branch: HAMI_SYNC.branch };
   if (sha) body.sha = sha;
   const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'hami-sync' };
-  let res = await fetch(url, { method: 'PUT', headers: hd, body: JSON.stringify(body) });
-  if (res.status === 409) {
+  // 409 冲突重试：多设备/多标签页同时推送时会撞版本，每次重新取最新 sha 再试，最多 3 次
+  let lastRes = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let res = await fetch(url, { method: 'PUT', headers: hd, body: JSON.stringify(body) });
+    if (res.status !== 409) { lastRes = res; break; }
     const got = await _ghGet();
-    if (got) { body.sha = got.sha; res = await fetch(url, { method: 'PUT', headers: hd, body: JSON.stringify(body) }); }
+    if (got) body.sha = got.sha;
+    lastRes = res;
   }
-  if (!res.ok) {
-    let msg = '推送失败 HTTP ' + res.status;
-    try { const e = await res.json(); if (e && e.message) msg = '推送失败：' + e.message; } catch (e2) {}
+  if (!lastRes || !lastRes.ok) {
+    let msg = '推送失败 HTTP ' + (lastRes ? lastRes.status : '?');
+    try { const e = await lastRes.json(); if (e && e.message) msg = '推送失败：' + e.message; } catch (e2) {}
     throw new Error(msg);
   }
-  const j = await res.json();
+  const j = await lastRes.json();
   return (j.content && j.content.sha) || (j.commit && j.commit.sha) || 'ok';
 }
 
@@ -5843,7 +5847,9 @@ function mergeStoreInto(local, remote) {
       if (remoteTs >= localTs) {
         local[k] = deepMergeObjects(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
       }
-    } else if (remoteTs >= localTs) {
+    } else if (remoteTs >= localTs && rv != null && rv !== '') {
+      // 标量：仅当云端值非空时才覆盖本地，避免「云端整库较新但某字段为空」时
+      // 把本地真实的标量（如目标体重 weightGoal、起始体重 startWeight）静默抹成空
       local[k] = rv;
     }
   });
