@@ -5815,8 +5815,15 @@ function deepMergeObjects(a, b) {
   const out = (Array.isArray(a) ? a.slice() : Object.assign({}, a));
   Object.keys(b || {}).forEach(function (k) {
     const bv = b[k];
-    if (bv && typeof bv === 'object' && !Array.isArray(bv) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) out[k] = deepMergeObjects(a[k], bv);
-    else out[k] = bv;
+    const av = out[k];
+    if (bv && typeof bv === 'object' && !Array.isArray(bv) && av && typeof av === 'object' && !Array.isArray(av)) {
+      out[k] = deepMergeObjects(av, bv);
+    } else if (bv === '' && av != null && av !== '') {
+      // 远程空字符串不覆盖本地已有的真实值（防止云端旧空字段把本地数据抹成空）
+      // 例：云端 accounts.big.followers 为 '' 时，不要覆盖本地真实的粉丝数
+    } else {
+      out[k] = bv;
+    }
   });
   return out;
 }
@@ -6949,7 +6956,8 @@ function tryRecoverStoreFromIDB() {
     } catch (e) {}
     // 重新渲染所有可能受影响的 panels
     try { renderHome(); } catch (e) {}
-    try { renderWeight(); } catch (e) {}
+    try { renderDesktopWeight(); } catch (e) {}
+    try { renderFitness(); } catch (e) {}
     try { renderHealth(); } catch (e) {}
     try { renderCheckin(); } catch (e) {}
     try { renderDesktopAccounts(); } catch (e) {}
@@ -8566,7 +8574,7 @@ function renderFitness() {
   const fitnessLastMD = lastRecord ? lastUpdateMD([{ date: lastRecord.date }]) : '—';
   const totalLost = latestAfter != null ? (startWeight - latestAfter).toFixed(1) : '—';
   const exerciseDays = monthExercises.length;
-  const totalDays = new Date(2026, parseInt(month.split('-')[1]), 0).getDate();
+  const totalDays = new Date(parseInt(month.split('-')[0], 10), parseInt(month.split('-')[1], 10), 0).getDate();
   const activeDays = totalDays - restDays.length;
 
   const aerobicsCount = monthExercises.filter(e=>e.aerobics).length;
@@ -12554,7 +12562,7 @@ function renderDesktopWeight() {
   }
   let monthChange = '—', monthChangeColor = '#7d4a5a';
   if (monthWeights.length >= 2) {
-    const lastW = monthWeights[monthWeights.length-1].after, firstW = monthWeights[0].after;
+    const lastW = getW(monthWeights[monthWeights.length-1]), firstW = getW(monthWeights[0]);
     if (lastW != null && firstW != null) {
       const change = (lastW - firstW).toFixed(1);
       const cn = parseFloat(change);
