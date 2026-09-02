@@ -6967,6 +6967,11 @@ function loadData() {
       (store.futurePosts || []).forEach(function (p) { if (!p.account) p.account = 'big'; });
       syncAllFuturePostMediaLinks();
     } catch (e) {}
+    // 脏数据防护：清掉各数组里可能残留的 null/undefined（多由异常合并产生），
+    // 避免后续 r.date 访问抛错导致面板崩溃、或记录"记了又消失"。一处净化、全局受益。
+    ['weightRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
+      if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
+    });
   } catch(e) {
     _loadBroken = true;
     console.error('[loadData] 本地存档解析失败，已停止自动保存以免用默认值覆盖您的数据', e);
