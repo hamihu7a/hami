@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-02-02">
+<meta name="hami-build" content="2026-09-03-01">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3107,6 +3107,61 @@ body.dark-mode .future-post-title { color: #ff9eb5 !important; }
 body.dark-mode .future-post-content { color: #e6cdd6 !important; }
 body.dark-mode .future-post-date { color: #e6cdd6 !important; background: rgba(255,158,188,.12) !important; }
 body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(255,158,188,.12) !important; border-color: rgba(255,158,188,.25) !important; }
+
+/* ===== 深色模式补强：覆盖内联硬编码色（解决"深底配深字看不见"） ===== */
+/* 说明：页面大量颜色写在行内 style 属性里，优先级高于上面的类选择器，
+   这里用属性选择器按"内联写法"精确命中并提亮/压暗，且只改颜色、不动任何尺寸排版。 */
+/* —— 文字色：深色 → 亮色 —— */
+body.dark-mode [style*="color:#d14b73"], body.dark-mode [style*="color: #d14b73"] { color:#ff9ab4 !important; }
+body.dark-mode [style*="color:#8a6270"], body.dark-mode [style*="color: #8a6270"] { color:#c9a8b6 !important; }
+body.dark-mode [style*="color:#5a3a48"], body.dark-mode [style*="color: #5a3a48"] { color:#eadde4 !important; }
+body.dark-mode [style*="color:#7d4a5a"], body.dark-mode [style*="color: #7d4a5a"] { color:#d9bcc8 !important; }
+body.dark-mode [style*="color:#4a3340"], body.dark-mode [style*="color: #4a3340"] { color:#eadde4 !important; }
+body.dark-mode [style*="color:#c75b86"], body.dark-mode [style*="color: #c75b86"] { color:#ff9ab4 !important; }
+body.dark-mode [style*="color:#856404"], body.dark-mode [style*="color: #856404"] { color:#ffd98a !important; }
+body.dark-mode [style*="color:#721c24"], body.dark-mode [style*="color: #721c24"] { color:#ffb0bd !important; }
+body.dark-mode [style*="color:#e6cdd6"], body.dark-mode [style*="color: #e6cdd6"] { color:#d9bcc8 !important; }
+/* —— 背景色：白/浅粉 → 深色 —— */
+body.dark-mode [style*="background:#fff"], body.dark-mode [style*="background: #fff"] { background:#2c1f26 !important; }
+body.dark-mode [style*="background-color:#fff"], body.dark-mode [style*="background-color: #fff"] { background-color:#2c1f26 !important; }
+body.dark-mode [style*="background:#fff0f5"], body.dark-mode [style*="background: #fff0f5"] { background:#33242c !important; }
+body.dark-mode [style*="background:#fff8fa"], body.dark-mode [style*="background: #fff8fa"] { background:#2c1f26 !important; }
+body.dark-mode [style*="background:#ffd6e0"], body.dark-mode [style*="background: #ffd6e0"] { background:#33242c !important; }
+body.dark-mode [style*="background:#ffd9e4"], body.dark-mode [style*="background: #ffd9e4"] { background:#33242c !important; }
+body.dark-mode [style*="background:#fdf6f1"], body.dark-mode [style*="background: #fdf6f1"] { background:#241a20 !important; }
+body.dark-mode [style*="background:#fff3cd"], body.dark-mode [style*="background: #fff3cd"] { background:#3d3320 !important; }
+body.dark-mode [style*="background:#f8d7da"], body.dark-mode [style*="background: #f8d7da"] { background:#40262c !important; }
+/* —— 主题切换：整体平滑过渡（只过渡颜色，不动画布局） —— */
+body, .panel, .card, .todo-card, .tip-box, .sidebar, .main, input, textarea, select, button {
+  transition: background-color .28s ease, color .28s ease, border-color .28s ease;
+}
+/* 深色下给有背景图的区域加柔光遮罩，避免夜间的图太刺眼（inset 阴影不影响子元素） */
+body.dark-mode .panel, body.dark-mode .mirror-block { box-shadow: inset 0 0 0 999px rgba(26,18,24,.48); }
+body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+
+/* ===== 微动效：内容错落进场 · 只动透明度与位移，不改变任何尺寸排版 ===== */
+@keyframes hamiCardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.panel.active > * { animation: hamiCardIn .42s cubic-bezier(.22,.61,.36,1) both; }
+.panel.active > *:nth-child(2) { animation-delay: .04s; }
+.panel.active > *:nth-child(3) { animation-delay: .08s; }
+.panel.active > *:nth-child(4) { animation-delay: .12s; }
+.panel.active > *:nth-child(5) { animation-delay: .16s; }
+.panel.active > *:nth-child(n+6) { animation-delay: .2s; }
+/* 列表行轻交互：悬停微移 + 阴影，提升"活"感 */
+.fin-flow-row, .rank-row, .ci-item, .todo-item, .future-post-card, .stat-card {
+  transition: transform .18s ease, box-shadow .18s ease, background-color .28s ease;
+}
+.fin-flow-row:hover, .rank-row:hover, .ci-item:hover, .todo-item:hover, .future-post-card:hover {
+  transform: translateX(2px);
+}
+.stat-card:hover { transform: translateY(-2px); }
+/* 尊重系统"减少动效"偏好：晕动症用户自动关闭全部动画 */
+@media (prefers-reduced-motion: reduce) {
+  .panel, .panel.active, .panel.active > * { animation: none !important; }
+  .fin-flow-row:hover, .rank-row:hover, .ci-item:hover, .todo-item:hover,
+  .future-post-card:hover, .stat-card:hover { transform: none !important; }
+  * { transition-duration: .01ms !important; }
+}
 </style>
 </head>
 <body>
@@ -3114,7 +3169,7 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-02-02';
+  var BUILD_VER = '2026-09-03-01';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -4112,8 +4167,35 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
         </div>
       </div>
       <div id="stats-inline-ranking"></div>
+      <div style="text-align:center;margin-top:10px;">
+        <button type="button" onclick="openStatsModal()" style="padding:8px 16px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:999px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.4;">
+          🔍 查看完整分类统计
+        </button>
+      </div>
     </div>
 
+  </div>
+
+  <!-- ==================== 完整分类统计 弹窗 ==================== -->
+  <div id="stats-modal" class="modal-mask" style="display:none;z-index:1200;" onclick="if(event.target===this)closeStatsModal()">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeStatsModal()" aria-label="关闭">✕</button>
+        <div class="arm-tabs">
+          <button class="arm-tab active" data-stype="expense">支出</button>
+          <button class="arm-tab" data-stype="income">收入</button>
+        </div>
+        <span class="arm-account" id="stats-display-mode" onclick="toggleStatsMode()" style="cursor:pointer;user-select:none;" title="切换金额 / 笔数">显示笔数 ▾</span>
+      </div>
+      <div class="ring-wrap" style="width:200px;height:200px;margin:12px auto 8px;">
+        <svg viewBox="0 0 220 220" id="ring-svg" style="width:100%;height:100%;"></svg>
+        <div class="ring-center">
+          <div class="ring-center-label" id="ring-center-label">总支出</div>
+          <div class="ring-center-value" id="ring-center-value">¥0.00</div>
+        </div>
+      </div>
+      <div id="stats-ranking" style="max-height:44vh;overflow:auto;"></div>
+    </div>
   </div>
 
   <!-- ==================== 记一笔 弹窗 ==================== -->
@@ -4490,6 +4572,25 @@ body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(25
       <div id="cr-topic-list"></div>
     </div>
 
+    <!-- 爆款对标 -->
+    <div class="card">
+      <div class="card-title"><span>🎯</span> 爆款对标库 · 拆别人的爆款，变自己的套路</div>
+      <div style="font-size:12px;color:#8a6270;line-height:1.6;margin-bottom:8px;">
+        刷到别人的爆款，把标题和互动数据记下来，自动算出<b>爆款等级</b>和<b>可借鉴点</b>。攒够 10 条，规律自己就浮出来了。
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="cr-bm-title" class="cr-input" style="flex:1 1 100%;min-width:0;" placeholder="爆款标题，如：sims4捏脸｜这个参数我调了三天">
+        <input id="cr-bm-likes" class="cr-input" style="width:84px;min-width:0;" type="number" min="0" inputmode="numeric" placeholder="点赞">
+        <input id="cr-bm-collects" class="cr-input" style="width:84px;min-width:0;" type="number" min="0" inputmode="numeric" placeholder="收藏">
+        <input id="cr-bm-comments" class="cr-input" style="width:84px;min-width:0;" type="number" min="0" inputmode="numeric" placeholder="评论">
+        <select id="cr-bm-platform" class="cr-input" style="width:96px;min-width:0;">
+          <option>小红书</option><option>抖音</option>
+        </select>
+        <button class="cr-btn" onclick="crAddBenchmark()">加入对标库</button>
+      </div>
+      <div id="cr-bm-list" style="margin-top:10px;"></div>
+    </div>
+
     <!-- 封面模板 -->
     <div class="card">
       <div class="card-title"><span>🎨</span> 封面模板库（点「复制结构」照着排）</div>
@@ -4862,6 +4963,7 @@ let store = {
   mediaRecords: [],  // { id, date, account, title, content, douyin, link, likes, collects, comments, note, count, createdAt }
   futurePosts: [],     // 未来更新图文记录 { id, title, content, tags, date, done, createdAt }
   topicLibrary: [],   // 选题库/系列化栏目 { id, name, cat, status, note, created }
+  benchmarkNotes: [],  // 爆款对标库 { id, title, platform, likes, collects, comments, link, level, score, tips[], note, createdAt }
   accountHealth: { scores: {}, notes: {} },  // 七维账号体检 { scores:{key:1-5}, notes:{} }
   inspireRecords: [
     { date: "2026-07-31", type: "web", platform: "小红书", topic: "捏脸技巧", title: "模拟人生4 高级捏脸｜把EA风发挥到极致", traffic: "爆款",
@@ -5361,7 +5463,7 @@ function countStoreRecords(s) {
   let n = 0;
   const arrKeys = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords',
     'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'periodRecords', 'washRecords',
-    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords'];
+    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords', 'benchmarkNotes'];
   arrKeys.forEach(function (k) { if (Array.isArray(s[k])) n += s[k].length; });
   const objKeys = ['dailyCheckin', 'periodRestDays'];
   objKeys.forEach(function (k) { if (s[k] && typeof s[k] === 'object') n += Object.keys(s[k]).length; });
@@ -7040,7 +7142,7 @@ function loadData() {
     } catch (e) {}
     // 脏数据防护：清掉各数组里可能残留的 null/undefined（多由异常合并产生），
     // 避免后续 r.date 访问抛错导致面板崩溃、或记录"记了又消失"。一处净化、全局受益。
-    ['weightRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
+    ['weightRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
   } catch(e) {
@@ -8089,6 +8191,93 @@ const CR_COVERS = [
   { id: 'c', name: '合集型', layout: '上方大字 + 下方 3–4 个缩略方块', copy: '【标题】收藏！8 套 sims4 婚礼捏脸\n【方块】复古 / 甜美 / 暗黑 / 童话' },
   { id: 'd', name: '人设型', layout: '居中人物 + 底部一句话 slogan', copy: '【slogan】每月分享免费人物 · 接定制ing\n【标题】你的专属 sims 角色长这样' }
 ];
+// ============ 爆款对标库：算爆款等级 + 拆可借鉴点 ============
+function crAnalyzeBenchmark(title, likes, collects, comments) {
+  var L = Number(likes) || 0, C = Number(collects) || 0, M = Number(comments) || 0;
+  var heat = L + C * 2 + M * 3;          // 收藏/评论权重更高（更能代表内容价值）
+  var level = '起步', color = '#8a6270';
+  if (heat >= 30000) { level = '现象级'; color = '#e84a5f'; }
+  else if (heat >= 10000) { level = '大爆款'; color = '#ff7f9e'; }
+  else if (heat >= 3000) { level = '爆款'; color = '#d14b73'; }
+  else if (heat >= 1000) { level = '优质'; color = '#c75b86'; }
+  else if (heat >= 300) { level = '潜力'; color = '#856404'; }
+  var t = String(title || '');
+  var tips = [];
+  if (/\d/.test(t)) tips.push('标题带数字，清单感强');
+  if (/保姆级|教程|干货|攻略|技巧|新手|入门|步骤/.test(t)) tips.push('教程型词，收藏率高');
+  if (/[?？]|吗|怎么|如何|为什么|凭什么/.test(t)) tips.push('疑问句开头，勾好奇心');
+  if (/绝了|太美|哭了|惊艳|封神|狠狠|真的会|谁懂/.test(t)) tips.push('情绪词拉满，易被推荐');
+  if (/公开|免费|分享|附|送|参数|合集/.test(t)) tips.push('给实际好处，涨粉快');
+  if (/sims|模拟人生|捏脸|捏人|cc|mod/i.test(t)) tips.push('精准命中领域关键词');
+  if (t.length >= 15 && t.length <= 28) tips.push('标题长度刚好（15-28 字）');
+  else if (t.length > 0 && t.length < 12) tips.push('标题偏短，可补痛点或结果');
+  else if (t.length > 32) tips.push('标题偏长，重点会被折叠');
+  if (C > 0 && C > L * 0.5) tips.push('收藏高：有保存价值，适合做成系列');
+  if (M > 0 && M > L * 0.1) tips.push('评论高：结尾留了讨论点');
+  if (!tips.length) tips.push('标题较平，建议加数字＋痛点');
+  return { heat: heat, level: level, color: color, tips: tips };
+}
+function crAddBenchmark() {
+  var tEl = document.getElementById('cr-bm-title');
+  var title = (tEl && tEl.value ? tEl.value : '').trim();
+  if (!title) { try { hamiToast('先填爆款标题呀～'); } catch (e) {} return; }
+  var likes = parseInt((document.getElementById('cr-bm-likes') || {}).value, 10) || 0;
+  var collects = parseInt((document.getElementById('cr-bm-collects') || {}).value, 10) || 0;
+  var comments = parseInt((document.getElementById('cr-bm-comments') || {}).value, 10) || 0;
+  var pEl = document.getElementById('cr-bm-platform');
+  var platform = pEl ? pEl.value : '小红书';
+  var a = crAnalyzeBenchmark(title, likes, collects, comments);
+  if (!store.benchmarkNotes) store.benchmarkNotes = [];
+  store.benchmarkNotes.push({
+    id: 'bm' + Date.now(), title: title, platform: platform,
+    likes: likes, collects: collects, comments: comments,
+    heat: a.heat, level: a.level, color: a.color, tips: a.tips,
+    createdAt: Date.now()
+  });
+  try { saveData(); } catch (e) {}
+  if (tEl) tEl.value = '';
+  ['cr-bm-likes', 'cr-bm-collects', 'cr-bm-comments'].forEach(function (id) {
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+  crRenderBenchmarks();
+  try { hamiToast('已加入对标库 · ' + a.level); } catch (e) {}
+}
+function crDelBenchmark(idx) {
+  if (!store.benchmarkNotes || !store.benchmarkNotes[idx]) return;
+  var t = store.benchmarkNotes[idx].title || '这条';
+  store.benchmarkNotes.splice(idx, 1);
+  try { saveData(); } catch (e) {}
+  crRenderBenchmarks();
+  try { hamiToast('已删除对标：' + t.substring(0, 12)); } catch (e) {}
+}
+function crRenderBenchmarks() {
+  var box = document.getElementById('cr-bm-list');
+  if (!box) return;
+  var list = store.benchmarkNotes || [];
+  if (!list.length) {
+    box.innerHTML = '<div style="text-align:center;color:#8a6270;padding:22px;font-size:13px;line-height:1.7;">还没有对标记录～<br>刷到爆款就回来记一条，攒够 10 条规律就出来了</div>';
+    return;
+  }
+  var sorted = list.slice().sort(function (a, b) { return (b.heat || 0) - (a.heat || 0); });
+  var html = '';
+  sorted.forEach(function (b) {
+    var realIdx = list.indexOf(b);
+    var tipsHtml = (b.tips || []).map(function (t) {
+      return '<span style="display:inline-block;font-size:11.5px;background:rgba(255,158,181,.16);color:#c75b86;padding:3px 9px;border-radius:9px;line-height:1.6;">' + escapeHtml(t) + '</span>';
+    }).join('');
+    html += '<div class="co-box" style="margin-bottom:9px;padding:11px 13px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+      + '<span style="font-weight:800;color:' + b.color + ';font-size:13px;white-space:nowrap;">' + escapeHtml(b.level) + '</span>'
+      + '<span style="font-size:13px;color:#5a3a48;font-weight:700;flex:1;min-width:0;line-height:1.6;word-break:break-word;">' + escapeHtml(b.title) + '</span>'
+      + '<button class="row-del-btn" onclick="crDelBenchmark(' + realIdx + ')" aria-label="删除">🗑</button>'
+      + '</div>'
+      + '<div style="font-size:12px;color:#8a6270;margin-top:5px;line-height:1.6;">' + escapeHtml(b.platform || '')
+      + ' · 赞 ' + (b.likes || 0) + ' · 藏 ' + (b.collects || 0) + ' · 评 ' + (b.comments || 0) + ' · 热度 ' + (b.heat || 0) + '</div>'
+      + '<div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">' + tipsHtml + '</div>'
+      + '</div>';
+  });
+  box.innerHTML = html;
+}
 function crRenderCovers() {
   const box = document.getElementById('cr-cover-list');
   if (!box) return;
@@ -8241,6 +8430,7 @@ function renderCreate() {
   try { crRenderCovers(); } catch(e){}
   try { crRenderReview(); } catch(e){}
   try { crRenderTopicList(); } catch(e){}
+  try { crRenderBenchmarks(); } catch(e){}
 }
 
 // 月份下拉动态生成：生成当前月前后若干月的选项，避免写死导致 2027 年后显示错月、且看不到历史月份
@@ -10279,7 +10469,12 @@ function renderStatsModal(type) {
   });
   const cats = Object.values(catMap).sort((a,b) => b.amount - a.amount);
   const total = cats.reduce((s,c) => s + c.amount, 0);
+  const totalCount = cats.reduce((s,c) => s + (c.count || 0), 0);
   const label = type === 'income' ? '总收入' : '总支出';
+  // 显示模式：amount=按金额 / count=按笔数（弹窗右上角「显示笔数 ▾」切换）
+  const modeEl = document.getElementById('stats-display-mode');
+  const mode = modeEl ? (modeEl.dataset.mode || 'amount') : 'amount';
+  const centerMain = mode === 'count' ? (totalCount + '笔') : ('¥' + fmtMoney(total));
 
   // 环形图 SVG
   let svg = '';
@@ -10304,7 +10499,7 @@ function renderStatsModal(type) {
   const ring = document.getElementById('ring-svg');
   if (ring) ring.innerHTML = svg;
   const cv = document.getElementById('ring-center-value');
-  if (cv) cv.textContent = '¥' + fmtMoney(total);
+  if (cv) cv.textContent = centerMain;
   const cl = document.getElementById('ring-center-label');
   if (cl) cl.textContent = label;
 
@@ -10315,17 +10510,21 @@ function renderStatsModal(type) {
     }
     let h = '';
     cats.forEach(c => {
-      const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
+      const pct = mode === 'count'
+        ? (totalCount > 0 ? ((c.count / totalCount) * 100).toFixed(1) : 0)
+        : (total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0);
       const sign = type === 'income' ? '+' : '-';
+      const mainTxt = mode === 'count' ? (c.count + '笔') : (sign + '¥' + fmtMoney(c.amount));
+      const subTxt  = mode === 'count' ? (sign + '¥' + fmtMoney(c.amount)) : (c.count + '笔');
       h += `
         <div class="rank-row">
           <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
           <span class="rank-name">${c.name}</span>
           <span style="font-size:12px;color:#8a6270;min-width:36px;text-align:left;">${pct}%</span>
           <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
-          <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${sign}¥${fmtMoney(c.amount)}</span>
+          <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${mainTxt}</span>
         </div>
-        <div style="text-align:right;font-size:12px;color:#8a6270;padding:0 16px 8px;">${c.count}笔</div>
+        <div style="text-align:right;font-size:12px;color:#8a6270;padding:0 16px 8px;">${subTxt}</div>
       `;
     });
     return h;
@@ -10601,14 +10800,8 @@ function bindFinanceEvents() {
       });
     });
   }
-  // 财务面板内 Tab 切换（支出/收入）
-  const tab = document.getElementById('account-rank-tab');
-  if (tab && !tab.dataset.bound) {
-    tab.dataset.bound = '1';
-    tab.querySelectorAll('.fin-tab').forEach(t => {
-      t.addEventListener('click', () => renderAccountRanking(t.dataset.tab));
-    });
-  }
+  // 说明：财务面板的「支出/收入」切换已由 renderInlineStats 承担（见下方 iTab 绑定），
+  // 旧的 account-rank-tab 绑定所依赖的元素与函数均不存在，属失效死代码，已移除。
   // 统计弹窗内 Tab 切换（支出/收入）
   const statsModal = document.getElementById('stats-modal');
   if (statsModal && !statsModal.dataset.bound) {
