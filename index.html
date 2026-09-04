@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-03-01">
+<meta name="hami-build" content="2026-09-04-01">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3169,7 +3169,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-03-01';
+  var BUILD_VER = '2026-09-04-01';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -4794,6 +4794,20 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
           </button>
           <span id="settings-cloud-status" style="font-size:12px;color:var(--c-pink-deep,#d14b73);"></span>
         </div>
+
+        <!-- ===== 同步自检：一眼看清手机/电脑到底通没通 ===== -->
+        <div style="margin-top:12px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,138,166,0.10);border:1.5px solid rgba(209,75,115,0.30);">
+          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:8px;line-height:1.5;">🔍 同步自检（手机/电脑对不上、数据记不住时，先点它）</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <button id="settings-sync-check" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">
+              查一下同步通不通
+            </button>
+            <button id="settings-sync-force" style="padding:8px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;">
+              强制重新同步
+            </button>
+          </div>
+          <div id="hami-sync-check-out" style="font-size:12px;color:#8a6270;line-height:1.7;"></div>
+        </div>
         <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button id="settings-cloud-open-system" style="padding:8px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;">
             🪟 用系统浏览器打开（推荐）
@@ -5712,9 +5726,19 @@ function delBgStored(key) {
   try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}
 }
 // 启动时：载入 IndexedDB 里的背景图，并把 localStorage 里的旧背景图迁移过去、立刻腾出 5MB 配额
+// 带超时的 Promise 包装：IndexedDB 被阻塞时 Promise 可能永不 resolve，
+// 必须兜底，否则后面所有依赖它的逻辑（背景图迁移、以及曾经挂在它后面的云同步）会被全部拖死。
+function _promiseTimeout(p, ms, fallback) {
+  return Promise.race([
+    Promise.resolve(p).catch(function () { return fallback; }),
+    new Promise(function (resolve) { setTimeout(function () { resolve(fallback); }, ms); })
+  ]);
+}
 async function initBgCacheAndMigrate() {
   try {
-    const idbBgs = await bgIdbGetAll();
+    // 手机浏览器上 IndexedDB 可能被阻塞，3 秒拿不到就当没有缓存继续走，
+    // 保证 localStorage 腾挪（腾出 5MB 配额）一定执行，业务数据才写得进去。
+    const idbBgs = await _promiseTimeout(bgIdbGetAll(), 3000, {});
     Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k]) BG_CACHE[k] = idbBgs[k]; });
   } catch (e) {}
   let migrated = 0;
@@ -6093,7 +6117,67 @@ function scheduleCloudPush() {
   _syncPushTimer = setTimeout(function () { try { pushNow(); } catch (e) {} }, 2500);
 }
 
-async function initCloudSync(statusEl) {
+// ---------- 同步自检：把「同步到底通不通」摊开给主人看，不再靠猜 ----------
+async function hamiSyncSelfCheck() {
+  const out = document.getElementById('hami-sync-check-out');
+  if (!out) return;
+  const L = [];
+  const add = function (k, v, ok) {
+    L.push('<div style="font-size:12.5px;line-height:1.95;color:#5a3a48;">'
+      + (ok === true ? '<span style="color:#1a9e4b;font-weight:800;">✓</span> '
+        : (ok === false ? '<span style="color:#e84a5f;font-weight:800;">✗</span> ' : ''))
+      + escapeHtml(k) + '：<b>' + escapeHtml(String(v)) + '</b></div>');
+  };
+  add('本机加密环境', _cryptoReady() ? '支持' : '不支持（必须用 https 打开本页）', _cryptoReady());
+  add('云同步开关', hamiSyncEnabled ? '已开启' : '未开启', hamiSyncEnabled);
+  add('同步密码', getSyncPassword() ? '已设自定义密码（两台设备必须填一样的，否则互相解不开）' : '未设置（用默认密钥，可正常同步）', true);
+  add('上次成功同步', _lastSyncAt ? new Date(_lastSyncAt).toLocaleString('zh-CN') : '从未成功过', !!_lastSyncAt);
+  add('本机体重记录', ((store.weightRecords || []).length) + ' 条', true);
+  out.innerHTML = L.join('') + '<div style="font-size:12px;color:#8a6270;margin-top:6px;">正在查询云端…</div>';
+  try {
+    const got = await _ghGet();
+    if (!got) {
+      add('云端存档', '还不存在（说明本机一次都没推送成功过）', false);
+      out.innerHTML = L.join('') + '<div style="font-size:12px;color:#c75b86;margin-top:6px;line-height:1.7;">点下方「立即同步到云端」把本机数据传上去，别的设备再打开就能拉到了。</div>';
+      return;
+    }
+    let remote = null;
+    try {
+      remote = await decryptStore(got.content.replace(/\s+/g, ''), getSyncPassword());
+    } catch (de) {
+      add('云端存档', '存在，但解密失败：' + (de.message || de) + '（多半是两台设备填的密码不一样）', false);
+      out.innerHTML = L.join('');
+      return;
+    }
+    const rs = (remote && remote.store) || {};
+    add('云端存档', '存在（约 ' + Math.max(1, Math.round(got.content.length / 1024)) + ' KB）', true);
+    add('云端最后更新', (remote && remote.updatedAt) ? new Date(remote.updatedAt).toLocaleString('zh-CN') : '未知', true);
+    const lw = (store.weightRecords || []).length;
+    const rw = (rs.weightRecords || []).length;
+    add('云端体重记录', rw + ' 条', true);
+    add('体重对比', '本机 ' + lw + ' 条 / 云端 ' + rw + ' 条'
+      + (lw === rw ? '（一致）' : '（不一致 → 点「立即同步到云端」合并）'), lw === rw);
+    out.innerHTML = L.join('');
+  } catch (e) {
+    add('云端读取', '失败：' + (e.message || e), false);
+    out.innerHTML = L.join('');
+  }
+}
+// 强制立刻重新同步：重新初始化（拉云端 → 合并 → 推回），用于卡住时手动救活
+async function hamiForceResync() {
+  try { hamiToast('正在重新同步…'); } catch (e) {}
+  try { await initCloudSync(document.getElementById('settings-cloud-status'), true); } catch (e) {}
+  try { await pullAndMerge(); } catch (e) {}
+  try { await pushNow(); } catch (e) {}
+  try { hamiSyncSelfCheck(); } catch (e) {}
+  try { renderDesktop(); } catch (e) {}
+}
+
+let _cloudInitStarted = false;   // 云同步只自动初始化一次：多条启动路径（独立启动/背景图完成后/超时兜底）不会重复推送
+async function initCloudSync(statusEl, force) {
+  if (_cloudInitStarted && !force) return;
+  _cloudInitStarted = true;
+  if (force) { hamiSyncReady = false; _syncBusy = false; }
   // 自愈：首次同步（拉云端→合并→推回）若因网络抖动失败，最多自动重试 3 次（间隔 15s）。
   // 关键不变量：只有「成功拉取云端」后才会推送，绝不在没拉到数据时覆盖云端（避免误删别处记录）。
   let attempt = 0;
@@ -6436,6 +6520,12 @@ async function initSettingsPanel() {
       catch (e) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 上传失败：' + ((e && e.message) ? e.message : e); }
     });
   }
+
+  // 8.5) 同步自检 / 强制重新同步（同步不通时的一键排查与救活）
+  const chkBtn = document.getElementById('settings-sync-check');
+  if (chkBtn) chkBtn.addEventListener('click', function () { hamiSyncSelfCheck(); });
+  const forceBtn = document.getElementById('settings-sync-force');
+  if (forceBtn) forceBtn.addEventListener('click', function () { hamiForceResync(); });
 
   // 7) 数据备份与恢复（真备份：存成一个文件，云同步 ≠ 备份）
   const expBtn = document.getElementById('settings-export-data');
@@ -8475,6 +8565,10 @@ function switchPanel(name, navEl) {
   }
   if (name === 'create') {
     try { renderCreate(); } catch (e) {}
+  }
+  // 每次点开「设置」自动跑一次同步自检，让同步状态永远看得见（不用主人猜）
+  if (name === 'settings') {
+    try { setTimeout(function () { hamiSyncSelfCheck(); }, 300); } catch (e) {}
   }
   if (name === 'benchmark') {
     try { renderFuturePosts(); } catch (e) {}
@@ -13716,10 +13810,28 @@ fillMonthSelect(document.getElementById('account-month'), true);
 updateBackupAge();
 // 关键顺序：先把背景图从 IndexedDB 载入内存缓存（并把 localStorage 里的旧图迁移走、腾出 5MB 配额），
 // 再初始化背景图显示。若不先迁移，背景图会读不到，而且 localStorage 仍被占满导致业务数据写不进去。
-try {
-  initBgCacheAndMigrate().then(function () { try { initCustomBg(); } catch (e) {} })
-    .catch(function () { try { initCustomBg(); } catch (e) {} });
-} catch (e) { try { initCustomBg(); } catch (e2) {} }
+// 【关键修复 · 云同步不再被背景图拖累】
+// 曾经：initCloudSync 被挂在 initBgCacheAndMigrate()（IndexedDB）的 Promise 后面。
+//   一旦 IndexedDB 在手机浏览器上打开被阻塞（open 请求既不 success 也不 error，Promise 永不 resolve），
+//   云同步就永远启动不了 —— 表现为「手机记的电脑看不到、电脑记的手机看不到」，且云端文件从未被创建。
+// 现在：云同步独立启动，三条路 + 只跑一次守卫；背景图各走各路，互不拖累。
+try { applyAllBgs(); } catch (e) {}
+(function () {
+  function bootCloud() {
+    try { initCloudSync(document.getElementById('settings-cloud-status')); } catch (e) {}
+  }
+  setTimeout(bootCloud, 1000);                 // 路线一：1 秒后必定启动，不依赖任何异步
+  try {
+    initBgCacheAndMigrate().then(function () {  // 路线二：背景图迁移完成后再补一次
+      try { applyAllBgs(); } catch (e) {}
+      bootCloud();
+    }).catch(function () {
+      try { applyAllBgs(); } catch (e) {}
+      bootCloud();
+    });
+  } catch (e) { bootCloud(); }
+  setTimeout(bootCloud, 4000);                  // 路线三：4 秒兜底，万无一失
+})();
 initSettingsPanel();
 ensureDefaults();
 ensureDailyInspire();
