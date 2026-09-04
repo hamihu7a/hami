@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-04-01">
+<meta name="hami-build" content="2026-09-04-02">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3169,7 +3169,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-04-01';
+  var BUILD_VER = '2026-09-04-02';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -4805,6 +4805,9 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
             <button id="settings-sync-force" style="padding:8px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;">
               强制重新同步
             </button>
+            <button id="settings-sync-report" style="padding:8px 14px;border:1.5px solid #8a6270;border-radius:10px;background:#fff;color:#5a3a48;font-size:12.5px;font-weight:700;cursor:pointer;">
+              📮 一键上报问题给我
+            </button>
           </div>
           <div id="hami-sync-check-out" style="font-size:12px;color:#8a6270;line-height:1.7;"></div>
         </div>
@@ -5921,11 +5924,22 @@ async function decryptStore(b64, password) {
 // ---------- GitHub Contents API ----------
 async function _ghGet() {
   const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path + '?ref=' + HAMI_SYNC.branch;
-  const res = await fetch(url, {
-    headers: { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' }
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error('拉取失败 HTTP ' + res.status);
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' }
+    });
+  } catch (e) {
+    _diagStep('拉取云端档案', false, '网络请求直接失败（被拦截/断网/跨域被挡）：' + ((e && e.message) ? e.message : e));
+    throw e;
+  }
+  if (res.status === 404) { _diagStep('拉取云端档案', true, 'HTTP 404（云端还没有档案，首次同步的正常情况）'); return null; }
+  if (!res.ok) {
+    let t = '';
+    try { t = (await res.text()).slice(0, 150); } catch (e2) {}
+    _diagStep('拉取云端档案', false, 'HTTP ' + res.status + ' ' + t);
+    throw new Error('拉取失败 HTTP ' + res.status);
+  }
   const j = await res.json();
   return { sha: j.sha, content: j.content };
 }
@@ -5946,9 +5960,11 @@ async function _ghPut(contentB64, sha, message) {
   if (!lastRes || !lastRes.ok) {
     let msg = '推送失败 HTTP ' + (lastRes ? lastRes.status : '?');
     try { const e = await lastRes.json(); if (e && e.message) msg = '推送失败：' + e.message; } catch (e2) {}
+    _diagStep('推送到云端', false, msg);
     throw new Error(msg);
   }
   const j = await lastRes.json();
+  _diagStep('推送到云端', true, 'HTTP ' + lastRes.status + ' 已写入');
   return (j.content && j.content.sha) || (j.commit && j.commit.sha) || 'ok';
 }
 
@@ -6096,6 +6112,7 @@ async function pushNow() {
     cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
     syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
   } catch (e) {
+    _diagStep('pushNow 推送失败', false, (e && e.message) ? e.message : String(e));
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
     syncBadgeShow('同步失败', true);
@@ -6118,6 +6135,109 @@ function scheduleCloudPush() {
 }
 
 // ---------- 同步自检：把「同步到底通不通」摊开给主人看，不再靠猜 ----------
+// ---------- 诊断上报：同步失败时一键把真实错误发给小助理 ----------
+// 隐私承诺：只上报技术信息（错误、环境、记录条数），绝不上报任何具体记录内容。
+let _syncDiag = { started: Date.now(), steps: [], errors: [] };
+function _diagStep(name, ok, detail) {
+  try {
+    _syncDiag.steps.push('[' + new Date().toLocaleTimeString('zh-CN') + '] ' + (ok ? 'OK  ' : 'FAIL') + ' ' + name + (detail ? ' :: ' + detail : ''));
+    if (!ok && detail) _syncDiag.errors.push(name + ' :: ' + detail);
+    while (_syncDiag.steps.length > 60) _syncDiag.steps.shift();
+  } catch (e) {}
+}
+function _diagEnv() {
+  const ua = (navigator.userAgent || '');
+  const inWx = /MicroMessenger/i.test(ua);
+  const inWb = /Weibo/i.test(ua);
+  const inQQ = /\sQQ\//i.test(ua);
+  const iOS = /iPhone|iPad|iPod/i.test(ua);
+  return {
+    ua: ua,
+    browser: inWx ? '微信内置浏览器（强烈建议改用 Safari/Chrome）' : (inWb ? '微博内置浏览器（建议改用系统浏览器）' : (inQQ ? 'QQ 内置浏览器（建议改用系统浏览器）' : '普通浏览器')),
+    os: iOS ? 'iOS' : (/Android/i.test(ua) ? 'Android' : '其他/桌面'),
+    https: location.protocol === 'https:',
+    crypto: (function () { try { return !!_cryptoReady(); } catch (e) { return false; } })(),
+    lang: navigator.language || '',
+    dpr: window.devicePixelRatio || 0,
+    screen: (screen.width || 0) + 'x' + (screen.height || 0)
+  };
+}
+async function hamiReportDiag() {
+  const out = document.getElementById('hami-sync-check-out');
+  const btn = document.getElementById('settings-sync-report');
+  const say = function (t, c) { if (out) out.innerHTML = '<div style="font-size:12.5px;line-height:1.8;color:' + (c || '#5a3a48') + ';">' + t + '</div>'; };
+  if (btn) { btn.disabled = true; btn.textContent = '📮 正在上报…'; }
+  say('正在收集诊断信息并上报，稍等几秒…');
+  try {
+    const env = _diagEnv();
+    // 现场再跑一次网络探测，拿到真实 HTTP 状态
+    let netLine = '未探测';
+    try {
+      const res = await fetch('https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path + '?ref=' + HAMI_SYNC.branch,
+        { headers: { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' } });
+      netLine = 'HTTP ' + res.status + (res.status === 404 ? '（云端档案还不存在）' : (res.ok ? '（网络正常）' : '（异常！' + (await res.text()).slice(0, 120) + '）'));
+      _diagStep('现场网络探测', res.ok || res.status === 404, netLine);
+    } catch (e) {
+      netLine = '请求直接失败：' + (e && e.message ? e.message : e) + '（可能是网络被拦/跨域被挡）';
+      _diagStep('现场网络探测', false, netLine);
+    }
+    const counts = {};
+    try {
+      ['weightRecords', 'accountRecords', 'exerciseRecords', 'mediaRecords', 'userTodos', 'periodRecords'].forEach(function (k) {
+        counts[k] = ((store && store[k]) || []).length;
+      });
+    } catch (e) {}
+    const body = [
+      '## 主人上报的同步问题诊断（由工作台自动生成）',
+      '',
+      '**上报时间**：' + new Date().toLocaleString('zh-CN'),
+      '',
+      '### 1. 环境',
+      '- 浏览器：' + env.browser,
+      '- 系统：' + env.os + ' / 屏幕 ' + env.screen + ' / DPR ' + env.dpr,
+      '- 是否 https：' + (env.https ? '是' : '否（**非 https 会导致无法加密同步**）'),
+      '- 加密环境 crypto.subtle：' + (env.crypto ? '支持' : '**不支持（这会导致同步直接失败）**'),
+      '- 语言：' + env.lang,
+      '- UA：`' + env.ua + '`',
+      '',
+      '### 2. 同步状态',
+      '- 同步开关：' + (hamiSyncEnabled ? '已开' : '未开'),
+      '- 首次同步完成标记：' + (hamiSyncReady ? '是' : '否'),
+      '- 云同步已尝试启动：' + (_cloudInitStarted ? '是' : '否'),
+      '- 上次成功同步：' + (_lastSyncAt ? new Date(_lastSyncAt).toLocaleString('zh-CN') : '**从未成功过**'),
+      '- 现场网络探测：' + netLine,
+      '',
+      '### 3. 本机记录条数（仅条数，不含内容）',
+      '```', JSON.stringify(counts, null, 2), '```',
+      '',
+      '### 4. 报错记录',
+      _syncDiag.errors.length ? '```\n' + _syncDiag.errors.slice(-15).join('\n') + '\n```' : '（无）',
+      '',
+      '### 5. 同步过程时间线',
+      '```\n' + (_syncDiag.steps.length ? _syncDiag.steps.join('\n') : '（无任何同步动作被执行过 —— 说明同步压根没启动）') + '\n```'
+    ].join('\n');
+    const r = await fetch('https://api.github.com/repos/' + HAMI_SYNC.repo + '/issues', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'token ' + HAMI_SYNC.token,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'hami-sync'
+      },
+      body: JSON.stringify({ title: '[同步诊断] ' + env.os + ' / ' + env.browser.slice(0, 10) + ' / ' + new Date().toLocaleString('zh-CN'), body: body })
+    });
+    if (r.ok || r.status === 201) {
+      const j = await r.json();
+      say('✅ 上报成功！小助理已收到。<br>您的记录内容<b>一条都没有外传</b>，只发了技术信息。<br>请把这个编号告诉小助理：<b>#' + j.number + '</b>', '#1a9e4b');
+    } else {
+      say('❌ 上报失败（HTTP ' + r.status + '）。请把本页显示的错误文字截图发给小助理。', '#e84a5f');
+    }
+  } catch (e) {
+    say('❌ 上报过程出错：' + ((e && e.message) ? e.message : e) + '<br>请截图发给小助理。', '#e84a5f');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '📮 一键上报问题给我'; }
+}
+
 async function hamiSyncSelfCheck() {
   const out = document.getElementById('hami-sync-check-out');
   if (!out) return;
@@ -6178,6 +6298,7 @@ async function initCloudSync(statusEl, force) {
   if (_cloudInitStarted && !force) return;
   _cloudInitStarted = true;
   if (force) { hamiSyncReady = false; _syncBusy = false; }
+  _diagStep('云同步启动（独立启动路径）', true, force ? '手动强制' : '自动');
   // 自愈：首次同步（拉云端→合并→推回）若因网络抖动失败，最多自动重试 3 次（间隔 15s）。
   // 关键不变量：只有「成功拉取云端」后才会推送，绝不在没拉到数据时覆盖云端（避免误删别处记录）。
   let attempt = 0;
@@ -6187,12 +6308,21 @@ async function initCloudSync(statusEl, force) {
       hamiSyncEnabled = true;
       hamiSyncPassword = getSyncPassword();
       syncBadgeShow('同步中…', false);
-      if (!_cryptoReady()) { cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
+      if (!_cryptoReady()) { _diagStep('加密环境检查', false, 'crypto.subtle 不可用，浏览器不支持或非 https'); cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
+      _diagStep('加密环境检查', true, 'crypto.subtle 可用');
       await pullAndMerge();          // 先成功拉取，失败则进入下方 catch 重试
       hamiSyncReady = true;
-      try { await pushNow(); } catch (e) { console.error('[initCloudSync] 首次推送失败', e); }
+      _diagStep('拉取云端完成', true, '');
+      try {
+        await pushNow();
+        _diagStep('推送云端完成', true, '');
+      } catch (e) {
+        _diagStep('推送云端失败', false, (e && e.message) ? e.message : String(e));
+        console.error('[initCloudSync] 首次推送失败', e);
+      }
       cloudStatus('☁️ 云同步已开启（零登录自动同步）', '#5aa86a');
     } catch (e) {
+      _diagStep('第' + attempt + '次同步尝试失败', false, (e && e.message) ? e.message : String(e));
       console.error('[initCloudSync] 第' + attempt + '次失败', e);
       if (attempt < 3) {
         cloudStatus('☁️ 同步暂未成功，15 秒后自动重试（第 ' + attempt + '/3 次）…', '#c75b86');
@@ -6526,6 +6656,8 @@ async function initSettingsPanel() {
   if (chkBtn) chkBtn.addEventListener('click', function () { hamiSyncSelfCheck(); });
   const forceBtn = document.getElementById('settings-sync-force');
   if (forceBtn) forceBtn.addEventListener('click', function () { hamiForceResync(); });
+  const reportBtn = document.getElementById('settings-sync-report');
+  if (reportBtn) reportBtn.addEventListener('click', function () { hamiReportDiag(); });
 
   // 7) 数据备份与恢复（真备份：存成一个文件，云同步 ≠ 备份）
   const expBtn = document.getElementById('settings-export-data');
