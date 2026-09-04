@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-04-02">
+<meta name="hami-build" content="2026-09-04-03">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -5922,6 +5922,22 @@ async function decryptStore(b64, password) {
 }
 
 // ---------- GitHub Contents API ----------
+// ---------- Base64 编解码（处理 GitHub 档案的外层包装）----------
+// 背景：加密结果是 "base64(iv):base64(密文)"，中间的冒号不是合法 Base64 字符。
+// 直接把它当作 GitHub Contents API 的 content 字段上传，会被服务器拒绝并报
+// "content is not valid Base64"（这正是此前云同步一次都没成功的真凶）。
+// 解决：上传前把整串再包一层 Base64，下载后解一层，还原成 "iv:ct" 给解密函数。
+function _b64enc(str) {
+  try { return btoa(String(str).replace(/[\u0080-\uFFFF]/g, function (c) { return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4); })); }
+  catch (e) { return null; }
+}
+function _b64dec(b64) {
+  try {
+    const raw = atob(String(b64).replace(/\s+/g, ''));
+    return raw.replace(/\\u[0-9a-fA-F]{4}/g, function (m) { return String.fromCharCode(parseInt(m.slice(2), 16)); });
+  } catch (e) { return null; }
+}
+
 async function _ghGet() {
   const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path + '?ref=' + HAMI_SYNC.branch;
   let res;
@@ -5941,11 +5957,19 @@ async function _ghGet() {
     throw new Error('拉取失败 HTTP ' + res.status);
   }
   const j = await res.json();
-  return { sha: j.sha, content: j.content };
+  // 解掉外层 Base64 包装，还原成 "base64(iv):base64(密文)" 供解密函数直接使用
+  const inner = _b64dec(j.content);
+  if (inner === null) { _diagStep('拉取云端档案', false, '档案外层 Base64 解码失败（文件可能已损坏）'); throw new Error('云端档案解码失败'); }
+  _diagStep('拉取云端档案', true, 'HTTP 200，已解包');
+  return { sha: j.sha, content: inner };
 }
 async function _ghPut(contentB64, sha, message) {
   const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path;
-  const body = { message: message, content: contentB64, branch: HAMI_SYNC.branch };
+  // 关键修复：content 必须是纯 Base64。上传前把 "iv:ct" 整体再包一层 Base64，
+  // 否则含冒号的字符串会被 GitHub 拒绝（content is not valid Base64）。
+  let wrapped = _b64enc(contentB64);
+  if (wrapped === null) { _diagStep('推送到云端', false, '本地 Base64 包装失败'); throw new Error('内容编码失败'); }
+  const body = { message: message, content: wrapped, branch: HAMI_SYNC.branch };
   if (sha) body.sha = sha;
   const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'hami-sync' };
   // 409 冲突重试：多设备/多标签页同时推送时会撞版本，每次重新取最新 sha 再试，最多 3 次
@@ -6116,6 +6140,7 @@ async function pushNow() {
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
     syncBadgeShow('同步失败', true);
+    throw e;   // 关键：失败必须向上抛出，否则上层会误以为"推送完成"而掩盖真实故障
   } finally { _syncBusy = false; }
 }
 // 顶部「刷新网页并同步最新数据」按钮：先拉云端合并到本机，再强制从服务器重载最新页面（绕过缓存）
