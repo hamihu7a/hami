@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-04-06">
+<meta name="hami-build" content="2026-09-04-07">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3183,7 +3183,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-04-06';
+  var BUILD_VER = '2026-09-04-07';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -6115,25 +6115,25 @@ async function pullAndMerge() {
   cloudStatus('⏳ 正在从云端拉取…', '#c75b86');
   const got = await _ghGet();
   if (!got) { cloudStatus('☁️ 云端暂无数据，将把本机数据上传', '#5aa86a'); return; }
-  try {
-    let remote = null, _pwFallback = false;
-    try {
-      remote = await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword);
-    } catch (e1) {
-      try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); _pwFallback = true; } catch (e2) { throw e1; }
-    }
-    if (remote && remote.store) {
-      mergeStoreInto(store, remote.store);
-      try { saveData(); } catch (e) {}
-      try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e) {}
-      _lastSyncAt = Date.now(); _persistLastSync();
-      cloudStatus(_pwFallback ? '⚠️ 同步密码不一致，已用默认密码读取（建议两端进阶密码保持一致）' : '☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', _pwFallback ? '#c75b86' : '#5aa86a');
-      syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
-    }
-  } catch (e) {
-    cloudStatus('⚠️ 云端数据解密失败（密码不符？）：' + (e.message || e), '#c75b86');
-    syncBadgeShow('同步失败', true);
-    throw e;
+  // 关键修复：解密先试【默认密码】，再试【本机进阶密码】。
+  // 这样无论云端是哪种密码加密，本机都能合并进来，绝不因密码不一致而丢数据。
+  let remote = null;
+  try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
+  catch (e1) {
+    try { remote = await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword); }
+    catch (e2) { remote = null; }
+  }
+  if (remote && remote.store) {
+    mergeStoreInto(store, remote.store);
+    try { saveData(); } catch (e) {}
+    try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e) {}
+    _lastSyncAt = Date.now(); _persistLastSync();
+    cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
+    syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
+  } else {
+    // 云端加密与本地密码都不匹配：不致命，保留本机数据，交给 pushNow 用默认密码上传覆盖，
+    // 避免“解不开就整段同步失败 + 数据看不见”。
+    cloudStatus('☁️ 云端加密与本地密码不一致，将用本机数据上传', '#c75b86');
   }
 }
 async function pushNow() {
@@ -6149,7 +6149,7 @@ async function pushNow() {
       try {
         await pullAndMerge();
         const payload = { v: 1, updatedAt: Date.now(), store: store };
-        const ct = await encryptStore(payload, hamiSyncPassword);
+        const ct = await encryptStore(payload, '');
         const got = await _ghGet();
         await _ghPut(ct, got ? got.sha : null, 'hami sync ' + new Date().toISOString());
         _lastSyncAt = Date.now(); _persistLastSync();
