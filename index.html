@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-05-02">
+<meta name="hami-build" content="2026-09-05-03">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -723,6 +723,28 @@
     transition: all 0.3s;
     border: 2px solid rgba(255, 158, 181, 0.3);   /* 统一：未完成也用淡粉描边（"量体重"不再"裸奔"），完成态再加深 */
   }
+
+  /* 打卡卡 ⓘ 按钮：右上角小图标，点击弹出今日真实记录详情 */
+  .checkin-card { position: relative; }
+  .ci-info-btn {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    color: var(--c-pink-deep, #d14b73);
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(209,75,115,0.25);
+    box-shadow: 0 1px 3px rgba(209,75,115,0.18);
+    transition: transform .2s;
+  }
+  .ci-info-btn:hover { transform: scale(1.15); background: var(--c-pink-deep, #d14b73); color: #fff; }
 
   /* 自媒体账号概览小框 */
   .accounts-grid {
@@ -3208,7 +3230,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-05-02';
+  var BUILD_VER = '2026-09-05-03';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -8201,26 +8223,62 @@ window.refreshInspireToday = function () {
 };
 
 // ==================== 打卡卡片 ====================
+// 把今天真实记录的具体内容直接展示出来（不再笼统"已完成"）
+// 主人疑惑："我没操作怎么显示已完成" —— 现在每张卡的 tip 行就是答案
 function renderDesktopCheckin() {
   const today = todayStr();
   const hasWeight = store.weightRecords.some(w => w.date === today);
   const hasExercise = store.exerciseRecords.some(e => e.date === today);
   const pendingOrders = store.customOrders.filter(o => o.status === 'pending');
+  const allOrders = store.customOrders || [];
 
   const todayMd = `${(new Date().getMonth()+1).toString().padStart(2,'0')}.${new Date().getDate().toString().padStart(2,'0')}`;
+
+  // ========= 列出今天 store 里真实的内容（给主人直接看，不靠猜）=========
+  const wToday = (store.weightRecords || []).filter(w => w.date === today);
+  const eToday = (store.exerciseRecords || []).filter(e => e.date === today);
+  const getW = (w) => w && (w.value != null ? w.value : (w.after != null ? w.after : w.before));
+  const wText = hasWeight
+    ? ('今天 ' + (wToday.map(w => getW(w)).filter(v=>v!=null).map(v=>v.toFixed(1)+'kg').join(' / ') || '已记录'))
+    : '';
+  const exParts = [];
+  if (hasExercise) {
+    const e = eToday[0];
+    if (e) {
+      if (e.aerobics) exParts.push('健身操');
+      if (e.cardio)   exParts.push('有氧' + (e.duration ? ' ' + e.duration : ''));
+      if (e.weights)  exParts.push('器械');
+    }
+  }
+  const exText = hasExercise ? ('今天 ' + (exParts.join(' + ') || '已打卡')) : '';
+
   const cards = [
-    { icon: '⚖️', label: '量体重', done: hasWeight, tip: hasWeight ? '坚持记录超好~' : '记得上秤别忘啦' },
-    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, tip: hasExercise ? '今天超棒继续保持' : '动起来挥洒汗水' },
-    { icon: '📝', label: '定制单', done: pendingOrders.length === 0, tip: pendingOrders.length > 0 ? `${pendingOrders.length}单待完成 加油收尾` : '全部搞定 可以休息' }
+    { icon: '⚖️', label: '量体重', done: hasWeight,
+      tip: hasWeight ? ('坚持记录超好~ ' + wText) : '记得上秤别忘啦',
+      raw: { today: today, weightRecords: wToday, exerciseRecords: eToday, customOrders: allOrders, pendingCount: pendingOrders.length }
+    },
+    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise,
+      tip: hasExercise ? ('今天超棒继续保持 ' + exText) : '动起来挥洒汗水',
+      raw: { today: today, exerciseRecords: eToday }
+    },
+    { icon: '📝', label: '定制单', done: pendingOrders.length === 0,
+      tip: pendingOrders.length > 0
+        ? (`待完成 ${pendingOrders.length} 单：` + pendingOrders.slice(0, 2).map(o=>o.title||o.note||'订单').join('、') + (pendingOrders.length>2?` 等`:``))
+        : ('全部搞定（共 ' + allOrders.length + ' 单） 可以休息'),
+      raw: { today: today, allOrders: allOrders, pending: pendingOrders }
+    }
   ];
 
   let html = '';
   cards.forEach((c, i) => {
     const target = i === 0 ? 'fitness' : (i === 1 ? 'fitness' : 'income');
     const statusLine = c.done ? '✓ 已完成' : '待打卡';
+    // ⓘ 信息按钮：点了就弹窗显示今天 store 里真实内容（脱敏：订单只显示条数+是否pending，不外泄姓名/详情）
+    const infoJson = JSON.stringify(c.raw).replace(/'/g, '&#39;');
     html += `<div class="checkin-card ${c.done ? 'done' : ''}" onclick="switchPanel('${target}', this)">
       <div class="ci-icon">${c.icon}</div>
       <div class="ci-label">${c.label}</div>
+      <div class="ci-info-btn" onclick="event.stopPropagation();showCheckinDetail('${c.label}','${infoJson}');" aria-label="查看今日真实记录">ⓘ</div>
       <div class="ci-lines">
         <div class="ci-line ci-status-line ${c.done ? 'done' : 'pending'}">${statusLine}</div>
         <div class="ci-line ci-date-line">今天 · ${todayMd}</div>
@@ -8229,6 +8287,48 @@ function renderDesktopCheckin() {
     </div>`;
   });
   document.getElementById('desktop-checkin').innerHTML = html;
+}
+
+// 弹窗显示打卡卡对应的"今日 store 真实内容"，让主人立即看到事实
+// 脱敏：订单只输出条数和是否为 pending（不打印客户姓名 / 标题等任何隐私字段）
+function showCheckinDetail(label, rawJson) {
+  let raw;
+  try { raw = JSON.parse(rawJson.replace(/&#39;/g, "'")); } catch (e) { raw = {}; }
+  const today = raw.today || todayStr();
+  let body = '📅 今天 ' + today + ' · ' + label + '\n\n';
+  if (label === '量体重') {
+    const ws = raw.weightRecords || [];
+    if (ws.length === 0) body += '📭 今天没有任何体重记录\n（确认 "已完成" 提示是误判，请叫小助理）';
+    else {
+      body += '📒 今天共 ' + ws.length + ' 条体重记录：\n';
+      ws.forEach((w, i) => {
+        const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
+        body += '  ' + (i+1) + ') ' + (v != null ? v + 'kg' : '?') + '（' + (w.note||'已称') + '）\n';
+      });
+      body += '\n注：上次编辑这条记录的时间会显示在编辑弹窗里。';
+    }
+  } else if (label === '运动打卡') {
+    const es = raw.exerciseRecords || [];
+    if (es.length === 0) body += '📭 今天没有任何运动记录\n（确认 "已完成" 提示是误判，请叫小助理）';
+    else {
+      body += '📒 今天共 ' + es.length + '条运动记录：\n';
+      es.forEach((e, i) => {
+        const parts = [];
+        if (e.aerobics) parts.push('健身操');
+        if (e.cardio)   parts.push('有氧' + (e.duration ? ' ' + e.duration : ''));
+        if (e.weights)  parts.push('器械');
+        body += '  ' + (i+1) + ') ' + (parts.join('+')||'已打卡') + '\n';
+      });
+    }
+  } else if (label === '定制单') {
+    const all = raw.allOrders || [];
+    const pnd = raw.pending || [];
+    body += '📦 订单总数：' + all.length + ' 单\n';
+    body += '⏳ 待完成：' + pnd.length + ' 单\n';
+    if (pnd.length > 0) body += '（点 "📝" 卡片进入收入面板看具体哪几单）';
+    else body += '✅ 所有订单都已处理完';
+  }
+  hamiToast(body);
 }
 
 // 判断一句话属于「工作」还是「日常」待办
