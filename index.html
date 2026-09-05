@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-04-07">
+<meta name="hami-build" content="2026-09-05-01">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -474,6 +474,29 @@
   }
   .hami-cmd-bar .cmd-send:hover { transform:scale(1.04); box-shadow:0 2px 8px rgba(209,75,115,0.25); }
   .hami-cmd-bar .cmd-send:active { transform:scale(0.97); }
+  /* 语音按钮：按住说话（松手就自动记下）；也可点一下开始，说完再点一下结束 */
+  .hami-cmd-bar .cmd-mic {
+    flex-shrink:0;border:none;border-radius:50%;
+    width:34px;height:34px;
+    background:#fff0f4;color:#b83557;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .2s, transform .15s, box-shadow .15s;
+    box-shadow:0 2px 6px rgba(184,53,87,0.12);
+    touch-action:none;-webkit-touch-callout:none;
+    -webkit-user-select:none;user-select:none;
+  }
+  .hami-cmd-bar .cmd-mic svg { display:block; }
+  .hami-cmd-bar .cmd-mic:hover { background:#ffe4ec; transform:scale(1.06); }
+  .hami-cmd-bar .cmd-mic:active { transform:scale(0.95); }
+  .hami-cmd-bar .cmd-mic.recording {
+    background:#ff4d6d;color:#fff;
+    animation:hami-mic-pulse 1.2s infinite;
+  }
+  @keyframes hami-mic-pulse {
+    0%   { box-shadow:0 0 0 0 rgba(255,77,109,0.55); }
+    70%  { box-shadow:0 0 0 10px rgba(255,77,109,0); }
+    100% { box-shadow:0 0 0 0 rgba(255,77,109,0); }
+  }
   /* 刷新按钮：纯图标，位于「记一下」右侧 */
   .hami-cmd-bar .cmd-refresh {
     flex-shrink:0;border:none;border-radius:50%;
@@ -911,6 +934,8 @@
   }
   .weight-cal-change { font-size: 11px; font-weight: 600; white-space: nowrap; }
   .weight-cal-weight { font-size: 11px; font-weight: 700; color: #4a3340; background: #f0e8ee; border-radius: 3px; padding: 0 2px; }
+  /* 当天没打卡、自动沿用前一天体重的格子：淡一档，和真实打卡一眼能区分 */
+  .weight-cal-weight.weight-cal-weight-fill { color:#b6a0ac; background:#faf6f8; font-weight:600; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; }
   .weight-cal-ex-dot { font-size: 12px; }
   .weight-cal-legend {
@@ -2516,7 +2541,7 @@
         flex: 1 1 auto;
         font-size: 13px;
       }
-      #hami-cmd-send, #hami-cmd-refresh {
+      #hami-cmd-send, #hami-cmd-refresh, #hami-cmd-mic {
         flex: 0 0 auto;
         min-height: 34px;
         min-width: 34px;
@@ -3183,7 +3208,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-04-07';
+  var BUILD_VER = '2026-09-05-01';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -3353,6 +3378,14 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
   <input class="cmd-input" id="hami-cmd-input" type="text"
     placeholder=""
     autocomplete="off">
+  <button class="cmd-mic" id="hami-cmd-mic" title="按住说话，松手自动记录；也可以点一下开始，说完再点一下结束" aria-label="语音记录">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+      <line x1="8" y1="23" x2="16" y2="23"></line>
+    </svg>
+  </button>
   <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
   <button class="cmd-refresh" id="hami-cmd-refresh" title="刷新网页并同步最新数据" aria-label="刷新网页并同步最新数据" onclick="cmdRefreshAction()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -3792,7 +3825,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
   <div id="panel-fitness" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：每天只记一次体重。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>（永远按今天所在月算），日历改了这里自动更新。
+      💕 <b>使用说明</b>：每天只记一次体重。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>（永远按今天所在月算），日历改了这里自动更新。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。
     </div>
 
     <div class="goal-row" id="weight-goal-row">
@@ -4791,13 +4824,13 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
           </button>
         </div>
         <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,138,166,0.10);border:1.5px solid rgba(209,75,115,0.30);">
-          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:4px;">🔑 进阶加密密码（可选·留空也能同步）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.5;margin-bottom:8px;">手机和电脑<b>填同一个密码</b>即可自动互通。密码只存在您设备里、不上传，数据加密后才传云端——云端只存密文，看不到明文。<b>忘了密码 = 云端数据解不开，请牢记。</b></div>
+          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:4px;">🔑 进阶加密密码（已停用）</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.5;margin-bottom:8px;">为保证手机和电脑<b>始终能互相看到数据</b>，云端同步已统一使用默认加密，<b>无需、也不能再设密码</b>。之前因手机/电脑密码不一致导致数据互不可见、同步失败的问题已彻底修复。</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="settings-sync-pwd" type="password" placeholder="设一个同步密码，如 hami888" style="flex:1 1 160px;min-width:0;padding:10px 12px;border:1.5px solid var(--c-line,#ffe4ec);border-radius:10px;font-size:13px;min-height:42px;">
-            <button id="settings-sync-pwd-save" style="padding:10px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(209,75,115,0.3);">保存并启用同步</button>
+            <input id="settings-sync-pwd" type="password" placeholder="已停用 · 同步已统一加密" disabled style="flex:1 1 160px;min-width:0;padding:10px 12px;border:1.5px solid var(--c-line,#ffe4ec);border-radius:10px;font-size:13px;min-height:42px;background:#f3f3f3;color:#999;cursor:not-allowed;">
+            <button id="settings-sync-pwd-save" disabled style="padding:10px 16px;border:none;border-radius:10px;background:#ccc;color:#fff;font-size:13px;font-weight:700;cursor:not-allowed;white-space:nowrap;">已停用</button>
           </div>
-          <div id="settings-sync-pwd-status" style="margin-top:8px;font-size:12px;color:var(--c-pink-deep,#d14b73);"></div>
+          <div id="settings-sync-pwd-status" style="margin-top:8px;font-size:12px;color:var(--c-pink-deep,#d14b73);">✅ 同步密码已统一，手机电脑自动互通，无需任何设置。</div>
         </div>
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button id="settings-cloud-test" style="padding:10px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;">
@@ -6308,7 +6341,7 @@ async function hamiSyncSelfCheck() {
   };
   add('本机加密环境', _cryptoReady() ? '支持' : '不支持（必须用 https 打开本页）', _cryptoReady());
   add('云同步开关', hamiSyncEnabled ? '已开启' : '未开启', hamiSyncEnabled);
-  add('同步密码', getSyncPassword() ? '已设自定义密码（两台设备必须填一样的，否则互相解不开）' : '未设置（用默认密钥，可正常同步）', true);
+  add('同步密码', '已统一使用默认加密（进阶密码已停用），手机电脑自动互通', true);
   add('上次成功同步', _lastSyncAt ? new Date(_lastSyncAt).toLocaleString('zh-CN') : '从未成功过', !!_lastSyncAt);
   add('本机体重记录', ((store.weightRecords || []).length) + ' 条', true);
   out.innerHTML = L.join('') + '<div style="font-size:12px;color:#8a6270;margin-top:6px;">正在查询云端…</div>';
@@ -7329,6 +7362,9 @@ function showCmdHelp() {
     + '· 体重 88.5 / 洗头了 / 上厕所 / 敷面膜\n'
     + '· 午饭花了25 / 打车18 / 工资到账8000\n'
     + '· 运动有氧30分钟 / 8月2日体重88\n\n'
+    + '🎤 语音：按住麦克风说话，松手自动记；\n'
+    + '也可点一下麦克风开始，说完再点一下结束。\n'
+    + '（例："8月14号吃饭花了24块钱"）\n\n'
     + '我会自动识别并帮你记录到对应位置~');
 }
 function loadData() {
@@ -13155,6 +13191,38 @@ function renderMovie() {
   document.getElementById('movie-now-playing').innerHTML = ticketsHtml;
 }
 
+// ==================== 体重「没打卡自动沿用前一天」 ====================
+// 规则：某天没记体重，就沿用它之前最近一次真实体重（前值结转），日历/曲线不断档。
+// 只影响显示，不写进真实数据——打卡天数、历史记录仍以主人真实打卡为准。
+// 例：9/1 记了 88.5，9/2 没记 → 9/2 显示 88.5（浅色），9/3 记了 88.0 → 9/3 显示 88.0。
+function prevDateStr(ds) {
+  var t = Date.parse((ds || '') + 'T00:00:00Z');
+  if (isNaN(t)) return null;
+  return new Date(t - 86400000).toISOString().split('T')[0];
+}
+function buildFilledWeightMap() {
+  var out = {};
+  var getW = function (w) { return w && (w.value != null ? w.value : (w.after != null ? w.after : w.before)); };
+  var recs = (store.weightRecords || [])
+    .map(function (w) { return { d: w && w.date, v: getW(w) }; })
+    .filter(function (x) { return x.d && x.v != null; })
+    .sort(function (a, b) { return a.d.localeCompare(b.d); });
+  if (!recs.length) return out;
+  var today = todayStr();
+  var startT = Date.parse(recs[0].d + 'T00:00:00Z');
+  var endT = Date.parse(today + 'T00:00:00Z');
+  if (isNaN(startT) || isNaN(endT) || startT > endT) return out;
+  var realMap = {};
+  recs.forEach(function (r) { realMap[r.d] = r.v; });
+  var last = null;
+  for (var t = startT; t <= endT; t += 86400000) {
+    var ds = new Date(t).toISOString().split('T')[0];
+    if (realMap[ds] != null) last = realMap[ds];
+    if (last != null) out[ds] = last;
+  }
+  return out;
+}
+
 // ==================== 主面板体重记录卡片 ====================
 function renderDesktopWeight() {
   const today = todayStr();
@@ -13168,6 +13236,8 @@ function renderDesktopWeight() {
 
   const monthWeights = store.weightRecords.filter(w => w && w.date && w.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
   const monthExercises = store.exerciseRecords.filter(e => e.date.startsWith(month));
+  // 没打卡的日子按「沿用最近一次真实体重」补出来的序列（只用于显示）
+  const filledMap = buildFilledWeightMap();
 
   // 构建日期→数据映射
   const weightMap = {};
@@ -13239,24 +13309,33 @@ function renderDesktopWeight() {
     else if (w || ex) { bg = '#fce8f0'; border = '#f0c0d0'; }
     else if (isFuture) { bg = '#f8f8f8'; border = '#e8e8e8'; }
 
-    // 变化值（↑红增/↓绿减/—持平）
+    // 体重值：真实记录优先；没打卡的日子自动沿用最近一次真实体重，日历不断档
+    let wv = getW(w);
+    let isFilled = false;
+    if (wv == null && !isFuture) {
+      const fv = filledMap[dateStr];
+      if (fv != null) { wv = fv; isFilled = true; }
+    }
+
+    // 变化值（↑红增/↓绿减/—持平）：按补出来的序列算，没打卡的日子自然是持平
     let changeText = '';
     let changeColor = '#7d4a5a';
-    if (w) {
-      const idx = monthWeights.findIndex(x => x.date === dateStr);
-      const wv = getW(w);
-      const prev = idx > 0 ? getW(monthWeights[idx-1]) : null;
-      if (idx > 0 && wv != null && prev != null) {
-        const diff = (wv - prev).toFixed(1);
-        const dn = parseFloat(diff);
+    if (wv != null && !isFuture) {
+      const pd = prevDateStr(dateStr);
+      let pv = null;
+      if (pd) {
+        const pw = weightMap[pd];
+        pv = (pw != null) ? getW(pw) : (filledMap[pd] != null ? filledMap[pd] : null);
+      }
+      if (pv != null) {
+        const dn = parseFloat((wv - pv).toFixed(1));
         if (dn > 0) { changeText = '↑' + Math.abs(dn); changeColor = '#e84a5f'; }
         else if (dn < 0) { changeText = '↓' + Math.abs(dn); changeColor = '#34c759'; }
         else { changeText = '—'; changeColor = '#a0a0a0'; }
       }
     }
 
-    // 体重文本（未称体重时为 null，留空）—— 兼容 value/after/before
-    const wv = getW(w);
+    // 体重文本（没称体重但已自动沿用前一天时，用浅色标出，和真实打卡区分）
     const weightText = (wv != null) ? wv.toFixed(1) : '';
 
     // 3项运动打卡圆图标（●打卡 / ○未打卡），手机上通过 class 进一步缩小
@@ -13276,7 +13355,7 @@ function renderDesktopWeight() {
       <div class="weight-cal-day" style="color:${isToday ? '#c08020' : '#5a3a48'}">${d}</div>
       <div class="weight-cal-body">
         ${changeText ? `<span class="weight-cal-change" style="color:${changeColor}">${changeText}</span>` : ''}
-        ${weightText ? `<span class="weight-cal-weight">${weightText}</span>` : ''}
+        ${weightText ? `<span class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}"${isFilled ? ' title="' + dateStr + ' 没打卡，已自动沿用最近一次体重"' : ''}>${weightText}</span>` : ''}
       </div>
       <div class="weight-cal-ex">${exIcons}</div>
     </div>`;
@@ -13290,6 +13369,12 @@ function renderDesktopWeight() {
     <span><span style="color:#34c759;">●</span>有氧</span>
     <span><span style="color:#d14b73;">●</span>器械</span>
   </div>`;
+
+  // 提示：本月有几天是"自动沿用前一天"补上的（浅色数字）
+  const filledDays = Object.keys(filledMap).filter(d => d.startsWith(month) && !weightMap[d]).length;
+  if (filledDays > 0) {
+    html += `<div class="weight-cal-legend" style="opacity:.72;margin-top:2px;"><span>浅色数字 = 当天没打卡，自动沿用最近一次体重（本月 ${filledDays} 天）</span></div>`;
+  }
 
   document.getElementById('desktop-weight').innerHTML = html;
 }
@@ -14495,6 +14580,118 @@ setInterval(updateClock, 1000);
     <div class="tm-modal-note"><b>忌：</b><span id="tma-ji"></span></div>
   </div>
 </div>
+
+<script>
+// ==================== 语音记录（按住/点一下说话 → 自动识别 → 交给指令引擎记录） ====================
+// 覆盖「记一下」里的全部功能：体重、记账、运动、洗头、如厕、面膜、经期、灵感、提醒……
+// 例：说「8月14号吃饭花了24块钱」→ 自动记到 8月14日 的餐饮支出。
+var HamiVoice = (function () {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, want = false, holdStart = 0, tapMode = false, finalTxt = '', btn = null;
+
+  function inputEl() { return document.getElementById('hami-cmd-input'); }
+  function setUI(on) { if (btn) { try { if (on) btn.classList.add('recording'); else btn.classList.remove('recording'); } catch (e) {} } }
+  function toast(msg) { try { showCmdToast(msg); } catch (e) { try { hamiToast(msg); } catch (e2) {} } }
+
+  function ensure() {
+    if (rec) return rec;
+    if (!SR) return null;
+    var r = new SR();
+    r.lang = 'zh-CN';
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+    r.onresult = function (e) {
+      var txt = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      finalTxt = txt;
+      var el = inputEl();
+      if (el) el.value = txt;
+    };
+    r.onerror = function (e) {
+      var code = e && e.error;
+      if (code === 'not-allowed' || code === 'service-not-allowed') {
+        want = false; setUI(false); try { r.stop(); } catch (x) {}
+        toast('🎤 麦克风没开：请允许本网页用麦克风后再试（iPhone：设置 → Safari → 麦克风）');
+      } else if (code === 'network') {
+        want = false; setUI(false); try { r.stop(); } catch (x) {}
+        toast('🎤 语音识别要联网，请检查网络后再试~');
+      } else if (code !== 'no-speech' && code !== 'aborted') {
+        toast('🎤 语音识别有点小状况（' + code + '），打字也能记~');
+      }
+    };
+    r.onend = function () {
+      // iOS/Safari 会在停顿后自动结束；只要主人还按着（或处在点击模式），就自动续听
+      if (want) {
+        setTimeout(function () { if (want) { try { r.start(); } catch (x) {} } }, 250);
+      } else {
+        setUI(false);
+      }
+    };
+    rec = r;
+    return r;
+  }
+
+  function startVoice() {
+    if (!SR) { toast('🎤 这个浏览器不支持语音，直接打字也能记~'); return; }
+    var r = ensure();
+    if (!r) return;
+    finalTxt = '';
+    var el = inputEl();
+    if (el) el.value = '';
+    want = true; tapMode = false; setUI(true);
+    try { r.start(); } catch (x) {}
+    toast('🎤 在听呢…说完松手就自动记下来');
+  }
+
+  function finishVoice() {
+    if (!want) return;
+    want = false; tapMode = false; setUI(false);
+    try { if (rec) rec.stop(); } catch (x) {}
+    var el = inputEl();
+    var txt = (((el && el.value) || '') || finalTxt || '').trim();
+    if (!txt) { toast('🎤 没听清，靠近点再说一次试试~'); return; }
+    try { sendHamiCmd(); } catch (e) { toast('⚠️ 记录失败：' + (e && e.message ? e.message : e)); }
+  }
+
+  function onDown(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (want) { finishVoice(); return; }   // 录音中再按 = 结束并发送
+    holdStart = Date.now();
+    startVoice();
+  }
+  function onUp(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!want) return;
+    if (Date.now() - holdStart >= 700) finishVoice();   // 按住 ≥0.7 秒：松手即发送
+    else { tapMode = true; toast('🎤 继续说…说完了再点一下麦克风'); }  // 轻点：进入免按模式
+  }
+  function onLeave() { if (want && !tapMode) finishVoice(); }
+
+  function bind() {
+    btn = document.getElementById('hami-cmd-mic');
+    if (!btn) return;
+    if (window.PointerEvent) {
+      btn.addEventListener('pointerdown', onDown);
+      btn.addEventListener('pointerup', onUp);
+      btn.addEventListener('pointercancel', onUp);
+      btn.addEventListener('pointerleave', onLeave);
+    } else {
+      btn.addEventListener('touchstart', function (e) { e.preventDefault(); onDown(e); }, false);
+      btn.addEventListener('touchend', function (e) { e.preventDefault(); onUp(e); }, false);
+      btn.addEventListener('mousedown', onDown);
+      btn.addEventListener('mouseup', onUp);
+    }
+    btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    btn.addEventListener('click', function (e) { e.preventDefault(); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+
+  return { start: startVoice, stop: finishVoice, get listening() { return want; } };
+})();
+</script>
 
 </body>
 </html>
