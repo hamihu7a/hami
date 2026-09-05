@@ -924,10 +924,18 @@
 
   /* ---------- 体重日历：自适应网格，根治小屏撑爆/挤压 ---------- */
   .weight-cal-header {
-    display: flex; justify-content: flex-start; align-items: center; gap: 8px;
+    display: flex; justify-content: flex-start; align-items: center; gap: 6px;
     flex-wrap: wrap; margin-bottom: 6px;
   }
   .weight-cal-month { font-size: 14px; font-weight: 800; color: #d14b73; }
+  .weight-cal-nav, .weight-cal-today {
+    width: 22px; height: 22px; border-radius: 50%; border: 1px solid #f0c0d0;
+    background: #fff0f5; color: #d14b73; font-size: 12px; line-height: 1;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; flex-shrink: 0;
+  }
+  .weight-cal-nav:hover, .weight-cal-today:hover { background: #ffd0e0; }
+  .weight-cal-nav:active, .weight-cal-today:active { transform: scale(0.92); }
   .weight-cal-badge {
     text-align: center; padding: 2px 6px; border-radius: 6px; background: #fce8ee;
     flex-shrink: 0;
@@ -2538,8 +2546,9 @@
       /* 体重记录与变化日历：收窄内边距，把宽度让给格子 */
       #home-weight-cal { padding: 10px 8px; }
       #home-weight-cal h3 { font-size: 13px; text-align: center; text-wrap: balance; margin-bottom: 4px; }
-      .weight-cal-header { gap: 6px; margin-bottom: 4px; }
+      .weight-cal-header { gap: 5px; margin-bottom: 4px; }
       .weight-cal-month { font-size: 13px; }
+      .weight-cal-nav, .weight-cal-today { width: 20px; height: 20px; font-size: 11px; }
       .weight-cal-badge { padding: 1px 5px; border-radius: 5px; }
       .weight-cal-badge-num, .weight-cal-badge-label { font-size: 11px; }
       .weight-cal-weekdays { gap: 2px; }
@@ -3230,7 +3239,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-05-04';
+  var BUILD_VER = '2026-09-05-05';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -3447,6 +3456,9 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <!-- 倒计时组件：所有提醒统一在卡片轮播中轮番展示 -->
     <div id="desktop-countdown" style="display:flex;gap:4px;margin-bottom:var(--space-block);"></div>
+
+    <!-- 全局提醒横幅（生日/纪念日/出游/洗头等）-->
+    <div id="reminder-banner"></div>
 
     <!-- 天气 + 运势 并排 -->
     <div id="home-weather-fortune" style="display:flex;gap:8px;margin-bottom:var(--space-block);">
@@ -3847,7 +3859,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
   <div id="panel-fitness" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：每天只记一次体重。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>（永远按今天所在月算），日历改了这里自动更新。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。
+      💕 <b>使用说明</b>：每天只记一次体重。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>，点日历标题旁的 ❮ ❯ 可切换月份查看历史，「今」按钮回到今天所在月。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。
     </div>
 
     <div class="goal-row" id="weight-goal-row">
@@ -4357,9 +4369,6 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
   <!-- ==================== 重要日期（日期提醒）==================== -->
   <div id="panel-reminder" class="panel">
-
-    <!-- 提醒横幅（动态显示） -->
-    <div id="reminder-banner"></div>
 
     <div class="tip-box">
       💕 <b>使用方法</b>：告诉我重要的日期（生日/纪念日/在一起的日子），我帮你记录并提醒~
@@ -5086,6 +5095,7 @@ let store = {
   maskRecords: [],     // 敷面膜记录 { date }
   accountRecords: [],   // 记账记录 { date, type('income'/'expense'), category, subCategory, amount, note }
   depositBalance: 0,    // 可支配余额：本金（主人手头现有存款），与所有账单联动增减
+  weightCalMonth: '',   // 体重日历当前查看月份（YYYY-MM），空字符串表示跟随今天所在月
   accounts: {
     big: {
       name: 'sims哈弥老师', platform: '小红书', accountId: 'hamihami1998',
@@ -7518,6 +7528,8 @@ function loadData() {
       if (p.accountRecords !== undefined) store.accountRecords = p.accountRecords;
       // 可支配余额本金：显式恢复，避免刷新后被默认 0 覆盖
       if (p.depositBalance !== undefined) store.depositBalance = p.depositBalance;
+      // 体重日历当前查看月份：恢复用户上次切换的月份
+      if (p.weightCalMonth !== undefined) store.weightCalMonth = p.weightCalMonth;
       // 账号数据：主人手动更新后从存档恢复（持久化），避免刷新被内置默认值覆盖
       // 修复：深度合并，防止用户只保存了部分字段时丢失默认账号的 name/platform 等基础信息
       if (p.accounts) {
@@ -9382,10 +9394,10 @@ function bindWeightGoalInput() {
 }
 
 // ==================== 减肥记录 ====================
-// 与主页「体重记录与变化日历」完全同步同源：永远按"今天所在月"算，
+// 与主页「体重记录与变化日历」完全同步同源：跟随用户切换的月份（weightCalMonth），
 // 不再读 #fitness-month 选择器（删除后）。起始体重 = store.startWeight（默认90，可改）；最新体重取全部记录最新一条。
 function renderFitness() {
-  const month = todayStr().substring(0, 7);   // 关键：与 renderDesktopWeight 同一份 month 来源
+  const month = (store.weightCalMonth || todayStr().substring(0, 7));   // 关键：与 renderDesktopWeight 同一份 month 来源
   const today = todayStr();
   // 兼容旧数据：旧记录用 {before,after}，新记录用 {value}
   const getW = (w) => w && (w.value != null ? w.value : (w.after != null ? w.after : w.before));
@@ -13440,9 +13452,12 @@ function buildFilledWeightMap() {
 function renderDesktopWeight() {
   const today = todayStr();
   const todayDate = new Date(today);
-  const month = today.substring(0, 7);
-  const year = todayDate.getFullYear();
-  const monthIdx = todayDate.getMonth();
+  // 默认显示今天所在月；用户切换后记住选择的月份，刷新不丢
+  let viewMonth = store.weightCalMonth || today.substring(0, 7);
+  if (!viewMonth || !/^\d{4}-\d{2}$/.test(viewMonth)) viewMonth = today.substring(0, 7);
+  const month = viewMonth;
+  const year = parseInt(month.split('-')[0], 10);
+  const monthIdx = parseInt(month.split('-')[1], 10) - 1;
   const totalDays = new Date(year, monthIdx + 1, 0).getDate();
   // 兼容三种字段口径：value（新版） / after（迁移字段） / before（极旧字段）
   const getW = (w) => w && (w.value != null ? w.value : (w.after != null ? w.after : w.before));
@@ -13484,8 +13499,12 @@ function renderDesktopWeight() {
   let html = '';
 
   // 顶部：月份标题 + 月统计徽章（使用 class，方便媒体查询收紧）
+  const isViewTodayMonth = month === today.substring(0, 7);
   html += `<div class="weight-cal-header">
+    <button class="weight-cal-nav" type="button" onclick="changeWeightCalMonth(-1)" title="上个月">❮</button>
     <div class="weight-cal-month">${year}年${monthIdx + 1}月</div>
+    <button class="weight-cal-nav" type="button" onclick="changeWeightCalMonth(1)" title="下个月">❯</button>
+    ${!isViewTodayMonth ? `<button class="weight-cal-today" type="button" onclick="resetWeightCalMonth()" title="回到今天所在月">今</button>` : ''}
     <div class="weight-cal-badge">
       <div class="weight-cal-badge-num">${recordDays}/${totalDays}</div>
       <div class="weight-cal-badge-label">打卡</div>
@@ -13590,6 +13609,25 @@ function renderDesktopWeight() {
   }
 
   document.getElementById('desktop-weight').innerHTML = html;
+}
+
+// 体重日历切换月份：±1 个月，跨年自动处理
+function changeWeightCalMonth(delta) {
+  const current = store.weightCalMonth || todayStr().substring(0, 7);
+  const [y, m] = current.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  store.weightCalMonth = `${yy}-${mm}`;
+  try { saveData(); } catch (e) {}
+  try { renderDesktopWeight(); } catch (e) {}
+}
+
+// 回到今天所在月
+function resetWeightCalMonth() {
+  store.weightCalMonth = todayStr().substring(0, 7);
+  try { saveData(); } catch (e) {}
+  try { renderDesktopWeight(); } catch (e) {}
 }
 
 // ==================== 主面板电影推荐（左右两个面板） ====================
