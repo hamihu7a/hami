@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-05-03">
+<meta name="hami-build" content="2026-09-05-04">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3230,7 +3230,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-05-03';
+  var BUILD_VER = '2026-09-05-04';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -4211,6 +4211,26 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <button class="fin-add-btn" onclick="openAddModal()">➕ 记一笔</button>
     </div>
 
+    <div class="todo-card" id="account-disposable-card" style="padding:16px 18px;background:linear-gradient(135deg,#fff5f8,#ffe9f1);border:1.5px solid #ffd6e3;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:18px;">💎</span>
+        <h3 style="font-size:15px;font-weight:800;color:#d14b73;">可支配余额</h3>
+        <span style="margin-left:auto;font-size:11px;color:#a8788a;">本金 + 所有账单自动算</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="font-size:13px;color:#7d4a5a;font-weight:600;">我现在的存款余额</label>
+        <div style="display:flex;align-items:center;background:#fff;border:1.5px solid #ffc2d6;border-radius:999px;padding:4px 12px;">
+          <span style="color:#d14b73;font-weight:700;margin-right:2px;">¥</span>
+          <input id="account-deposit-input" type="number" inputmode="decimal" placeholder="填你手头有的钱" style="border:none;outline:none;width:130px;font-size:15px;font-weight:700;color:#d14b73;background:transparent;" />
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:baseline;gap:8px;">
+        <span style="font-size:13px;color:#7d4a5a;">当前可支配余额</span>
+        <span id="account-disposable-value" style="font-size:24px;font-weight:800;color:#d14b73;">¥0.00</span>
+      </div>
+      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">每记一笔账（花钱 / 模拟人生工作单收入等）会自动跟着加减，本金你只填一次。</p>
+    </div>
+
     <div class="stats-grid" id="account-stats"></div>
 
     <div class="todo-card" style="padding:18px;">
@@ -5065,6 +5085,7 @@ let store = {
   toiletRecords: [],   // 如厕记录 { date, count }  count=当天上厕所次数（不再预填演示数据）
   maskRecords: [],     // 敷面膜记录 { date }
   accountRecords: [],   // 记账记录 { date, type('income'/'expense'), category, subCategory, amount, note }
+  depositBalance: 0,    // 可支配余额：本金（主人手头现有存款），与所有账单联动增减
   accounts: {
     big: {
       name: 'sims哈弥老师', platform: '小红书', accountId: 'hamihami1998',
@@ -7495,6 +7516,8 @@ function loadData() {
       }
       if (p.maskRecords !== undefined) store.maskRecords = p.maskRecords;
       if (p.accountRecords !== undefined) store.accountRecords = p.accountRecords;
+      // 可支配余额本金：显式恢复，避免刷新后被默认 0 覆盖
+      if (p.depositBalance !== undefined) store.depositBalance = p.depositBalance;
       // 账号数据：主人手动更新后从存档恢复（持久化），避免刷新被内置默认值覆盖
       // 修复：深度合并，防止用户只保存了部分字段时丢失默认账号的 name/platform 等基础信息
       if (p.accounts) {
@@ -11047,6 +11070,19 @@ function renderAccount() {
   const totalExpense = inMonth.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
   const balance = totalIncome - totalExpense;
 
+  // 可支配余额：本金 + 全部账单净收支（与月份筛选无关，反映手头真实余额）
+  const _allRecs = store.accountRecords || [];
+  const _allManualInc = _allRecs.filter(r => r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const _allOrderInc = (store.customOrders || []).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  const _allInc = _allManualInc + _allOrderInc;
+  const _allExp = _allRecs.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const _deposit = parseFloat(store.depositBalance) || 0;
+  const disposable = _deposit + _allInc - _allExp;
+  const _depInput = document.getElementById('account-deposit-input');
+  if (_depInput && document.activeElement !== _depInput) _depInput.value = (store.depositBalance != null ? store.depositBalance : '');
+  const _dispEl = document.getElementById('account-disposable-value');
+  if (_dispEl) _dispEl.textContent = '¥' + fmtMoney(disposable);
+
   const lastMD = (function(){
     const pool = [...records, ...ordersAll];
     if (pool.length === 0) return '暂无记录';
@@ -11277,6 +11313,24 @@ function bindFinanceEvents() {
         });
         renderInlineStats(t.dataset.stype);
       });
+    });
+  }
+  // 可支配余额本金输入：实时更新 store + 显示（不重渲染输入框，避免输入时丢焦点）
+  const _depEl = document.getElementById('account-deposit-input');
+  if (_depEl && !_depEl._bound) {
+    _depEl._bound = true;
+    _depEl.addEventListener('input', function () {
+      var v = parseFloat(_depEl.value);
+      store.depositBalance = isNaN(v) ? 0 : v;
+      try { saveData(); } catch (e) {}
+      var dEl = document.getElementById('account-disposable-value');
+      if (dEl) {
+        var ars = store.accountRecords || [];
+        var mi = ars.filter(function (r) { return r.type === 'income'; }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+        var oi = (store.customOrders || []).reduce(function (s, o) { return s + (parseFloat(o.amount) || 0); }, 0);
+        var ae = ars.filter(function (r) { return r.type === 'expense'; }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+        dEl.textContent = '¥' + fmtMoney((parseFloat(store.depositBalance) || 0) + mi + oi - ae);
+      }
     });
   }
   // 说明：财务面板的「支出/收入」切换已由 renderInlineStats 承担（见下方 iTab 绑定），
