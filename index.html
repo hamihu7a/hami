@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-05-04">
+<meta name="hami-build" content="2026-09-05-07">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -860,44 +860,6 @@
   .ci-status-line.done { background: #ffb3c6; color: var(--c-text-2); }
   .checkin-card .ci-date-line { font-size: 8px; color: #a67c8a; }
   .checkin-card .ci-tip-line { font-size: 8px; color: #b58a96; }
-
-  }
-  .checkin-card.done {
-    border-color: #ff9eb5;
-    background: linear-gradient(135deg, #fff0f5, var(--c-pink-soft));
-  }
-  .checkin-card .ci-icon {
-    font-size: 26px;
-    margin-bottom: 3px;
-  }
-  .checkin-card .ci-label {
-    font-size: 12px;
-    color: var(--c-text-2);
-    margin-bottom: 5px;
-  }
-  .checkin-card .ci-lines {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1px;
-    margin-top: 2px;
-  }
-  .checkin-card .ci-line {
-    font-size: 10px;
-    line-height: 1.25;
-    color: #8a6270;
-    white-space: nowrap;
-  }
-  .checkin-card .ci-status-line {
-    font-weight: 700;
-    padding: 1px 7px;
-    border-radius: 8px;
-    margin-bottom: 1px;
-  }
-  .ci-status-line.pending { background: #fff3f6; color: var(--c-text-2); }
-  .ci-status-line.done { background: #ffb3c6; color: var(--c-text-2); }
-  .checkin-card .ci-date-line { font-size: 9px; color: #a67c8a; }
-  .checkin-card .ci-tip-line { font-size: 9px; color: #b58a96; }
 
   /* 待办卡片 */
   .todo-card {
@@ -2765,6 +2727,33 @@
     color: var(--c-text-2); font-size: 14px; line-height: 1.6; text-align: center; text-wrap: balance;
     max-width: 320px; min-width: 240px; opacity: 0;
     animation: hami-confirm-in 0.24s cubic-bezier(0.22,1,0.36,1) forwards; }
+  /* === iPhone 超小屏（<=420px）：打卡卡片 + 跟小助理说 bar 排版整理 === */
+  @media (max-width: 420px) {
+    /* 打卡卡片：横向 3 列空间宝贵，所有尺寸小一档，文字不换行、不孤行 */
+    .checkin-grid { gap: 6px; }
+    .checkin-card { padding: 8px 4px; border-radius: 10px; }
+    .checkin-card .ci-icon { font-size: 20px; margin-bottom: 1px; }
+    .checkin-card .ci-label { font-size: 10.5px; margin-bottom: 2px; }
+    .checkin-card .ci-line { font-size: 8.5px; line-height: 1.2; max-width: 100%; }
+    .checkin-card .ci-status-line { font-size: 9px; padding: 1px 5px; border-radius: 6px; }
+    .checkin-card .ci-info-btn { width: 16px; height: 16px; line-height: 14px; font-size: 10px; top: 3px; right: 4px; }
+
+    /* 跟小助理说 bar：超小屏上简化排版，标签文字折叠成图标，同步文字隐藏避免挤压输入框 */
+    .hami-cmd-bar { padding: 7px 10px; gap: 5px; height: 52px; }
+    .hami-cmd-bar .cmd-label {
+      /* 折叠长文字"跟小助理说"只剩 💬 图标，节省横向空间 */
+      font-size: 0;
+      padding: 5px 7px;
+      gap: 0;
+      border-radius: 50%;
+    }
+    .hami-cmd-bar .cmd-label::before { content: '💬'; font-size: 15px; }
+    .hami-cmd-bar .cmd-input { font-size: 13px; padding: 6px 8px; min-height: 34px; }
+    .hami-cmd-bar .cmd-mic { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
+    .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 8px; min-height: 34px; }
+    .hami-cmd-bar .cmd-refresh { width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
+    .hami-cmd-bar .sync-status { display: none; } /* 小屏上只显示同步圆点（用全局事件通知代替文字） */
+  }
   @keyframes hami-confirm-in { to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
   .hami-confirm.out { animation: hami-confirm-out 0.2s ease forwards; }
   @keyframes hami-confirm-out { to { opacity: 0; transform: translate(-50%,-50%) scale(0.96); } }
@@ -3239,7 +3228,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-05-05';
+  var BUILD_VER = '2026-09-05-07';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -3358,13 +3347,9 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <span class="nav-icon">🎂</span>
       <span class="nav-text">重要日期</span>
     </button>
-    <button class="nav-item" type="button" onclick="switchPanel('travel', this)">
-      <span class="nav-icon">✈️</span>
-      <span class="nav-text">游玩清单</span>
-    </button>
-    <button class="nav-item" type="button" onclick="switchPanel('trip', this)">
-      <span class="nav-icon">🗺️</span>
-      <span class="nav-text">游玩计划</span>
+    <button class="nav-item" type="button" onclick="switchPanel('trip-travel', this)">
+      <span class="nav-icon">🧳</span>
+      <span class="nav-text">游玩计划与清单</span>
     </button>
   </div>
 
@@ -4385,25 +4370,19 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
   </div>
 
-  <!-- ==================== 游玩清单 ==================== -->
-  <div id="panel-travel" class="panel">
+  <!-- ==================== 游玩计划与清单（合并）==================== -->
+  <div id="panel-trip-travel" class="panel">
     <div class="card">
-      <div class="card-title" style="display:flex;align-items:center;gap:6px;">
-        <span>✈️</span> 游玩清单
+      <div class="card-title" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span>🧳</span> 游玩计划与清单
+        <button class="date-add-btn" onclick="openTripModal()" type="button">➕ 新建行程</button>
         <button class="date-add-btn" onclick="openTravelModal()" type="button">➕ 记一次</button>
       </div>
-      <div id="travel-reminders"></div>
-    </div>
-  </div>
-
-  <!-- ==================== 游玩计划（行程时间轴）==================== -->
-  <div id="panel-trip" class="panel">
-    <div class="card">
-      <div class="card-title" style="display:flex;align-items:center;gap:6px;">
-        <span>🗺️</span> 游玩计划
-        <button class="date-add-btn" onclick="openTripModal()" type="button">➕ 新建行程</button>
-      </div>
+      <div style="font-size:14px;font-weight:800;color:#d14b73;margin:8px 0 4px;">📋 计划（行程安排）</div>
       <div id="trip-plans"></div>
+      <div style="height:10px;"></div>
+      <div style="font-size:14px;font-weight:800;color:#d14b73;margin:10px 0 4px;">🧳 清单（出游记录）</div>
+      <div id="travel-reminders"></div>
     </div>
   </div>
 
@@ -8296,12 +8275,24 @@ function renderDesktopCheckin() {
       tip: hasExercise ? ('今天超棒继续保持 ' + exText) : '动起来挥洒汗水',
       raw: { today: today, exerciseRecords: eToday }
     },
-    { icon: '📝', label: '定制单', done: pendingOrders.length === 0,
-      tip: pendingOrders.length > 0
-        ? (`待完成 ${pendingOrders.length} 单：` + pendingOrders.slice(0, 2).map(o=>o.title||o.note||'订单').join('、') + (pendingOrders.length>2?` 等`:``))
-        : ('全部搞定（共 ' + allOrders.length + ' 单） 可以休息'),
-      raw: { today: today, allOrders: allOrders, pending: pendingOrders }
-    }
+    // 定制单的"已完成"判定修复——原代码用 `pendingOrders.length === 0`，
+    // 等价于"今天没待办就算完成"，对从来没创建过订单的日子也会误报 ✓。
+    // 真正的"今天已收尾"：今天新创建过订单 且 今天没有 pending，单子才算交付。
+    (function(){
+      const createdToday = allOrders.filter(o => o.date === today);
+      const pendingToday = pendingOrders.filter(o => o.date === today);
+      const customDone = createdToday.length > 0 && pendingToday.length === 0;
+      const customTip = createdToday.length === 0
+        ? '今日还没记录新订单'
+        : pendingToday.length > 0
+          ? ('⚠️ 今日还有 ' + pendingToday.length + ' 单未完成（点 ⓘ 看详情）')
+          : ('✓ 今日 ' + createdToday.length + ' 单已交付');
+      return {
+        icon: '📝', label: '定制单', done: customDone,
+        tip: customTip,
+        raw: { today: today, allOrders: allOrders, pending: pendingOrders, createdToday: createdToday, pendingToday: pendingToday }
+      };
+    })()
   ];
 
   let html = '';
@@ -9009,8 +9000,8 @@ function switchPanel(name, navEl) {
   if (name === 'movie' || name === 'movie-good' || name === 'movie-now') {
     try { renderMovie(); } catch (e) {}
   }
-  // 切到「游玩清单 / 游玩计划」面板，强制重渲（重要日期/游玩清单/游玩计划三块都会刷新，与所在面板无关）
-  if (name === 'travel' || name === 'trip') {
+  // 切到「游玩计划与清单」面板，强制重渲（重要日期/游玩清单/游玩计划三块都会刷新，与所在面板无关）
+  if (name === 'trip-travel') {
     try { renderReminder(); } catch (e) {}
   }
   // 切到任意面板时，对所有 key 检查；若对应元素已在 DOM 且 localStorage 有图，则强制再 apply 一次。
@@ -11741,11 +11732,8 @@ function checkReminderAlerts() {
     }
   });
 
-  // 洗头提醒：仅到了第3天（needWash）才在提醒页提示；未到3天不提醒
-  const washInfo = getNextWashInfo();
-  if (washInfo && washInfo.needWash) {
-    banners.push({ icon: '🧴', text: '该洗头啦！已超过3天没洗，今天记得洗哦~', color: '#721c24', bg: '#f8d7da' });
-  }
+  // （主页顶部不再显示洗头提醒——主人说"已经有另外的洗头提示了"，
+  //  重要日期面板内已保留（washRemindHtml 在 renderReminder 里），避免重复打扰）
 
   // 出游提醒（前10天、前5天、当天）
   travels.forEach(t => {
@@ -12061,6 +12049,7 @@ function renderTripPlans() {
           </div>
           <div class="card-actions" style="position:static;flex-direction:row;gap:4px;">
             <button class="row-edit-btn" onclick="openTripModal(${realIdx})" type="button" aria-label="编辑">✏️</button>
+            <button class="row-edit-btn" onclick="exportTripImage(${realIdx})" type="button" aria-label="导出图片" title="导出为图片">📤</button>
             <button class="row-del-btn" onclick="deleteTripRecord(${realIdx})" type="button" aria-label="删除">🗑</button>
           </div>
         </div>
@@ -12109,6 +12098,151 @@ function ensureTripDays(trip) {
 function switchTripDay(tripIdx, dayIdx) {
   _tripActiveDay[tripIdx] = dayIdx;
   renderTripPlans();
+}
+
+// ==================== 游玩计划：一键导出为图片（分享卡）====================
+function exportTripImage(realIdx) {
+  try {
+    var trip = store.trips && store.trips[realIdx];
+    if (!trip) { alert('没有找到这个行程哦~'); return; }
+    var W = 720, PAD = 30, FONT = 'PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif';
+    var contentW = W - PAD * 2;
+
+    function wrap(text, fontSize, maxW) {
+      var c = document.createElement('canvas').getContext('2d');
+      c.font = fontSize + 'px ' + FONT;
+      var lines = [], cur = '';
+      for (var i = 0; i < text.length; i++) {
+        var ch = text[i];
+        var test = cur + ch;
+        if (c.measureText(test).width > maxW && cur) { lines.push(cur); cur = ch; }
+        else { cur = test; }
+      }
+      if (cur) lines.push(cur);
+      return lines.length ? lines : [''];
+    }
+
+    var TYPE_MAP = { play:['🎡','游玩'], food:['🍜','餐饮'], traffic:['🚇','交通'], stay:['🏨','住宿'], shop:['🛍️','购物'], other:['📌','其他'] };
+    var ops = [];
+    ops.push({ k:'title', text: '🗺️ 游玩计划 · ' + (trip.city || '未命名行程') });
+    var dateStr = (trip.start || '') + (trip.end && trip.end !== trip.start ? ' ~ ' + trip.end : '');
+    ops.push({ k:'sub', text: (trip.remark ? '📝 ' + trip.remark + '　' : '') + '📅 ' + dateStr });
+    ops.push({ k:'gap' });
+    ops.push({ k:'section', text:'📋 行程计划' });
+    var days = (trip.days || []).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+    if (days.length === 0) ops.push({ k:'muted', text:'（暂无每日安排）' });
+    days.forEach(function(day, di){
+      ops.push({ k:'dayhead', text:'Day ' + (di+1) + '　' + fmtMD(day.date) + (day.title ? '　' + day.title : '') });
+      var items = (day.items || []).slice().sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+      if (items.length === 0) { ops.push({ k:'muted', text:'　（这天还没安排）' }); return; }
+      items.forEach(function(it){
+        var tm = TYPE_MAP[it.type] || TYPE_MAP.other;
+        ops.push({ k:'itemhead', text:(it.time || '全天') + '　' + tm[0] + tm[1] + (it.done ? '　✅' : ''), title: it.title || '' });
+        if (it.place) ops.push({ k:'meta', text:'🗺️ ' + it.place });
+        if (it.transport) ops.push({ k:'meta', text:'🚇 ' + it.transport });
+        if (it.note) ops.push({ k:'note', text: it.note });
+      });
+    });
+    ops.push({ k:'gap' });
+    ops.push({ k:'section', text:'🧳 我的游玩清单' });
+    var travels = store.travelPlans || [];
+    if (travels.length === 0) ops.push({ k:'muted', text:'（暂无出游清单）' });
+    travels.slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); }).forEach(function(t){
+      var line = '📍 ' + (t.destination || '') + '　📅 ' + (t.date || '') + (t.hotel ? '　🏨 已订' : '　🏨 未订');
+      ops.push({ k:'travelhead', text: line });
+      if (t.checklist && t.checklist.length) {
+        t.checklist.forEach(function(item){ ops.push({ k:'meta', text:(item.done ? '✅ ' : '⬜ ') + item.name }); });
+      }
+    });
+
+    ops.forEach(function(op){
+      if (op.k === 'gap') { op._h = 16; return; }
+      if (op.k === 'title') { op._fs = 26; op._lines = wrap(op.text, op._fs, contentW); op._h = op._lines.length * 34 + 6; return; }
+      if (op.k === 'sub') { op._fs = 15; op._lines = wrap(op.text, op._fs, contentW); op._h = op._lines.length * 24 + 6; return; }
+      if (op.k === 'section') { op._fs = 19; op._lines = [op.text]; op._h = 46; return; }
+      if (op.k === 'dayhead') { op._fs = 16; op._lines = wrap(op.text, op._fs, contentW); op._h = op._lines.length * 24 + 6; return; }
+      if (op.k === 'muted') { op._fs = 14; op._lines = wrap(op.text, op._fs, contentW - 16); op._h = op._lines.length * 22 + 4; op._indent = 16; return; }
+      op._fs = op.k === 'itemhead' ? 16 : (op.k === 'travelhead' ? 15 : 14);
+      op._indent = (op.k === 'meta' || op.k === 'note') ? 20 : 0;
+      var full = op.title ? (op.text + '　' + op.title) : op.text;
+      op._lines = wrap(full, op._fs, contentW - op._indent);
+      op._h = op._lines.length * (op._fs + 8) + 2;
+    });
+    var totalH = PAD * 2 + 14;
+    ops.forEach(function(op){ totalH += op._h; });
+
+    var scale = Math.min(window.devicePixelRatio || 1, 3);
+    var canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = totalH * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    var grd = ctx.createLinearGradient(0, 0, 0, totalH);
+    grd.addColorStop(0, '#ffeef3');
+    grd.addColorStop(1, '#fff6f9');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, totalH);
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    ctx.fillStyle = '#ffffff';
+    rr(PAD/2, PAD/2, W - PAD, totalH - PAD, 24); ctx.fill();
+
+    var cy = PAD + 14;
+    ctx.textBaseline = 'top';
+    ops.forEach(function(op){
+      var ix = PAD + 10 + (op._indent || 0);
+      if (op.k === 'gap') { cy += op._h; return; }
+      if (op.k === 'title') { ctx.fillStyle = '#d14b73'; ctx.font = '800 ' + op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12, cy + i*34); }); cy += op._h; return; }
+      if (op.k === 'sub') { ctx.fillStyle = '#8a6270'; ctx.font = op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12, cy + i*24); }); cy += op._h; return; }
+      if (op.k === 'section') {
+        cy += 8;
+        ctx.fillStyle = '#ffd0dc'; ctx.fillRect(PAD+12, cy, W - PAD*2 - 24, 2); cy += 14;
+        ctx.fillStyle = '#c2416b'; ctx.font = '800 ' + op._fs + 'px ' + FONT; ctx.fillText(op.text, PAD+12, cy); cy += 36; return;
+      }
+      if (op.k === 'dayhead') { ctx.fillStyle = '#5a3a48'; ctx.font = '800 ' + op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12, cy + i*24); }); cy += op._h; return; }
+      if (op.k === 'muted') { ctx.fillStyle = '#b09aa3'; ctx.font = op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12 + op._indent, cy + i*22); }); cy += op._h; return; }
+      ctx.fillStyle = op.k === 'itemhead' ? '#3d2b33' : (op.k === 'travelhead' ? '#5a3a48' : '#7a5560');
+      ctx.font = (op.k === 'itemhead' ? '800 ' : '') + op._fs + 'px ' + FONT;
+      op._lines.forEach(function(ln, i){ ctx.fillText(ln, ix, cy + i*(op._fs + 8)); });
+      cy += op._h;
+    });
+    ctx.fillStyle = '#c9a9b3'; ctx.font = '12px ' + FONT;
+    ctx.fillText('—— 来自 Hami 工作台 · 我的旅行手账 ——', PAD + 12, totalH - PAD - 6);
+
+    showExportImage(canvas.toDataURL('image/png'), trip.city || '行程');
+  } catch (e) {
+    alert('导出图片失败了：' + (e && e.message ? e.message : e));
+  }
+}
+
+function showExportImage(url, title) {
+  var old = document.getElementById('export-image-modal');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var mask = document.createElement('div');
+  mask.id = 'export-image-modal';
+  mask.style.cssText = 'position:fixed;inset:0;background:rgba(40,20,30,0.72);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
+  mask.onclick = function(e){ if (e.target === mask && mask.parentNode) mask.parentNode.removeChild(mask); };
+  var box = document.createElement('div');
+  box.style.cssText = 'max-width:92vw;max-height:82vh;overflow:auto;background:#fff;border-radius:18px;padding:12px;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+  var img = document.createElement('img');
+  img.src = url; img.alt = title; img.style.cssText = 'display:block;max-width:100%;height:auto;border-radius:10px;';
+  var tip = document.createElement('div');
+  tip.style.cssText = 'text-align:center;color:#8a6270;font-size:13px;margin-top:10px;';
+  tip.textContent = '长按上方图片即可保存到相册 / 分享给朋友';
+  var close = document.createElement('button');
+  close.textContent = '关闭';
+  close.style.cssText = 'margin:12px auto 2px;display:block;padding:9px 28px;border:none;border-radius:20px;background:#ff7ea3;color:#fff;font-size:14px;';
+  close.onclick = function(){ if (mask.parentNode) mask.parentNode.removeChild(mask); };
+  box.appendChild(img); box.appendChild(tip); box.appendChild(close);
+  mask.appendChild(box);
+  document.body.appendChild(mask);
 }
 
 // ==================== 游玩计划：弹窗逻辑 ====================
@@ -13501,10 +13635,10 @@ function renderDesktopWeight() {
   // 顶部：月份标题 + 月统计徽章（使用 class，方便媒体查询收紧）
   const isViewTodayMonth = month === today.substring(0, 7);
   html += `<div class="weight-cal-header">
-    <button class="weight-cal-nav" type="button" onclick="changeWeightCalMonth(-1)" title="上个月">❮</button>
-    <div class="weight-cal-month">${year}年${monthIdx + 1}月</div>
-    <button class="weight-cal-nav" type="button" onclick="changeWeightCalMonth(1)" title="下个月">❯</button>
-    ${!isViewTodayMonth ? `<button class="weight-cal-today" type="button" onclick="resetWeightCalMonth()" title="回到今天所在月">今</button>` : ''}
+    <button class="weight-cal-nav" type="button" onclick="event.stopPropagation(); changeWeightCalMonth(-1);" title="上个月">❮</button>
+    <div class="weight-cal-month" id="weight-cal-month-label" onclick="event.stopPropagation(); openWeightMonthPicker();" title="点这里选月份（解决：点击日期/标题直接跳转任意月份）">${year}年${monthIdx + 1}月 <span style="font-size:11px;color:#b58a96;margin-left:2px;">▾</span></div>
+    <button class="weight-cal-nav" type="button" onclick="event.stopPropagation(); changeWeightCalMonth(1);" title="下个月">❯</button>
+    ${!isViewTodayMonth ? `<button class="weight-cal-today" type="button" onclick="event.stopPropagation(); resetWeightCalMonth();" title="回到今天所在月">今</button>` : ''}
     <div class="weight-cal-badge">
       <div class="weight-cal-badge-num">${recordDays}/${totalDays}</div>
       <div class="weight-cal-badge-label">打卡</div>
@@ -13628,6 +13762,57 @@ function resetWeightCalMonth() {
   store.weightCalMonth = todayStr().substring(0, 7);
   try { saveData(); } catch (e) {}
   try { renderDesktopWeight(); } catch (e) {}
+}
+
+// 跳转到指定的任意月份（解决：除了左右小按键，还能直接选月份跳转）
+function openWeightMonthPicker() {
+  try { event && event.stopPropagation(); } catch(e){}
+  const cur = store.weightCalMonth || todayStr().substring(0, 7);
+  const [cy, cm] = cur.split('-').map(Number);
+  const old = document.getElementById('wmp-bg');
+  if (old) old.remove();
+  // 近 5 年范围：往前 3 年、往后 1 年（覆盖主人回忆历史 + 不打扰太久远）
+  const yearList = [];
+  for (let y = parseInt(todayStr().substring(0,4),10) - 3; y <= parseInt(todayStr().substring(0,4),10) + 1; y++) yearList.push(y);
+  const html = `
+    <div class="modal-card" onclick="event.stopPropagation()" style="max-width:280px;padding:16px;">
+      <div class="modal-title">📅 跳转到指定月份</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:#7d4a5a;margin-bottom:4px;">年份</div>
+        <select id="wmp-year" style="width:100%;padding:7px 10px;border-radius:10px;border:1.5px solid #ffd0dc;font-size:14px;background:#fff8fb;">
+          ${yearList.map(y => `<option value="${y}" ${y===cy?'selected':''}>${y} 年</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;color:#7d4a5a;margin-bottom:4px;">月份</div>
+        <select id="wmp-month" style="width:100%;padding:7px 10px;border-radius:10px;border:1.5px solid #ffd0dc;font-size:14px;background:#fff8fb;">
+          ${Array.from({length:12},(_,i)=>i+1).map(m => `<option value="${m}" ${m===cm?'selected':''}>${m} 月</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" style="flex:1;padding:8px 0;font-size:13px;" onclick="jumpToWeightMonth()">跳转</button>
+        <button class="btn" style="flex:1;padding:8px 0;font-size:13px;background:#fff0f5;color:#d14b73;border:1px solid #ffc0d0;" onclick="closeWeightMonthPicker()">取消</button>
+      </div>
+    </div>`;
+  const bg = document.createElement('div');
+  bg.id = 'wmp-bg';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;';
+  bg.onclick = function(e) { if (e.target === bg) closeWeightMonthPicker(); };
+  bg.innerHTML = html;
+  document.body.appendChild(bg);
+}
+function jumpToWeightMonth() {
+  const y = (document.getElementById('wmp-year')||{}).value;
+  const m = (document.getElementById('wmp-month')||{}).value;
+  if (!y || !m) return;
+  store.weightCalMonth = y + '-' + String(m).padStart(2,'0');
+  try { saveData(); } catch(e){}
+  closeWeightMonthPicker();
+  try { renderDesktopWeight(); } catch(e){}
+}
+function closeWeightMonthPicker() {
+  const old = document.getElementById('wmp-bg');
+  if (old) old.remove();
 }
 
 // ==================== 主面板电影推荐（左右两个面板） ====================
