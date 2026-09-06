@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-13">
+<meta name="hami-build" content="2026-09-06-14">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3295,7 +3295,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-13';
+  var BUILD_VER = '2026-09-06-14';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6005,20 +6005,41 @@ function clearBg(key) {
 async function bgUploadAllToCloud() {
   const statusEl = document.getElementById('settings-bg-cloud-status');
   if (statusEl) statusEl.textContent = '⏳ 正在把背景图打包加密上传到云端…';
+  // 标记：本流程自己负责把 bgBackups 写上云，期间 scheduleCloudPush 要让位（避免并发抢 sha 报 409）
+  _bgUploadInFlight = true;
   try {
+    // 关键：等当前推送链路释放（最坏 10s），再开始背景图上传，避免与并发 commitToCloud 撞车
+    for (let i = 0; i < 40; i++) {
+      if (!_syncBusy && !_commitBusy) break;
+      await new Promise(r => setTimeout(r, 250));
+    }
     const bgs = await bgIdbGetAll();
     const keys = Object.keys(bgs || {}).filter(k => bgs[k]);
     if (!keys.length) { if (statusEl) statusEl.textContent = '⚠️ 本地浏览器里没有背景图，无须上传。请先在「主面板镜像 · 点击板块改背景」上传几张图。'; return; }
     let total = 0; keys.forEach(k => total += (bgs[k] || '').length);
     if (statusEl) statusEl.textContent = '⏳ 找到 ' + keys.length + ' 张背景图（共 ' + Math.round(total / 1024) + ' KB），上传中…';
-    // 直接复用 pushNow：把 bgBackups 写进 payload 加密 → PUT 云端
-    const payload = { v: 1, updatedAt: Date.now(), store: store, bgBackups: bgs, bgBackupsAt: Date.now() };
-    const ct = await encryptStore(payload, '');
-    const got = await _ghGet();
-    await _ghPut(ct, got ? got.sha : null, 'hami bg-backup ' + new Date().toISOString());
-    if (statusEl) statusEl.textContent = '✅ 已上传 ' + keys.length + ' 张背景图到云端（共 ' + Math.round(total / 1024) + ' KB）。换设备后或丢失时，可点「从云端拉回背景」一键恢复。';
+    // 直接走 _ghGet + _ghPut，但带 sha 冲突重试（和 pushNow 同款逻辑）：拉最新 → 再推；连 5 次真冲突才放弃
+    let lastErr = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const payload = { v: 1, updatedAt: Date.now(), store: store, bgBackups: bgs, bgBackupsAt: Date.now() };
+        const ct = await encryptStore(payload, '');
+        const got = await _ghGet();
+        await _ghPut(ct, got ? got.sha : null, 'hami bg-backup ' + new Date().toISOString());
+        if (statusEl) statusEl.textContent = '✅ 已上传 ' + keys.length + ' 张背景图到云端（共 ' + Math.round(total / 1024) + ' KB）。换设备后或丢失时，可点「从云端拉回背景」一键恢复。';
+        return;
+      } catch (e) {
+        lastErr = e;
+        const msg = (e && e.message) ? String(e.message) : String(e);
+        // 409 是 sha 冲突，GitHub 保护机制 → 拉新 sha 重试；其他错（5xx/网络）也重试
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+    if (statusEl) statusEl.textContent = '❌ 上传失败：' + ((lastErr && lastErr.message) || '未知错误') + '（已自动重试 5 次仍冲突，可再点一次重试）';
   } catch (e) {
     if (statusEl) statusEl.textContent = '❌ 上传失败：' + ((e && e.message) || String(e));
+  } finally {
+    _bgUploadInFlight = false;
   }
 }
 async function bgDownloadFromCloud() {
@@ -6540,6 +6561,9 @@ function scheduleCloudPush() {
   // 关键：云端合并后的全量重渲期间，渲染函数内部会调用 saveData，
   // 若不拦截就会形成「重渲→保存→推送→拉取→重渲」死循环（v2026-09-06-01 页面卡死的元凶）。
   if (_cloudRendering) return;
+  // 关键：背景图上传流程（bgUploadAllToCloud）自己负责把完整 store+bgBackups 写上云，
+  // 这期间 scheduleCloudPush 必须让位，否则两个流程并发抢 sha 必报 409，让主人看到吓人横幅。
+  if (typeof _bgUploadInFlight !== 'undefined' && _bgUploadInFlight) return;
   if (_syncPushTimer) clearTimeout(_syncPushTimer);
   // 300ms 内立刻推云端（原为 2.5s，窗口太大，关页面/断网就漏掉）
   _syncPushTimer = setTimeout(function () { try { commitToCloud(); } catch (e) {} }, 300);
@@ -6553,9 +6577,12 @@ function scheduleCloudPush() {
 var _pendingCommit = 0;
 var _commitRetryTimer = null;
 var _commitBusy = false;
+var _hamiBannerHideTimer = null;   // 横幅自动消失定时器：让"正在自动重试"几秒后自动退场，不再持续打扰主人
 
 function hamiPendingBanner(show, msg) {
   let el = document.getElementById('hami-cloud-pending');
+  // 退出前清掉旧的自动消失定时器
+  if (_hamiBannerHideTimer) { clearTimeout(_hamiBannerHideTimer); _hamiBannerHideTimer = null; }
   if (!show) { if (el) el.remove(); return; }
   if (!el) {
     el = document.createElement('div');
@@ -6572,6 +6599,14 @@ function hamiPendingBanner(show, msg) {
       'border-radius:9px;background:#e890a8;color:#fff;cursor:pointer;font-size:12px;">再试一次</span>';
   const btn = document.getElementById('hami-cloud-retry');
   if (btn) btn.onclick = function () { commitToCloud(); };
+  // 关键：横幅不再赖着不走。4 秒后自动消失（除非期间又有真正失败才会刷新文字）。
+  // 主人看到"几秒就消失"=正在自动重试中，不是真失败；
+  // 主人看到"反复跳出来"=真有问题需要看。
+  _hamiBannerHideTimer = setTimeout(function () {
+    const e2 = document.getElementById('hami-cloud-pending');
+    if (e2) e2.remove();
+    _hamiBannerHideTimer = null;
+  }, 4000);
 }
 
 async function commitToCloud() {
