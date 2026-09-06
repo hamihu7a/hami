@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-02">
+<meta name="hami-build" content="2026-09-06-03">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -858,6 +858,7 @@
   }
   .ci-status-line.pending { background: #fff3f6; color: var(--c-text-2); }
   .ci-status-line.done { background: #ffb3c6; color: var(--c-text-2); }
+  .checkin-card .ci-fact-line { font-size: 9px; color: #a67c8a; }
   .checkin-card .ci-date-line { font-size: 8px; color: #a67c8a; }
   .checkin-card .ci-tip-line { font-size: 8px; color: #b58a96; }
 
@@ -2516,10 +2517,11 @@
       .weight-cal-weekdays { gap: 2px; }
       .weight-cal-weekdays > div { font-size: 11px; }
       .weight-cal-grid { gap: 2px; }
-      .weight-cal-cell { min-height: 36px; border-radius: 5px; padding: 2px 0; }
+      .weight-cal-cell { min-height: 34px; border-radius: 5px; padding: 2px 0; }
       .weight-cal-day { font-size: 11px; }
-      .weight-cal-change, .weight-cal-weight { font-size: 10px; }
-      .weight-cal-ex-dot { font-size: 9px; }
+      .weight-cal-body { flex-wrap: nowrap; gap: 1px; }
+      .weight-cal-change, .weight-cal-weight { font-size: 9px; }
+      .weight-cal-ex-dot { font-size: 8px; }
       .weight-cal-legend { font-size: 11px; margin-top: 4px; padding-top: 3px; }
 
       /* 内容卡片 & 顶栏：超小屏收窄留白，别浪费横向空间 */
@@ -2729,14 +2731,14 @@
     animation: hami-confirm-in 0.24s cubic-bezier(0.22,1,0.36,1) forwards; }
   /* === iPhone 超小屏（<=420px）：打卡卡片 + 跟小助理说 bar 排版整理 === */
   @media (max-width: 420px) {
-    /* 打卡卡片：横向 3 列空间宝贵，所有尺寸小一档，文字不换行、不孤行 */
-    .checkin-grid { gap: 6px; }
-    .checkin-card { padding: 8px 4px; border-radius: 10px; }
-    .checkin-card .ci-icon { font-size: 20px; margin-bottom: 1px; }
-    .checkin-card .ci-label { font-size: 10.5px; margin-bottom: 2px; }
-    .checkin-card .ci-line { font-size: 8.5px; line-height: 1.2; max-width: 100%; }
-    .checkin-card .ci-status-line { font-size: 9px; padding: 1px 5px; border-radius: 6px; }
-    .checkin-card .ci-info-btn { width: 16px; height: 16px; line-height: 14px; font-size: 10px; top: 3px; right: 4px; }
+    /* 打卡卡片：横向 3 列空间宝贵，再小一档 */
+    .checkin-grid { gap: 5px; }
+    .checkin-card { padding: 6px 3px; border-radius: 9px; }
+    .checkin-card .ci-icon { font-size: 18px; margin-bottom: 0; }
+    .checkin-card .ci-label { font-size: 10px; margin-bottom: 1px; }
+    .checkin-card .ci-line { font-size: 8px; line-height: 1.15; max-width: 100%; }
+    .checkin-card .ci-status-line { font-size: 8px; padding: 1px 4px; border-radius: 5px; margin-bottom: 1px; }
+    .checkin-card .ci-fact-line { font-size: 8px; }
 
     /* 跟小助理说 bar：超小屏上简化排版，标签文字折叠成图标，同步文字隐藏避免挤压输入框 */
     .hami-cmd-bar { padding: 7px 10px; gap: 5px; height: 52px; }
@@ -2752,7 +2754,8 @@
     .hami-cmd-bar .cmd-mic { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 8px; min-height: 34px; }
     .hami-cmd-bar .cmd-refresh { width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
-    .hami-cmd-bar .sync-status { display: none; } /* 小屏上只显示同步圆点（用全局事件通知代替文字） */
+    .hami-cmd-bar .sync-status { font-size: 10px; gap: 3px; padding: 2px 5px; white-space: nowrap; }
+    .hami-cmd-bar .sync-status .dot { width: 6px; height: 6px; }
   }
   @keyframes hami-confirm-in { to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
   .hami-confirm.out { animation: hami-confirm-out 0.2s ease forwards; }
@@ -3228,7 +3231,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-01';
+  var BUILD_VER = '2026-09-06-03';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -3349,7 +3352,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     </button>
     <button class="nav-item" type="button" onclick="switchPanel('trip-travel', this)">
       <span class="nav-icon">🧳</span>
-      <span class="nav-text">游玩计划与清单</span>
+      <span class="nav-text">游玩计划<br>与清单</span>
     </button>
   </div>
 
@@ -7670,6 +7673,19 @@ function loadData() {
     ['weightRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
+    // 工作代办去重：因早期种子/同步 bug，同一文本可能重复出现（主人截图显示 4 条重复 N 次），
+    // 这里按「文本+分类」保留第一条，清理重复。
+    try {
+      if (Array.isArray(store.userTodos)) {
+        const seen = new Set();
+        store.userTodos = store.userTodos.filter(function (t) {
+          const key = (t.text || '') + '|' + (t.category || 'daily');
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+    } catch (e) {}
   } catch(e) {
     _loadBroken = true;
     console.error('[loadData] 本地存档解析失败，已停止自动保存以免用默认值覆盖您的数据', e);
@@ -8360,15 +8376,9 @@ function renderDesktopCheckin() {
   const pendingOrders = store.customOrders.filter(o => o.status === 'pending');
   const allOrders = store.customOrders || [];
 
-  const todayMd = `${(new Date().getMonth()+1).toString().padStart(2,'0')}.${new Date().getDate().toString().padStart(2,'0')}`;
-
-  // ========= 列出今天 store 里真实的内容（给主人直接看，不靠猜）=========
   const wToday = (store.weightRecords || []).filter(w => w.date === today);
   const eToday = (store.exerciseRecords || []).filter(e => e.date === today);
   const getW = (w) => w && (w.value != null ? w.value : (w.after != null ? w.after : w.before));
-  const wText = hasWeight
-    ? ('今天 ' + (wToday.map(w => getW(w)).filter(v=>v!=null).map(v=>v.toFixed(1)+'kg').join(' / ') || '已记录'))
-    : '';
   const exParts = [];
   if (hasExercise) {
     const e = eToday[0];
@@ -8378,51 +8388,39 @@ function renderDesktopCheckin() {
       if (e.weights)  exParts.push('器械');
     }
   }
-  const exText = hasExercise ? ('今天 ' + (exParts.join(' + ') || '已打卡')) : '';
+
+  // 事实短句（没有加油/坚持等激励语，只显示真实记录）
+  const wFact = hasWeight
+    ? (wToday.map(w => getW(w)).filter(v=>v!=null).map(v=>v.toFixed(1)+'kg').join(' / ') || '已记录')
+    : '未记录';
+  const exFact = hasExercise
+    ? (exParts.join(' + ') || '已打卡')
+    : '未打卡';
+  const createdToday = allOrders.filter(o => o.date === today);
+  const pendingToday = pendingOrders.filter(o => o.date === today);
+  const customDone = createdToday.length > 0 && pendingToday.length === 0;
+  const customFact = createdToday.length === 0
+    ? '今日无订单'
+    : pendingToday.length > 0
+      ? ('还有 ' + pendingToday.length + ' 单')
+      : ('今日 ' + createdToday.length + ' 单完成');
 
   const cards = [
-    { icon: '⚖️', label: '量体重', done: hasWeight,
-      tip: hasWeight ? ('坚持记录超好~ ' + wText) : '记得上秤别忘啦',
-      raw: { today: today, weightRecords: wToday, exerciseRecords: eToday, customOrders: allOrders, pendingCount: pendingOrders.length }
-    },
-    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise,
-      tip: hasExercise ? ('今天超棒继续保持 ' + exText) : '动起来挥洒汗水',
-      raw: { today: today, exerciseRecords: eToday }
-    },
-    // 定制单的"已完成"判定修复——原代码用 `pendingOrders.length === 0`，
-    // 等价于"今天没待办就算完成"，对从来没创建过订单的日子也会误报 ✓。
-    // 真正的"今天已收尾"：今天新创建过订单 且 今天没有 pending，单子才算交付。
-    (function(){
-      const createdToday = allOrders.filter(o => o.date === today);
-      const pendingToday = pendingOrders.filter(o => o.date === today);
-      const customDone = createdToday.length > 0 && pendingToday.length === 0;
-      const customTip = createdToday.length === 0
-        ? '今日还没记录新订单'
-        : pendingToday.length > 0
-          ? ('⚠️ 今日还有 ' + pendingToday.length + ' 单未完成（点 ⓘ 看详情）')
-          : ('✓ 今日 ' + createdToday.length + ' 单已交付');
-      return {
-        icon: '📝', label: '定制单', done: customDone,
-        tip: customTip,
-        raw: { today: today, allOrders: allOrders, pending: pendingOrders, createdToday: createdToday, pendingToday: pendingToday }
-      };
-    })()
+    { icon: '⚖️', label: '量体重', done: hasWeight, fact: wFact },
+    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, fact: exFact },
+    { icon: '📝', label: '定制单', done: customDone, fact: customFact }
   ];
 
   let html = '';
   cards.forEach((c, i) => {
     const target = i === 0 ? 'fitness' : (i === 1 ? 'fitness' : 'income');
     const statusLine = c.done ? '✓ 已完成' : '待打卡';
-    // ⓘ 信息按钮：点了就弹窗显示今天 store 里真实内容（脱敏：订单只显示条数+是否pending，不外泄姓名/详情）
-    const infoJson = JSON.stringify(c.raw).replace(/'/g, '&#39;');
     html += `<div class="checkin-card ${c.done ? 'done' : ''}" onclick="switchPanel('${target}', this)">
       <div class="ci-icon">${c.icon}</div>
       <div class="ci-label">${c.label}</div>
-      <div class="ci-info-btn" onclick="event.stopPropagation();showCheckinDetail('${c.label}','${infoJson}');" aria-label="查看今日真实记录">ⓘ</div>
       <div class="ci-lines">
         <div class="ci-line ci-status-line ${c.done ? 'done' : 'pending'}">${statusLine}</div>
-        <div class="ci-line ci-date-line">今天 · ${todayMd}</div>
-        <div class="ci-line ci-tip-line">${c.tip}</div>
+        <div class="ci-line ci-fact-line">${c.fact}</div>
       </div>
     </div>`;
   });
@@ -14545,22 +14543,9 @@ setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e)
     });
     try { saveData(); } catch (e) {}
   })();
-  // 运动打卡：今日保留一条"已完成"记录（使主页/健身面板的「运动打卡」保持 完成）；
-  // 但 体重记录与变化日历 面板的【健身操/有氧/器械】三项刻意记为未打卡（○）——只保留当日总打卡标记，不展开具体类型。
+  // 运动打卡：不再自动补空壳记录。之前这里每天自动插一条「已完成」空记录，
+  // 导致主人没运动也显示「已完成」，已删除。只有主人手动打卡才算完成。
   if (!store.exerciseRecords) store.exerciseRecords = [];
-  var todayExIdx = store.exerciseRecords.findIndex(function (e) { return e.date === today; });
-  var todayExRec = {
-    date: today,
-    aerobics: false,
-    cardio: false,
-    cardioType: '',
-    weights: false,
-    weightsContent: '',
-    sets: '',
-    duration: ''
-  };
-  // 【止血·第零批】不覆盖今天已有的真实运动记录；仅在今天完全无记录时补一条空壳（首开保持打卡态）
-  if (todayExIdx < 0) store.exerciseRecords.push(todayExRec);
   // 补录日常记录（指定日期，去重；已存在则不重复添加）
   if (!store.washRecords) store.washRecords = [];
   if (!store.maskRecords) store.maskRecords = [];
