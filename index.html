@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-01">
+<meta name="hami-build" content="2026-09-05-07">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3228,7 +3228,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-01';
+  var BUILD_VER = '2026-09-05-07';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -5480,7 +5480,7 @@ function showLoadBrokenBanner() {
   el.textContent = '本地存档读取失败（可能已损坏）。已停止自动保存，避免用空白覆盖您的数据。请去「设置 → 数据备份 → 从备份恢复」选一份备份文件。';
 }
 
-function saveData(skipCloud) {
+function saveData() {
   if (_loadBroken) return;
   let savedOk = false;
   // 更新时间戳，便于与 IndexedDB 备份比较新旧
@@ -5502,9 +5502,8 @@ function saveData(skipCloud) {
   // 兼容旧账号备份
   try { saveAccountsToIDB(); } catch (e) {}
   try { renderBackupReminder(); } catch(e) {}
-  // 云同步：改动后立刻推送到云端（零登录，GitHub 加密后端）
-  // skipCloud=true：云端合并流程内部自己存盘时传 true，避免「拉→存→推→拉」无限递归
-  try { if (!skipCloud && typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch(e) {}
+  // 云同步：改动后防抖推送到云端（零登录，GitHub 加密后端）
+  try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch(e) {}
   return savedOk;
 }
 
@@ -6114,24 +6113,6 @@ function deepMergeObjects(a, b) {
   });
   return out;
 }
-// 【云端合并专用】只增不减的深合并：
-//  · 本机缺的键 → 补云端的（别处设备记的内容能进来）
-//  · 两边都有的叶子值 → 保留本机非空值（本机刚改的不会被云端旧值回滚抹掉）
-//  · 云端空字符串 → 绝不覆盖本机真实值
-// 目的：双向下全集，任何一端记的东西都不会被另一端吃掉。
-function deepMergeUnion(a, b) {
-  const out = Object.assign({}, a);
-  Object.keys(b || {}).forEach(function (k) {
-    const bv = b[k]; const av = out[k];
-    const bothObj = bv && typeof bv === 'object' && !Array.isArray(bv)
-                 && av && typeof av === 'object' && !Array.isArray(av);
-    if (bothObj) { out[k] = deepMergeUnion(av, bv); return; }
-    if (bv === '' || bv == null) return;                 // 云端空值不抹本机
-    if (av == null || av === '') { out[k] = bv; return; } // 本机为空 → 补云端
-    // 两边都有值：保留本机（本机改动会在 300ms 内推上云端，不会造成云端落后）
-  });
-  return out;
-}
 function mergeStoreInto(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
   const localTs = local._lastSavedAt || 0;
@@ -6143,16 +6124,12 @@ function mergeStoreInto(local, remote) {
       // 数组：按业务键去重取并集（体重按日期+值等），不因为时间戳丢记录
       local[k] = unionArrays(lv && Array.isArray(lv) ? lv : [], rv, k);
     } else if (rv && typeof rv === 'object' && !Array.isArray(rv)) {
-      // 对象（待办/打卡/经期/账号数据等）：一律双向补全取并集，不再按时间戳整块丢弃。
-      // 【关键修复·根治跨设备丢数据】旧逻辑「云端比本机旧就整块跳过」正是数据丢失的真凶：
-      // 本机刚记过一笔 → localTs 变新 → 云端的 dailyCheckin / accounts / periodRestDays
-      // 永远拉不进本机 → 随后本机 push 又拿这份不完整数据覆盖云端 → 别处记录彻底消失。
-      local[k] = deepMergeUnion(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
-    } else if (rv != null && rv !== '') {
-      // 标量（目标体重/起始体重/存款本金等）：本机为空才采用云端真实值；
-      // 本机已有值则保留本机，遵循「只增不减」，避免被云端旧值回退抹掉。
-      if (lv == null || lv === '') local[k] = rv;
-    }
+      // 对象：若云端存档比本机旧，保留本机对象，防止旧空数据覆盖新数据
+      // 例如云端 accountsMeta.lastUpdate 仍为空字符串时，不要覆盖本地已记录的时间
+      if (remoteTs >= localTs) {
+        local[k] = deepMergeObjects(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
+      }
+    } else if (remoteTs >= localTs && rv != null && rv !== '') {
       // 标量：仅当云端值非空时才覆盖本地，避免「云端整库较新但某字段为空」时
       // 把本地真实的标量（如目标体重 weightGoal、起始体重 startWeight）静默抹成空
       local[k] = rv;
@@ -6198,20 +6175,6 @@ function rerenderSynced() {
 function hamiCloudEnabled() { return hamiSyncEnabled && _cryptoReady(); }
 function cloudEnabled() { return hamiCloudEnabled(); }
 
-// 云端数据合并进本机后，重渲全部业务面板：
-// 保证主人看到的永远是「含云端」的最新数据，而不是刚打开页面时那份本地旧快照。
-// （页面还没初始化完时不跑，交给初始化流程自己渲染，避免重复/报错）
-var _hamiBootDone = false;
-function renderAllFromCloud() {
-  if (!_hamiBootDone) return;
-  const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
-    'renderCreate', 'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
-    'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
-  fns.forEach(function (n) {
-    try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
-  });
-}
-
 async function pullAndMerge() {
   if (!hamiCloudEnabled()) return;
   cloudStatus('⏳ 正在从云端拉取…', '#c75b86');
@@ -6227,9 +6190,7 @@ async function pullAndMerge() {
   }
   if (remote && remote.store) {
     mergeStoreInto(store, remote.store);
-    try { saveData(true); } catch (e) {}   // 传 true：云端合并自己存盘不再回推，防死循环
-    // 云端合并完成后重渲全部面板（旧代码只重渲主页，其它面板仍显示本地旧数据）
-    try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e) {}
+    try { saveData(); } catch (e) {}
     try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e) {}
     _lastSyncAt = Date.now(); _persistLastSync();
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
@@ -6293,66 +6254,7 @@ async function cmdRefreshAction() {
 function scheduleCloudPush() {
   if (!hamiSyncReady || !hamiCloudEnabled()) return;
   if (_syncPushTimer) clearTimeout(_syncPushTimer);
-  // 300ms 内立刻推云端（原为 2.5s，窗口太大，关页面/断网就漏掉）
-  _syncPushTimer = setTimeout(function () { try { commitToCloud(); } catch (e) {} }, 300);
-}
-
-// ============ 云端优先提交：改动必须先上云，失败要明说 + 自动重试 ============
-// 硬要求：禁止「先悄悄写本地、云端成不成听天由命」。这里做到三点：
-//  ① 数据改动后 300ms 内立刻推云端，不等长防抖，关页面/断网也不会漏
-//  ② 推送失败 → 页面顶部红条明说「还没存到云端」，绝不假装成功、绝不静默丢失
-//  ③ 每 20 秒自动重试，网络恢复后自己补上；主人也可点「再试一次」立即重来
-var _pendingCommit = 0;
-var _commitRetryTimer = null;
-var _commitBusy = false;
-
-function hamiPendingBanner(show, msg) {
-  let el = document.getElementById('hami-cloud-pending');
-  if (!show) { if (el) el.remove(); return; }
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'hami-cloud-pending';
-    // 纯浮层：position:fixed，不占文档流、不改动任何现有布局与样式
-    el.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:100400;' +
-      'background:#fff0f3;border:1px solid #e890a8;color:#b3325c;border-radius:12px;' +
-      'padding:8px 14px;font-size:12.5px;line-height:1.6;box-shadow:0 6px 20px rgba(160,80,110,.22);' +
-      'max-width:88vw;text-align:center;';
-    document.body.appendChild(el);
-  }
-  el.innerHTML = '⚠️ <b>这条还没存到云端</b><br>' + (msg || '正在自动重试，先别关页面')
-    + '<br><span id="hami-cloud-retry" style="display:inline-block;margin-top:5px;padding:3px 12px;' +
-      'border-radius:9px;background:#e890a8;color:#fff;cursor:pointer;font-size:12px;">再试一次</span>';
-  const btn = document.getElementById('hami-cloud-retry');
-  if (btn) btn.onclick = function () { commitToCloud(); };
-}
-
-async function commitToCloud() {
-  if (!hamiSyncReady || !hamiCloudEnabled()) return;
-  if (_syncBusy) {                       // 上一轮还在传，稍后补推，避免并发抢写
-    _pendingCommit++; hamiPendingBanner(true);
-    setTimeout(function () { commitToCloud(); }, 1500);
-    return;
-  }
-  if (_commitBusy) { _pendingCommit++; hamiPendingBanner(true); return; }
-  _commitBusy = true;
-  _pendingCommit = 0;
-  try {
-    await pushNow();
-    hamiPendingBanner(false);
-  } catch (e) {
-    _pendingCommit = 1;
-    hamiPendingBanner(true, '云端写入失败：' + ((e && e.message) || String(e)) + '，正在自动重试');
-    if (!_commitRetryTimer) {
-      _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 20000);
-    }
-  } finally {
-    _commitBusy = false;
-    // 提交期间又产生了新改动 → 立刻再推一轮，保证最后一条一定上云
-    if (_pendingCommit > 0) {
-      _pendingCommit = 0;
-      setTimeout(function () { commitToCloud(); }, 300);
-    }
-  }
+  _syncPushTimer = setTimeout(function () { try { pushNow(); } catch (e) {} }, 2500);
 }
 
 // ---------- 同步自检：把「同步到底通不通」摊开给主人看，不再靠猜 ----------
@@ -6587,9 +6489,9 @@ setInterval(function () {
   const ae = document.activeElement;
   if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
   if (document.querySelector('.account-drawer.open')) return;
-    _periodicPullBusy = true;
-    pullAndMerge().then(function () { _periodicPullBusy = false; }).catch(function () { _periodicPullBusy = false; });
-  }, 20000);   // 原 60s → 20s：GitHub 云端没有 Realtime 推送，只能靠勤快轮询接近「实时」
+  _periodicPullBusy = true;
+  pullAndMerge().then(function () { _periodicPullBusy = false; }).catch(function () { _periodicPullBusy = false; });
+}, 60000);
 
 
 
@@ -14629,7 +14531,7 @@ try { applyAllBgs(); } catch (e) {}
   function bootCloud() {
     try { initCloudSync(document.getElementById('settings-cloud-status')); } catch (e) {}
   }
-  setTimeout(bootCloud, 200);                  // 路线一：200ms 内必定启动（原 1s，云端要抢第一优先级）
+  setTimeout(bootCloud, 1000);                 // 路线一：1 秒后必定启动，不依赖任何异步
   try {
     initBgCacheAndMigrate().then(function () {  // 路线二：背景图迁移完成后再补一次
       try { applyAllBgs(); } catch (e) {}
@@ -14683,8 +14585,6 @@ try { initSettingsPanel(); } catch(e) { console.log('initSettingsPanel error:', 
 try { checkCheckinAlerts(); } catch(e) { console.log('checkCheckinAlerts error:', e.message); }
 try { requestNotifyPermission(); } catch(e) { console.log('requestNotifyPermission error:', e.message); }
 try { checkWeeklyUpdateAlert(); } catch(e) { console.log('checkWeeklyUpdateAlert error:', e.message); }
-// 页面初始化完成：此后云端拉到新数据，就可以安全地全量重渲了
-try { _hamiBootDone = true; } catch (e) {}
 
 // ==================== 顶部指令栏宽度跟随左右面板（=左+右，绝不超过合并宽度） ====================
 function updateCmdBarWidth() {
