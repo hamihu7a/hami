@@ -30,7 +30,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-04">
+<meta name="hami-build" content="2026-09-06-05">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -708,17 +708,17 @@
   /* 打卡卡片网格 */
   .checkin-grid {
     display: flex;
-    gap: 12px;
+    gap: 6px;
     margin-bottom: var(--space-block);
   }
   .checkin-card {
     flex: 1;
     background: rgba(255,255,255,0.75);
     backdrop-filter: blur(10px);
-    border-radius: 14px;
-    padding: 10px 6px;
+    border-radius: 12px;
+    padding: 7px 4px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(255, 158, 181, 0.08);
+    box-shadow: 0 2px 8px rgba(255, 158, 181, 0.08);
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid rgba(255, 158, 181, 0.3);   /* 统一：未完成也用淡粉描边（"量体重"不再"裸奔"），完成态再加深 */
@@ -829,20 +829,22 @@
     background: linear-gradient(135deg, #fff0f5, var(--c-pink-soft));
   }
   .checkin-card .ci-icon {
-    font-size: 22px;
-    margin-bottom: 2px;
+    font-size: 20px;
+    margin-bottom: 1px;
+    line-height: 1.1;
   }
   .checkin-card .ci-label {
     font-size: 11px;
     color: var(--c-text-2);
-    margin-bottom: 3px;
+    margin-bottom: 2px;
+    line-height: 1.2;
   }
   .checkin-card .ci-lines {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0px;
-    margin-top: 1px;
+    gap: 1px;
+    margin-top: 0;
   }
   .checkin-card .ci-line {
     font-size: 9px;
@@ -2517,11 +2519,13 @@
       .weight-cal-weekdays { gap: 2px; }
       .weight-cal-weekdays > div { font-size: 11px; }
       .weight-cal-grid { gap: 2px; }
-      .weight-cal-cell { min-height: 34px; border-radius: 5px; padding: 2px 0; }
-      .weight-cal-day { font-size: 11px; }
-      .weight-cal-body { flex-wrap: nowrap; gap: 1px; }
-      .weight-cal-change, .weight-cal-weight { font-size: 9px; }
-      .weight-cal-ex-dot { font-size: 8px; }
+      .weight-cal-cell { min-height: 34px; border-radius: 5px; padding: 1px 0 2px; }
+      .weight-cal-day { font-size: 11px; line-height: 1; }
+      .weight-cal-body { flex-wrap: nowrap; gap: 0; line-height: 1; min-height: 11px; }
+      .weight-cal-change { font-size: 8px; padding: 0 1px; }
+      .weight-cal-weight { font-size: 8px; padding: 0 1px; }
+      .weight-cal-ex-dot { font-size: 7px; }
+      .weight-cal-ex { gap: 0; }
       .weight-cal-legend { font-size: 11px; margin-top: 4px; padding-top: 3px; }
 
       /* 内容卡片 & 顶栏：超小屏收窄留白，别浪费横向空间 */
@@ -2745,8 +2749,8 @@
   @media (max-width: 420px) {
     /* 打卡卡片：横向 3 列空间宝贵，再小一档 */
     .checkin-grid { gap: 5px; }
-    .checkin-card { padding: 6px 3px; border-radius: 9px; }
-    .checkin-card .ci-icon { font-size: 18px; margin-bottom: 0; }
+    .checkin-card { padding: 5px 3px; border-radius: 9px; }
+    .checkin-card .ci-icon { font-size: 17px; margin-bottom: 0; }
     .checkin-card .ci-label { font-size: 10px; margin-bottom: 1px; }
     .checkin-card .ci-line { font-size: 8px; line-height: 1.15; max-width: 100%; }
     .checkin-card .ci-status-line { font-size: 8px; padding: 1px 4px; border-radius: 5px; margin-bottom: 1px; }
@@ -3243,7 +3247,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-04';
+  var BUILD_VER = '2026-09-06-05';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -3473,7 +3477,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     <!-- 自媒体账号概览 -->
     <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 10px;border-radius:12px;margin-bottom:var(--space-block);">
       <div class="ac-title" style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px;position:relative;">
-        <span>📱 自媒体数据</span>
+        <span>自媒体数据</span>
         <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:#fff;background:rgba(255,255,255,0.22);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;" onclick="promptUpdateAllAccounts()">修改</span>
       </div>
       <div id="desktop-accounts"></div>
@@ -5500,6 +5504,21 @@ function showLoadBrokenBanner() {
 
 function saveData(skipCloud) {
   if (_loadBroken) return;
+  // 根治 userTodos 重复：每次保存前按「文本+分类」去重，保留最早创建的那条（done 状态取"完成"那条）。
+  // 不论是早期 seed bug、云端多次合并，还是「删了又从云端拉回来」，都会在写入前被压平。
+  try {
+    if (Array.isArray(store.userTodos)) {
+      const seen = new Map();
+      store.userTodos.forEach(function (t) {
+        const key = (t && t.text || '') + '|' + (t && t.category || 'daily');
+        const exist = seen.get(key);
+        if (!exist) { seen.set(key, t); return; }
+        // 已存在：若新条目 done 而旧条目未 done，则升级为 done（手动勾选有效）
+        if (t.done && !exist.done) { seen.set(key, t); }
+      });
+      store.userTodos = Array.from(seen.values());
+    }
+  } catch (e) {}
   let savedOk = false;
   // 更新时间戳，便于与 IndexedDB 备份比较新旧
   try { store._lastSavedAt = Date.now(); } catch (e) {}
@@ -8703,6 +8722,9 @@ function removeUserTodo(idx) {
   store.userTodos.splice(idx, 1);
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
+  // 删除是"不可逆"操作：本地再保存只是候选，必须第一时间把"云端已经没有这条"的版本强推上去，
+  // 避免下次拉云端又把被删的条目并回来（根治"删了没用"）。
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
 }
 
 // ==================== 面板切换 ====================
@@ -12846,8 +12868,8 @@ function renderDesktopAccounts() {
       </div>
       <div class="ac-followers" style="color:#ff7f9e;text-align:center;margin:4px 0;">${c.data.followers}<span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
-      <div class="ac-detail"><span>❤️获赞</span><b>${c.data.likes}</b></div>
-      <div class="ac-detail"><span>📅本周</span><b>${c.data.weekly}</b></div>
+      <div class="ac-detail"><span>获赞</span><b>${c.data.likes}</b></div>
+      <div class="ac-detail"><span>本周</span><b>${c.data.weekly}</b></div>
     </div>`;
   });
   html += '</div>';
@@ -13877,7 +13899,7 @@ function renderDesktopWeight() {
       exIcons = '<span class="weight-cal-ex-dot" style="color:#ddd;">○</span><span class="weight-cal-ex-dot" style="color:#ddd;">○</span><span class="weight-cal-ex-dot" style="color:#ddd;">○</span>';
     }
 
-    const todayShadow = isToday ? 'box-shadow:0 0 0 2px #f0c040;' : '';
+    const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1.5px #f0c040;' : '';
 
     // 把变化值和体重合并到同一行，避免垂直方向太挤
     html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;" title="点击记录/修改 ${dateStr} 的体重" onclick="openWeightEditByDate('${dateStr}')">
