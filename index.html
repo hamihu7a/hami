@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-23">
+<meta name="hami-build" content="2026-09-06-24">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3236,8 +3236,8 @@
 
   /* ============ 明日天气 / 明日黄历 小半透明按钮 + 预览弹窗 ============ */
   .tomorrow-badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    padding: 2px 7px; border-radius: 10px;
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.15;
+    padding: 3px 9px; border-radius: 10px;
     background: rgba(255,255,255,0.45);
     border: 1px solid rgba(209,75,115,0.25);
     color: var(--c-pink-deep); font-size: 11px; font-weight: 600;
@@ -3277,7 +3277,8 @@
   .tm-modal-title { font-size: 16px; font-weight: 800; color: #d14b73; text-align: center; margin-bottom: 14px; }
   .tm-city-switcher { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: -6px 0 14px; }
   .tm-city-chip {
-    padding: 3px 12px; border-radius: 14px; border: 1px solid rgba(209,75,115,0.25);
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.2;
+    padding: 4px 14px; border-radius: 14px; border: 1px solid rgba(209,75,115,0.25);
     background: rgba(255,255,255,0.5); color: #7d4a5a; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all .15s ease; user-select: none;
   }
@@ -3673,7 +3674,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-23';
+  var BUILD_VER = '2026-09-06-24';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -14336,8 +14337,8 @@ function renderWeatherFromApi(d) {
           <div class="home-card-note">${tip}</div>
         </div>
         <div class="home-card-foot">
-          <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">查看明日天气</span>
-          <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">🔍 搜索城市</span>
+          <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<br>天气</span>
+          <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">搜索<br>城市</span>
         </div>
       </div>`;
   } catch(e) { renderWeatherFallback(); }
@@ -14369,8 +14370,8 @@ function renderWeatherFallback() {
         <div class="home-card-note">${weatherDesc}</div>
       </div>
       <div class="home-card-foot">
-        <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">查看明日天气</span>
-        <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">🔍 搜索城市</span>
+        <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<br>天气</span>
+        <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">搜索<br>城市</span>
       </div>
     </div>`;
 }
@@ -14404,7 +14405,7 @@ function renderWeatherFortune() {
         </div>
       </div>
       <div class="home-card-foot">
-        <span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">查看明日黄历</span>
+        <span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">明日<br>黄历</span>
       </div>
     </div>`;
 
@@ -14588,7 +14589,7 @@ function showTomorrowWeatherModal(e) {
   // 渲染城市切换按钮：把以前的多个固定城市按钮改成「🔍 搜索城市」单一按钮 + 一个高亮的小字标签显示当前城市
   const switcher = document.getElementById('tmw-city-switcher');
   if (switcher) {
-    switcher.innerHTML = '<button type="button" class="tm-city-chip active" onclick="openWeatherSearchCity()" style="cursor:pointer;">🔍 搜索城市（当前：<b>' + currentCityName + '</b>）</button>';
+    switcher.innerHTML = '<button type="button" class="tm-city-chip active" onclick="openWeatherSearchCity()" style="cursor:pointer;">搜索<br>城市（当前：<b>' + currentCityName + '</b>）</button>';
   }
 
   const tomorrow = new Date();
