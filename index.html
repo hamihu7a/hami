@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-26">
+<meta name="hami-build" content="2026-09-06-27">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3677,7 +3677,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-26';
+  var BUILD_VER = '2026-09-06-27';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -9521,6 +9521,17 @@ function switchTodoCat(cat) {
   todoCurCat = cat;
   // 旧入口保留，避免其他代码调用报错；新 UI 已无需 Tab 切换
 }
+// v26 待办也改每页 4 条翻页（主人要求所有记录列表每页 4 条、数据永不丢）
+const TODO_PAGE = 4;
+const __todoPage = {};
+function todoGo(cat, delta) {
+  const items = (store.userTodos || [])
+    .map((ut, i) => ({ ut, i }))
+    .filter(o => (o.ut.category || 'daily') === cat);
+  const maxPage = Math.max(0, Math.ceil(items.length / TODO_PAGE) - 1);
+  __todoPage[cat] = Math.max(0, Math.min((__todoPage[cat] || 0) + delta, maxPage));
+  renderTodoListForCat(cat);
+}
 function renderTodoListForCat(cat) {
   const el = document.getElementById('todo-list-' + cat);
   if (!el) return;
@@ -9528,12 +9539,18 @@ function renderTodoListForCat(cat) {
     .map((ut, i) => ({ ut, i }))
     .filter(o => (o.ut.category || 'daily') === cat);
   if (items.length === 0) {
+    __todoPage[cat] = 0;
     el.innerHTML = `<div class="todo-empty">这里还没有${cat === 'work' ? '工作' : '日常'}待办，下面加一条吧~</div>`;
     return;
   }
   const sorted = sortTodos(items);
+  // 分页：一页 TODO_PAGE 条，翻到底看全不丢
+  const maxPage = Math.max(0, Math.ceil(sorted.length / TODO_PAGE) - 1);
+  if ((__todoPage[cat] || 0) > maxPage) __todoPage[cat] = maxPage;
+  const start = (__todoPage[cat] || 0) * TODO_PAGE;
+  const pageList = sorted.slice(start, start + TODO_PAGE);
   let html = '';
-  sorted.forEach(o => {
+  pageList.forEach(o => {
     const ut = o.ut;
     const info = todoDeadlineInfo(ut);
     const overdueCls = (info.overdue && !ut.done) ? ' todo-item-overdue' : '';
@@ -9550,6 +9567,13 @@ function renderTodoListForCat(cat) {
       </span>
     </div>`;
   });
+  if (sorted.length > TODO_PAGE) {
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;padding-top:6px;">
+      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',-1)" ${(__todoPage[cat] || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${(__todoPage[cat] || 0) + 1}/${maxPage + 1} 页 · 共 ${sorted.length} 条</span>
+      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',1)" ${(__todoPage[cat] || 0) >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
   el.innerHTML = html;
 }
 function renderTodoPanel() {
@@ -9620,12 +9644,14 @@ function editUserTodo(idx) {
 function toggleUserTodo(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
   store.userTodos[idx].done = !store.userTodos[idx].done;
+  __todoPage.daily = 0; __todoPage.work = 0;   // 勾选会改变排序位置，回到第1页最直观
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
 }
 function removeUserTodo(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
   store.userTodos.splice(idx, 1);
+  __todoPage.daily = 0; __todoPage.work = 0;
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
   // 删除是"不可逆"操作：本地再保存只是候选，必须第一时间把"云端已经没有这条"的版本强推上去，
@@ -9820,17 +9846,30 @@ function crDelBenchmark(idx) {
   crRenderBenchmarks();
   try { hamiToast('已删除对标：' + t.substring(0, 12)); } catch (e) {}
 }
+let __benchPage = 0;   // v26 对标库分页
+function benchGo(delta) {
+  const n = (store.benchmarkNotes || []).length;
+  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  __benchPage = Math.max(0, Math.min((__benchPage || 0) + delta, mp));
+  crRenderBenchmarks();
+}
 function crRenderBenchmarks() {
   var box = document.getElementById('cr-bm-list');
   if (!box) return;
   var list = store.benchmarkNotes || [];
   if (!list.length) {
+    __benchPage = 0;
     box.innerHTML = '<div style="text-align:center;color:#8a6270;padding:22px;font-size:13px;line-height:1.7;">还没有对标记录～<br>刷到爆款就回来记一条，攒够 10 条规律就出来了</div>';
     return;
   }
   var sorted = list.slice().sort(function (a, b) { return (b.heat || 0) - (a.heat || 0); });
+  // v26 分页
+  var maxPg = Math.max(0, Math.ceil(sorted.length / ACC_PAGE) - 1);
+  if ((__benchPage || 0) > maxPg) __benchPage = maxPg;
+  var start = (__benchPage || 0) * ACC_PAGE;
+  var pageList = sorted.slice(start, start + ACC_PAGE);
   var html = '';
-  sorted.forEach(function (b) {
+  pageList.forEach(function (b) {
     var realIdx = list.indexOf(b);
     var tipsHtml = (b.tips || []).map(function (t) {
       return '<span style="display:inline-block;font-size:11.5px;background:rgba(255,158,181,.16);color:#c75b86;padding:3px 9px;border-radius:9px;line-height:1.6;">' + escapeHtml(t) + '</span>';
@@ -9846,6 +9885,13 @@ function crRenderBenchmarks() {
       + '<div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">' + tipsHtml + '</div>'
       + '</div>';
   });
+  if (sorted.length > ACC_PAGE) {
+    html += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+      <button class="flow-toggle-btn" type="button" onclick="benchGo(-1)" ${(__benchPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${(__benchPage || 0) + 1}/${maxPg + 1} 页 · 共 ${sorted.length} 条</span>
+      <button class="flow-toggle-btn" type="button" onclick="benchGo(1)" ${(__benchPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
   box.innerHTML = html;
 }
 function crRenderCovers() {
@@ -10112,10 +10158,33 @@ function applyDarkModePref() {
 })();
 
 // ==================== 收入台账 ====================
+// v26：定制单明细 / 美化档明细 每页 ACC_PAGE 条翻页，数据永不丢
+let __orderPage = 0;     // 定制单明细当前页
+let __beautyPage = 0;    // 美化档明细当前页
+let __incomeRenderedMonth = '';   // 记录上次渲染月份，用于翻页归零
+function orderGo(delta) {
+  const monthEl = document.getElementById('income-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const n = (store.customOrders || []).filter(o => o.date && o.date.startsWith(month)).length;
+  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  __orderPage = Math.max(0, Math.min((__orderPage || 0) + delta, mp));
+  renderIncome();
+}
+function beautyGo(delta) {
+  const monthEl = document.getElementById('income-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const n = (store.beautyRecords || []).filter(b => b.date && b.date.startsWith(month)).length;
+  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  __beautyPage = Math.max(0, Math.min((__beautyPage || 0) + delta, mp));
+  renderIncome();
+}
 function renderIncome() {
   const monthEl = document.getElementById('income-month');
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
   const today = todayStr();
+  // 月份变了就把两明细页归零
+  const _incomeMonthChanged = (__incomeRenderedMonth !== month);
+  if (_incomeMonthChanged) { __orderPage = 0; __beautyPage = 0; __incomeRenderedMonth = month; }
   const monthOrders = store.customOrders.filter(o => o.date.startsWith(month));
   const customIncome = monthOrders.filter(o => o.status === 'done').reduce((s,o) => s+o.amount, 0);
   const pendingCount = monthOrders.filter(o => o.status === 'pending').length;
@@ -10132,12 +10201,20 @@ function renderIncome() {
     <div class="stat-card"><div class="label">待完成</div><div class="value ${overdueCount > 0 ? 'red' : ''}">${pendingCount}</div><div class="unit">${overdueCount > 0 ? '⚠️ '+overdueCount+'单逾期' : '暂无逾期'}</div></div>
   `;
 
-  if (monthOrders.length === 0) {
+  const _orderList = store.customOrders
+    .map((o, idx) => ({ o, idx }))
+    .filter(x => x.o.date && x.o.date.startsWith(month));
+  if (_orderList.length === 0) {
     document.getElementById('custom-orders-table').innerHTML = `<div class="empty-state"><div class="big-icon">📝</div><p>本月暂无定制单</p></div>`;
   } else {
+    // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
+    const maxPg = Math.max(0, Math.ceil(_orderList.length / ACC_PAGE) - 1);
+    if ((__orderPage || 0) > maxPg) __orderPage = maxPg;
+    const start = (__orderPage || 0) * ACC_PAGE;
+    const pageList = _orderList.slice(start, start + ACC_PAGE);
     let html = '<div class="co-card-list">';
-    store.customOrders.forEach((o, idx) => {
-      if (!o.date.startsWith(month)) return;
+    pageList.forEach(x => {
+      const o = x.o, idx = x.idx;
       const overdue = o.status === 'pending' && new Date(o.deadline) < new Date(today);
       const badge = o.status === 'done' ? '<span class="badge done">已完成</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待完成</span>');
       html += `
@@ -10155,6 +10232,13 @@ function renderIncome() {
         </div>`;
     });
     html += '</div>';
+    if (_orderList.length > ACC_PAGE) {
+      html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+        <button class="flow-toggle-btn" type="button" onclick="orderGo(-1)" ${(__orderPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <span style="font-size:12px;color:#8a6270;">第 ${(__orderPage || 0) + 1}/${maxPg + 1} 页 · 共 ${_orderList.length} 单</span>
+        <button class="flow-toggle-btn" type="button" onclick="orderGo(1)" ${(__orderPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      </div>`;
+    }
     document.getElementById('custom-orders-table').innerHTML = html;
   }
 
@@ -10181,13 +10265,25 @@ function renderIncome() {
     if (recs.length === 0) {
       beautyTableEl.innerHTML = `<div class="empty-state"><div class="big-icon">🎨</div><p>本月暂无美化档记录</p><p style="font-size:12px;margin-top:6px;">每月底报销量时告诉我「美化档×N」，或点上方「➕ 记美化档」</p></div>`;
     } else {
+      // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
+      const maxPg = Math.max(0, Math.ceil(recs.length / ACC_PAGE) - 1);
+      if (__beautyPage > maxPg) __beautyPage = maxPg;
+      const start = __beautyPage * ACC_PAGE;
+      const pageList = recs.slice(start, start + ACC_PAGE);
       let bhtml = `<div style="overflow-x:auto;"><table><thead><tr><th>日期</th><th>档数</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody>`;
-      store.beautyRecords.forEach((b, idx) => {
-        if (!b.date.startsWith(month)) return;
+      pageList.forEach(b => {
+        const idx = store.beautyRecords.indexOf(b);
         const amt = (b.amount != null ? b.amount : (b.count * MOD_PRICE));
         bhtml += `<tr><td>${b.date}</td><td>${b.count}</td><td>¥${amt}</td><td>${b.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openBeautyRecordModal(${idx})">✏️ 修改</button> <button class="row-del-btn" onclick="deleteBeautyRecord(${idx})">🗑</button></td></tr>`;
       });
       bhtml += '</tbody></table></div>';
+      if (recs.length > ACC_PAGE) {
+        bhtml += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;">
+          <button class="flow-toggle-btn" type="button" onclick="beautyGo(-1)" ${__beautyPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+          <span style="font-size:12px;color:#8a6270;">第 ${__beautyPage + 1}/${maxPg + 1} 页 · 共 ${recs.length} 条</span>
+          <button class="flow-toggle-btn" type="button" onclick="beautyGo(1)" ${__beautyPage >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+        </div>`;
+      }
       beautyTableEl.innerHTML = bhtml;
     }
   }
@@ -10959,6 +11055,14 @@ function syncAllFuturePostMediaLinks() {
     return !r.futurePostId || validIds.has(r.futurePostId);
   });
 }
+// v26：未来图文也每页 4 条翻页（数据永不丢）
+let __futurePage = 0;
+function futureGo(delta) {
+  const n = (store.futurePosts || []).length;
+  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  __futurePage = Math.max(0, Math.min((__futurePage || 0) + delta, mp));
+  renderFuturePosts();
+}
 function renderFuturePosts() {
   const box = document.getElementById('future-post-list');
   if (!box) return;
@@ -10970,8 +11074,13 @@ function renderFuturePosts() {
     return;
   }
   const today = todayStr();
+  // 分页
+  const maxPg = Math.max(0, Math.ceil(list.length / ACC_PAGE) - 1);
+  if ((__futurePage || 0) > maxPg) __futurePage = maxPg;
+  const start = (__futurePage || 0) * ACC_PAGE;
+  const pageList = list.slice(start, start + ACC_PAGE);
   let html = '';
-  list.forEach(function (p, idx) {
+  pageList.forEach(function (p) {
     const originalIdx = (store.futurePosts || []).indexOf(p);
     const isOverdue = p.date && p.date < today && !p.done;
     const tagsHtml = (p.tags || '').split(/\s+/).filter(Boolean).map(function (t) {
@@ -10982,7 +11091,6 @@ function renderFuturePosts() {
     const doneIcon = p.done ? '↩️' : '✓';
     const accMap = { big: '🎨 美化档大号', small: '👤 定制人物小号', douyin: '🎵 抖音' };
     const accName = accMap[p.account] || accMap['big'];
-    const dyBadge = p.douyin ? '<span class="future-post-tag" style="background:rgba(25,25,25,0.08);color:#5a3a48;">🎵 同步抖音</span>' : '';
     html += '<div class="future-post-card' + (p.done ? ' done' : '') + (isOverdue ? ' overdue' : '') + '">'
       + '<div class="future-post-title">' + crEscapeHtml(p.title || '（无标题）') + '</div>'
       + '<div class="future-post-meta">'
@@ -11002,6 +11110,13 @@ function renderFuturePosts() {
       + '<div id="fp-check-result-' + originalIdx + '" class="fp-check-result" style="display:none;"></div>'
       + '</div>';
   });
+  if (list.length > ACC_PAGE) {
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+      <button class="flow-toggle-btn" type="button" onclick="futureGo(-1)" ${(__futurePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${(__futurePage || 0) + 1}/${maxPg + 1} 页 · 共 ${list.length} 条</span>
+      <button class="flow-toggle-btn" type="button" onclick="futureGo(1)" ${(__futurePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
   box.innerHTML = html;
 }
 
@@ -12158,7 +12273,7 @@ function toggleStatsMode() {
 // v2026-09-06-25：主人强烈要求"所有记账都要永远在，太多了就翻页看，别只给前几条还要能看全"。
 // 之前"默认3笔 + 展开全部一次铺几百条"既让主人误以为只存了3条，又一翻到底很累。
 // 改为**每页8条 + 上一页/下一页**：数据永远全量保存(三重备份)，只是分页浏览更清楚。
-const ACC_PAGE = 8;                 // 每页 8 条
+const ACC_PAGE = 4;                 // v26 主人要求每页 4 条
 let accountFlowPage = 0;            // 消费日期列表当前页码(0-based)
 let accountTimelinePage = 0;        // 时间线列表当前页码(0-based)
 function accFlowGo(delta) {
@@ -12489,7 +12604,7 @@ function renderInlineStats(type) {
 // 供各日常/健康记录列表复用。数据全量在 store，只是分页浏览（主人 2026-09-06-25 强烈要求）
 const __foldState = {};
 const __foldPage = {};            // 每个列表当前页码(0-based)
-const FOLD_PAGE = 8;              // 每页 8 条
+const FOLD_PAGE = 4;              // v26 主人要求每页 4 条
 function toggleFold(key) {
   __foldState[key] = !__foldState[key];
   if (!__foldState[key]) __foldPage[key] = 0;   // 收起回到第1页
@@ -13064,12 +13179,21 @@ function showReminderBanners() {
   }
 }
 
+// v26：重要日期也每页 4 条翻页
+let __impDatePage = 0;
+function impDateGo(delta) {
+  const n = (store.importantDates || []).length;
+  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  __impDatePage = Math.max(0, Math.min((__impDatePage || 0) + delta, mp));
+  renderReminder();
+}
 function renderReminder() {
   const today = new Date(todayStr());
 
   // ========== 重要日期（Days Matter 风格列表）==========
   const dates = store.importantDates || [];
   if (dates.length === 0) {
+    __impDatePage = 0;
     document.getElementById('important-dates').innerHTML = `<div class="empty-state"><div class="big-icon">🎂</div><p>暂无重要日期</p><p style="font-size:12px;margin-top:6px;">告诉我你的生日/纪念日/其他提醒，或点「➕ 新增日期」自己加~</p></div>`;
   } else {
     // 计算每个日期的信息并排序（按距今最近排列）；保留原始 store 索引 d._idx 用于编辑/删除
@@ -13080,10 +13204,12 @@ function renderReminder() {
     dateList.sort((a, b) => a.sortKey - b.sortKey);
 
     let html = '';
-    const VISIBLE = 5;
-    const hasMore = dateList.length > VISIBLE;
-    let moreHtml = '';
-    dateList.forEach((d, idx) => {
+    // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
+    const maxPg = Math.max(0, Math.ceil(dateList.length / ACC_PAGE) - 1);
+    if ((__impDatePage || 0) > maxPg) __impDatePage = maxPg;
+    const start = (__impDatePage || 0) * ACC_PAGE;
+    const pageList = dateList.slice(start, start + ACC_PAGE);
+    pageList.forEach((d, idx) => {
       const isBirthday = d.type === 'birthday';
       const isAnniversary = d.type === 'anniversary';
       const isOther = !isBirthday && !isAnniversary;
@@ -13145,13 +13271,15 @@ function renderReminder() {
           <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
         </div>
       </div>`;
-      if (hasMore && idx >= VISIBLE) moreHtml += itemHtml; else html += itemHtml;
+      html += itemHtml;
     });
-    // 超过 5 条则把其余折叠，点击「展开其余 N 条」显示
-    if (hasMore) {
-      html += `<div id="imp-dates-collapsed" style="display:none;">${moreHtml}</div>`;
-      const rest = dateList.length - VISIBLE;
-      html += `<div style="text-align:center;margin-top:8px;"><button class="date-fold-btn" id="imp-dates-toggle" type="button" onclick="toggleImpDates()">▾ 展开其余 ${rest} 条</button></div>`;
+    // v26 分页条：上一页 / 页码 / 下一页
+    if (dateList.length > ACC_PAGE) {
+      html += `<div style="text-align:center;margin-top:8px;display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="date-fold-btn" type="button" onclick="impDateGo(-1)" ${(__impDatePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <span style="font-size:12px;color:#8a6270;">第 ${(__impDatePage || 0) + 1}/${maxPg + 1} 页 · 共 ${dateList.length} 条</span>
+        <button class="date-fold-btn" type="button" onclick="impDateGo(1)" ${(__impDatePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      </div>`;
     }
     document.getElementById('important-dates').innerHTML = html;
   }
@@ -13228,11 +13356,19 @@ function renderReminder() {
 
 // ==================== 游玩计划：行程 + 每日安排 ====================
 let _tripActiveDay = {}; // { tripIndex: dayIndex }
+let __tripPage = 0;      // v26 行程卡分页
+function tripGo(delta) {
+  const n = (store.trips || []).length;
+  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  __tripPage = Math.max(0, Math.min((__tripPage || 0) + delta, mp));
+  renderTripPlans();
+}
 function renderTripPlans() {
   const el = document.getElementById('trip-plans');
   if (!el) return;
   const trips = store.trips || [];
   if (trips.length === 0) {
+    __tripPage = 0;
     el.innerHTML = '<div class="trip-empty"><div class="big-icon">🗺️</div><p>暂无游玩行程</p><p style="font-size:12px;margin-top:6px;">点右上角「➕ 新建行程」，记录城市、日期和每天安排~</p></div>';
     return;
   }
@@ -13241,8 +13377,13 @@ function renderTripPlans() {
   const sorted = trips.slice().sort((a,b) => (a.start||'').localeCompare(b.start||''));
   const today = todayStr();
   let html = '<div class="trip-plans-list">';
+  // v26：行程卡较多时按每页 ACC_PAGE 条翻页（每个行程卡内所有 Day 仍完整展示，属于一次行程的内容不拆）
+  const maxPg = Math.max(0, Math.ceil(sorted.length / ACC_PAGE) - 1);
+  if ((__tripPage || 0) > maxPg) __tripPage = maxPg;
+  const tripStart = (__tripPage || 0) * ACC_PAGE;
+  const pageTrips = sorted.slice(tripStart, tripStart + ACC_PAGE);
 
-  sorted.forEach((trip, sortIdx) => {
+  pageTrips.forEach((trip, sortIdx) => {
     const realIdx = store.trips.indexOf(trip);
     const start = trip.start || '';
     const end = trip.end || start;
@@ -13325,6 +13466,14 @@ function renderTripPlans() {
   });
 
   html += '</div>';
+  // v26 行程分页条
+  if (sorted.length > ACC_PAGE) {
+    html += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+      <button class="flow-toggle-btn" type="button" onclick="tripGo(-1)" ${(__tripPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${(__tripPage || 0) + 1}/${maxPg + 1} 页 · 共 ${sorted.length} 个行程</span>
+      <button class="flow-toggle-btn" type="button" onclick="tripGo(1)" ${(__tripPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
   el.innerHTML = html;
 }
 
