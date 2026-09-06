@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-11">
+<meta name="hami-build" content="2026-09-06-12">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3295,7 +3295,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-11';
+  var BUILD_VER = '2026-09-06-12';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4989,6 +4989,9 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
             <button id="settings-sync-report" style="padding:8px 14px;border:1.5px solid #8a6270;border-radius:10px;background:#fff;color:#5a3a48;font-size:12.5px;font-weight:700;cursor:pointer;">
               📮 一键上报问题给我
             </button>
+            <button id="settings-cloud-purge" style="padding:8px 14px;border:1.5px solid #c25f5f;border-radius:10px;background:#fff;color:#c25f5f;font-size:12.5px;font-weight:700;cursor:pointer;">
+              🧹 清掉旧云端档案
+            </button>
           </div>
           <div id="hami-sync-check-out" style="font-size:12px;color:#8a6270;line-height:1.7;"></div>
         </div>
@@ -6628,6 +6631,31 @@ function _diagEnv() {
     screen: (screen.width || 0) + 'x' + (screen.height || 0)
   };
 }
+async function hamiCloudPurgeConfirm() {
+  const ok = await hamiConfirm('🧹 清掉旧云端档案？\n\n这会清空 GitHub 上的加密存档，本机数据不会丢。\n\n清空后点「立即同步到云端」即可用本机最新数据重建。\n\n（主人可以放心做：这只是删除云端那个加密文件，本机浏览器里的所有记账/体重/代办等数据都还在。）', { title: '清掉旧云端档案', yesText: '✅ 是的，清掉重建', noText: '取消', danger: true });
+  if (!ok) return;
+  const out = document.getElementById('hami-sync-check-out');
+  if (out) out.innerHTML = '<div style="font-size:12.5px;line-height:1.8;">⏳ 正在清空云端旧档案…</div>';
+  try {
+    // 直接 PUT 一个最小 payload（空 store）并强制覆盖，文件 → 仍存在但内容是空档案 → 下次 pushNow 即可覆盖
+    // GitHub Contents API 没有"直接删除文件"接口，但可以用空 payload 覆盖 == 等价清空
+    const payload = { v: 1, updatedAt: Date.now(), store: {}, _cleared: true, clearedAt: Date.now() };
+    const ct = await encryptStore(payload, '');
+    // 必须先 GET 拿到 sha 才能 PUT
+    const got = await _ghGet();
+    const sha = got ? got.sha : null;
+    if (!sha) {
+      if (out) out.innerHTML = '<div style="font-size:12.5px;color:#5aa86a;line-height:1.8;">✅ 云端本来就没有档案，无须清空。可以直接点「立即同步到云端」重建。</div>';
+      return;
+    }
+    await _ghPut(ct, sha, 'hami purge old cloud ' + new Date().toISOString());
+    if (out) out.innerHTML = '<div style="font-size:12.5px;color:#5aa86a;line-height:1.8;">✅ 云端旧档案已用最小占位文件覆盖。现在点「🔄 立即同步到云端」即可用本机数据重建。</div>';
+    try { cloudStatus('☁️ 已清空旧云端档案，准备重建', '#c75b86'); } catch (e) {}
+  } catch (e) {
+    if (out) out.innerHTML = '<div style="font-size:12.5px;color:#c25f5f;line-height:1.8;">❌ 清空失败：' + ((e && e.message) || String(e)) + '<br><br>小助理可以帮主人用 GitHub 工具直接删除，要的话告诉小助理。</div>';
+  }
+}
+
 async function hamiReportDiag() {
   const out = document.getElementById('hami-sync-check-out');
   const btn = document.getElementById('settings-sync-report');
@@ -6728,11 +6756,15 @@ async function hamiSyncSelfCheck() {
       return;
     }
     let remote = null;
-    try {
-      remote = await decryptStore(got.content.replace(/\s+/g, ''), getSyncPassword());
-    } catch (de) {
-      add('云端存档', '存在，但解密失败：' + (de.message || de) + '（多半是两台设备填的密码不一样）', false);
-      out.innerHTML = L.join('');
+    let remoteErr = null;
+    try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
+    catch (de1) {
+      try { remote = await decryptStore(got.content.replace(/\s+/g, ''), getSyncPassword()); remoteErr = null; }
+      catch (de2) { remoteErr = de2; }
+    }
+    if (!remote) {
+      add('云端存档', '存在，但解密失败：' + ((remoteErr && (remoteErr.message || remoteErr)) || '未知') + '（多半是更早的旧版云端档案用的不是默认密码）', false);
+      out.innerHTML = L.join('') + '<div style="font-size:12px;color:#c75b86;margin-top:6px;line-height:1.7;">若主人两台设备已经统一用默认加密，可以点下方 <b>「🧹 清掉旧云端档案」</b>一键重建——主人本机的数据不会丢。</div>';
       return;
     }
     const rs = (remote && remote.store) || {};
@@ -7124,6 +7156,8 @@ async function initSettingsPanel() {
   if (forceBtn) forceBtn.addEventListener('click', function () { hamiForceResync(); });
   const reportBtn = document.getElementById('settings-sync-report');
   if (reportBtn) reportBtn.addEventListener('click', function () { hamiReportDiag(); });
+  const purgeBtn = document.getElementById('settings-cloud-purge');
+  if (purgeBtn) purgeBtn.addEventListener('click', function () { hamiCloudPurgeConfirm(); });
 
   // 7) 数据备份与恢复（真备份：存成一个文件，云同步 ≠ 备份）
   const expBtn = document.getElementById('settings-export-data');
@@ -14722,12 +14756,19 @@ function renderCountdown() {
       </div>`;
   }
 
-  // 一页一张卡片，整行占满，每张独立一行（上下轮播，去掉分页小点）
+  // 一页一张卡片，整行占满，每张独立一行（上下轮播）
   let html = `<div class="countdown-page" style="position:relative;">`;
   page.forEach(item => html += boxHtml(item));
   html += `</div>`;
-
-  // 不再渲染分页小点；轮播指示由"上下整页切换"本身代替（更符合主人对上下轮播的预期）
+  // 右侧分页小点（保留指示，主人的原话：右边的小点是轮播效果最好的指示）
+  if (pages.length > 1) {
+    html += `<div class="countdown-dots" style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:6px;">`;
+    pages.forEach((_, idx) => {
+      const active = idx === pageIndex ? 'background:#d14b73;width:14px;' : 'background:rgba(209,75,115,0.4);width:6px;';
+      html += `<span class="countdown-dot" style="height:6px;border-radius:3px;transition:all .3s;${active}"></span>`;
+    });
+    html += `</div>`;
+  }
 
   wrap.innerHTML = html;
 
