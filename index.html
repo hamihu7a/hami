@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-10">
+<meta name="hami-build" content="2026-09-06-11">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3295,7 +3295,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-10';
+  var BUILD_VER = '2026-09-06-11';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -3308,18 +3308,21 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
   }
 })();
 </script>
-<!-- 顶部版本号水印（第一时间写入；格式：版本：月.日.时:分，主人核对"我用的是不是最新"） -->
+<!-- 顶部版本号水印（第一时间写入；固定口令不跟随当前时间变化，主人刷新对账用） -->
+<!-- 口令格式：09.06-#10（月.日-#序号）；每次修改推送一个固定编码，主人刷新再多次也是同一个 -->
 <script>
 (function(){
   try{
     var bv=''+window.BUILD_VER;
-    var m=bv.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    var d=new Date();
-    var hh=String(d.getHours()).padStart(2,'0');
-    var mn=String(d.getMinutes()).padStart(2,'0');
+    var m=bv.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
     var tag=document.getElementById('hami-version-tag');
     if(tag){
-      tag.textContent='版本：'+(m?m[2]+'.'+m[3]+'.'+hh+':'+mn:(bv||'?'));
+      if(m){
+        // 口令=月.日-#序号（序号取 BUILD_VER 最后一段）
+        tag.textContent='版本：'+m[2]+'.'+m[3]+'-#'+m[4];
+      }else{
+        tag.textContent='版本：'+(bv||'?');
+      }
     }
   }catch(e){}
 })();
@@ -4938,6 +4941,17 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
         <input type="file" id="settings-bg-file" accept="image/*" style="display:none;">
         <div id="settings-bg-status" style="margin-top:10px;font-size:12px;color:#8a6270;"></div>
+
+        <!-- 🛟 背景图备份/恢复（跨设备迁移、丢失找回专用） -->
+        <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,228,236,.55);border:1.5px dashed var(--c-pink-deep,#d14b73);">
+          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;">🛟 背景图备份 · 跨设备同步 · 丢失找回</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.6;margin-bottom:8px;">背景图默认只存本机浏览器（IndexedDB），换设备或清理浏览数据会丢失。<b>点「📤 上传背景到云端」可让背景图跟着工作台一起跨设备同步</b>；换设备后或发现没背景时，再点「📥 从云端拉回背景」一键还原。</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">📤 上传背景到云端</button>
+            <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" style="flex:1;padding:9px 12px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;">📥 从云端拉回背景</button>
+          </div>
+          <div id="settings-bg-cloud-status" style="margin-top:8px;font-size:12px;color:#8a6270;line-height:1.5;"></div>
+        </div>
         <div style="margin-top:14px;display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
           <button id="settings-sync-all-bg" style="flex:1 1 0;min-width:0;padding:10px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             🔄 立即同步到云端
@@ -5982,6 +5996,56 @@ function clearBg(key) {
   } catch (e) {}
 }
 
+// ========== 背景图云端备份/恢复 ==========
+// 主人核心痛点：背景图只存本地浏览器 IndexedDB，换设备/清缓存就全没。
+// 这里让背景图跟着 store 一起走云端（加密）+ 设置面板两个手动按钮兜底。
+async function bgUploadAllToCloud() {
+  const statusEl = document.getElementById('settings-bg-cloud-status');
+  if (statusEl) statusEl.textContent = '⏳ 正在把背景图打包加密上传到云端…';
+  try {
+    const bgs = await bgIdbGetAll();
+    const keys = Object.keys(bgs || {}).filter(k => bgs[k]);
+    if (!keys.length) { if (statusEl) statusEl.textContent = '⚠️ 本地浏览器里没有背景图，无须上传。请先在「主面板镜像 · 点击板块改背景」上传几张图。'; return; }
+    let total = 0; keys.forEach(k => total += (bgs[k] || '').length);
+    if (statusEl) statusEl.textContent = '⏳ 找到 ' + keys.length + ' 张背景图（共 ' + Math.round(total / 1024) + ' KB），上传中…';
+    // 直接复用 pushNow：把 bgBackups 写进 payload 加密 → PUT 云端
+    const payload = { v: 1, updatedAt: Date.now(), store: store, bgBackups: bgs, bgBackupsAt: Date.now() };
+    const ct = await encryptStore(payload, '');
+    const got = await _ghGet();
+    await _ghPut(ct, got ? got.sha : null, 'hami bg-backup ' + new Date().toISOString());
+    if (statusEl) statusEl.textContent = '✅ 已上传 ' + keys.length + ' 张背景图到云端（共 ' + Math.round(total / 1024) + ' KB）。换设备后或丢失时，可点「从云端拉回背景」一键恢复。';
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '❌ 上传失败：' + ((e && e.message) || String(e));
+  }
+}
+async function bgDownloadFromCloud() {
+  const statusEl = document.getElementById('settings-bg-cloud-status');
+  if (statusEl) statusEl.textContent = '⏳ 正在从云端拉取背景图…';
+  try {
+    const got = await _ghGet();
+    if (!got) { if (statusEl) statusEl.textContent = '☁️ 云端暂无数据。请先在主菜单某台设备上传几张背景图，或点这里上传：' + '📤 上传背景到云端'; return; }
+    let remote = null;
+    try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
+    catch (e1) {
+      try { remote = await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword); }
+      catch (e2) { remote = null; }
+    }
+    const bgs = remote && remote.bgBackups;
+    if (!bgs || !Object.keys(bgs).length) { if (statusEl) statusEl.textContent = '☁️ 云端有数据但没背景图。先点「📤 上传背景到云端」一次。'; return; }
+    const keys = Object.keys(bgs).filter(k => bgs[k]);
+    let done = 0;
+    await Promise.all(keys.map(function (k) {
+      const data = bgs[k];
+      try { BG_CACHE[k] = data; } catch (e) {}
+      return bgIdbSet(k, data).then(function () { done++; });
+    }));
+    if (typeof applyAllBgs === 'function') applyAllBgs();
+    if (statusEl) statusEl.textContent = '✅ 已从云端拉回 ' + done + ' 张背景图（已写回本机 + 应用到页面）。' + (remote.bgBackupsAt ? '云端备份时间：' + new Date(remote.bgBackupsAt).toLocaleString('zh-CN') : '');
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '❌ 拉取失败：' + ((e && e.message) || String(e));
+  }
+}
+
 function onBgFile(key, input) {
   const file = input.files && input.files[0];
   if (!file) return;
@@ -6289,18 +6353,14 @@ function syncBadgeShow(text, fail) {
   // 顺手刷新顶部的"版本号水印"，让主人一眼能核对当前是不是最新版本
   try { refreshVersionTag(); } catch (e) {}
 }
-// 把 BUILD_VER 解析成「月.日.时:分」格式（如 09.06.18:08），不依赖日期，年月日取自 BUILD_VER，小时分钟取自当前时间
+// 把 BUILD_VER 解析成「月.日-#序号」格式（如 09.06-#10），固定编码不依赖当前时间，主人刷新再多次也是同一个口令
 function refreshVersionTag() {
   const el = document.getElementById('hami-version-tag');
   if (!el) return;
   const v = String(window.BUILD_VER || '');
-  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})-(\d+)$/);
-  if (!m) { el.textContent = '版本：' + v; return; }
-  const mm = m[2], dd = m[3];
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const min = String(now.getMinutes()).padStart(2, '0');
-  el.textContent = '版本：' + mm + '.' + dd + '.' + hh + ':' + min;
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
+  if (m) { el.textContent = '版本：' + m[2] + '.' + m[3] + '-#' + m[4]; return; }
+  el.textContent = '版本：' + v;
 }
 function _fmtSyncTime(ts) {
   if (!ts) return '';
@@ -6378,6 +6438,23 @@ async function pullAndMerge() {
     // 云端合并完成后重渲全部面板（旧代码只重渲主页，其它面板仍显示本地旧数据）
     try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e) {}
     try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e) {}
+    // 跨设备背景图恢复：云端如果带了 bgBackups，写回本地 IDB + 内存 + 应用到页面
+    try {
+      if (remote.bgBackups && typeof remote.bgBackups === 'object') {
+        const keys = Object.keys(remote.bgBackups);
+        if (keys.length) {
+          let pending = keys.length;
+          keys.forEach(function (k) {
+            const data = remote.bgBackups[k];
+            if (!data) { if (!--pending && typeof applyAllBgs === 'function') applyAllBgs(); return; }
+            try { BG_CACHE[k] = data; } catch (e) {}
+            bgIdbSet(k, data).then(function () {
+              if (!--pending && typeof applyAllBgs === 'function') applyAllBgs();
+            }).catch(function () { if (!--pending && typeof applyAllBgs === 'function') applyAllBgs(); });
+          });
+        }
+      }
+    } catch (e) {}
     _lastSyncAt = Date.now(); _persistLastSync();
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
     syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
@@ -6400,6 +6477,14 @@ async function pushNow() {
       try {
         await pullAndMerge();
         const payload = { v: 1, updatedAt: Date.now(), store: store };
+        // 把背景图也带上云端（base64 字串 ≤30KB/张；主人换设备 / 清缓存时能一键拉回）
+        try {
+          const bgs = await bgIdbGetAll();
+          if (bgs && Object.keys(bgs).length) {
+            payload.bgBackups = bgs;
+            payload.bgBackupsAt = Date.now();
+          }
+        } catch (e3) {}
         const ct = await encryptStore(payload, '');
         const got = await _ghGet();
         await _ghPut(ct, got ? got.sha : null, 'hami sync ' + new Date().toISOString());
