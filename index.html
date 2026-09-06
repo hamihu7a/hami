@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-06">
+<meta name="hami-build" content="2026-09-06-07">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -890,6 +890,8 @@
   }
   .ci-status-line.pending { background: #fff3f6; color: var(--c-text-2); }
   .ci-status-line.done { background: #ffb3c6; color: var(--c-text-2); }
+  .ci-status-line.rest { background: #ece4f5; color: #6b5b8a; }   /* 休息日：紫色系淡色，区分待打卡 vs 完成 */
+  .checkin-card.rest { border-color: rgba(180,150,210,.35); }
   .checkin-card .ci-fact-line { font-size: 9px; color: #a67c8a; }
   .checkin-card .ci-date-line { font-size: 8px; color: #a67c8a; }
   .checkin-card .ci-tip-line { font-size: 8px; color: #b58a96; }
@@ -953,14 +955,21 @@
   }
   .weight-cal-empty { border: none; background: transparent !important; }
   .weight-cal-day { font-size: 12px; font-weight: 700; line-height: 1.1; }
+  /* 关键：变化值+体重现在合并成一个 span（".weight-cal-body"），
+     强制单行 + 省略号，再窄也不换行（根治 iPhone 格子被拆成两行字）。 */
   .weight-cal-body {
-    display: flex; align-items: center; justify-content: center; gap: 2px;
-    flex-wrap: wrap; line-height: 1; min-height: 14px;
+    font-size: 11px; font-weight: 700; line-height: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%; padding: 0 1px; min-height: 12px;
+    display: block; text-align: center;
   }
+  /* 旧 class 仍保留，兼容旧调用：置空即可，不会再被使用 */
   .weight-cal-change { font-size: 11px; font-weight: 600; white-space: nowrap; }
   .weight-cal-weight { font-size: 11px; font-weight: 700; color: #4a3340; background: #f0e8ee; border-radius: 3px; padding: 0 2px; }
   /* 当天没打卡、自动沿用前一天体重的格子：淡一档，和真实打卡一眼能区分 */
   .weight-cal-weight.weight-cal-weight-fill { color:#b6a0ac; background:#faf6f8; font-weight:600; }
+  /* 合并串里的"沿用前一日"态直接走更淡的色 */
+  .weight-cal-body.weight-cal-weight-fill { color:#b6a0ac; font-weight:600; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; }
   .weight-cal-ex-dot { font-size: 12px; }
   .weight-cal-legend {
@@ -2549,11 +2558,11 @@
       .weight-cal-weekdays { gap: 2px; }
       .weight-cal-weekdays > div { font-size: 11px; }
       .weight-cal-grid { gap: 2px; }
-      .weight-cal-cell { min-height: 34px; border-radius: 5px; padding: 1px 0 2px; }
+      .weight-cal-cell { min-height: 36px; border-radius: 5px; padding: 1px 0 2px; }
       .weight-cal-day { font-size: 11px; line-height: 1; }
-      .weight-cal-body { flex-wrap: nowrap; gap: 0; line-height: 1; min-height: 11px; }
-      .weight-cal-change { font-size: 8px; padding: 0 1px; }
-      .weight-cal-weight { font-size: 8px; padding: 0 1px; }
+      /* 超小屏：变化值+体重合并单 span 强制单行，绝不再换行 */
+      .weight-cal-body { font-size: 9px; padding: 0; line-height: 1; min-height: 11px; }
+      .weight-cal-change, .weight-cal-weight { font-size: 9px; padding: 0 1px; }
       .weight-cal-ex-dot { font-size: 7px; }
       .weight-cal-ex { gap: 0; }
       .weight-cal-legend { font-size: 11px; margin-top: 4px; padding-top: 3px; }
@@ -2816,6 +2825,13 @@
   .hami-confirm-no { background: rgba(160,112,128,0.12); color: var(--c-muted); }
   .hami-confirm-yes { background: var(--c-pink-deep); color: #fff; font-weight: 600; }
   @media (max-width: 420px) { .hami-confirm { font-size: 13px; max-width: calc(100vw - 48px); } }
+
+  /* ============ 倒计时条上下切换动画 ============ */
+  .countdown-page { width: 100%; overflow: hidden; }
+  .countdown-page-out { animation: countdown-page-up .24s ease forwards; }
+  .countdown-page-in  { animation: countdown-page-down .38s cubic-bezier(.22,.9,.34,1.2) both; }
+  @keyframes countdown-page-up   { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-18px); opacity: 0; } }
+  @keyframes countdown-page-down { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
   /* ============ 全端文字排版统一（桌面 + 移动）：转行均衡、防孤字、短文本居中 ============
    * 主人要求：所有字体若必须转行，上行下行字数尽量一致（text-wrap: balance）；
@@ -3277,7 +3293,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-06';
+  var BUILD_VER = '2026-09-06-07';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -8450,19 +8466,25 @@ window.refreshInspireToday = function () {
 function renderDesktopCheckin() {
   const today = todayStr();
   const hasWeight = store.weightRecords.some(w => w.date === today);
-  const hasExercise = store.exerciseRecords.some(e => e.date === today);
+  // 关键修复：必须「有任一运动子项被勾选」才算真的已打卡。
+  // 早期逻辑只看 exerciseRecords 里有没有今天这条，但「取消/休息日」也会塞记录
+  // → 把整张卡都判定为「✓ 已完成 / 已打卡」（主人已反馈第三次）。
+  // 下面拆出 exTodayTrue（任一子项为 true）、exTodayCancel（全 false 的休息日）、exTodayNone（无任何记录）三态。
+  const eTodayAll = (store.exerciseRecords || []).filter(e => e.date === today);
+  const eTodayTrue = eTodayAll.filter(e => e.aerobics || e.cardio || e.weights);
+  const eTodayCancel = eTodayAll.length > 0 && eTodayTrue.length === 0;
+  const hasExercise = eTodayTrue.length > 0;
   const pendingOrders = store.customOrders.filter(o => o.status === 'pending');
   const allOrders = store.customOrders || [];
 
   const wToday = (store.weightRecords || []).filter(w => w.date === today);
-  const eToday = (store.exerciseRecords || []).filter(e => e.date === today);
   const getW = (w) => w && (w.value != null ? w.value : (w.after != null ? w.after : w.before));
   const exParts = [];
   if (hasExercise) {
-    const e = eToday[0];
+    const e = eTodayTrue[0];
     if (e) {
       if (e.aerobics) exParts.push('健身操');
-      if (e.cardio)   exParts.push('有氧' + (e.duration ? ' ' + e.duration : ''));
+      if (e.cardio)   exParts.push('有氧' + (e.duration && e.duration !== '取消' ? ' ' + e.duration : ''));
       if (e.weights)  exParts.push('器械');
     }
   }
@@ -8471,9 +8493,18 @@ function renderDesktopCheckin() {
   const wFact = hasWeight
     ? (wToday.map(w => getW(w)).filter(v=>v!=null).map(v=>v.toFixed(1)+'kg').join(' / ') || '已记录')
     : '未记录';
-  const exFact = hasExercise
-    ? (exParts.join(' + ') || '已打卡')
-    : '未打卡';
+  let exFact;
+  let exStatus;       // 'done' | 'rest' | 'pending'
+  if (hasExercise) {
+    exFact = exParts.join(' + ') || '已打卡';
+    exStatus = 'done';
+  } else if (eTodayCancel) {
+    exFact = '今天休息';
+    exStatus = 'rest';
+  } else {
+    exFact = '未打卡';
+    exStatus = 'pending';
+  }
   const createdToday = allOrders.filter(o => o.date === today);
   const pendingToday = pendingOrders.filter(o => o.date === today);
   const customDone = createdToday.length > 0 && pendingToday.length === 0;
@@ -8484,20 +8515,19 @@ function renderDesktopCheckin() {
       : ('今日 ' + createdToday.length + ' 单完成');
 
   const cards = [
-    { icon: '⚖️', label: '量体重', done: hasWeight, fact: wFact },
-    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, fact: exFact },
-    { icon: '📝', label: '定制单', done: customDone, fact: customFact }
+    { icon: '⚖️', label: '量体重', done: hasWeight, fact: wFact, statusText: hasWeight ? '✓ 已完成' : '待打卡', statusKind: hasWeight ? 'done' : 'pending' },
+    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, fact: exFact, statusText: exStatus === 'done' ? '✓ 已完成' : (exStatus === 'rest' ? '🌙 休息日' : '待打卡'), statusKind: exStatus },
+    { icon: '📝', label: '定制单', done: customDone, fact: customFact, statusText: customDone ? '✓ 已完成' : '待打卡', statusKind: customDone ? 'done' : 'pending' }
   ];
 
   let html = '';
   cards.forEach((c, i) => {
     const target = i === 0 ? 'fitness' : (i === 1 ? 'fitness' : 'income');
-    const statusLine = c.done ? '✓ 已完成' : '待打卡';
-    html += `<div class="checkin-card ${c.done ? 'done' : ''}" onclick="switchPanel('${target}', this)">
+    html += `<div class="checkin-card ${c.done ? 'done' : (c.statusKind === 'rest' ? 'rest' : '')}" onclick="switchPanel('${target}', this)">
       <div class="ci-icon">${c.icon}</div>
       <div class="ci-label">${c.label}</div>
       <div class="ci-lines">
-        <div class="ci-line ci-status-line ${c.done ? 'done' : 'pending'}">${statusLine}</div>
+        <div class="ci-line ci-status-line ${c.statusKind}">${c.statusText}</div>
         <div class="ci-line ci-fact-line">${c.fact}</div>
       </div>
     </div>`;
@@ -13931,13 +13961,15 @@ function renderDesktopWeight() {
 
     const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1.5px #f0c040;' : '';
 
-    // 把变化值和体重合并到同一行，避免垂直方向太挤
-    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;" title="点击记录/修改 ${dateStr} 的体重" onclick="openWeightEditByDate('${dateStr}')">
+    // 把变化值和体重合并为同一个紧凑字符串（中间无空格、不换行），超窄格子省略号处理，
+    // 避免 iPhone 上再被 flex 拆成 ↑0.8 / 89.2 两行字，治本"格子挤爆"。
+    const combo = (changeText && weightText) ? (changeText + weightText)
+                : (changeText || weightText || '');
+    const comboStyle = `color:${changeText ? changeColor : (isFilled ? '#b6a0ac' : '#4a3340')};${isFilled ? '' : ''}`;
+    const comboTitle = `${dateStr} · 体重 ${weightText || '—'}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''}`;
+    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;" title="${comboTitle} · 点击修改" onclick="openWeightEditByDate('${dateStr}')">
       <div class="weight-cal-day" style="color:${isToday ? '#c08020' : '#5a3a48'}">${d}</div>
-      <div class="weight-cal-body">
-        ${changeText ? `<span class="weight-cal-change" style="color:${changeColor}">${changeText}</span>` : ''}
-        ${weightText ? `<span class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}"${isFilled ? ' title="' + dateStr + ' 没打卡，已自动沿用最近一次体重"' : ''}>${weightText}</span>` : ''}
-      </div>
+      <div class="weight-cal-body${isFilled ? ' weight-cal-weight-fill' : ''}" style="${comboStyle}" title="${comboTitle}">${combo}</div>
       <div class="weight-cal-ex">${exIcons}</div>
     </div>`;
   }
@@ -14560,27 +14592,36 @@ function renderCountdown() {
       </div>`;
   }
 
-  // 一行一个卡片 + 分页点（占满整行，避免挤字）
-  let html = `<div style="display:flex;gap:0;max-width:100%;">`;
+  // 一页一张卡片，整行占满，每张独立一行（上下轮播，去掉分页小点）
+  let html = `<div class="countdown-page" style="position:relative;">`;
   page.forEach(item => html += boxHtml(item));
   html += `</div>`;
 
-  if (pages.length > 1) {
-    html += `<div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:6px;">`;
-    pages.forEach((_, idx) => {
-      const active = idx === pageIndex ? 'background:#d14b73;width:12px;' : 'background:#d14b7355;width:6px;';
-      html += `<span style="height:6px;border-radius:3px;transition:all .3s;${active}"></span>`;
-    });
-    html += `</div>`;
-  }
+  // 不再渲染分页小点；轮播指示由"上下整页切换"本身代替（更符合主人对上下轮播的预期）
 
   wrap.innerHTML = html;
 
-  // 自动轮播：每 4 秒翻一页
+  // 自动轮播：每 4 秒切到下一页（上下方向：旧页向上淡出，新页从下推上来）
   if (pages.length > 1) {
+    if (window.__countdownTimer) clearInterval(window.__countdownTimer);
     window.__countdownTimer = setInterval(() => {
-      window.__countdownPage = (pageIndex + 1) % pages.length;
-      renderCountdown();
+      const w = document.getElementById('countdown-bar');
+      if (!w) return;
+      // 给当前容器加 out 类做向上淡出
+      const cur = w.firstElementChild;
+      if (cur) {
+        cur.classList.add('countdown-page-out');
+      }
+      setTimeout(() => {
+        window.__countdownPage = (window.__countdownPage + 1) % pages.length;
+        renderCountdown();
+        // 新页做从下推入的动画
+        const nw = document.getElementById('countdown-bar');
+        if (nw && nw.firstElementChild) {
+          nw.firstElementChild.classList.add('countdown-page-in');
+          setTimeout(() => { try { nw.firstElementChild.classList.remove('countdown-page-in'); } catch (e) {} }, 380);
+        }
+      }, 240);
     }, 4000);
   }
 }
