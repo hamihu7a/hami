@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="hami-build" content="2026-09-06-22">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -82,7 +83,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-21">
+<omitted>
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3397,6 +3398,10 @@
     margin-top: auto;
     text-align: center;
     padding-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
   }
   /* 宜/忌：默认各显示 1 行，超出用省略号，点击展开查看完整内容 */
   .home-card-note.yi-ji {
@@ -3667,7 +3672,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-21';
+  var BUILD_VER = '2026-09-06-22';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4695,14 +4700,6 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <div class="stats-grid" id="account-stats"></div>
 
-    <div class="todo-card" style="padding:18px;">
-      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-        <span>📒</span> 消费日期近期记录
-        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按消费日期</span>
-      </h3>
-      <div id="account-flow-table"></div>
-    </div>
-
     <div class="todo-card" style="padding:16px 14px;">
       <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
         <span>🕒</span> 时间线记账记录
@@ -4710,6 +4707,15 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
         <span id="account-timeline-flip" onclick="toggleAccountTimeline()" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
       </h3>
       <div id="account-timeline-table"></div>
+    </div>
+
+    <div class="todo-card" style="padding:18px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <span>📒</span> 消费日期近期记录
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按消费日期</span>
+        <span id="account-flow-flip" onclick="toggleAccountFlow()" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+      </h3>
+      <div id="account-flow-table"></div>
     </div>
 
     <div class="todo-card" style="padding:16px 14px;">
@@ -11983,6 +11989,16 @@ function renderAccount() {
   try { bindFinanceEvents(); } catch(e) {}
   const monthEl = document.getElementById('account-month');
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  // 头部折叠小按钮文案：默认折叠→提示"展开 N 笔"；展开后提示"收起"
+  try {
+    const flowFlipEl = document.getElementById('account-flow-flip');
+    if (flowFlipEl) {
+      // 渲染只参考当月 inMonth 数；与下方同步
+      const _probe = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month)));
+      if (_probe.length > 3) flowFlipEl.textContent = (accountFlowExpanded ? '收起 ▲' : '展开全部 ' + _probe.length + ' 笔 ▼');
+      else flowFlipEl.textContent = '';
+    }
+  } catch (e) {}
   const records = (store.accountRecords || []).slice().sort((a, b) => {
     const d = (b.date || '').localeCompare(a.date || '');   // 先按账目日期：近 → 远
     if (d !== 0) return d;
@@ -12045,8 +12061,8 @@ function renderAccount() {
   if (inMonth.length === 0) {
     flowHtml = `<div class="empty-state"><div class="big-icon"></div><p style="color:#8a6270;margin-top:8px;">暂无记录</p><p style="font-size:12px;margin-top:6px;">点「记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
   } else {
-    const showAll = accountFlowExpanded || inMonth.length <= 5;
-    const list = showAll ? inMonth : inMonth.slice(0, 5);
+    const showAll = accountFlowExpanded || inMonth.length <= 3;
+    const list = showAll ? inMonth : inMonth.slice(0, 3);
     list.forEach(r => {
       const realIdx = store.accountRecords.indexOf(r);  // 真实 store 索引（r 是 store 里同一对象引用）
       const c = getCategoryInfo(r.category, r.type);
@@ -12074,7 +12090,7 @@ function renderAccount() {
         </div>
       `;
     });
-    if (inMonth.length > 5) {
+    if (inMonth.length > 3) {
       flowHtml += `<div class="flow-toggle-wrap">
         <button class="flow-toggle-btn" type="button" onclick="toggleAccountFlow()">${showAll ? '收起 ▲' : '展开全部 ' + inMonth.length + ' 笔 ▼'}</button>
       </div>`;
@@ -14256,6 +14272,7 @@ function renderWeatherFromApi(d) {
         </div>
         <div class="home-card-foot">
           <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">查看明日天气</span>
+          <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">🔍 搜索城市</span>
         </div>
       </div>`;
   } catch(e) { renderWeatherFallback(); }
@@ -14288,6 +14305,7 @@ function renderWeatherFallback() {
       </div>
       <div class="home-card-foot">
         <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">查看明日天气</span>
+        <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">🔍 搜索城市</span>
       </div>
     </div>`;
 }
@@ -14342,12 +14360,131 @@ function guessWeatherIcon(name) {
 }
 
 // 明日天气弹窗内快速切换城市
+// 主人的统一城市选择：今日+明日共享同一个城市（不同步时不会出现"明日是 X、今日是 Y"的不一致）
 const COMMON_CITIES = [
   { name: '汕尾', lat: 22.79, lon: 115.34 },
   { name: '广州', lat: 23.13, lon: 113.26 },
   { name: '深圳', lat: 22.54, lon: 114.06 },
   { name: '上海', lat: 31.23, lon: 121.47 }
 ];
+
+// 城市搜索（基于 open-meteo 免费的 geocoding API，无需密钥，支持 CORS）
+function openWeatherSearchCity() {
+  // 复用明日天气的弹窗做搜索？还是做一个独立 popover？
+  // 主人在「今日天气」右下角按下，期望：弹出可输入城市、显示候选，点击后切换，且今日+明日都跟着切
+  // 做法：复用现有的「明日天气弹窗」机制没必要，做一个浮层 popover 在右下角更顺手。
+  let pop = document.getElementById('hami-city-search-pop');
+  if (pop) { pop.remove(); return; }  // 已开则关掉
+  pop = document.createElement('div');
+  pop.id = 'hami-city-search-pop';
+  pop.style.cssText = 'position:fixed;right:14px;bottom:90px;z-index:100500;width:300px;max-width:88vw;' +
+    'background:#fff;border-radius:14px;box-shadow:0 12px 36px rgba(160,80,110,.28);padding:14px;' +
+    'font-size:13px;border:1px solid #f3d8e2;color:#5b3848';
+  pop.innerHTML = `
+    <div style="font-weight:800;color:#d14b73;font-size:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+      <span>🔍 切换城市</span>
+      <span style="cursor:pointer;color:#9b6878;font-weight:600;font-size:16px;line-height:1;" onclick="document.getElementById('hami-city-search-pop').remove()">×</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input id="hami-city-input" placeholder="输入城市名（如：上海）" style="flex:1;padding:7px 10px;border-radius:10px;border:1px solid #f3d8e2;font-size:13px;outline:none;background:#fff8fb;" />
+      <button id="hami-city-go" style="padding:7px 14px;border-radius:10px;border:none;background:#d14b73;color:#fff;font-weight:700;cursor:pointer;">搜索</button>
+    </div>
+    <div id="hami-city-results" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+    <div style="margin-top:10px;border-top:1px dashed #f3d8e2;padding-top:8px;font-size:11.5px;color:#9b6878;">
+      切换后今日+明日同时显示该城市
+    </div>
+  `;
+  document.body.appendChild(pop);
+  document.getElementById('hami-city-input').focus();
+  const doSearch = function() {
+    const q = (document.getElementById('hami-city-input').value || '').trim();
+    if (!q) return;
+    const rEl = document.getElementById('hami-city-results');
+    rEl.innerHTML = '<span style="color:#9b6878;">🔄 搜索中...</span>';
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=10&language=zh&format=json')
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)); })
+      .then(function(data){
+        const list = (data && data.results) || [];
+        if (list.length === 0) { rEl.innerHTML = '<span style="color:#9b6878;">没找到，换个名字再试</span>'; return; }
+        rEl.innerHTML = '';
+        list.forEach(function(it){
+          // 拼中文显示名；priority 给中国城市优先
+          const disp = (it.name || '') + (it.admin1 && it.admin1 !== it.name ? ' · ' + it.admin1 : '') + (it.country ? ' · ' + it.country : '');
+          const lat = it.latitude, lon = it.longitude;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.cssText = 'padding:5px 10px;border-radius:9px;border:1px solid #f3d8e2;background:#fff;cursor:pointer;font-size:12px;color:#5b3848;';
+          btn.textContent = disp;
+          btn.onclick = function() {
+            applyWeatherCity(it.name, lat, lon, true);
+            const p = document.getElementById('hami-city-search-pop');
+            if (p) p.remove();
+          };
+          rEl.appendChild(btn);
+        });
+      })
+      .catch(function(){
+        rEl.innerHTML = '<span style="color:#d14b73;">搜索失败，可能是网络问题</span>';
+      });
+  };
+  document.getElementById('hami-city-go').onclick = doSearch;
+  document.getElementById('hami-city-input').addEventListener('keydown', function(e){ if (e.key === 'Enter') doSearch(); });
+  // 点外面关闭
+  setTimeout(function(){
+    document.addEventListener('click', function closePop(ev){
+      if (!pop.contains(ev.target)) {
+        pop.remove();
+        document.removeEventListener('click', closePop);
+      }
+    });
+  }, 0);
+}
+
+// 把城市切换到指定坐标：写全局、写localStorage、今日拉新、明日如果开着也立刻拉
+function applyWeatherCity(nameCn, lat, lon, alsoFetch) {
+  try {
+    WEATHER_LAT = parseFloat(lat);
+    WEATHER_LON = parseFloat(lon);
+    WEATHER_CITY_CN = nameCn || '本地';
+    // 保留 pinyin 形式作为 wttr.in 兜底（取拼音可能不准确，open-meteo 才是主用，故用空，主用中文）
+    WEATHER_CITY = nameCn || 'Local';
+    localStorage.setItem('hami_weather_city', JSON.stringify({ name: nameCn, lat: WEATHER_LAT, lon: WEATHER_LON, ts: Date.now() }));
+    // 同步删除位置缓存，避免 detectLocation 又把它覆盖回定位
+    try { localStorage.removeItem('hami_location_cache'); } catch(e) {}
+    try { localStorage.removeItem('hami_weather_cache_v3'); try { localStorage.removeItem('hami_weather_cache_v2'); } catch(e2) {} } catch(e) {}
+  } catch(e) {}
+  // 立刻拉今日
+  if (alsoFetch) {
+    try { fetchWeather(); } catch(e) {}
+  }
+  // 如果明日弹窗打开，立刻重拉明日（用同一 lat/lon）
+  const modalOpen = document.getElementById('tm-weather-modal');
+  if (modalOpen && modalOpen.classList.contains('show')) {
+    try {
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+      const week = '周' + ['日','一','二','三','四','五','六'][tomorrow.getDay()];
+      const dateStr = (tomorrow.getMonth() + 1) + '月' + tomorrow.getDate() + '日 ' + week;
+      const cityEl = document.getElementById('tmw-city');
+      if (cityEl) cityEl.textContent = nameCn + ' · ' + dateStr;
+      // 隐藏缓存中的"选择 chip"高亮
+      const chips = document.querySelectorAll('.tm-city-chip');
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      loadTomorrowWeatherForCity(nameCn, WEATHER_LAT, WEATHER_LON);
+    } catch(e) {}
+  }
+  try { finToast('📍 已切换到 ' + nameCn); } catch(e) {}
+}
+
+// 启动时恢复主人之前选择过的城市（如果存在）
+try {
+  const saved = localStorage.getItem('hami_weather_city');
+  if (saved) {
+    const c = JSON.parse(saved);
+    if (c && c.lat != null && c.lon != null && c.name) {
+      WEATHER_LAT = c.lat; WEATHER_LON = c.lon; WEATHER_CITY_CN = c.name; WEATHER_CITY = c.name;
+    }
+  }
+} catch(e) {}
 
 function showTomorrowWeatherModal(e) {
   if (e && e.stopPropagation) e.stopPropagation();
@@ -14378,18 +14515,15 @@ function showTomorrowWeatherModal(e) {
     };
   }
 
-  const savedCity = localStorage.getItem('hami_tomorrow_city');
-  const currentCityName = savedCity || d.city || (typeof WEATHER_CITY_CN !== 'undefined' ? WEATHER_CITY_CN : '汕尾');
+  // 默认沿用今日天气的统一城市（不另存 savedCity）
+  let savedCity = null;
+  try { const sc = localStorage.getItem('hami_weather_city'); if (sc) savedCity = (JSON.parse(sc).name || null); } catch(e) {}
+  const currentCityName = savedCity || (typeof WEATHER_CITY_CN !== 'undefined' ? WEATHER_CITY_CN : '汕尾');
 
-  // 渲染城市切换按钮
+  // 渲染城市切换按钮：把以前的多个固定城市按钮改成「🔍 搜索城市」单一按钮 + 一个高亮的小字标签显示当前城市
   const switcher = document.getElementById('tmw-city-switcher');
   if (switcher) {
-    let html = '';
-    COMMON_CITIES.forEach(function(c){
-      const active = c.name === currentCityName ? ' active' : '';
-      html += '<button type="button" class="tm-city-chip' + active + '" data-name="' + c.name + '" data-lat="' + c.lat + '" data-lon="' + c.lon + '" onclick="switchTomorrowCity(this)">' + c.name + '</button>';
-    });
-    switcher.innerHTML = html;
+    switcher.innerHTML = '<button type="button" class="tm-city-chip active" onclick="openWeatherSearchCity()" style="cursor:pointer;">🔍 搜索城市（当前：<b>' + currentCityName + '</b>）</button>';
   }
 
   const tomorrow = new Date();
@@ -14413,8 +14547,8 @@ function showTomorrowWeatherModal(e) {
   document.getElementById('tmw-tip').textContent = getWeatherTip(d.tomorrowName || '');
 
   // 异步拉取选中城市的明日天气
-  const selectedCity = COMMON_CITIES.find(function(c){ return c.name === currentCityName; });
-  if (selectedCity) loadTomorrowWeatherForCity(selectedCity.name, selectedCity.lat, selectedCity.lon);
+  // 始终用「统一城市」的全局 lat/lon，保证今日/明日同一城市
+  loadTomorrowWeatherForCity(currentCityName, WEATHER_LAT, WEATHER_LON);
 
   const m = document.getElementById('tm-weather-modal');
   if (m) { m.classList.add('show'); document.body.style.overflow = 'hidden'; }
