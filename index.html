@@ -71,7 +71,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-08">
+<meta name="hami-build" content="2026-09-06-09">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -962,27 +962,24 @@
     position: relative; z-index: 1; /* 确保格子和文字始终压在背景图之上 */
   }
   .weight-cal-cell {
-    min-height: 46px; border: 1px solid #f5e8ee; border-radius: 6px; padding: 1px 0;
+    min-height: 52px; border: 1px solid #f5e8ee; border-radius: 6px; padding: 1px 0 2px;
     display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     box-sizing: border-box; overflow: hidden;
   }
   .weight-cal-empty { border: none; background: transparent !important; }
   .weight-cal-day { font-size: 12px; font-weight: 700; line-height: 1.1; }
-  /* 关键：变化值+体重现在合并成一个 span（".weight-cal-body"），
-     强制单行 + 省略号，再窄也不换行（根治 iPhone 格子被拆成两行字）。 */
-  .weight-cal-body {
-    font-size: 11px; font-weight: 700; line-height: 1;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    max-width: 100%; padding: 0 1px; min-height: 12px;
-    display: block; text-align: center;
+  /* 主人要的版式：体重在上、变化值（↑0.8/↓0.8/—）在下，两行各自完整一行，不再挤成单字符串 */
+  .weight-cal-stack {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; line-height: 1; min-height: 22px; flex: 1; width: 100%;
   }
-  /* 旧 class 仍保留，兼容旧调用：置空即可，不会再被使用 */
-  .weight-cal-change { font-size: 11px; font-weight: 600; white-space: nowrap; }
-  .weight-cal-weight { font-size: 11px; font-weight: 700; color: #4a3340; background: #f0e8ee; border-radius: 3px; padding: 0 2px; }
+  .weight-cal-weight { font-size: 11px; font-weight: 700; color: #4a3340; background: #f0e8ee; border-radius: 3px; padding: 0 3px; line-height: 1.2; }
+  .weight-cal-change { font-size: 10px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+  /* 没数据的格子用空 div 占位，保证变化行不被挤上挤下 */
+  .weight-cal-weight-empty, .weight-cal-change-empty { visibility: hidden; line-height: 1.2; }
+  .weight-cal-weight.weight-cal-weight-empty { background: transparent; }
   /* 当天没打卡、自动沿用前一天体重的格子：淡一档，和真实打卡一眼能区分 */
   .weight-cal-weight.weight-cal-weight-fill { color:#b6a0ac; background:#faf6f8; font-weight:600; }
-  /* 合并串里的"沿用前一日"态直接走更淡的色 */
-  .weight-cal-body.weight-cal-weight-fill { color:#b6a0ac; font-weight:600; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; }
   .weight-cal-ex-dot { font-size: 12px; }
   .weight-cal-legend {
@@ -2574,8 +2571,9 @@
       .weight-cal-cell { min-height: 36px; border-radius: 5px; padding: 1px 0 2px; }
       .weight-cal-day { font-size: 11px; line-height: 1; }
       /* 超小屏：变化值+体重合并单 span 强制单行，绝不再换行 */
+      .weight-cal-stack { gap: 0; min-height: 20px; }
       .weight-cal-body { font-size: 9px; padding: 0; line-height: 1; min-height: 11px; }
-      .weight-cal-change, .weight-cal-weight { font-size: 9px; padding: 0 1px; }
+      .weight-cal-change, .weight-cal-weight { font-size: 9px; padding: 0 2px; line-height: 1.2; }
       .weight-cal-ex-dot { font-size: 7px; }
       .weight-cal-ex { gap: 0; }
       .weight-cal-legend { font-size: 11px; margin-top: 4px; padding-top: 3px; }
@@ -3307,7 +3305,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-08';
+  var BUILD_VER = '2026-09-06-09';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -6471,12 +6469,12 @@ function hamiPendingBanner(show, msg) {
 
 async function commitToCloud() {
   if (!hamiSyncReady || !hamiCloudEnabled()) return;
-  if (_syncBusy) {                       // 上一轮还在传，稍后补推，避免并发抢写
-    _pendingCommit++; hamiPendingBanner(true);
+  if (_syncBusy) {                       // 上一轮还在传，安静排队，别反复吓主人横幅
+    _pendingCommit++;
     setTimeout(function () { commitToCloud(); }, 1500);
     return;
   }
-  if (_commitBusy) { _pendingCommit++; hamiPendingBanner(true); return; }
+  if (_commitBusy) { _pendingCommit++; return; }
   _commitBusy = true;
   _pendingCommit = 0;
   try {
@@ -6484,7 +6482,17 @@ async function commitToCloud() {
     hamiPendingBanner(false);
   } catch (e) {
     _pendingCommit = 1;
-    hamiPendingBanner(true, '云端写入失败：' + ((e && e.message) || String(e)) + '，正在自动重试');
+    // 把令人恐惧的 sha 杂讯收敛成一句人话（409 = 云端有别处刚改的版本，是 GitHub 正常保护）
+    const raw = (e && e.message) ? String(e.message) : String(e);
+    let msg = raw;
+    if (raw.indexOf('does not match') >= 0 || raw.indexOf('409') >= 0) {
+      msg = '云端在推的时刻刚好被另一端改了，正在自动重试（不丢数据）';
+    } else if (raw.indexOf('HTTP 5') === 0) {
+      msg = '云端一时连不上（' + raw + '），正在自动重试';
+    } else if (raw.indexOf('Failed to fetch') >= 0 || raw.indexOf('NetworkError') >= 0) {
+      msg = '网络一时连不上，正在自动重试';
+    }
+    hamiPendingBanner(true, '云端写入失败：' + msg);
     if (!_commitRetryTimer) {
       _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 20000);
     }
@@ -13990,16 +13998,14 @@ function renderDesktopWeight() {
     }
 
     const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1.5px #f0c040;' : '';
-
-    // 把变化值和体重合并为同一个紧凑字符串（中间无空格、不换行），超窄格子省略号处理，
-    // 避免 iPhone 上再被 flex 拆成 ↑0.8 / 89.2 两行字，治本"格子挤爆"。
-    const combo = (changeText && weightText) ? (changeText + weightText)
-                : (changeText || weightText || '');
-    const comboStyle = `color:${changeText ? changeColor : (isFilled ? '#b6a0ac' : '#4a3340')};${isFilled ? '' : ''}`;
-    const comboTitle = `${dateStr} · 体重 ${weightText || '—'}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''}`;
-    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;" title="${comboTitle} · 点击修改" onclick="openWeightEditByDate('${dateStr}')">
+    // 主人要的版式：↑0.8（变化）一行 + 89.2（体重）一行，两行清晰各自一行，不强行单行
+    const cellTitle = `${dateStr}${weightText ? ' · 体重 ' + weightText : ''}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''} · 点击修改`;
+    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
       <div class="weight-cal-day" style="color:${isToday ? '#c08020' : '#5a3a48'}">${d}</div>
-      <div class="weight-cal-body${isFilled ? ' weight-cal-weight-fill' : ''}" style="${comboStyle}" title="${comboTitle}">${combo}</div>
+      <div class="weight-cal-stack">
+        ${weightText ? `<div class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}">${weightText}</div>` : '<div class="weight-cal-weight weight-cal-weight-empty">&nbsp;</div>'}
+        ${changeText ? `<div class="weight-cal-change" style="color:${changeColor}">${changeText}</div>` : '<div class="weight-cal-change weight-cal-change-empty">&nbsp;</div>'}
+      </div>
       <div class="weight-cal-ex">${exIcons}</div>
     </div>`;
   }
