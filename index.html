@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-22">
+<meta name="hami-build" content="2026-09-06-23">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2917,7 +2917,8 @@
     grid-column: 1 / -1;
   }
   body.hami-force-desktop #panel-account .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    /* 主人要求"上面两个、下面两个"4 个 stat 卡 2×2 排列，永远保持 2 列不折行 */
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
   /* ==================== hami-force-narrow 同上效果（iPad 700~999） ====================
@@ -3672,7 +3673,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-22';
+  var BUILD_VER = '2026-09-06-23';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6336,13 +6337,17 @@ function bgIdbGetAll() {
 // 统一写入口：更新内存缓存 + 异步写 IndexedDB（不再占用 localStorage）
 function setBgStored(key, dataUrl) {
   BG_CACHE[key] = dataUrl;
+  BG_IDB_TS[key] = Date.now();
   try { bgIdbSet(key, dataUrl); } catch (e) {}
+  try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
 }
 // 统一删除入口：清缓存 + 清 IndexedDB + 兼容清理 localStorage 旧副本
 function delBgStored(key) {
   delete BG_CACHE[key];
+  delete BG_IDB_TS[key];
   try { bgIdbDel(key); } catch (e) {}
   try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}
+  try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
 }
 // 启动时：载入 IndexedDB 里的背景图，并把 localStorage 里的旧背景图迁移过去、立刻腾出 5MB 配额
 // 带超时的 Promise 包装：IndexedDB 被阻塞时 Promise 可能永不 resolve，
@@ -6353,24 +6358,84 @@ function _promiseTimeout(p, ms, fallback) {
     new Promise(function (resolve) { setTimeout(function () { resolve(fallback); }, ms); })
   ]);
 }
+// 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
+async function syncBgsFromCloudOnBoot() {
+  try {
+    if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
+    const got = await _ghGet();
+    if (!got) return;
+    let remote = null;
+    try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
+    catch (e1) {
+      try { remote = await decryptStore(got.content.replace(/\s+/g, ''), (typeof hamiSyncPassword === 'string' ? hamiSyncPassword : '')); }
+      catch (e2) { return; }
+    }
+    if (!remote || !remote.bgBackups || typeof remote.bgBackups !== 'object') return;
+    const keys = Object.keys(remote.bgBackups);
+    if (!keys.length) return;
+    let pending = keys.length, applied = 0;
+    keys.forEach(function (k) {
+      const data = remote.bgBackups[k];
+      if (!data) { if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {} return; }
+      // 用 ts 比较：云端比本地新（或本地没有）才覆盖
+      const localData = BG_CACHE[k];
+      const localTs = (function(){ try { return BG_IDB_TS[k] || 0; } catch(e) { return 0; } })();
+      const remoteTs = (typeof remote.bgBackupsAt === 'number' ? remote.bgBackupsAt : 0);
+      const shouldApply = !localData || remoteTs >= localTs;
+      if (!shouldApply) { if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {} return; }
+      try { BG_CACHE[k] = data; applied++; } catch (e) {}
+      bgIdbSet(k, data).then(function(){
+        try { BG_IDB_TS[k] = remoteTs; } catch (e) {}
+        if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {}
+      }).catch(function(){ if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {} });
+    });
+    if (applied > 0) {
+      try {
+        const statusEl = document.getElementById('settings-bg-cloud-status');
+        if (statusEl) statusEl.textContent = '☁️ 启动时已从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）';
+      } catch (e) {}
+    }
+  } catch (e) {}
+}
+// 记录每张背景图在本地 IDB 的写入时间戳，用于「云端 vs 本地」新旧比较
+const BG_IDB_TS = {};
+
 async function initBgCacheAndMigrate() {
+  // 加载 IDB 写入时间戳（用于"云端 vs 本地"新旧比较，决定是否覆盖本地背景图）
+  try {
+    const tsRaw = localStorage.getItem('hami_bg_idb_ts');
+    if (tsRaw) { const obj = JSON.parse(tsRaw) || {}; Object.keys(obj).forEach(function(k){ BG_IDB_TS[k] = obj[k] || 0; }); }
+  } catch (e) {}
   try {
     // 手机浏览器上 IndexedDB 可能被阻塞，3 秒拿不到就当没有缓存继续走，
     // 保证 localStorage 腾挪（腾出 5MB 配额）一定执行，业务数据才写得进去。
     const idbBgs = await _promiseTimeout(bgIdbGetAll(), 3000, {});
-    Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k]) BG_CACHE[k] = idbBgs[k]; });
+    const now = Date.now();
+    Object.keys(idbBgs || {}).forEach(function (k) {
+      if (idbBgs[k]) {
+        BG_CACHE[k] = idbBgs[k];
+        if (!BG_IDB_TS[k]) BG_IDB_TS[k] = now;
+      }
+    });
   } catch (e) {}
   let migrated = 0;
   Object.keys(BG_KEYS).forEach(function (key) {
     let old = null;
     try { old = localStorage.getItem(BG_KEYS[key]); } catch (e) {}
-    if (old && !BG_CACHE[key]) { BG_CACHE[key] = old; try { bgIdbSet(key, old); } catch (e) {} }
+    if (old && !BG_CACHE[key]) {
+      BG_CACHE[key] = old;
+      BG_IDB_TS[key] = Date.now();
+      try { bgIdbSet(key, old); } catch (e) {}
+    }
     if (old) { try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}; migrated++; }
   });
   if (migrated > 0) {
     console.log('[背景图迁移] 已把 ' + migrated + ' 张背景图从 localStorage 搬到 IndexedDB，腾出 5MB 配额');
     try { saveData(); } catch (e) {}   // 空间刚腾出来，立刻把业务数据补写一次
   }
+  try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
+  // 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
+  try { syncBgsFromCloudOnBoot(); } catch (e) {}
 }
 
 function applyBg(key, dataUrl) {
