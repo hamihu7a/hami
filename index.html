@@ -82,7 +82,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-19">
+<meta name="hami-build" content="2026-09-06-20">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -2793,8 +2793,9 @@
     .panel.active .todo-card[id] {
       grid-column: 1 / -1;
     }
-    .weight-cal-grid { grid-template-columns: repeat(7, minmax(44px, 1fr)) !important; }
-    .weight-cal-cell { min-height: 64px !important; }
+    .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px !important; }
+    .weight-cal-cell { min-height: 46px !important; }
+    .weight-cal-day { font-size: 11px !important; }
     th, td { padding: 10px 8px; }
   }
 
@@ -2843,19 +2844,21 @@
   }
   /* 体重日历：在 iPad 窄宽度场景下，保证每个 cell 至少 44px 宽（能塞下"89.2"+"↑0.8"）。
      用 minmax(44px, 1fr) 而非 1fr，避免被窄列挤压；横向溢出时允许滚动。 */
+  /* 体重日历：还原紧凑小字（主人要求，不要被放大成大格子大日期）。
+     日期 11px、重量 10px、格子高度适中，7 列仍能放下"89.2 + ↑0.8"。 */
   body.hami-force-desktop .weight-cal-grid {
-    grid-template-columns: repeat(7, minmax(44px, 1fr)) !important;
-    gap: 4px !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 3px !important;
     overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    min-height: 64px !important; padding: 4px 2px !important;
+    min-height: 46px !important; padding: 3px 2px !important;
     min-width: 0;
   }
-  body.hami-force-desktop .weight-cal-day { font-size: 13px !important; }
-  body.hami-force-desktop .weight-cal-stack { font-size: 11px !important; gap: 1px; }
-  body.hami-force-desktop .weight-cal-weight { font-size: 11px !important; padding: 0 2px; }
-  body.hami-force-desktop .weight-cal-change { font-size: 10px !important; }
+  body.hami-force-desktop .weight-cal-day { font-size: 11px !important; }
+  body.hami-force-desktop .weight-cal-stack { font-size: 10px !important; gap: 1px; }
+  body.hami-force-desktop .weight-cal-weight { font-size: 10px !important; padding: 0 2px; }
+  body.hami-force-desktop .weight-cal-change { font-size: 9px !important; }
   body.hami-force-desktop table { font-size: 13px; }
   body.hami-force-desktop th,
   body.hami-force-desktop td { padding: 10px 8px; }
@@ -2866,10 +2869,17 @@
   body.hami-force-desktop .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
+  /* 自媒体账号卡：保持横向三卡紧凑（主人明确要求，不要被 v18 拆成上下排/空旷）。
+     用 flex + 每卡弹性均分，宽度不足时允许轻微压缩，仍挤在同一行 */
   body.hami-force-desktop .accounts-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex !important;
+    flex-wrap: nowrap;
     gap: 10px !important;
+  }
+  body.hami-force-desktop .account-card {
+    flex: 1 1 0 !important;
+    min-width: 0;
+    max-width: none !important;
   }
   body.hami-force-desktop .hami-drawer { max-width: 520px; }
   body.hami-force-desktop .modal-card {
@@ -3654,7 +3664,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-19';
+  var BUILD_VER = '2026-09-06-20';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4684,8 +4694,8 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <div class="todo-card" style="padding:18px;">
       <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-        <span>📒</span> 近期记录
-        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按账目日期</span>
+        <span>📒</span> 消费日期近期记录
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按消费日期</span>
       </h3>
       <div id="account-flow-table"></div>
     </div>
@@ -5549,6 +5559,7 @@ let store = {
   toiletRecords: [],   // 如厕记录 { date, count }  count=当天上厕所次数（不再预填演示数据）
   maskRecords: [],     // 敷面膜记录 { date }
   accountRecords: [],   // 记账记录 { date, type('income'/'expense'), category, subCategory, amount, note }
+  accountDeleted: [],   // 删除标记（墓碑）：主人删过的记账唯一指纹，云端合并用它防止"删了又复活"
   depositBalance: 0,    // 可支配余额：本金（主人手头现有存款），与所有账单联动增减
   weightCalMonth: '',   // 体重日历当前查看月份（YYYY-MM），空字符串表示跟随今天所在月
   accounts: {
@@ -6745,6 +6756,32 @@ function deepMergeUnion(a, b) {
 }
 function mergeStoreInto(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
+  // 删除标记传播：先把"本机删过的"和"云端删过的"墓碑取并集，
+  // 再从本地 & 远程的记账数组里同时剔除被删记录，杜绝"删了2秒又复活"。
+  // 注意：必须在下方 deepMergeUnion 之前执行（合并后 store.accountRecords 已被替换引用，需先处理旧引用）。
+  try {
+    if (remote.accountDeleted && Array.isArray(remote.accountDeleted) && remote.accountDeleted.length) {
+      if (!local.accountDeleted) local.accountDeleted = [];
+      const seen = new Set(local.accountDeleted);
+      remote.accountDeleted.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.accountDeleted.push(k); } });
+      if (local.accountDeleted.length > 200) local.accountDeleted = local.accountDeleted.slice(-200);
+    }
+    if (local.accountDeleted && local.accountDeleted.length) {
+      const tb = new Set(local.accountDeleted);
+      // 本地清除
+      if (Array.isArray(local.accountRecords)) {
+        local.accountRecords = local.accountRecords.filter(function (r) {
+          const k = recAccountKey(r); return !(k && tb.has(k));
+        });
+      }
+      // 远程清除（远端那份也带墓碑的项直接丢掉，不再并回本机）
+      if (Array.isArray(remote.accountRecords)) {
+        remote.accountRecords = remote.accountRecords.filter(function (r) {
+          const k = recAccountKey(r); return !(k && tb.has(k));
+        });
+      }
+    }
+  } catch (e) {}
   const localTs = local._lastSavedAt || 0;
   const remoteTs = remote._lastSavedAt || 0;
   Object.keys(remote).forEach(function (k) {
@@ -11586,10 +11623,43 @@ async function deleteAccountRecord(idx) {
   const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
   const tip = '确定删除这条记账吗？\n' + dateStr + ' ' + sign + '¥' + (r.amount || 0).toFixed(2);
   if (!await hamiConfirm(tip)) return;
+  // 删除标记（墓碑）：先把这条记账的唯一指纹存进 store.accountDeleted，
+  // 云端合并（pullAndMerge → mergeStoreInto）和 push 都会拿墓碑把对应记录剔掉，
+  // 保证任何设备拉取时都不再把这条"复活"回来。这是根治"删了2秒又回来"的关键。
+  try {
+    if (!store.accountDeleted) store.accountDeleted = [];
+    store.accountDeleted.push(recAccountKey(r));
+    // 墓碑只保留最近 200 条，避免无限膨胀
+    if (store.accountDeleted.length > 200) store.accountDeleted = store.accountDeleted.slice(-200);
+  } catch (e) {}
   store.accountRecords.splice(idx, 1);
+  // 顺带把云端/本地里可能与这条同键的历史残留一并压掉（保险）
+  try { accountPruneByDeleted(); } catch (e) {}
   try { saveData(); } catch(e) {}
   try { renderAccount(); } catch(e) {}
   finToast('🗑 已删除');
+}
+
+// 给一条记账记录算唯一指纹（用于删除标记 / 去重识别）。
+// 优先用 id，缺 id 就用「date|type|category|amount|note|time|ts」拼，保证同一笔唯一稳定。
+function recAccountKey(r) {
+  try {
+    if (r && r.id) return 'id:' + r.id;
+    if (!r) return '';
+    return ['d:' + (r.date || ''), 't:' + (r.type || ''), 'c:' + (r.category || ''),
+      'a:' + (r.amount != null ? r.amount : ''), 'n:' + (r.note || ''),
+      'tm:' + (r.time || ''), 'ts:' + (r.ts || 0)].join('|');
+  } catch (e) { return ''; }
+}
+// 依据 store.accountDeleted 墓碑，从本地数组里剔除已被主人删除过的记录。
+function accountPruneByDeleted() {
+  if (!store.accountDeleted || !store.accountDeleted.length) return;
+  if (!Array.isArray(store.accountRecords)) return;
+  const tombstones = new Set(store.accountDeleted);
+  store.accountRecords = store.accountRecords.filter(function (r) {
+    const k = recAccountKey(r);
+    return !(k && tombstones.has(k));
+  });
 }
 
 // 打开记一笔弹窗
@@ -15564,24 +15634,33 @@ function hamiEnforceRealLayout() {
     var w = window.innerWidth || document.documentElement.clientWidth || 0;
     // 抹掉历史 class
     document.body.classList.remove('hami-force-desktop', 'hami-force-narrow', 'hami-force-mini');
+    // 关键修复：不再覆盖 --sidebar-w！侧栏宽度永远归主人手动拖拽管理（存 localStorage）。
+    // 之前这里 setProperty 钉死 220px，导致主人拖拽后被 resize/云同步抢回，感觉"拖了没用"。
     if (w >= 1000) {
       // 真桌面：≥1000px viewport，走完整桌面布局
-      document.documentElement.style.setProperty('--sidebar-w', '220px');
       document.body.classList.add('hami-force-desktop');
     } else if (w >= 700) {
-      // 平板 ~700-999：紧凑桌面布局，sidebar 200px
-      document.documentElement.style.setProperty('--sidebar-w', '200px');
+      // 平板 ~700-999：紧凑桌面布局
       document.body.classList.add('hami-force-desktop', 'hami-force-narrow');
     } else if (w >= 500) {
-      // v17 重大修复：主人 iPad Pro 11" 在 iPadOS Safari 默认 mobile UA 模式下 viewport ~568px，
-      // 之前设 sidebar 80px 反而挤爆 main；现在直接给 sidebar 200px，main 至少 350px，
-      // grid 7 列每列 ≥50px，体重数字 89.2 能完整显示。主人 iPhone 17 ≤420 不受影响。
-      document.documentElement.style.setProperty('--sidebar-w', '200px');
       document.body.classList.add('hami-force-desktop', 'hami-force-narrow');
     } else {
       // 真手机：≤499，按手机原样渲染（不覆盖任何样式）
-      // class 已抹，无需操作
     }
+    // 若主人从没拖过、也没有保存宽度，才给一个合理默认，避免无样式塌陷；
+    // 一旦主人保存过（localStorage 有值），此处绝不动它。
+    try {
+      const savedW = parseInt(localStorage.getItem('hami_sidebar_width'), 10);
+      if (!savedW || isNaN(savedW)) {
+        const def = (w >= 1000) ? 220 : ((w >= 500) ? 200 : 100);
+        if (typeof __applySidebarWidth !== 'function') {
+          document.documentElement.style.setProperty('--sidebar-w', def + 'px');
+        }
+      } else if (typeof window.__applySidebarWidth === 'function') {
+        // 尊重已保存宽度（拖拽逻辑内部也会调用，这里仅为首帧对齐）
+        window.__applySidebarWidth();
+      }
+    } catch (e) {}
   } catch (e) {}
 }
 try { hamiEnforceRealLayout(); } catch (e) {}
