@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-28">
+<meta name="hami-build" content="2026-09-06-29">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1770,11 +1770,16 @@
     gap: 12px;
     margin-bottom: 16px;
   }
-  /* v2026-09-06-28 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
+  /* v2026-09-06-29 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
   #income-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   #income-stats .stat-card { padding: 14px 10px; }
   #income-stats .stat-card .value { font-size: 20px; }
   #income-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
+  /* v2026-09-06-29 自媒体更新记录「上2下2」专属：4 张卡永远 2×2 */
+  #media-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  #media-stats .stat-card { padding: 14px 10px; }
+  #media-stats .stat-card .value { font-size: 20px; }
+  #media-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
   /* v2026-09-06-28 历史推荐表：标题列允许换行且不溢出；表头紧凑 */
   #inspire-history td:first-child,
   #inspire-history td:nth-child(2),
@@ -3693,7 +3698,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-28';
+  var BUILD_VER = '2026-09-06-29';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4703,23 +4708,23 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <span style="font-size:18px;">💎</span>
         <h3 style="font-size:15px;font-weight:800;color:#d14b73;">可支配余额</h3>
+        <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:8px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;">✏️ 修改</button>
+        <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;">💾 保存</button>
         <span style="margin-left:auto;font-size:11px;color:#a8788a;">本金 + 所有账单自动算</span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label style="font-size:13px;color:#7d4a5a;font-weight:600;">我现在的存款余额</label>
-        <div id="account-deposit-wrap" style="display:flex;align-items:center;background:#fff;border:1.5px solid #ffc2d6;border-radius:999px;padding:4px 12px;transition:border-color .15s ease;">
-          <span style="color:#d14b73;font-weight:700;margin-right:2px;">¥</span>
-          <input id="account-deposit-input" type="number" inputmode="decimal" placeholder="填你手头有的钱" style="border:none;outline:none;width:130px;font-size:15px;font-weight:700;color:#d14b73;background:transparent;" />
-        </div>
-        <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改本金" style="border:none;background:#ffe1ea;color:#d14b73;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;cursor:pointer;">✏️ 修改</button>
-        <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存本金" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;cursor:pointer;display:none;">💾 保存</button>
-      </div>
-      <div style="margin-top:12px;display:flex;align-items:baseline;gap:8px;">
-        <span style="font-size:13px;color:#7d4a5a;">当前可支配余额</span>
-        <span id="account-disposable-value" style="font-size:24px;font-weight:800;color:#d14b73;">¥0.00</span>
+      <div id="account-disposable-display" style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:#fff;border:1.5px dashed #ffc2d6;border-radius:14px;">
+        <span style="font-size:13px;color:#7d4a5a;font-weight:600;">当前可支配余额</span>
+        <span id="account-disposable-value" style="font-size:26px;font-weight:800;color:#d14b73;line-height:1.2;">¥0.00</span>
         <span id="account-deposit-saved-tip" style="margin-left:auto;font-size:11px;color:#3aaa55;font-weight:700;opacity:0;transition:opacity .25s ease;">✓ 已保存</span>
       </div>
-      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">每记一笔账（花钱 / 模拟人生工作单收入等）会自动跟着加减，本金你只填一次。<br>想改金额？点「✏️ 修改」改完再点「💾 保存」。</p>
+      <div id="account-disposable-editor" style="display:none;margin-top:8px;padding:10px 12px;background:#fff;border:1.5px solid #ff7fa8;border-radius:14px;align-items:center;gap:8px;">
+        <span style="font-size:13px;color:#7d4a5a;font-weight:600;">改成</span>
+        <span style="color:#d14b73;font-weight:700;">¥</span>
+        <input id="account-deposit-input" type="number" inputmode="decimal" placeholder="填一个数字" style="border:none;outline:none;width:140px;font-size:16px;font-weight:700;color:#d14b73;background:transparent;" />
+        <button type="button" onclick="saveDepositBalance()" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">💾 保存</button>
+        <button type="button" onclick="cancelEditDeposit()" style="border:none;background:#f3e3e8;color:#7d4a5a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;">取消</button>
+      </div>
+      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">这里的金额是"本金 + 所有账单自动算出来的"。想改它？点右上角「✏️ 修改」直接改这个数。</p>
     </div>
 
     <div class="stats-grid" id="account-stats"></div>
@@ -10198,51 +10203,71 @@ function beautyGo(delta) {
   renderIncome();
 }
 
-// —— 可支配余额：主人小白需要明确的"修改/保存"两步，input 实时保存是后台兜底 ——
+// —— 可支配余额：主人改的就是当前可支配余额（不再分开本金/最终值）
+// 反算：store.depositBalance = 输入值 - 所有账单收支；这样下次算出还是主人想看到的值
+function calcAccountNetForDeposit() {
+  const ars = store.accountRecords || [];
+  const mi = ars.filter(r => r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const oi = (store.customOrders || []).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  const ae = ars.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  return mi + oi - ae;
+}
+function refreshDisposableDisplay() {
+  const dEl = document.getElementById('account-disposable-value');
+  if (!dEl) return;
+  const cur = (parseFloat(store.depositBalance) || 0) + calcAccountNetForDeposit();
+  dEl.textContent = '¥' + fmtMoney(cur);
+}
 function editDepositBalance() {
-  const input = document.getElementById('account-deposit-input');
-  const wrap = document.getElementById('account-deposit-wrap');
-  const saveBtn = document.getElementById('account-deposit-save-btn');
+  const display = document.getElementById('account-disposable-display');
+  const editor = document.getElementById('account-disposable-editor');
   const editBtn = document.getElementById('account-deposit-edit-btn');
   const tip = document.getElementById('account-deposit-saved-tip');
+  const input = document.getElementById('account-deposit-input');
   if (tip) tip.style.opacity = '0';
-  if (wrap) wrap.style.borderColor = '#ff7fa8';
-  if (saveBtn) saveBtn.style.display = 'inline-block';
-  if (editBtn) { editBtn.textContent = '✏️ 修改中…'; editBtn.disabled = true; }
-  if (input) { input.focus(); input.select && input.select(); }
+  // 预填：当前显示的可支配余额（本金+账单），主人改的就是它
+  const cur = (parseFloat(store.depositBalance) || 0) + calcAccountNetForDeposit();
+  if (input) input.value = cur.toFixed(2);
+  if (display) display.style.display = 'none';
+  if (editor) { editor.style.display = 'flex'; }
+  if (editBtn) { editBtn.style.display = 'none'; }
+  if (input) { setTimeout(() => { try { input.focus(); input.select(); } catch (e) {} }, 30); }
+}
+function cancelEditDeposit() {
+  const display = document.getElementById('account-disposable-display');
+  const editor = document.getElementById('account-disposable-editor');
+  const editBtn = document.getElementById('account-deposit-edit-btn');
+  if (editor) editor.style.display = 'none';
+  if (display) display.style.display = 'flex';
+  if (editBtn) editBtn.style.display = 'inline-block';
 }
 function saveDepositBalance() {
   const input = document.getElementById('account-deposit-input');
-  const wrap = document.getElementById('account-deposit-wrap');
-  const saveBtn = document.getElementById('account-deposit-save-btn');
+  const display = document.getElementById('account-disposable-display');
+  const editor = document.getElementById('account-disposable-editor');
   const editBtn = document.getElementById('account-deposit-edit-btn');
   const tip = document.getElementById('account-deposit-saved-tip');
   const v = parseFloat((input && input.value) || '');
-  if (isNaN(v) || v < 0) {
-    try { hamiToast('本金得是正数哦～'); } catch (e) {}
+  if (isNaN(v)) {
+    try { hamiToast('请填一个数字～'); } catch (e) {}
     if (input) input.focus();
     return;
   }
-  store.depositBalance = v;
+  // 反算：本金 = 主人想要的可支配余额 - 当前所有账单收支
+  // 这样以后再记一笔账，可支配余额仍然 = 主人输入的那个值 ± 新增的收支
+  const net = calcAccountNetForDeposit();
+  store.depositBalance = v - net;
+  // 反算：本次改完后立即存盘。后续云端合并的标量规则（lv 非空保留 lv）会保护主人刚改的值
   try { saveData(); } catch (e) {}
-  // 立刻刷新"当前可支配余额"
-  try { renderIncome(); } catch (e) {}
-  const dEl = document.getElementById('account-disposable-value');
-  if (dEl) {
-    const ars = store.accountRecords || [];
-    const mi = ars.filter(function (r) { return r.type === 'income'; }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-    const oi = (store.customOrders || []).reduce(function (s, o) { return s + (parseFloat(o.amount) || 0); }, 0);
-    const ae = ars.filter(function (r) { return r.type === 'expense'; }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-    dEl.textContent = '¥' + fmtMoney((parseFloat(store.depositBalance) || 0) + mi + oi - ae);
-  }
-  if (wrap) wrap.style.borderColor = '#ffc2d6';
-  if (saveBtn) saveBtn.style.display = 'none';
-  if (editBtn) { editBtn.textContent = '✏️ 修改'; editBtn.disabled = false; }
+  try { refreshDisposableDisplay(); } catch (e) {}
+  if (editor) editor.style.display = 'none';
+  if (display) display.style.display = 'flex';
+  if (editBtn) editBtn.style.display = 'inline-block';
   if (tip) {
     tip.style.opacity = '1';
-    setTimeout(function () { try { tip.style.opacity = '0'; } catch (e) {} }, 2500);
+    setTimeout(() => { try { tip.style.opacity = '0'; } catch (e) {} }, 2500);
   }
-  try { hamiToast('本金已保存 ¥' + fmtMoney(v)); } catch (e) {}
+  try { hamiToast('可支配余额已改为 ¥' + fmtMoney(v)); } catch (e) {}
 }
 
 function renderIncome() {
@@ -12426,7 +12451,10 @@ function renderAccount() {
   const _deposit = parseFloat(store.depositBalance) || 0;
   const disposable = _deposit + _allInc - _allExp;
   const _depInput = document.getElementById('account-deposit-input');
-  if (_depInput && document.activeElement !== _depInput) _depInput.value = (store.depositBalance != null ? store.depositBalance : '');
+  const _depEditor = document.getElementById('account-disposable-editor');
+  const _isEditing = _depEditor && _depEditor.style.display !== 'none';
+  // 只有非编辑态、且当前 input 不是焦点时才把 store 的本金同步进 input（避免抢主人正在填的值）
+  if (_depInput && !_isEditing && document.activeElement !== _depInput) _depInput.value = (store.depositBalance != null ? store.depositBalance : '');
   const _dispEl = document.getElementById('account-disposable-value');
   if (_dispEl) _dispEl.textContent = '¥' + fmtMoney(disposable);
 
@@ -12783,22 +12811,19 @@ function bindFinanceEvents() {
       });
     });
   }
-  // 可支配余额本金输入：实时更新 store + 显示（不重渲染输入框，避免输入时丢焦点）
+  // 可支配余额：编辑态实时预览（不动 store，只有点保存才落库；反算逻辑由 saveDepositBalance 负责）
   const _depEl = document.getElementById('account-deposit-input');
   if (_depEl && !_depEl._bound) {
     _depEl._bound = true;
     _depEl.addEventListener('input', function () {
-      var v = parseFloat(_depEl.value);
-      store.depositBalance = isNaN(v) ? 0 : v;
-      try { saveData(); } catch (e) {}
-      var dEl = document.getElementById('account-disposable-value');
-      if (dEl) {
-        var ars = store.accountRecords || [];
-        var mi = ars.filter(function (r) { return r.type === 'income'; }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-        var oi = (store.customOrders || []).reduce(function (s, o) { return s + (parseFloat(o.amount) || 0); }, 0);
-        var ae = ars.filter(function (r) { return r.type === 'expense'; }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-        dEl.textContent = '¥' + fmtMoney((parseFloat(store.depositBalance) || 0) + mi + oi - ae);
-      }
+      // 仅在编辑区显示时预览，不修改 store
+      const editor = document.getElementById('account-disposable-editor');
+      if (!editor || editor.style.display === 'none') return;
+      const v = parseFloat(_depEl.value);
+      if (isNaN(v)) return;
+      // 预览：把这个值显示在显示区作为参考（但不覆盖主显示——主显示仍按 store 计算）
+      const tip = document.getElementById('account-deposit-saved-tip');
+      if (tip) { tip.style.opacity = '0'; }
     });
   }
   // 说明：财务面板的「支出/收入」切换已由 renderInlineStats 承担（见下方 iTab 绑定），
