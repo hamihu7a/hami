@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-15">
+<meta name="hami-build" content="2026-09-06-16">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -2755,18 +2755,24 @@
   body.hami-force-desktop .main {
     position: fixed !important; top: 56px !important;
     left: var(--sidebar-w) !important; right: 0 !important;
-    bottom: 0 !important; padding: 0 48px 28px !important;
+    bottom: 0 !important; padding: 0 24px 28px !important;
     width: auto !important; max-width: none !important;
   }
+  /* 体重日历：在 iPad 窄宽度场景下，保证每个 cell 至少 44px 宽（能塞下"89.2"+"↑0.8"）。
+     用 minmax(44px, 1fr) 而非 1fr，避免被窄列挤压；横向溢出时允许滚动。 */
   body.hami-force-desktop .weight-cal-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 6px !important;
+    grid-template-columns: repeat(7, minmax(44px, 1fr)) !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    min-height: 70px !important; padding: 4px 2px !important;
+    min-height: 64px !important; padding: 4px 2px !important;
+    min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 13px !important; }
-  body.hami-force-desktop .weight-cal-stack { font-size: 12px !important; }
+  body.hami-force-desktop .weight-cal-stack { font-size: 11px !important; gap: 1px; }
+  body.hami-force-desktop .weight-cal-weight { font-size: 11px !important; padding: 0 2px; }
+  body.hami-force-desktop .weight-cal-change { font-size: 10px !important; }
   body.hami-force-desktop table { font-size: 13px; }
   body.hami-force-desktop th,
   body.hami-force-desktop td { padding: 10px 8px; }
@@ -2779,7 +2785,7 @@
   }
   body.hami-force-desktop .accounts-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px !important;
   }
   body.hami-force-desktop .hami-drawer { max-width: 520px; }
@@ -2789,6 +2795,94 @@
   body.hami-force-desktop #lucky-cat { width: 90px; height: 90px; }
   body.hami-force-desktop .desktop-time { font-size: 32px; }
   body.hami-force-desktop .desktop-hero { padding: 18px 20px; }
+
+  /* ===================== 极窄兜底（hami-force-narrow，innerWidth 600~699） =====================
+   * 主人 iPad Pro 11" 横屏 viewport 在某些 iPadOS 配置下被报成 ~375-390px，
+   * 比真实侧栏+主面板所需宽度（375px = 120px sidebar + 235px main）还小一点点。
+   * 此时 JS 触发 .hami-force-narrow，把 sidebar 进一步压到 100px（和主人手机一致），
+   * 让 main 至少能塞下体重日历 7 列（每列 ~30px，挤但能看）。
+   * ========================================================================= */
+  body.hami-force-narrow { --sidebar-w: 100px !important; }
+  body.hami-force-narrow .main { left: var(--sidebar-w) !important; padding: 0 12px 20px !important; }
+  body.hami-force-narrow .nav-item .nav-icon { font-size: 16px; }
+  body.hami-force-narrow .nav-item .nav-text { display: none; }
+  body.hami-force-narrow .sidebar .nav-group-title { font-size: 12px; padding: 8px 4px 4px; text-align: center; }
+  body.hami-force-narrow .sidebar .nav-header { padding: 6px 4px 10px !important; }
+  body.hami-force-narrow .sidebar .nav-header .avatar { width: 44px; height: 44px; font-size: 22px; }
+  body.hami-force-narrow .sidebar .nav-header .nav-title { font-size: 12px; }
+  body.hami-force-narrow .sidebar .nav-header .nav-motto { display: none; }
+  body.hami-force-narrow .weight-cal-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+  }
+  body.hami-force-narrow .weight-cal-cell { min-height: 56px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
+  body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
+  body.hami-force-narrow .weight-cal-change { font-size: 9px !important; }
+  body.hami-force-narrow table { font-size: 12px; }
+  body.hami-force-narrow th, body.hami-force-narrow td { padding: 6px 4px; }
+  body.hami-force-narrow .card,
+  body.hami-force-narrow .todo-card { padding: 14px 14px; }
+  body.hami-force-narrow .stat-card .value { font-size: 18px; }
+
+  /* ===================== 极窄兜底（hami-force-mini，innerWidth 450~699） =====================
+   * 主人 iPad Pro 11" 横屏在 iPadOS 某些配置下 viewport 被报成 375-414px，跟手机 viewport 一致。
+   * 此时 sidebar 80px（仅图标）+ main 给到 ~290px，让内容能完整显示。
+   * 体重日历横向可滚动保证 7 列完整可读。
+   * ========================================================================= */
+  body.hami-force-mini { --sidebar-w: 80px !important; }
+  body.hami-force-mini .main {
+    position: fixed !important; top: 56px !important;
+    left: var(--sidebar-w) !important; right: 0 !important;
+    bottom: 0 !important; padding: 0 12px 20px !important;
+    width: auto !important; max-width: none !important;
+    overflow-x: hidden;
+  }
+  body.hami-force-mini .sidebar {
+    top: 0 !important; height: 100vh !important;
+    padding: 56px 0 12px 0 !important; overflow-y: auto !important;
+    width: 80px !important;
+  }
+  body.hami-force-mini .sidebar .nav-item {
+    font-size: 11px !important; padding: 7px 4px !important; gap: 2px !important;
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+  body.hami-force-mini .sidebar .nav-item .nav-icon { font-size: 18px; }
+  body.hami-force-mini .sidebar .nav-item .nav-text { font-size: 10px; display: block; line-height: 1.2; text-align: center; }
+  body.hami-force-mini .sidebar .nav-group-title { font-size: 11px; padding: 6px 2px 3px; text-align: center; }
+  body.hami-force-mini .sidebar .nav-header { padding: 6px 4px 10px !important; }
+  body.hami-force-mini .sidebar .nav-header .avatar { width: 38px; height: 38px; font-size: 20px; }
+  body.hami-force-mini .sidebar .nav-header .nav-title { font-size: 12px; }
+  body.hami-force-mini .sidebar .nav-header .nav-motto { display: none; }
+  /* 体重日历：7 列横排，最小宽度保证，每列内容完整显示；溢出时整行横向滚动 */
+  body.hami-force-mini .weight-cal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  body.hami-force-mini .weight-cal-grid {
+    grid-template-columns: repeat(7, minmax(34px, 1fr)) !important;
+    gap: 2px !important;
+  }
+  body.hami-force-mini .weight-cal-cell { min-height: 56px !important; padding: 2px 1px !important; }
+  body.hami-force-mini .weight-cal-day { font-size: 11px !important; }
+  body.hami-force-mini .weight-cal-weight { font-size: 10px !important; padding: 0 1px; }
+  body.hami-force-mini .weight-cal-change { font-size: 9px !important; }
+  body.hami-force-mini .weight-cal-weekdays { gap: 2px; }
+  body.hami-force-mini .weight-cal-weekdays > div { font-size: 10px; }
+  /* 表格容器允许横向滚动，避免挤字 */
+  body.hami-force-mini .panel,
+  body.hami-force-mini .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  body.hami-force-mini table { font-size: 12px; min-width: 380px; }
+  body.hami-force-mini th, body.hami-force-mini td { padding: 6px 4px; white-space: nowrap; }
+  body.hami-force-mini .card,
+  body.hami-force-mini .todo-card { padding: 14px 14px; }
+  body.hami-force-mini .top-bar h1 { font-size: 18px; }
+  body.hami-force-mini .stat-card .value { font-size: 18px; }
+  /* 账户面板保持 grid 但允许卡片横向排开 */
+  body.hami-force-mini .accounts-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 6px !important;
+  }
+  body.hami-force-mini .modal-card { max-width: 320px !important; border-radius: 16px !important; }
+  body.hami-force-mini .hami-drawer { max-width: 320px; }
   /* 超大屏：main 是 relative 定位，width 由 calc(100vw - --sidebar-w) 决定，无须再卡 max-width */
   /* @media (min-width: 1400px) 的样式已不需要，保留空规则作为占位（防止误删触发其它）；如确实无样式可以删除。 */
 
@@ -3428,7 +3522,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-15';
+  var BUILD_VER = '2026-09-06-16';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -14246,8 +14340,9 @@ function renderDesktopWeight() {
   </div>`;
 
   // 日期区 — grid 7 列等分，宽度和 gaps 全部交给 CSS class 控制
+  // ⚠️ 外层包一个 .weight-cal-wrap，让 .hami-force-mini 模式下可以横向滚动
   const firstDay = new Date(year, monthIdx, 1).getDay();
-  html += `<div class="weight-cal-grid">`;
+  html += `<div class="weight-cal-wrap"><div class="weight-cal-grid">`;
 
   // 前置空白
   for (let i = 0; i < firstDay; i++) {
@@ -14322,7 +14417,7 @@ function renderDesktopWeight() {
     </div>`;
   }
 
-  html += `</div>`;
+  html += `</div></div>`;
 
   // 图例
   html += `<div class="weight-cal-legend">
@@ -15191,16 +15286,31 @@ try { _hamiBootDone = true; } catch (e) {}
 // 背景：iPadOS Safari 在某些场景下（缩放模式、UA 默认 mobile、低视力辅助）会把 CSS viewport
 // 报告成 ≤768px，导致 ≤768px 的 mobile 样式被错误命中，sidebar 卡成 100px、main padding 收缩、
 // 体重日历单元格被压成竖排条、表格挤成坨。
-// 这里在 JS 启动后用 window.innerWidth（真实布局视口宽度）兜底：
-// 真实宽度 ≥900px 一律视为"平板及以上"，强制走桌面布局 + 220px sidebar。
+// 这里在 JS 启动后用 window.innerWidth（真实布局视口宽度）兜底。
+// ⚠️ 主人 iPad Pro 11" 横屏因「缩放模式」或「请求桌面网站」关闭后 viewport 被报成 ~375-390px，
+// 此时跟手机 viewport 几乎一致。我们必须给这个特殊宽度一套"极窄优化版"布局，
+// 既保留桌面版结构感（让主人感觉 iPad 不是被当手机用），又不让内容塞爆。
 function hamiEnforceRealLayout() {
   try {
     var w = window.innerWidth || document.documentElement.clientWidth || 0;
-    if (w >= 900) {
+    // 抹掉历史 class
+    document.body.classList.remove('hami-force-desktop', 'hami-force-narrow', 'hami-force-mini');
+    if (w >= 1000) {
+      // 真桌面：≥1000px viewport，走完整桌面布局
       document.documentElement.style.setProperty('--sidebar-w', '220px');
       document.body.classList.add('hami-force-desktop');
+    } else if (w >= 700) {
+      // 平板 ~700-999：紧凑桌面布局，sidebar 180px
+      document.documentElement.style.setProperty('--sidebar-w', '180px');
+      document.body.classList.add('hami-force-desktop', 'hami-force-narrow');
+    } else if (w >= 450) {
+      // 主人 iPad Pro 11" 横屏在某些 iPadOS 配置下 viewport 被报成 375-414px，
+      // 这是最大痛点区间：sidebar 80px（图标态）+ main 给到 ~290px，让内容能完整显示
+      document.documentElement.style.setProperty('--sidebar-w', '80px');
+      document.body.classList.add('hami-force-mini');
     } else {
-      document.body.classList.remove('hami-force-desktop');
+      // 真手机：≤449，按手机原样渲染（不覆盖任何样式）
+      // class 已抹，无需操作
     }
   } catch (e) {}
 }
