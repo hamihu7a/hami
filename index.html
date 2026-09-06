@@ -2719,6 +2719,18 @@
     .hami-drawer.open .hami-drawer-panel { transform: translateY(0); }
   }
 
+  /* 批量修改自媒体数据抽屉 */
+  .ad-account-group { display: flex; flex-direction: column; gap: 8px; }
+  .ad-account-name { font-size: 14px; font-weight: 700; color: var(--c-text-2); text-align: center; }
+  .ad-input-row { display: flex; gap: 8px; }
+  .ad-input-row label { flex: 1; min-width: 0; }
+  .ad-input-row label input { width: 100%; box-sizing: border-box; padding: 10px 8px; font-size: 15px; }
+  @media (max-width: 420px) {
+    .ad-input-row { flex-wrap: wrap; }
+    .ad-input-row label { flex: 1 1 30%; min-width: 70px; }
+    .ad-input-row label input { padding: 9px 6px; font-size: 14px; }
+  }
+
   /* ============ 确认浮层（替代原生 confirm，淡雅毛玻璃 + 确定/取消） ============ */
   .hami-confirm { pointer-events: auto; cursor: default; position: fixed; left: 50%; top: 50%;
     z-index: 100300; transform: translate(-50%,-50%) scale(0.96);
@@ -3231,7 +3243,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-03';
+  var BUILD_VER = '2026-09-06-04';
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
   if (stored !== BUILD_VER) {
@@ -3460,7 +3472,10 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <!-- 自媒体账号概览 -->
     <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 10px;border-radius:12px;margin-bottom:var(--space-block);">
-      <div class="ac-title" style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px;">📱 自媒体数据</div>
+      <div class="ac-title" style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px;position:relative;">
+        <span>📱 自媒体数据</span>
+        <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:#fff;background:rgba(255,255,255,0.22);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;" onclick="promptUpdateAllAccounts()">修改</span>
+      </div>
       <div id="desktop-accounts"></div>
     </div>
 
@@ -5848,6 +5863,20 @@ function applyBg(key, dataUrl) {
   let weak = false;
   try { weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
   el.classList.toggle('weakened', weak);
+}
+
+// 启动时一次性应用所有已缓存/已内嵌的背景图；避免逐个区域等待或漏加载。
+function applyAllBgs() {
+  Object.keys(BG_KEYS).forEach(function (key) {
+    const d = BG_CACHE[key];
+    if (d) { applyBg(key, d); return; }
+    try {
+      const cfg = loadEmbeddedBgConfig();
+      if (cfg.bgs && cfg.bgs[key]) { applyBg(key, cfg.bgs[key]); return; }
+    } catch (e) {}
+    // 没有可用来源时恢复默认纯色，避免残留旧状态
+    try { clearBg(key); } catch (e) {}
+  });
 }
 
 function clearBg(key) {
@@ -12811,12 +12840,9 @@ function renderDesktopAccounts() {
   cards.forEach(c => {
     const link = c.data.link || '';
     html += `<div class="account-card">
-      <div style="text-align:center;margin-bottom:5px;">
+      <div style="text-align:center;margin-bottom:4px;">
         <div style="font-size:13px;font-weight:700;color:#d14b73;line-height:1.3;white-space:nowrap;">${c.nameCn}</div>
-        <div style="font-size:12px;color:#7d4a5a;margin-top:2px;white-space:nowrap;display:flex;justify-content:center;align-items:center;gap:6px;">
-          <span>${c.data.platform}</span>
-          <span style="cursor:pointer;color:#7d4a5a;background:rgba(160,112,128,0.18);padding:2px 12px;border-radius:8px;font-size:12px;font-weight:500;" onclick="promptUpdateAccount('${c.key}')">更新</span>
-        </div>
+        <div style="font-size:11px;color:#7d4a5a;margin-top:1px;white-space:nowrap;">${c.data.platform}</div>
       </div>
       <div class="ac-followers" style="color:#ff7f9e;text-align:center;margin:4px 0;">${c.data.followers}<span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
@@ -12889,15 +12915,17 @@ function maybeAutoExportAccountsBackup() {
 }
 
 // 手动录入（弹窗输入 粉丝数,获赞数,本周数）
-let _adKey = null;
-function promptUpdateAccount(key) {
-  _adKey = key;
-  const cur = store.accounts[key] || {};
-  const label = key === 'big' ? '哈弥老师（小红书）' : key === 'small' ? '哈弥定制版（小红书）' : '哈弥老师（抖音）';
-  const t = document.getElementById('account-drawer-title'); if (t) t.textContent = '更新 · ' + label;
-  const f = document.getElementById('ad-followers'); if (f) f.value = (cur.followers != null && !isNaN(cur.followers)) ? cur.followers : '';
-  const l = document.getElementById('ad-likes'); if (l) l.value = (cur.likes != null && !isNaN(cur.likes)) ? cur.likes : '';
-  const w = document.getElementById('ad-weekly'); if (w) w.value = (cur.weekly != null && !isNaN(cur.weekly)) ? cur.weekly : '';
+const _adAllKeys = ['big', 'small', 'douyin'];
+const _adNameMap = { big: '哈弥老师（小红书）', small: '哈弥定制版（小红书）', douyin: '哈弥老师（抖音）' };
+function promptUpdateAllAccounts() {
+  _adAllKeys.forEach(function (key) {
+    const cur = store.accounts[key] || {};
+    const prefix = 'ad-' + key;
+    const f = document.getElementById(prefix + '-followers'); if (f) f.value = (cur.followers != null && !isNaN(cur.followers)) ? cur.followers : '';
+    const l = document.getElementById(prefix + '-likes'); if (l) l.value = (cur.likes != null && !isNaN(cur.likes)) ? cur.likes : '';
+    const w = document.getElementById(prefix + '-weekly'); if (w) w.value = (cur.weekly != null && !isNaN(cur.weekly)) ? cur.weekly : '';
+  });
+  const t = document.getElementById('account-drawer-title'); if (t) t.textContent = '批量修改自媒体数据';
   openAccountDrawer();
 }
 function openAccountDrawer() {
@@ -12905,7 +12933,7 @@ function openAccountDrawer() {
   if (!d) return;
   d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
-  const f = document.getElementById('ad-followers');
+  const f = document.getElementById('ad-big-followers');
   if (f) setTimeout(function () { try { f.focus(); } catch (e) {} }, 220);
 }
 function closeAccountDrawer() {
@@ -12915,16 +12943,39 @@ function closeAccountDrawer() {
   document.body.style.overflow = '';
 }
 function submitAccountDrawer() {
-  if (_adKey == null) return;
-  const f = document.getElementById('ad-followers');
-  const l = document.getElementById('ad-likes');
-  const w = document.getElementById('ad-weekly');
-  const followers = f ? parseInt(f.value, 10) : NaN;
-  const likes = l ? parseInt(l.value, 10) : NaN;
-  if (isNaN(followers) || isNaN(likes)) { hamiToast('请填写有效的粉丝数和获赞数~'); return; }
-  const wk = (w && w.value !== '' && !isNaN(parseInt(w.value, 10))) ? parseInt(w.value, 10) : null;
-  updateAccountData(_adKey, followers, likes, wk);
+  let changedCount = 0;
+  let hasAny = false;
+  _adAllKeys.forEach(function (key) {
+    const acc = store.accounts[key]; if (!acc) return;
+    const prefix = 'ad-' + key;
+    const f = document.getElementById(prefix + '-followers');
+    const l = document.getElementById(prefix + '-likes');
+    const w = document.getElementById(prefix + '-weekly');
+    const followers = f && f.value !== '' ? parseInt(f.value, 10) : NaN;
+    const likes = l && l.value !== '' ? parseInt(l.value, 10) : NaN;
+    const weekly = (w && w.value !== '' && !isNaN(parseInt(w.value, 10))) ? parseInt(w.value, 10) : null;
+    let changedThis = false;
+    if (!isNaN(followers)) {
+      if (acc.followers != null && !isNaN(acc.followers)) acc.prevFollowers = acc.followers;
+      acc.followers = followers; hasAny = true; changedThis = true;
+    }
+    if (!isNaN(likes)) { acc.likes = likes; hasAny = true; changedThis = true; }
+    if (weekly !== null) { acc.weekly = weekly; hasAny = true; changedThis = true; }
+    if (changedThis) changedCount++;
+  });
+  if (!hasAny) { hamiToast('请至少填写一个数据~'); return; }
+  store.accountsMeta = store.accountsMeta || {};
+  store.accountsMeta.lastUpdate = formatAccountUpdateTime(new Date());
+  store.accountsMeta._lastSavedAt = Date.now();
+  const saved = saveData();
+  try { renderDesktopAccounts(); } catch (e) {}
   closeAccountDrawer();
+  if (saved) {
+    hamiToast('✅ 已更新 ' + changedCount + ' 个账号\n最后更新：' + (store.accountsMeta.lastUpdate || ''));
+    try { maybeAutoExportAccountsBackup(); } catch (e) {}
+  } else {
+    hamiToast('⚠️ 保存可能失败，请检查存储空间');
+  }
 }
 
 // 周一晚9点提醒更新账号数据
@@ -14625,7 +14676,8 @@ updateBackupAge();
 //   一旦 IndexedDB 在手机浏览器上打开被阻塞（open 请求既不 success 也不 error，Promise 永不 resolve），
 //   云同步就永远启动不了 —— 表现为「手机记的电脑看不到、电脑记的手机看不到」，且云端文件从未被创建。
 // 现在：云同步独立启动，三条路 + 只跑一次守卫；背景图各走各路，互不拖累。
-try { applyAllBgs(); } catch (e) {}
+// 先统一初始化自定义背景（应用内嵌/缓存 + 启动云同步），避免 applyAllBgs 与 initCloudSync 分别漏调。
+try { initCustomBg(); } catch (e) {}
 (function () {
   function bootCloud() {
     try { initCloudSync(document.getElementById('settings-cloud-status')); } catch (e) {}
@@ -15069,13 +15121,34 @@ setInterval(updateClock, 1000);
   <div class="hami-drawer-mask" onclick="closeAccountDrawer()"></div>
   <div class="hami-drawer-panel" role="dialog" aria-modal="true">
     <div class="hami-drawer-head">
-      <span id="account-drawer-title">更新账号数据</span>
+      <span id="account-drawer-title">批量修改自媒体数据</span>
       <button type="button" class="hami-drawer-close" onclick="closeAccountDrawer()" aria-label="关闭">✕</button>
     </div>
-    <div class="hami-drawer-body">
-      <label>粉丝数<input id="ad-followers" type="number" inputmode="numeric" placeholder="如 2813"></label>
-      <label>获赞数<input id="ad-likes" type="number" inputmode="numeric" placeholder="如 34000"></label>
-      <label>本周数（可空）<input id="ad-weekly" type="number" inputmode="numeric" placeholder="如 15"></label>
+    <div class="hami-drawer-body" id="account-drawer-body">
+      <div class="ad-account-group">
+        <div class="ad-account-name">哈弥老师 · 小红书</div>
+        <div class="ad-input-row">
+          <label>粉丝<input id="ad-big-followers" type="number" inputmode="numeric" placeholder="如 2813"></label>
+          <label>获赞<input id="ad-big-likes" type="number" inputmode="numeric" placeholder="如 34000"></label>
+          <label>本周<input id="ad-big-weekly" type="number" inputmode="numeric" placeholder="如 0"></label>
+        </div>
+      </div>
+      <div class="ad-account-group">
+        <div class="ad-account-name">哈弥定制版 · 小红书</div>
+        <div class="ad-input-row">
+          <label>粉丝<input id="ad-small-followers" type="number" inputmode="numeric" placeholder="如 107"></label>
+          <label>获赞<input id="ad-small-likes" type="number" inputmode="numeric" placeholder="如 806"></label>
+          <label>本周<input id="ad-small-weekly" type="number" inputmode="numeric" placeholder="如 0"></label>
+        </div>
+      </div>
+      <div class="ad-account-group">
+        <div class="ad-account-name">哈弥老师 · 抖音</div>
+        <div class="ad-input-row">
+          <label>粉丝<input id="ad-douyin-followers" type="number" inputmode="numeric" placeholder="如 769"></label>
+          <label>获赞<input id="ad-douyin-likes" type="number" inputmode="numeric" placeholder="如 13000"></label>
+          <label>本周<input id="ad-douyin-weekly" type="number" inputmode="numeric" placeholder="如 0"></label>
+        </div>
+      </div>
     </div>
     <div class="hami-drawer-foot">
       <button type="button" class="hami-btn-cancel" onclick="closeAccountDrawer()">取消</button>
