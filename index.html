@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-14">
+<meta name="hami-build" content="2026-09-06-15">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -2637,17 +2637,23 @@
   /* ===================== 电脑版桌面适配 ===================== */
   @media (min-width: 769px) {
     body { background-attachment: fixed; }
-    :root { --sidebar-w: 220px; }
+    :root { --sidebar-w: 220px !important; }
+    .sidebar { top: 0 !important; height: 100vh !important; padding: 56px 0 20px 0 !important; overflow-y: auto !important; }
     .sidebar .nav-text { font-size: 13px; }
     .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
+    .nav-header { padding: 10px 12px 14px !important; }
+    .nav-header .avatar { width: 64px; height: 64px; font-size: 32px; }
+    .nav-item { font-size: 13px; padding: 10px 14px; gap: 10px; }
     /* 桌面端 sidebar 220px 已在 :root 覆盖；.main 显式 fixed（与基础规则一致，杜绝被覆写） */
     .main {
-      position: fixed;
-      top: 56px;
-      left: var(--sidebar-w);
-      right: 0;
-      bottom: 0;
-      padding: 0 48px 28px;
+      position: fixed !important;
+      top: 56px !important;
+      left: var(--sidebar-w) !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      padding: 0 48px 28px !important;
+      width: auto !important;
+      max-width: none !important;
     }
     .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
     table { font-size: 13px; }
@@ -2656,6 +2662,133 @@
     .checkin-grid { flex-wrap: wrap; }
     .accounts-grid { flex-wrap: wrap; }
   }
+
+  /* ===================== iPad 横屏兜底（≥1000px）=====================
+   * 关键：iPad Pro 11" / iPad Air / iPad mini 在横屏下 viewport 通常 ≥1000px，
+   * 但 iPadOS Safari 在某些场景下（默认 mobile UA、缩放模式）会把 viewport 报得
+   * 比实际小，导致 ≤768px 的移动端样式被错误命中，把 sidebar 卡到 100px、main
+   * padding 收缩成手机态，体重日历/表格全部竖排崩坏。
+   *
+   * 这里用更宽的断点（≥1000px）作为"平板及以上"兜底，
+   * 强制把 sidebar 拉宽到 220px、main 用桌面 padding，
+   * 体重日历用 7 列 grid 而不是 mobile 的 6 列，表格正常横排。
+   * ========================================================================= */
+  @media (min-width: 1000px) {
+    :root { --sidebar-w: 220px !important; }
+    body { background-attachment: fixed; }
+    .sidebar {
+      top: 0;
+      height: 100vh;
+      padding: 56px 0 20px 0;
+      overflow-y: auto;
+    }
+    .sidebar .nav-text { font-size: 13px; }
+    .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
+    .nav-header { padding: 10px 12px 14px; }
+    .nav-header .avatar { width: 64px; height: 64px; font-size: 32px; }
+    .nav-header .nav-title { font-size: 16px; }
+    .nav-header .nav-motto { font-size: 12px; }
+    .nav-item { font-size: 13px; padding: 10px 14px; gap: 10px; }
+    .nav-item .nav-icon { font-size: 16px; }
+    .main {
+      position: fixed !important;
+      top: 56px !important;
+      left: var(--sidebar-w) !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      padding: 0 48px 28px !important;
+      width: auto !important;
+      max-width: none !important;
+    }
+    /* 体重日历恢复 7 列 grid，不再被 mobile 样式切成竖排条 */
+    .weight-cal-grid {
+      grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+    .weight-cal-cell {
+      min-height: 70px !important;
+      padding: 4px 2px !important;
+    }
+    .weight-cal-day { font-size: 13px !important; }
+    .weight-cal-stack { font-size: 12px !important; }
+    /* 表格/卡片恢复桌面 padding */
+    table { font-size: 13px; }
+    th, td { padding: 10px 8px; }
+    .card, .todo-card { padding: 20px 22px; }
+    .top-bar h1 { font-size: 22px; }
+    .stat-card .value { font-size: 22px; }
+    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    /* 账户面板：恢复到桌面 grid（mobile 是 flex 单列） */
+    .accounts-grid {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px !important;
+    }
+    /* 抽屉和弹窗：iPad 不要全屏 */
+    .hami-drawer {
+      max-width: 520px;
+    }
+    .modal-card {
+      max-width: 520px !important;
+      border-radius: 18px !important;
+    }
+    /* 招财猫：小屏在桌面态时也合适位置（避免挤在左上角） */
+    #lucky-cat { width: 90px; height: 90px; }
+  }
+
+  /* ===================== JS 强制桌面兜底（hami-force-desktop） =====================
+   * 上面 @media 依赖于 CSS viewport 报告，但 iPadOS Safari 在某些配置下 viewport 会被
+   * 报成 ≤768px。这里用 JS 检测真实 innerWidth，给 body 加 .hami-force-desktop 类，
+   * 用 CSS 选择器强匹配，绕过 media query 的命中问题。
+   * ========================================================================= */
+  body.hami-force-desktop { background-attachment: fixed; }
+  body.hami-force-desktop { --sidebar-w: 220px !important; }
+  body.hami-force-desktop .sidebar {
+    top: 0 !important; height: 100vh !important;
+    padding: 56px 0 20px 0 !important; overflow-y: auto !important;
+  }
+  body.hami-force-desktop .sidebar .nav-text { font-size: 13px; }
+  body.hami-force-desktop .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
+  body.hami-force-desktop .nav-header { padding: 10px 12px 14px !important; }
+  body.hami-force-desktop .nav-header .avatar { width: 64px; height: 64px; font-size: 32px; }
+  body.hami-force-desktop .nav-item { font-size: 13px; padding: 10px 14px; gap: 10px; }
+  body.hami-force-desktop .main {
+    position: fixed !important; top: 56px !important;
+    left: var(--sidebar-w) !important; right: 0 !important;
+    bottom: 0 !important; padding: 0 48px 28px !important;
+    width: auto !important; max-width: none !important;
+  }
+  body.hami-force-desktop .weight-cal-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  body.hami-force-desktop .weight-cal-cell {
+    min-height: 70px !important; padding: 4px 2px !important;
+  }
+  body.hami-force-desktop .weight-cal-day { font-size: 13px !important; }
+  body.hami-force-desktop .weight-cal-stack { font-size: 12px !important; }
+  body.hami-force-desktop table { font-size: 13px; }
+  body.hami-force-desktop th,
+  body.hami-force-desktop td { padding: 10px 8px; }
+  body.hami-force-desktop .card,
+  body.hami-force-desktop .todo-card { padding: 20px 22px; }
+  body.hami-force-desktop .top-bar h1 { font-size: 22px; }
+  body.hami-force-desktop .stat-card .value { font-size: 22px; }
+  body.hami-force-desktop .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  body.hami-force-desktop .accounts-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px !important;
+  }
+  body.hami-force-desktop .hami-drawer { max-width: 520px; }
+  body.hami-force-desktop .modal-card {
+    max-width: 520px !important; border-radius: 18px !important;
+  }
+  body.hami-force-desktop #lucky-cat { width: 90px; height: 90px; }
+  body.hami-force-desktop .desktop-time { font-size: 32px; }
+  body.hami-force-desktop .desktop-hero { padding: 18px 20px; }
   /* 超大屏：main 是 relative 定位，width 由 calc(100vw - --sidebar-w) 决定，无须再卡 max-width */
   /* @media (min-width: 1400px) 的样式已不需要，保留空规则作为占位（防止误删触发其它）；如确实无样式可以删除。 */
 
@@ -3295,7 +3428,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-14';
+  var BUILD_VER = '2026-09-06-15';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -15053,6 +15186,26 @@ try { requestNotifyPermission(); } catch(e) { console.log('requestNotifyPermissi
 try { checkWeeklyUpdateAlert(); } catch(e) { console.log('checkWeeklyUpdateAlert error:', e.message); }
 // 页面初始化完成：此后云端拉到新数据，就可以安全地全量重渲了
 try { _hamiBootDone = true; } catch (e) {}
+
+// ==================== 真实屏幕宽度强适配（iPad 兜底） ====================
+// 背景：iPadOS Safari 在某些场景下（缩放模式、UA 默认 mobile、低视力辅助）会把 CSS viewport
+// 报告成 ≤768px，导致 ≤768px 的 mobile 样式被错误命中，sidebar 卡成 100px、main padding 收缩、
+// 体重日历单元格被压成竖排条、表格挤成坨。
+// 这里在 JS 启动后用 window.innerWidth（真实布局视口宽度）兜底：
+// 真实宽度 ≥900px 一律视为"平板及以上"，强制走桌面布局 + 220px sidebar。
+function hamiEnforceRealLayout() {
+  try {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (w >= 900) {
+      document.documentElement.style.setProperty('--sidebar-w', '220px');
+      document.body.classList.add('hami-force-desktop');
+    } else {
+      document.body.classList.remove('hami-force-desktop');
+    }
+  } catch (e) {}
+}
+try { hamiEnforceRealLayout(); } catch (e) {}
+try { window.addEventListener('resize', hamiEnforceRealLayout); } catch (e) {}
 
 // ==================== 顶部指令栏宽度跟随左右面板（=左+右，绝不超过合并宽度） ====================
 function updateCmdBarWidth() {
