@@ -60,7 +60,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-12">
+<meta name="hami-build" content="2026-09-06-13">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3295,7 +3295,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-12';
+  var BUILD_VER = '2026-09-06-13';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6152,7 +6152,17 @@ let _lastSyncAt = Number(localStorage.getItem('hami_last_sync') || 0);
 
 function getSyncPassword() { try { return localStorage.getItem(SYNC_PWD_KEY) || ''; } catch (e) { return ''; } }
 function setSyncPassword(p) { try { if (p) localStorage.setItem(SYNC_PWD_KEY, p); else localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {} }
-function _encB64(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function _encB64(buf) {
+  // 原版 String.fromCharCode.apply 在大 buffer（>~125KB）上会 RangeError: Maximum call stack size exceeded
+  // （手机 Safari 栈更小），这里改用循环拼接避免 apply。
+  const u = new Uint8Array(buf);
+  let s = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < u.length; i += CHUNK) {
+    s += String.fromCharCode.apply(null, u.subarray(i, i + CHUNK));
+  }
+  return btoa(s);
+}
 function _decB642u(b64) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
 function _cryptoReady() { return !!(window.crypto && window.crypto.subtle); }
 
@@ -6838,6 +6848,12 @@ async function initCloudSync(statusEl, force) {
 
 function afterBgChange(statusEl) {
   try { writeEmbeddedBgConfig(); } catch (e) {}
+  // 关键：背景图改动也要同步云端，让手机/电脑两端背景保持一致。
+  // 注意：必须用 scheduleCloudPush（300ms 防抖），不要直接 commitToCloud，
+  // 否则连续点几次 / 删几张图会一连串并发推送导致 409 冲突。
+  try {
+    if (typeof scheduleCloudPush === 'function') scheduleCloudPush();
+  } catch (e) {}
 }
 
 try {
