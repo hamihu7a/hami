@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-25">
+<meta name="hami-build" content="2026-09-06-26">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2958,7 +2958,9 @@
   body.hami-force-narrow .sidebar .nav-header { padding: 10px 12px 14px !important; }
   body.hami-force-narrow .sidebar .nav-header .avatar { width: 44px; height: 44px; font-size: 22px; }
   body.hami-force-narrow .sidebar .nav-header .nav-title { font-size: 12px; }
-  body.hami-force-narrow .sidebar .nav-header .nav-motto { display: none; }
+  /* v2026-09-06-25 主人反馈"每天进步一点点不见了"：之前这里 display:none 把窄屏下这句藏掉了。
+     这句话是主人的心头好，任何宽度都必须显示——改为缩小字号而非隐藏。 */
+  body.hami-force-narrow .sidebar .nav-header .nav-motto { display: block; font-size: 11px; }
   body.hami-force-narrow .weight-cal-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
@@ -3675,7 +3677,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-25';
+  var BUILD_VER = '2026-09-06-26';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4668,7 +4670,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     <div class="fin-topbar">
       <div class="fin-month">
         <span style="font-size:14px;">📅</span>
-        <select id="account-month" onchange="renderAccount()">
+        <select id="account-month" onchange="accResetPages();renderAccount()">
           <option value="2026-07">2026年7月</option>
           <option value="2026-08" selected>2026年8月</option>
           <option value="2026-09">2026年9月</option>
@@ -4707,7 +4709,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
         <span>🕒</span> 时间线记账记录
         <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按操作顺序</span>
-        <span id="account-timeline-flip" onclick="toggleAccountTimeline()" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+        <span id="account-timeline-flip" onclick="accTimelineGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
       </h3>
       <div id="account-timeline-table"></div>
     </div>
@@ -4716,7 +4718,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
         <span>📒</span> 消费日期近期记录
         <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按消费日期</span>
-        <span id="account-flow-flip" onclick="toggleAccountFlow()" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+        <span id="account-flow-flip" onclick="accFlowGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
       </h3>
       <div id="account-flow-table"></div>
     </div>
@@ -11815,6 +11817,7 @@ async function deleteAccountRecord(idx) {
   store.accountRecords.splice(idx, 1);
   // 顺带把云端/本地里可能与这条同键的历史残留一并压掉（保险）
   try { accountPruneByDeleted(); } catch (e) {}
+  try { accResetPages(); } catch (e) {}
   try { saveData(); } catch(e) {}
   try { renderAccount(); } catch(e) {}
   // 关键：删除后不依赖 300ms 防抖，立刻主动推一次云端 + 拉一次云端双向同步，
@@ -12038,6 +12041,7 @@ function commitRecord(closeIt) {
     addModalEditingIdx = -1;
   }
   try { saveData(); } catch(e) {}
+  accResetPages();
   renderAccount();
   if (addModalEditingIdx >= 0) {
     finToast(closeIt ? '已修改 ✨' : '已修改，再来一笔 ~');
@@ -12151,11 +12155,28 @@ function toggleStatsMode() {
 }
 
 // —— 主渲染函数 ——
-let accountFlowExpanded = false;
-function toggleAccountFlow() {
-  accountFlowExpanded = !accountFlowExpanded;
-  try { renderAccount(); } catch(e) {}
+// v2026-09-06-25：主人强烈要求"所有记账都要永远在，太多了就翻页看，别只给前几条还要能看全"。
+// 之前"默认3笔 + 展开全部一次铺几百条"既让主人误以为只存了3条，又一翻到底很累。
+// 改为**每页8条 + 上一页/下一页**：数据永远全量保存(三重备份)，只是分页浏览更清楚。
+const ACC_PAGE = 8;                 // 每页 8 条
+let accountFlowPage = 0;            // 消费日期列表当前页码(0-based)
+let accountTimelinePage = 0;        // 时间线列表当前页码(0-based)
+function accFlowGo(delta) {
+  const n = (store.accountRecords || []).length;
+  const maxPage = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  accountFlowPage = Math.max(0, Math.min((accountFlowPage || 0) + delta, maxPage));
+  try { renderAccount(); } catch (e) {}
 }
+function accTimelineGo(delta) {
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const pool = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month)));
+  const maxPage = Math.max(0, Math.ceil(pool.length / ACC_PAGE) - 1);
+  accountTimelinePage = Math.max(0, Math.min((accountTimelinePage || 0) + delta, maxPage));
+  try { renderAccount(); } catch (e) {}
+}
+// 月份切换/新增/删除/编辑后重置页码到第一页，避免"翻到第3页看半天才发现是旧数据"
+function accResetPages() { accountFlowPage = 0; accountTimelinePage = 0; }
 function renderAccount() {
   try { bindFinanceEvents(); } catch(e) {}
   const monthEl = document.getElementById('account-month');
@@ -12166,8 +12187,16 @@ function renderAccount() {
     if (flowFlipEl) {
       // 渲染只参考当月 inMonth 数；与下方同步
       const _probe = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month)));
-      if (_probe.length > 3) flowFlipEl.textContent = (accountFlowExpanded ? '收起 ▲' : '展开全部 ' + _probe.length + ' 笔 ▼');
-      else flowFlipEl.textContent = '';
+      // v25 分页：不再"展开全部一次铺满"，右上角改显示当前页/总页数（点击翻到下一段）
+      if (_probe.length > 0) {
+        const _mp = Math.max(0, Math.ceil(_probe.length / ACC_PAGE) - 1);
+        const _pg = Math.min(accountFlowPage || 0, _mp);
+        const _parts = [];
+        if (_probe.length > ACC_PAGE) _parts.push('第 ' + (_pg + 1) + '/' + (_mp + 1) + ' 页');
+        _parts.push('共 ' + _probe.length + ' 笔');
+        flowFlipEl.textContent = _parts.join(' · ');
+        flowFlipEl.onclick = function () { accFlowGo(1); };
+      } else flowFlipEl.textContent = '';
     }
   } catch (e) {}
   const records = (store.accountRecords || []).slice().sort((a, b) => {
@@ -12178,6 +12207,8 @@ function renderAccount() {
     return (b.ts || 0) - (a.ts || 0);                        // 最后按操作时间兜底
   });
   const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
+  // v25：月份变了就把页码归零，避免停在老页
+  if (accountFlowPage > 0 && accountFlowPage >= Math.ceil((inMonth.length || 0) / ACC_PAGE)) accountFlowPage = 0;
 
   // 手动收入（不含旧"模拟人生定制单"分类——历史迁移已删，不重复计入）
   const manualIncome = inMonth.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
@@ -12232,8 +12263,11 @@ function renderAccount() {
   if (inMonth.length === 0) {
     flowHtml = `<div class="empty-state"><div class="big-icon"></div><p style="color:#8a6270;margin-top:8px;">暂无记录</p><p style="font-size:12px;margin-top:6px;">点「记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
   } else {
-    const showAll = accountFlowExpanded || inMonth.length <= 3;
-    const list = showAll ? inMonth : inMonth.slice(0, 3);
+    // v25 分页：一页 ACC_PAGE 条，全部数据都在 store，翻到底能看全（不丢）
+    const maxPage = Math.max(0, Math.ceil(inMonth.length / ACC_PAGE) - 1);
+    if (accountFlowPage > maxPage) accountFlowPage = maxPage;
+    const start = accountFlowPage * ACC_PAGE;
+    const list = inMonth.slice(start, start + ACC_PAGE);
     list.forEach(r => {
       const realIdx = store.accountRecords.indexOf(r);  // 真实 store 索引（r 是 store 里同一对象引用）
       const c = getCategoryInfo(r.category, r.type);
@@ -12261,9 +12295,12 @@ function renderAccount() {
         </div>
       `;
     });
-    if (inMonth.length > 3) {
-      flowHtml += `<div class="flow-toggle-wrap">
-        <button class="flow-toggle-btn" type="button" onclick="toggleAccountFlow()">${showAll ? '收起 ▲' : '展开全部 ' + inMonth.length + ' 笔 ▼'}</button>
+    // 底部分页条：上一页 / 页码指示 / 下一页
+    if (inMonth.length > ACC_PAGE) {
+      flowHtml += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+        <button class="flow-toggle-btn" type="button" onclick="accFlowGo(-1)" ${accountFlowPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <span style="font-size:12px;color:#8a6270;">第 ${accountFlowPage + 1}/${maxPage + 1} 页 · 共 ${inMonth.length} 笔</span>
+        <button class="flow-toggle-btn" type="button" onclick="accFlowGo(1)" ${accountFlowPage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
       </div>`;
     }
   }
@@ -12290,11 +12327,13 @@ function renderAccount() {
       tlEl.innerHTML = `<div class="empty-state"><p style="color:#8a6270;font-size:12px;">暂无操作记录</p></div>`;
       if (tlFlip) tlFlip.textContent = '';
     } else {
-      // 时间线永远最多显示全部已记录的；点 flip 切换"只显示前 3 笔" / "显示全部"
-      // 默认：accountTimelineExpanded = false → 只显示前 3 笔 + "展开 N 笔"按钮
-      const TL_DEFAULT = 3;
-      const expand = accountTimelineExpanded;
-      const showList = expand ? tlAll : tlAll.slice(0, TL_DEFAULT);
+      // v25 分页：每页 ACC_PAGE 条，数据全量在 store，翻到底看全不丢
+      const showList = (function () {
+        const maxPage = Math.max(0, Math.ceil(tlAll.length / ACC_PAGE) - 1);
+        if (accountTimelinePage > maxPage) accountTimelinePage = maxPage;
+        const s = accountTimelinePage * ACC_PAGE;
+        return tlAll.slice(s, s + ACC_PAGE);
+      })();
       let tlHtml = '';
       showList.forEach(r => {
         const realIdx = store.accountRecords.indexOf(r);
@@ -12336,23 +12375,23 @@ function renderAccount() {
         </div>
       `;
       });
-      if (tlAll.length > TL_DEFAULT) {
-        tlHtml += `<div class="flow-toggle-wrap">
-          <button class="flow-toggle-btn" type="button" onclick="toggleAccountTimeline()">${expand ? '收起 ▲' : '展开全部 ' + tlAll.length + ' 笔（按操作顺序）▼'}</button>
+      // v25 分页条
+      if (tlAll.length > ACC_PAGE) {
+        const maxPage = Math.max(0, Math.ceil(tlAll.length / ACC_PAGE) - 1);
+        tlHtml += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+          <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(-1)" ${accountTimelinePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+          <span style="font-size:12px;color:#8a6270;">第 ${accountTimelinePage + 1}/${maxPage + 1} 页 · 共 ${tlAll.length} 笔（按操作顺序）</span>
+          <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(1)" ${accountTimelinePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
         </div>`;
       }
       tlEl.innerHTML = tlHtml;
-      if (tlFlip) tlFlip.textContent = expand ? '收起' : ('共 ' + tlAll.length + ' 笔');
+      if (tlFlip) tlFlip.textContent = '共 ' + tlAll.length + ' 笔';
+      // 头部右上角点击 = 翻到下一页（若有）
+      if (tlFlip) tlFlip.onclick = function () { accTimelineGo(1); };
     }
   }
 
   renderInlineStats('expense');
-}
-
-let accountTimelineExpanded = false;
-function toggleAccountTimeline() {
-  accountTimelineExpanded = !accountTimelineExpanded;
-  try { renderAccount(); } catch (e) {}
 }
 
 function renderInlineStats(type) {
@@ -12446,11 +12485,14 @@ function renderInlineStats(type) {
   srEl.innerHTML = h;
 }
 
-// ==================== 通用折叠：当月记录 >5 条时只显示最新 5 条 ====================
-// 与"记账近期记录"同款逻辑，供各日常/健康记录列表复用
+// ==================== 通用折叠 → v25 改「分页」：每页8条，翻到底能看全不丢 ====================
+// 供各日常/健康记录列表复用。数据全量在 store，只是分页浏览（主人 2026-09-06-25 强烈要求）
 const __foldState = {};
+const __foldPage = {};            // 每个列表当前页码(0-based)
+const FOLD_PAGE = 8;              // 每页 8 条
 function toggleFold(key) {
   __foldState[key] = !__foldState[key];
+  if (!__foldState[key]) __foldPage[key] = 0;   // 收起回到第1页
   const map = {
     periodHist: renderPeriod, wash: renderPeriod,
     toilet: renderToilet, mask: renderMask,
@@ -12460,33 +12502,59 @@ function toggleFold(key) {
   const fn = map[key];
   if (typeof fn === 'function') fn();
 }
+// 翻页：delta = -1 上一页 / +1 下一页；共用 foldRecords/foldRecordsTable 的渲染方
+function foldGo(key, delta) {
+  __foldState[key] = true;   // 一旦翻页就进入"展开/可翻"态
+  __foldPage[key] = Math.max(0, (__foldPage[key] || 0) + delta);
+  const map = {
+    periodHist: renderPeriod, wash: renderPeriod,
+    toilet: renderToilet, mask: renderMask,
+    exercise: renderFitness, weight: renderFitness,
+    media: renderMedia, travel: renderReminder, inspire: renderInspire
+  };
+  const fn = map[key];
+  if (typeof fn === 'function') fn();
+}
+// 普通版分页条（div 列表）
+function foldPagerHTML(key, total) {
+  if (total <= FOLD_PAGE) return '';
+  const page = __foldPage[key] || 0;
+  const maxPage = Math.max(0, Math.ceil(total / FOLD_PAGE) - 1);
+  const cur = Math.min(page, maxPage);
+  return '<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">'
+    + '<button class="flow-toggle-btn" type="button" onclick="foldGo(\'' + key + '\',-1)"' + (cur === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+    + '<span style="font-size:12px;color:#8a6270;">第 ' + (cur + 1) + '/' + (maxPage + 1) + ' 页 · 共 ' + total + ' 条</span>'
+    + '<button class="flow-toggle-btn" type="button" onclick="foldGo(\'' + key + '\',1)"' + (cur >= maxPage ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+    + '</div>';
+}
 // monthItems：已按"近→远"排好序的【当月】记录数组；renderItem(item) 返回单条 HTML 字符串
-// 返回拼好的 html（含展开/收起按钮）；不直接写 DOM，由调用方拼进容器
+// 默认只显示当前页 8 条；超过 8 条给「上一页/下一页」翻到底看全，数据永不丢
 function foldRecords(key, monthItems, renderItem) {
-  const LIMIT = 5;
   const total = monthItems.length;
-  const expanded = __foldState[key] === true;
-  const showAll = expanded || total <= LIMIT;
-  const list = showAll ? monthItems : monthItems.slice(0, LIMIT);
+  if (total === 0) return '';
+  const page = __foldPage[key] || 0;
+  const maxPage = Math.max(0, Math.ceil(total / FOLD_PAGE) - 1);
+  const cur = Math.min(page, maxPage);
+  const start = cur * FOLD_PAGE;
+  const list = monthItems.slice(start, start + FOLD_PAGE);
   let html = list.map(function (it) { return renderItem(it); }).join('');
-  if (total > LIMIT) {
-    html += '<div class="flow-toggle-wrap"><button class="flow-toggle-btn" type="button" onclick="toggleFold(\'' + key + '\')">'
-      + (showAll ? '收起 ▲' : '展开全部 ' + total + ' 条 ▼') + '</button></div>';
-  }
+  html += foldPagerHTML(key, total);
   return html;
 }
 
-// 表格版（记录列表是 <tbody> 时用，折叠按钮用 <tr> 包裹，colspan 撑满）
+// 表格版（记录列表是 <tbody> 时用，分页条用 <tr> 包裹，colspan 撑满）
 function foldRecordsTable(key, monthItems, renderRow, colspan) {
-  const LIMIT = 5;
   const total = monthItems.length;
-  const expanded = __foldState[key] === true;
-  const showAll = expanded || total <= LIMIT;
-  const list = showAll ? monthItems : monthItems.slice(0, LIMIT);
+  if (total === 0) return '';
+  const page = __foldPage[key] || 0;
+  const maxPage = Math.max(0, Math.ceil(total / FOLD_PAGE) - 1);
+  const cur = Math.min(page, maxPage);
+  const start = cur * FOLD_PAGE;
+  const list = monthItems.slice(start, start + FOLD_PAGE);
   let html = list.map(function (it) { return renderRow(it); }).join('');
-  if (total > LIMIT) {
-    html += '<tr><td colspan="' + (colspan || 1) + '" style="text-align:center;padding:8px 0;"><button class="flow-toggle-btn" type="button" onclick="toggleFold(\'' + key + '\')">'
-      + (showAll ? '收起 ▲' : '展开全部 ' + total + ' 条 ▼') + '</button></td></tr>';
+  if (total > FOLD_PAGE) {
+    const pager = foldPagerHTML(key, total);
+    html += '<tr><td colspan="' + (colspan || 1) + '" style="padding:0;border:none;">' + pager + '</td></tr>';
   }
   return html;
 }
