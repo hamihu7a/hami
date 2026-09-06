@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-24">
+<meta name="hami-build" content="2026-09-06-25">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3236,8 +3236,8 @@
 
   /* ============ 明日天气 / 明日黄历 小半透明按钮 + 预览弹窗 ============ */
   .tomorrow-badge {
-    display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.15;
-    padding: 3px 9px; border-radius: 10px;
+    display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; line-height: 1.2;
+    padding: 4px 12px; border-radius: 10px;
     background: rgba(255,255,255,0.45);
     border: 1px solid rgba(209,75,115,0.25);
     color: var(--c-pink-deep); font-size: 11px; font-weight: 600;
@@ -3245,6 +3245,7 @@
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     transition: background .15s ease, border-color .15s ease, transform .12s ease;
     user-select: none; -webkit-user-select: none;
+    white-space: nowrap;
   }
   .tomorrow-badge:hover { background: rgba(255,255,255,0.78); border-color: rgba(209,75,115,0.45); }
   .tomorrow-badge:active { transform: scale(0.95); }
@@ -3674,7 +3675,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-24';
+  var BUILD_VER = '2026-09-06-25';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6341,6 +6342,8 @@ function setBgStored(key, dataUrl) {
   BG_IDB_TS[key] = Date.now();
   try { bgIdbSet(key, dataUrl); } catch (e) {}
   try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
+  // 主人再也不用手动按"📤 上传背景到云端"：每次新上传/替换背景图，30 秒内自动推到云端
+  try { hamiScheduleBgAutoUpload(); } catch (e) {}
 }
 // 统一删除入口：清缓存 + 清 IndexedDB + 兼容清理 localStorage 旧副本
 function delBgStored(key) {
@@ -6349,6 +6352,30 @@ function delBgStored(key) {
   try { bgIdbDel(key); } catch (e) {}
   try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}
   try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
+  // 删除背景图也要同步到云端（让云端保留"已被删除"的标记，避免下次启动又被云端拉回来）
+  try { hamiScheduleBgAutoUpload(); } catch (e) {}
+}
+
+// 背景图自动上传调度：setBgStored/delBgStored 后 30 秒合并一次推到云端，主人再也不用手动点
+var _hamiBgAutoUploadTimer = null;
+var _hamiBgAutoUploadPending = false;     // 还没同步就绪就改了背景图，云就绪后立刻补传
+function hamiScheduleBgAutoUpload() {
+  try {
+    if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
+    if (!hamiSyncReady) { _hamiBgAutoUploadPending = true; return; }
+    if (_bgUploadInFlight) { _hamiBgAutoUploadPending = true; return; }
+    if (_hamiBgAutoUploadTimer) clearTimeout(_hamiBgAutoUploadTimer);
+    _hamiBgAutoUploadTimer = setTimeout(function () {
+      _hamiBgAutoUploadTimer = null;
+      // 走独立上传通道（不影响 store 数据同步，避免并发抢 sha 报 409）
+      bgUploadAllToCloud().catch(function (e) {
+        try { console.warn('[背景图自动上传] 失败：', e && e.message); } catch (e2) {}
+      }).then(function () {
+        // 上传完后再检查一次"期间是否又有新图要传"，形成串行防丢
+        if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); }
+      });
+    }, 30000);
+  } catch (e) {}
 }
 // 启动时：载入 IndexedDB 里的背景图，并把 localStorage 里的旧背景图迁移过去、立刻腾出 5MB 配额
 // 带超时的 Promise 包装：IndexedDB 被阻塞时 Promise 可能永不 resolve，
@@ -6364,38 +6391,112 @@ async function syncBgsFromCloudOnBoot() {
   try {
     if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
     const got = await _ghGet();
-    if (!got) return;
+    if (!got) {
+        hamiBgRecoveryToast('none', '云端连不上（GitHub 返回空），先等等或去设置面板点"立即同步"');
+        return;
+      }
     let remote = null;
     try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
     catch (e1) {
       try { remote = await decryptStore(got.content.replace(/\s+/g, ''), (typeof hamiSyncPassword === 'string' ? hamiSyncPassword : '')); }
-      catch (e2) { return; }
+      catch (e2) {
+        hamiBgRecoveryToast('fail', '云端备份存在但解密失败（密码变了？）');
+        return;
+      }
     }
-    if (!remote || !remote.bgBackups || typeof remote.bgBackups !== 'object') return;
+    if (!remote || !remote.bgBackups || typeof remote.bgBackups !== 'object') {
+        hamiBgRecoveryToast('none', '云端没存过背景图（请在背景图面板上传一次）');
+        return;
+      }
     const keys = Object.keys(remote.bgBackups);
-    if (!keys.length) return;
-    let pending = keys.length, applied = 0;
+    if (!keys.length) {
+        hamiBgRecoveryToast('none', '云端背景图备份为空');
+        return;
+      }
+    // 先盘点本地到底缺几张，避免"云端有但本地 IDB 也有"的假阳性提示
+    let localMissing = 0;
     keys.forEach(function (k) {
       const data = remote.bgBackups[k];
-      if (!data) { if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {} return; }
-      // 用 ts 比较：云端比本地新（或本地没有）才覆盖
+      const localData = BG_CACHE[k];
+      const localTs = (function(){ try { return BG_IDB_TS[k] || 0; } catch(e) { return 0; } })();
+      const remoteTs = (typeof remote.bgBackupsAt === 'number' ? remote.bgBackupsAt : 0);
+      const need = data && (!localData || remoteTs >= localTs);
+      if (need) localMissing++;
+    });
+    if (localMissing === 0) {
+      // 本地比云端新，无需恢复；只悄悄刷一次 applyAllBgs 避免旧的"消失"假象
+      try { applyAllBgs(); } catch (e) {}
+      return;
+    }
+    let pending = keys.length, applied = 0, failed = 0;
+    keys.forEach(function (k) {
+      const data = remote.bgBackups[k];
+      if (!data) { if (--pending <= 0) finish(); return; }
       const localData = BG_CACHE[k];
       const localTs = (function(){ try { return BG_IDB_TS[k] || 0; } catch(e) { return 0; } })();
       const remoteTs = (typeof remote.bgBackupsAt === 'number' ? remote.bgBackupsAt : 0);
       const shouldApply = !localData || remoteTs >= localTs;
-      if (!shouldApply) { if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {} return; }
-      try { BG_CACHE[k] = data; applied++; } catch (e) {}
+      if (!shouldApply) { if (--pending <= 0) finish(); return; }
+      try { BG_CACHE[k] = data; applied++; } catch (e) { failed++; }
       bgIdbSet(k, data).then(function(){
         try { BG_IDB_TS[k] = remoteTs; } catch (e) {}
-        if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {}
-      }).catch(function(){ if (--pending <= 0 && applied) try { applyAllBgs(); } catch (e) {} });
+        if (--pending <= 0) finish();
+      }).catch(function(){ failed++; if (--pending <= 0) finish(); });
     });
-    if (applied > 0) {
+    function finish() {
       try {
-        const statusEl = document.getElementById('settings-bg-cloud-status');
-        if (statusEl) statusEl.textContent = '☁️ 启动时已从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）';
+        if (applied > 0) {
+          try { applyAllBgs(); } catch (e) {}
+          try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
+          hamiBgRecoveryToast('ok', '☁️ 已自动从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）' + (failed ? '，失败 ' + failed + ' 张' : ''));
+          try {
+            const statusEl = document.getElementById('settings-bg-cloud-status');
+            if (statusEl) statusEl.textContent = '☁️ 启动时已从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）';
+          } catch (e) {}
+        } else if (failed > 0) {
+          hamiBgRecoveryToast('fail', '背景图恢复失败 ' + failed + ' 张，请去设置面板手动重试');
+        }
       } catch (e) {}
     }
+  } catch (e) {
+    hamiBgRecoveryToast('fail', '背景图云端恢复异常：' + (e && e.message ? e.message : e));
+  }
+}
+
+// 背景图恢复提示条：主人必须能看见背景图到底恢复没，否则"消失了"就完全摸不着头脑
+// 位置：右上角小悬浮条，绿色背景=成功 / 橙色=警告 / 红色=失败；4 秒后自动消失，可手动叉掉
+var _hamiBgRecoveryHideTimer = null;
+function hamiBgRecoveryToast(level, msg) {
+  try {
+    let el = document.getElementById('hami-bg-recovery');
+    if (_hamiBgRecoveryHideTimer) { clearTimeout(_hamiBgRecoveryHideTimer); _hamiBgRecoveryHideTimer = null; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'hami-bg-recovery';
+      el.style.cssText = 'position:fixed;top:14px;right:14px;z-index:100100;' +
+        'border-radius:12px;padding:8px 14px;font-size:12px;line-height:1.5;' +
+        'box-shadow:0 6px 18px rgba(160,80,110,.18);max-width:78vw;display:flex;align-items:center;gap:8px;';
+      document.body.appendChild(el);
+    }
+    const palette = {
+      ok:   { bg: '#e7f7ec', bd: '#7fc59a', fg: '#2e7d4f', icon: '🌿' },
+      none: { bg: '#fff7e6', bd: '#e8b56e', fg: '#a36414', icon: 'ℹ️' },
+      fail: { bg: '#fde8ee', bd: '#e890a8', fg: '#b3325c', icon: '⚠️' }
+    };
+    const p = palette[level] || palette.none;
+    el.style.background = p.bg;
+    el.style.border = '1px solid ' + p.bd;
+    el.style.color = p.fg;
+    el.innerHTML = '<span style="font-size:14px;">' + p.icon + '</span>' +
+      '<span>' + (msg || '') + '</span>' +
+      '<span id="hami-bg-recovery-close" style="cursor:pointer;opacity:.6;padding:0 4px;">✕</span>';
+    const closeBtn = document.getElementById('hami-bg-recovery-close');
+    if (closeBtn) closeBtn.onclick = function () { try { el.remove(); } catch (e) {} };
+    _hamiBgRecoveryHideTimer = setTimeout(function () {
+      const e2 = document.getElementById('hami-bg-recovery');
+      if (e2) e2.remove();
+      _hamiBgRecoveryHideTimer = null;
+    }, 6000);
   } catch (e) {}
 }
 // 记录每张背景图在本地 IDB 的写入时间戳，用于「云端 vs 本地」新旧比较
@@ -7378,6 +7479,8 @@ async function initCloudSync(statusEl, force) {
       await pullAndMerge();          // 先成功拉取，失败则进入下方 catch 重试
       hamiSyncReady = true;
       _diagStep('拉取云端完成', true, '');
+      // 关键：云同步刚就绪时，如果启动阶段主人改过背景图（彼时 hamiSyncReady=false 排队了），现在补传
+      try { if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); } } catch (e) {}
       try {
         await pushNow();
         _diagStep('推送云端完成', true, '');
@@ -7395,6 +7498,8 @@ async function initCloudSync(statusEl, force) {
         setTimeout(_try, 15000);
       } else {
         hamiSyncReady = true;
+        // 即使最终失败，也尝试补传一下背景图（store 可能还是空，但背景图值得保留）
+        try { if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); } } catch (e) {}
         cloudStatus('☁️ 同步异常：' + (e.message || e) + '（可点「🔄 立即同步到云端」手动重试）', '#c75b86');
         syncBadgeShow('同步失败', true);
       }
@@ -14337,8 +14442,8 @@ function renderWeatherFromApi(d) {
           <div class="home-card-note">${tip}</div>
         </div>
         <div class="home-card-foot">
-          <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<br>天气</span>
-          <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">搜索<br>城市</span>
+          <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日天气</span>
+          <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市">搜索城市</span>
         </div>
       </div>`;
   } catch(e) { renderWeatherFallback(); }
@@ -14370,8 +14475,8 @@ function renderWeatherFallback() {
         <div class="home-card-note">${weatherDesc}</div>
       </div>
       <div class="home-card-foot">
-        <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<br>天气</span>
-        <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市" style="padding:4px 10px;">搜索<br>城市</span>
+        <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日天气</span>
+        <span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市">搜索城市</span>
       </div>
     </div>`;
 }
@@ -14405,7 +14510,7 @@ function renderWeatherFortune() {
         </div>
       </div>
       <div class="home-card-foot">
-        <span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">明日<br>黄历</span>
+        <span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">明日黄历</span>
       </div>
     </div>`;
 
@@ -14589,7 +14694,7 @@ function showTomorrowWeatherModal(e) {
   // 渲染城市切换按钮：把以前的多个固定城市按钮改成「🔍 搜索城市」单一按钮 + 一个高亮的小字标签显示当前城市
   const switcher = document.getElementById('tmw-city-switcher');
   if (switcher) {
-    switcher.innerHTML = '<button type="button" class="tm-city-chip active" onclick="openWeatherSearchCity()" style="cursor:pointer;">搜索<br>城市（当前：<b>' + currentCityName + '</b>）</button>';
+    switcher.innerHTML = '<button type="button" class="tm-city-chip active" onclick="openWeatherSearchCity()" style="cursor:pointer;">搜索城市（当前：<b>' + currentCityName + '</b>）</button>';
   }
 
   const tomorrow = new Date();
