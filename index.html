@@ -82,7 +82,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-18">
+<meta name="hami-build" content="2026-09-06-19">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -3654,7 +3654,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-18';
+  var BUILD_VER = '2026-09-06-19';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4685,8 +4685,18 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     <div class="todo-card" style="padding:18px;">
       <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
         <span>📒</span> 近期记录
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按账目日期</span>
       </h3>
       <div id="account-flow-table"></div>
+    </div>
+
+    <div class="todo-card" style="padding:16px 14px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+        <span>🕒</span> 时间线记账记录
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按操作顺序</span>
+        <span id="account-timeline-flip" onclick="toggleAccountTimeline()" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+      </h3>
+      <div id="account-timeline-table"></div>
     </div>
 
     <div class="todo-card" style="padding:16px 14px;">
@@ -5963,6 +5973,31 @@ function saveData(skipCloud) {
       store.userTodos = Array.from(seen.values());
     }
   } catch (e) {}
+  // 一次性兜底：时间线（按操作顺序）依赖每条记录的 ts。早期数据若缺 ts，
+  // 按 date+time 反向推一个稳定值（保证历史时间线不会全部掉到 1970），
+  // 不会把新记录弄乱（新记录已经有 ts，不会被改写）。
+  try {
+    if (Array.isArray(store.accountRecords)) {
+      let touched = false;
+      store.accountRecords.forEach(function (r) {
+        if (!r || r.ts) return;
+        touched = true;
+        // 把 YYYY-MM-DD + HH:MM 解析为本地时间戳；解析失败回退到 0
+        try {
+          const d = (r.date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          const t = (r.time || '00:00').match(/^(\d{2}):(\d{2})$/);
+          if (d) {
+            const y = parseInt(d[1], 10), mo = parseInt(d[2], 10) - 1, da = parseInt(d[3], 10);
+            const hh = t ? parseInt(t[1], 10) : 0, mi = t ? parseInt(t[2], 10) : 0;
+            const dt = new Date(y, mo, da, hh, mi, 0, 0);
+            r.ts = dt.getTime();
+          } else {
+            r.ts = 0;
+          }
+        } catch (e2) { r.ts = 0; }
+      });
+    }
+  } catch (e) {}
   let savedOk = false;
   // 更新时间戳，便于与 IndexedDB 备份比较新旧
   try { store._lastSavedAt = Date.now(); } catch (e) {}
@@ -6937,35 +6972,38 @@ var _pendingCommit = 0;
 var _commitRetryTimer = null;
 var _commitBusy = false;
 var _hamiBannerHideTimer = null;   // 横幅自动消失定时器：让"正在自动重试"几秒后自动退场，不再持续打扰主人
+var _hamiBannerLastShowAt = 0;      // 上次显示横幅的时刻：用于去抖（短时间内的反复失败不要反复跳出来）
+var _hamiBannerFailStreak = 0;       // 连续失败计数：连续失败 3 次才算"真有问题"，前 2 次静默重试不打扰
+var _hamiBannerLastFailKey = '';     // 上次失败的指纹：相同错误不重复计数
 
+// 横幅从顶部中间移到屏幕底部居中浮层（避开点删除/记一笔这种顶部操作按钮）
 function hamiPendingBanner(show, msg) {
   let el = document.getElementById('hami-cloud-pending');
-  // 退出前清掉旧的自动消失定时器
   if (_hamiBannerHideTimer) { clearTimeout(_hamiBannerHideTimer); _hamiBannerHideTimer = null; }
-  if (!show) { if (el) el.remove(); return; }
+  if (!show) { if (el) el.remove(); _hamiBannerFailStreak = 0; return; }
+  _hamiBannerLastShowAt = Date.now();
   if (!el) {
     el = document.createElement('div');
     el.id = 'hami-cloud-pending';
-    // 纯浮层：position:fixed，不占文档流、不改动任何现有布局与样式
-    el.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:100400;' +
-      'background:#fff0f3;border:1px solid #e890a8;color:#b3325c;border-radius:12px;' +
-      'padding:8px 14px;font-size:12.5px;line-height:1.6;box-shadow:0 6px 20px rgba(160,80,110,.22);' +
-      'max-width:88vw;text-align:center;';
+    // 关键修复 ①：位置移到屏幕底部居中悬浮，不会挡住主人顶部"近期记录"的删除/编辑/记一笔按钮
+    // 关键修复 ②：z-index 调到 9999（低于所有面板/弹窗/确认框的 100290+），保证永远不会压在操作按钮之上
+    el.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;' +
+      'background:#fff0f3;border:1px solid #e890a8;color:#b3325c;border-radius:14px;' +
+      'padding:7px 14px;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(160,80,110,.22);' +
+      'max-width:92vw;text-align:center;pointer-events:auto;';
     document.body.appendChild(el);
   }
-  el.innerHTML = '⚠️ <b>这条还没存到云端</b><br>' + (msg || '正在自动重试，先别关页面')
-    + '<br><span id="hami-cloud-retry" style="display:inline-block;margin-top:5px;padding:3px 12px;' +
-      'border-radius:9px;background:#e890a8;color:#fff;cursor:pointer;font-size:12px;">再试一次</span>';
+  el.innerHTML = '⚠️ <b>还没同步到云端</b>　' + (msg || '正在自动重试，先别关页面')
+    + '　<span id="hami-cloud-retry" style="display:inline-block;padding:2px 9px;' +
+      'border-radius:8px;background:#e890a8;color:#fff;cursor:pointer;font-size:11.5px;margin-left:4px;">再试一次</span>';
   const btn = document.getElementById('hami-cloud-retry');
-  if (btn) btn.onclick = function () { commitToCloud(); };
-  // 关键：横幅不再赖着不走。4 秒后自动消失（除非期间又有真正失败才会刷新文字）。
-  // 主人看到"几秒就消失"=正在自动重试中，不是真失败；
-  // 主人看到"反复跳出来"=真有问题需要看。
+  if (btn) btn.onclick = function (e) { e.stopPropagation(); _hamiBannerFailStreak = 0; commitToCloud(); };
+  // 关键修复 ③：横幅停留时间从 4 秒压到 2 秒（正在自动重试就该悄悄做事，不要反复惊动主人）
   _hamiBannerHideTimer = setTimeout(function () {
     const e2 = document.getElementById('hami-cloud-pending');
     if (e2) e2.remove();
     _hamiBannerHideTimer = null;
-  }, 4000);
+  }, 2000);
 }
 
 async function commitToCloud() {
@@ -6993,7 +7031,20 @@ async function commitToCloud() {
     } else if (raw.indexOf('Failed to fetch') >= 0 || raw.indexOf('NetworkError') >= 0) {
       msg = '网络一时连不上，正在自动重试';
     }
-    hamiPendingBanner(true, '云端写入失败：' + msg);
+    // 关键修复：横幅去抖。同一错误指纹短时间内反复失败不要反复跳出来吓主人。
+    // 规则：相同错误连续 ≤2 次 → 完全不弹横幅（安静后台重试）
+    //      第 3 次起才弹一次（这时才是真有问题，主人需要看到）
+    //      不同错误 → 重置计数，立刻弹
+    const key = msg;
+    if (key === _hamiBannerLastFailKey) {
+      _hamiBannerFailStreak++;
+    } else {
+      _hamiBannerLastFailKey = key;
+      _hamiBannerFailStreak = 1;
+    }
+    if (_hamiBannerFailStreak >= 3 || (_hamiBannerFailStreak === 1 && key !== _hamiBannerLastFailKey)) {
+      hamiPendingBanner(true, '云端写入失败：' + msg);
+    }
     if (!_commitRetryTimer) {
       _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 20000);
     }
@@ -8118,8 +8169,8 @@ function sendHamiCmd() {
           const exist = store.accountRecords.find(function (r) {
             return r.date === date && r.type === 'income' && r.category === 'custom' && (r.note || '').indexOf('模拟人生') >= 0;
           });
-          if (exist) exist.amount = fmtMoney(exist.amount + amt);
-          else store.accountRecords.push({ date: date, type: 'income', amount: amt, category: 'custom', note: '模拟人生定制单收入' });
+          if (exist) { exist.amount = fmtMoney(exist.amount + amt); exist.ts = Date.now(); }
+          else store.accountRecords.push({ date: date, type: 'income', amount: amt, category: 'custom', note: '模拟人生定制单收入', ts: Date.now() });
           hints.push('模拟人生收入' + amt.toFixed(2) + '元');
           acted = true;
         }
@@ -8139,7 +8190,7 @@ function sendHamiCmd() {
       case 'income': {
         const amt = it.amount;
         if (amt > 0 && amt <= 1000000) {
-          store.accountRecords.push({ date: date, type: 'income', amount: amt, category: it.category, note: it.note });
+          store.accountRecords.push({ date: date, type: 'income', amount: amt, category: it.category, note: it.note, ts: Date.now() });
           hints.push('收入·' + getCategoryInfo(it.category, 'income').name);
           acted = true;
         }
@@ -8147,7 +8198,7 @@ function sendHamiCmd() {
       }
       case 'expense': {
         const amt = it.amount;
-        store.accountRecords.push({ date: date, type: 'expense', amount: amt, category: it.category, note: it.note });
+        store.accountRecords.push({ date: date, type: 'expense', amount: amt, category: it.category, note: it.note, ts: Date.now() });
         hints.push((amt > 0 ? '支出·' : '支出(未填金额)·') + getCategoryInfo(it.category, 'expense').name);
         acted = true;
         break;
@@ -11952,7 +12003,91 @@ function renderAccount() {
     }
   }
   flowEl.innerHTML = flowHtml;
+
+  // ===== 时间线记账记录（v2026-09-06-19 新增）=====
+  // 与"近期记录"的区别：
+  //   近期记录 → 按账目日期 desc（同一日期内按时间 desc，最后按 ts 兜底）
+  //   时间线  → 完全按主人"操作顺序" desc（用每条记录自带的 ts = 写入时刻；编辑不改 ts，删除后 ts 永远留在原地）
+  // 默认只展开前 3 笔，剩余折叠 — 主人在键盘上随手记完想回看最新 3 条就够，再往下点"展开"看。
+  const tlEl = document.getElementById('account-timeline-table');
+  const tlFlip = document.getElementById('account-timeline-flip');
+  if (tlEl) {
+    // 时间线也要按主人的月筛选走（与近期记录一致，避免同面板里两个列表口径不一致）
+    // 排序：ts desc（操作时间最晚在最上）；ts 缺失时按 date+time 兜底
+    const tlAll = (inMonth || []).slice().sort((a, b) => {
+      const at = (a.ts || 0), bt = (b.ts || 0);
+      if (bt !== at) return bt - at;
+      const d = (b.date || '').localeCompare(a.date || '');
+      if (d !== 0) return d;
+      return (b.time || '').localeCompare(a.time || '');
+    });
+    if (tlAll.length === 0) {
+      tlEl.innerHTML = `<div class="empty-state"><p style="color:#8a6270;font-size:12px;">暂无操作记录</p></div>`;
+      if (tlFlip) tlFlip.textContent = '';
+    } else {
+      // 时间线永远最多显示全部已记录的；点 flip 切换"只显示前 3 笔" / "显示全部"
+      // 默认：accountTimelineExpanded = false → 只显示前 3 笔 + "展开 N 笔"按钮
+      const TL_DEFAULT = 3;
+      const expand = accountTimelineExpanded;
+      const showList = expand ? tlAll : tlAll.slice(0, TL_DEFAULT);
+      let tlHtml = '';
+      showList.forEach(r => {
+        const realIdx = store.accountRecords.indexOf(r);
+        const c = getCategoryInfo(r.category, r.type);
+        const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
+        const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
+        const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+        const timeStr = (r.time || '').substring(0, 5);
+        // 时间线展示"记账当天日期"，但用淡淡的"操作时间"做辅助，告诉主人这是哪天记的
+        const tlAt = r.ts ? (function () {
+          try {
+            const dt = new Date(r.ts);
+            const yy = dt.getFullYear(), mm = String(dt.getMonth() + 1).padStart(2, '0'), dd = String(dt.getDate()).padStart(2, '0');
+            const hh = String(dt.getHours()).padStart(2, '0'), mi = String(dt.getMinutes()).padStart(2, '0');
+            const todayYmd = new Date().toLocaleDateString('sv-SE');
+            const opYmd = yy + '-' + mm + '-' + dd;
+            const dateChip = (opYmd === todayYmd) ? '今天' : (mm + '/' + dd);
+            return `<span style="color:#b58a98;font-size:10.5px;">（${dateChip} ${hh}:${mi} 记）</span>`;
+          } catch (e) { return ''; }
+        })() : '';
+        tlHtml += `
+        <div class="fin-flow-row">
+          <div class="card-actions">
+            <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
+            <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})" aria-label="删除">🗑</button>
+          </div>
+          <div class="fin-flow-line1">
+            <div class="fin-flow-cat">
+              <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
+              <span class="fin-flow-cat-name">${c.name}</span>
+            </div>
+            <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
+          </div>
+          <div class="fin-flow-line2">
+            <span class="fin-flow-date">${dateStr}</span>
+            <span class="fin-flow-time">${timeStr}</span>
+            ${tlAt}
+          </div>
+        </div>
+      `;
+      });
+      if (tlAll.length > TL_DEFAULT) {
+        tlHtml += `<div class="flow-toggle-wrap">
+          <button class="flow-toggle-btn" type="button" onclick="toggleAccountTimeline()">${expand ? '收起 ▲' : '展开全部 ' + tlAll.length + ' 笔（按操作顺序）▼'}</button>
+        </div>`;
+      }
+      tlEl.innerHTML = tlHtml;
+      if (tlFlip) tlFlip.textContent = expand ? '收起' : ('共 ' + tlAll.length + ' 笔');
+    }
+  }
+
   renderInlineStats('expense');
+}
+
+let accountTimelineExpanded = false;
+function toggleAccountTimeline() {
+  accountTimelineExpanded = !accountTimelineExpanded;
+  try { renderAccount(); } catch (e) {}
 }
 
 function renderInlineStats(type) {
