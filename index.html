@@ -82,7 +82,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="hami-build" content="2026-09-06-17">
+<meta name="hami-build" content="2026-09-06-18">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQyIiBmaWxsPSIjZmY5ZWI1Ii8+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MiIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC4zIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZjdmOWUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtc2l6ZT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjLg8L3RleHQ+Cjwvc3ZnPgo=">
 <style>
@@ -2765,6 +2765,60 @@
     #lucky-cat { width: 90px; height: 90px; }
   }
 
+  /* ===================== 平板中段（700-999px）专门适配 =====================
+   * 主人 iPad Pro 11" 横屏在 iPadOS 默认 mobile UA 模式下 viewport ~568px，
+   * 但开启"请求桌面网站"或横屏旋转后会到 ~1024 ~1366。这一档专门为它设计。
+   * ========================================================================= */
+  @media (min-width: 700px) and (max-width: 999px) {
+    :root { --sidebar-w: 180px !important; }
+    .main {
+      padding: 0 24px 24px !important;
+      left: var(--sidebar-w) !important;
+    }
+    .sidebar .nav-text { font-size: 13px; }
+    .panel.active {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px !important;
+    }
+    .panel.active .stats-grid,
+    .panel.active .checkin-grid,
+    .panel.active .accounts-grid {
+      grid-column: 1 / -1;
+    }
+    .panel.active #home-weight-cal,
+    .panel.active #home-daily-todo-card,
+    .panel.active #custom-order-card,
+    .panel.active #account-disposable-card,
+    .panel.active .todo-card[id] {
+      grid-column: 1 / -1;
+    }
+    .weight-cal-grid { grid-template-columns: repeat(7, minmax(44px, 1fr)) !important; }
+    .weight-cal-cell { min-height: 64px !important; }
+    th, td { padding: 10px 8px; }
+  }
+
+  /* @media 1000+ panel grid */
+  @media (min-width: 1000px) {
+    .panel.active {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 18px !important;
+    }
+    .panel.active .stats-grid,
+    .panel.active .checkin-grid,
+    .panel.active .accounts-grid {
+      grid-column: 1 / -1;
+    }
+    .panel.active #home-weight-cal,
+    .panel.active #home-daily-todo-card,
+    .panel.active #custom-order-card,
+    .panel.active #account-disposable-card,
+    .panel.active .todo-card[id] {
+      grid-column: 1 / -1;
+    }
+  }
+
   /* ===================== JS 强制桌面兜底（hami-force-desktop） =====================
    * 上面 @media 依赖于 CSS viewport 报告，但 iPadOS Safari 在某些配置下 viewport 会被
    * 报成 ≤768px。这里用 JS 检测真实 innerWidth，给 body 加 .hami-force-desktop 类，
@@ -2824,6 +2878,57 @@
   body.hami-force-desktop #lucky-cat { width: 90px; height: 90px; }
   body.hami-force-desktop .desktop-time { font-size: 32px; }
   body.hami-force-desktop .desktop-hero { padding: 18px 20px; }
+
+  /* ==================== v18 关键：桌面/平板下 panel 子元素自适应 grid ====================
+   * 之前 panel 内子元素用 inline flex + max-width:200 / flex:1 导致桌面布局下大量"挤在屏幕中间"，
+   * 现在 desktop/narrow 下让每个 panel 直接子元素 grid 自适应铺开，桌面 2-3 列、平板 2 列。
+   * 排除统计行（stats-grid/checkin-grid/accounts-grid）和特殊容器（id 卡片），让其保持原模板。
+   * ========================================================================= */
+  body.hami-force-desktop .panel.active {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px !important;
+    align-items: start;
+  }
+  body.hami-force-desktop .panel.active .stats-grid,
+  body.hami-force-desktop .panel.active .checkin-grid,
+  body.hami-force-desktop .panel.active .accounts-grid {
+    grid-column: 1 / -1;
+  }
+  body.hami-force-desktop .panel.active #home-weight-cal,
+  body.hami-force-desktop .panel.active #home-daily-todo-card,
+  body.hami-force-desktop .panel.active #custom-order-card,
+  body.hami-force-desktop .panel.active #account-disposable-card,
+  body.hami-force-desktop .panel.active .todo-card[id] {
+    grid-column: 1 / -1;
+  }
+  body.hami-force-desktop #panel-account .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  }
+
+  /* ==================== hami-force-narrow 同上效果（iPad 700~999） ====================
+   * 主人 iPad viewport ~568~999 区间也会触发 force-narrow，同样需要 panel grid 排开
+   * 注意：narrow 时 main 实际只有 350-800px，所以 minmax 设小一点（280px），
+   * 至少能保证 1 列，足够宽度时可 2 列铺开。
+   * ========================================================================= */
+  body.hami-force-narrow .panel.active {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px !important;
+    align-items: start;
+  }
+  body.hami-force-narrow .panel.active .stats-grid,
+  body.hami-force-narrow .panel.active .checkin-grid,
+  body.hami-force-narrow .panel.active .accounts-grid {
+    grid-column: 1 / -1;
+  }
+  body.hami-force-narrow .panel.active #home-weight-cal,
+  body.hami-force-narrow .panel.active #home-daily-todo-card,
+  body.hami-force-narrow .panel.active #custom-order-card,
+  body.hami-force-narrow .panel.active #account-disposable-card,
+  body.hami-force-narrow .panel.active .todo-card[id] {
+    grid-column: 1 / -1;
+  }
 
   /* ===================== 极窄兜底（hami-force-narrow，innerWidth 500~999） =====================
    * 主人 iPad Pro 11" 横屏 viewport 在某些 iPadOS 配置下被报成 ~375-568px，
@@ -3549,7 +3654,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-17';
+  var BUILD_VER = '2026-09-06-18';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -15346,6 +15451,7 @@ function hamiEnforceRealLayout() {
 }
 try { hamiEnforceRealLayout(); } catch (e) {}
 try { window.addEventListener('resize', hamiEnforceRealLayout); } catch (e) {}
+try { window.addEventListener('orientationchange', hamiEnforceRealLayout); } catch (e) {}
 
 // ==================== 顶部指令栏宽度跟随左右面板（=左+右，绝不超过合并宽度） ====================
 function updateCmdBarWidth() {
