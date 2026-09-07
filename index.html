@@ -676,7 +676,8 @@
   .main.has-custom-bg > *,
   #home-weight-cal.has-custom-bg > * { position: relative; z-index: 1; }
   /* 上传背景后，面板内的卡片半透明（0.55），让背景图清晰透出 */
-  .panel.has-custom-bg .card { background: rgba(255,255,255,0.55) !important; }
+  .panel.has-custom-bg .card,
+  .panel.has-custom-bg .todo-card { background: rgba(255,255,255,0.55) !important; }
   .panel.has-custom-bg .tip-box { background: rgba(255,255,255,0.5) !important; }
   .panel.has-custom-bg .stat-card { background: rgba(255,255,255,0.55) !important; }
   .panel.has-custom-bg .month-selector select { background: rgba(255,255,255,0.7) !important; }
@@ -3718,7 +3719,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-07-31';
+  var BUILD_VER = '2026-09-07-32';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4726,6 +4727,27 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <div class="stats-grid" id="account-stats"></div>
 
+    <!-- v32 恢复：时间线记账记录（按操作顺序，全部记录混合显示） -->
+    <div class="todo-card" style="padding:16px 14px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+        <span>🕒</span> 时间线记账记录
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按操作顺序</span>
+        <span id="account-timeline-flip" onclick="accTimelineGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+      </h3>
+      <div id="account-timeline-table"></div>
+    </div>
+
+    <!-- v32 恢复：消费日期近期记录（按账目日期，全部记录混合显示） -->
+    <div class="todo-card" style="padding:18px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+        <span>📒</span> 消费日期近期记录
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按消费日期</span>
+        <span id="account-flow-flip" onclick="accFlowGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+      </h3>
+      <div id="account-flow-table"></div>
+    </div>
+
+    <!-- v31 新增：支出账本（只显示支出） -->
     <div class="todo-card" style="padding:16px 14px;">
       <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
         <span>💸</span> 支出账本
@@ -6624,6 +6646,15 @@ function applyAllBgs() {
     // 没有可用来源时恢复默认纯色，避免残留旧状态
     try { clearBg(key); } catch (e) {}
   });
+  // v32：若首页整体没有背景图，但 hero 有，则把 hero 背景图继承到首页整体，避免模块间隙露白
+  try {
+    const cfg = loadEmbeddedBgConfig();
+    const heroData = BG_CACHE['hero'] || (cfg.bgs && cfg.bgs['hero'] ? cfg.bgs['hero'] : null);
+    const hasPanelDesktop = BG_CACHE['panel-desktop'] || (cfg.bgs && cfg.bgs['panel-desktop']);
+    if (heroData && !hasPanelDesktop) {
+      applyBg('panel-desktop', heroData);
+    }
+  } catch (e) {}
 }
 
 function clearBg(key) {
@@ -10388,11 +10419,11 @@ function renderIncome() {
               <span class="fin-flow-cat-name">${o.desc || '定制单'}</span>
             </div>
             <span class="fin-flow-amt income">¥${fmtMoney(o.amount)}</span>
+            <span style="flex-shrink:0;white-space:nowrap;margin-left:6px;">${badge}</span>
           </div>
           <div class="fin-flow-line2">
             <span class="fin-flow-date">下单 ${dateStr}</span>
             <span class="fin-flow-time">→ 截止 ${deadlineStr}</span>
-            ${badge}
           </div>
         </div>`;
     });
@@ -12463,8 +12494,33 @@ function toggleStatsMode() {
 // 之前"默认3笔 + 展开全部一次铺几百条"既让主人误以为只存了3条，又一翻到底很累。
 // 改为**每页8条 + 上一页/下一页**：数据永远全量保存(三重备份)，只是分页浏览更清楚。
 const ACC_PAGE = 4;                 // v26 主人要求每页 4 条
+let accountFlowPage = 0;            // 消费日期列表当前页码(0-based)
+let accountTimelinePage = 0;        // 时间线列表当前页码(0-based)
 let accountExpensePage = 0;         // v31 支出账本当前页码(0-based)
 let accountIncomePage = 0;          // v31 收入账本当前页码(0-based)
+function accFlowGo(delta) {
+  const records = (store.accountRecords || []).slice().sort((a, b) => {
+    const d = (b.date || '').localeCompare(a.date || '');
+    if (d !== 0) return d;
+    const t = (b.time || '').localeCompare(a.time || '');
+    if (t !== 0) return t;
+    return (b.ts || 0) - (a.ts || 0);
+  });
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
+  const maxPage = Math.max(0, Math.ceil(inMonth.length / ACC_PAGE) - 1);
+  accountFlowPage = Math.max(0, Math.min((accountFlowPage || 0) + delta, maxPage));
+  try { renderAccount(); } catch (e) {}
+}
+function accTimelineGo(delta) {
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const pool = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month)));
+  const maxPage = Math.max(0, Math.ceil(pool.length / ACC_PAGE) - 1);
+  accountTimelinePage = Math.max(0, Math.min((accountTimelinePage || 0) + delta, maxPage));
+  try { renderAccount(); } catch (e) {}
+}
 function accExpenseGo(delta) {
   const n = (store.accountRecords || []).filter(r => r.type === 'expense').length;
   const maxPage = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
@@ -12478,7 +12534,7 @@ function accIncomeGo(delta) {
   try { renderAccount(); } catch (e) {}
 }
 // 月份切换/新增/删除/编辑后重置页码到第一页，避免"翻到第3页看半天才发现是旧数据"
-function accResetPages() { accountExpensePage = 0; accountIncomePage = 0; }
+function accResetPages() { accountFlowPage = 0; accountTimelinePage = 0; accountExpensePage = 0; accountIncomePage = 0; }
 function renderAccount() {
   try { bindFinanceEvents(); } catch(e) {}
   const monthEl = document.getElementById('account-month');
@@ -12541,11 +12597,160 @@ function renderAccount() {
     </div>
   `;
 
-  // v31：支出账本 + 收入账本（两个独立账本，全部按操作顺序 ts desc，每页 ACC_PAGE=4 条）
+  // v32 恢复：时间线 + 消费日期（原来的两个混合账本）
+  renderAccountTimeline();
+  renderAccountFlow();
+  // v31 新增：支出账本 + 收入账本（两个独立账本，全部按操作顺序 ts desc，每页 ACC_PAGE=4 条）
   renderExpenseLedger();
   renderIncomeLedger();
 
   renderInlineStats('expense');
+}
+
+// ==================== 消费日期近期记录（v32 恢复）====================
+// 按账目日期 desc（同一日期内按时间 desc，最后按 ts 兜底），显示全部记录（收入+支出+转账）
+function renderAccountFlow() {
+  const el = document.getElementById('account-flow-table');
+  const flipEl = document.getElementById('account-flow-flip');
+  if (!el) return;
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const records = (store.accountRecords || []).slice().sort((a, b) => {
+    const d = (b.date || '').localeCompare(a.date || '');
+    if (d !== 0) return d;
+    const t = (b.time || '').localeCompare(a.time || '');
+    if (t !== 0) return t;
+    return (b.ts || 0) - (a.ts || 0);
+  });
+  const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
+  if (inMonth.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="big-icon"></div><p style="color:#8a6270;margin-top:8px;">暂无记录</p><p style="font-size:12px;margin-top:6px;">点「记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
+    if (flipEl) { flipEl.textContent = ''; flipEl.onclick = null; }
+    return;
+  }
+  const maxPage = Math.max(0, Math.ceil(inMonth.length / ACC_PAGE) - 1);
+  if (accountFlowPage > maxPage) accountFlowPage = maxPage;
+  const start = accountFlowPage * ACC_PAGE;
+  const list = inMonth.slice(start, start + ACC_PAGE);
+  let html = '';
+  list.forEach(r => {
+    const realIdx = store.accountRecords.indexOf(r);
+    const c = getCategoryInfo(r.category, r.type);
+    const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
+    const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
+    const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+    const timeStr = (r.time || '').substring(0, 5);
+    html += `
+      <div class="fin-flow-row">
+        <div class="card-actions">
+          <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
+          <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})" aria-label="删除">🗑</button>
+        </div>
+        <div class="fin-flow-line1">
+          <div class="fin-flow-cat">
+            <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
+            <span class="fin-flow-cat-name">${c.name}</span>
+          </div>
+          <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
+        </div>
+        <div class="fin-flow-line2">
+          <span class="fin-flow-date">${dateStr}</span>
+          <span class="fin-flow-time">${timeStr}</span>
+        </div>
+      </div>`;
+  });
+  if (inMonth.length > ACC_PAGE) {
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+      <button class="flow-toggle-btn" type="button" onclick="accFlowGo(-1)" ${accountFlowPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${accountFlowPage + 1}/${maxPage + 1} 页 · 共 ${inMonth.length} 笔</span>
+      <button class="flow-toggle-btn" type="button" onclick="accFlowGo(1)" ${accountFlowPage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
+  el.innerHTML = html;
+  if (flipEl) {
+    const parts = [];
+    if (inMonth.length > ACC_PAGE) parts.push('第 ' + (accountFlowPage + 1) + '/' + (maxPage + 1) + ' 页');
+    parts.push('共 ' + inMonth.length + ' 笔');
+    flipEl.textContent = parts.join(' · ');
+    flipEl.onclick = function () { accFlowGo(1); };
+  }
+}
+
+// ==================== 时间线记账记录（v32 恢复）====================
+// 完全按主人"操作顺序" desc（用每条记录自带的 ts = 写入时刻），显示全部记录（收入+支出+转账）
+function renderAccountTimeline() {
+  const el = document.getElementById('account-timeline-table');
+  const flipEl = document.getElementById('account-timeline-flip');
+  if (!el) return;
+  const monthEl = document.getElementById('account-month');
+  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
+  const tlAll = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month))).slice().sort((a, b) => {
+    const at = (a.ts || 0), bt = (b.ts || 0);
+    if (bt !== at) return bt - at;
+    const d = (b.date || '').localeCompare(a.date || '');
+    if (d !== 0) return d;
+    return (b.time || '').localeCompare(a.time || '');
+  });
+  if (tlAll.length === 0) {
+    el.innerHTML = `<div class="empty-state"><p style="color:#8a6270;font-size:12px;">暂无操作记录</p></div>`;
+    if (flipEl) { flipEl.textContent = ''; flipEl.onclick = null; }
+    return;
+  }
+  const maxPage = Math.max(0, Math.ceil(tlAll.length / ACC_PAGE) - 1);
+  if (accountTimelinePage > maxPage) accountTimelinePage = maxPage;
+  const start = accountTimelinePage * ACC_PAGE;
+  const list = tlAll.slice(start, start + ACC_PAGE);
+  let html = '';
+  list.forEach(r => {
+    const realIdx = store.accountRecords.indexOf(r);
+    const c = getCategoryInfo(r.category, r.type);
+    const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
+    const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
+    const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+    const timeStr = (r.time || '').substring(0, 5);
+    const tlAt = r.ts ? (function () {
+      try {
+        const dt = new Date(r.ts);
+        const yy = dt.getFullYear(), mm = String(dt.getMonth() + 1).padStart(2, '0'), dd = String(dt.getDate()).padStart(2, '0');
+        const hh = String(dt.getHours()).padStart(2, '0'), mi = String(dt.getMinutes()).padStart(2, '0');
+        const todayYmd = new Date().toLocaleDateString('sv-SE');
+        const opYmd = yy + '-' + mm + '-' + dd;
+        const dateChip = (opYmd === todayYmd) ? '今天' : (mm + '/' + dd);
+        return `<span style="color:#b58a98;font-size:10.5px;">（${dateChip} ${hh}:${mi} 记）</span>`;
+      } catch (e) { return ''; }
+    })() : '';
+    html += `
+      <div class="fin-flow-row">
+        <div class="card-actions">
+          <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
+          <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})" aria-label="删除">🗑</button>
+        </div>
+        <div class="fin-flow-line1">
+          <div class="fin-flow-cat">
+            <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
+            <span class="fin-flow-cat-name">${c.name}</span>
+          </div>
+          <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
+        </div>
+        <div class="fin-flow-line2">
+          <span class="fin-flow-date">${dateStr}</span>
+          <span class="fin-flow-time">${timeStr}</span>
+          ${tlAt}
+        </div>
+      </div>`;
+  });
+  if (tlAll.length > ACC_PAGE) {
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+      <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(-1)" ${accountTimelinePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${accountTimelinePage + 1}/${maxPage + 1} 页 · 共 ${tlAll.length} 笔（按操作顺序）</span>
+      <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(1)" ${accountTimelinePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
+  el.innerHTML = html;
+  if (flipEl) {
+    flipEl.textContent = '共 ' + tlAll.length + ' 笔';
+    flipEl.onclick = function () { accTimelineGo(1); };
+  }
 }
 
 // ==================== 支出账本（v31 新设计）====================
