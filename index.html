@@ -3718,7 +3718,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-07-30';
+  var BUILD_VER = '2026-09-07-31';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4724,46 +4724,24 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <button class="fin-add-btn" onclick="openAddModal()">➕ 记一笔</button>
     </div>
 
-    <div class="todo-card" id="account-disposable-card" style="padding:16px 18px;background:linear-gradient(135deg,#fff5f8,#ffe9f1);border:1.5px solid #ffd6e3;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:nowrap;">
-        <span style="font-size:18px;">💎</span>
-        <h3 style="font-size:15px;font-weight:800;color:#d14b73;white-space:nowrap;">可支配余额</h3>
-        <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:6px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;">✏️ 修改</button>
-        <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;">💾 保存</button>
-      </div>
-      <div id="account-disposable-display" style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:#fff;border:1.5px dashed #ffc2d6;border-radius:14px;">
-        <span style="font-size:13px;color:#7d4a5a;font-weight:600;">当前可支配余额</span>
-        <span id="account-disposable-value" style="font-size:26px;font-weight:800;color:#d14b73;line-height:1.2;">¥0.00</span>
-        <span id="account-deposit-saved-tip" style="margin-left:auto;font-size:11px;color:#3aaa55;font-weight:700;opacity:0;transition:opacity .25s ease;">✓ 已保存</span>
-      </div>
-      <div id="account-disposable-editor" style="display:none;margin-top:8px;padding:10px 12px;background:#fff;border:1.5px solid #ff7fa8;border-radius:14px;align-items:center;gap:8px;">
-        <span style="font-size:13px;color:#7d4a5a;font-weight:600;">改成</span>
-        <span style="color:#d14b73;font-weight:700;">¥</span>
-        <input id="account-deposit-input" type="number" inputmode="decimal" placeholder="填一个数字" style="border:none;outline:none;width:140px;font-size:16px;font-weight:700;color:#d14b73;background:transparent;" />
-        <button type="button" onclick="saveDepositBalance()" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">💾 保存</button>
-        <button type="button" onclick="cancelEditDeposit()" style="border:none;background:#f3e3e8;color:#7d4a5a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;">取消</button>
-      </div>
-      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">这里的金额是"本金 + 所有账单自动算出来的"。想改它？点右上角「✏️ 修改」直接改这个数。</p>
-    </div>
-
     <div class="stats-grid" id="account-stats"></div>
 
     <div class="todo-card" style="padding:16px 14px;">
-      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-        <span>🕒</span> 时间线记账记录
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+        <span>💸</span> 支出账本
         <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按操作顺序</span>
-        <span id="account-timeline-flip" onclick="accTimelineGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+        <span id="account-expense-flip" onclick="accExpenseGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
       </h3>
-      <div id="account-timeline-table"></div>
+      <div id="account-expense-ledger"></div>
     </div>
 
-    <div class="todo-card" style="padding:18px;">
-      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-        <span>📒</span> 消费日期近期记录
-        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按消费日期</span>
-        <span id="account-flow-flip" onclick="accFlowGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
+    <div class="todo-card" style="padding:16px 14px;">
+      <h3 style="font-size:16px;font-weight:800;color:#d14b73;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+        <span>💰</span> 收入账本
+        <span style="font-size:11px;font-weight:500;color:#9b6878;margin-left:4px;">按操作顺序</span>
+        <span id="account-income-flip" onclick="accIncomeGo(1)" style="margin-left:auto;font-size:12px;color:#d14b73;cursor:pointer;user-select:none;font-weight:700;"></span>
       </h3>
-      <div id="account-flow-table"></div>
+      <div id="account-income-ledger"></div>
     </div>
 
     <div class="todo-card" style="padding:16px 14px;">
@@ -4787,6 +4765,28 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
           🔍 查看完整分类统计
         </button>
       </div>
+    </div>
+
+    <div class="todo-card" id="account-disposable-card" style="padding:16px 18px;background:linear-gradient(135deg,#fff5f8,#ffe9f1);border:1.5px solid #ffd6e3;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:nowrap;">
+        <span style="font-size:18px;">💎</span>
+        <h3 style="font-size:15px;font-weight:800;color:#d14b73;white-space:nowrap;">可支配余额</h3>
+        <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:6px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;">✏️ 修改</button>
+        <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;">💾 保存</button>
+      </div>
+      <div id="account-disposable-display" style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:#fff;border:1.5px dashed #ffc2d6;border-radius:14px;">
+        <span style="font-size:13px;color:#7d4a5a;font-weight:600;">当前可支配余额</span>
+        <span id="account-disposable-value" style="font-size:26px;font-weight:800;color:#d14b73;line-height:1.2;">¥0.00</span>
+        <span id="account-deposit-saved-tip" style="margin-left:auto;font-size:11px;color:#3aaa55;font-weight:700;opacity:0;transition:opacity .25s ease;">✓ 已保存</span>
+      </div>
+      <div id="account-disposable-editor" style="display:none;margin-top:8px;padding:10px 12px;background:#fff;border:1.5px solid #ff7fa8;border-radius:14px;align-items:center;gap:8px;">
+        <span style="font-size:13px;color:#7d4a5a;font-weight:600;">改成</span>
+        <span style="color:#d14b73;font-weight:700;">¥</span>
+        <input id="account-deposit-input" type="number" inputmode="decimal" placeholder="填一个数字" style="border:none;outline:none;width:140px;font-size:16px;font-weight:700;color:#d14b73;background:transparent;" />
+        <button type="button" onclick="saveDepositBalance()" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">💾 保存</button>
+        <button type="button" onclick="cancelEditDeposit()" style="border:none;background:#f3e3e8;color:#7d4a5a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;">取消</button>
+      </div>
+      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">这里的金额是"本金 + 所有账单自动算出来的"。想改它？点右上角「✏️ 修改」直接改这个数。</p>
     </div>
 
   </div>
@@ -10369,26 +10369,33 @@ function renderIncome() {
     if ((__orderPage || 0) > maxPg) __orderPage = maxPg;
     const start = (__orderPage || 0) * ACC_PAGE;
     const pageList = _orderList.slice(start, start + ACC_PAGE);
-    let html = '<div class="co-card-list">';
+    let html = '';
     pageList.forEach(x => {
       const o = x.o, idx = x.idx;
       const overdue = o.status === 'pending' && new Date(o.deadline) < new Date(today);
       const badge = o.status === 'done' ? '<span class="badge done">已完成</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待完成</span>');
+      const dateStr = (o.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+      const deadlineStr = (o.deadline || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       html += `
-        <div class="co-card">
+        <div class="fin-flow-row">
           <div class="card-actions">
             <button class="row-edit-btn" onclick="openCustomOrderModal(${idx})" aria-label="修改">✏️</button>
             <button class="row-del-btn" onclick="deleteCustomOrder(${idx})" aria-label="删除">🗑</button>
           </div>
-          <div class="co-card-desc">${o.desc || '无备注'}</div>
-          <div class="co-card-amount">¥${o.amount}</div>
-          <div class="co-card-meta">
-            <span>📅 ${o.date} → ${o.deadline}</span>
+          <div class="fin-flow-line1">
+            <div class="fin-flow-cat">
+              <span class="rank-icon" style="background:#b48bf2;color:#fff;">${ICON_SVGS.gift || ''}</span>
+              <span class="fin-flow-cat-name">${o.desc || '定制单'}</span>
+            </div>
+            <span class="fin-flow-amt income">¥${fmtMoney(o.amount)}</span>
+          </div>
+          <div class="fin-flow-line2">
+            <span class="fin-flow-date">下单 ${dateStr}</span>
+            <span class="fin-flow-time">→ 截止 ${deadlineStr}</span>
             ${badge}
           </div>
         </div>`;
     });
-    html += '</div>';
     if (_orderList.length > ACC_PAGE) {
       html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
         <button class="flow-toggle-btn" type="button" onclick="orderGo(-1)" ${(__orderPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
@@ -10427,13 +10434,30 @@ function renderIncome() {
       if (__beautyPage > maxPg) __beautyPage = maxPg;
       const start = __beautyPage * ACC_PAGE;
       const pageList = recs.slice(start, start + ACC_PAGE);
-      let bhtml = `<div style="overflow-x:auto;"><table><thead><tr><th>日期</th><th>档数</th><th>金额</th><th>备注</th><th>操作</th></tr></thead><tbody>`;
+      let bhtml = '';
       pageList.forEach(b => {
         const idx = store.beautyRecords.indexOf(b);
         const amt = (b.amount != null ? b.amount : (b.count * MOD_PRICE));
-        bhtml += `<tr><td>${b.date}</td><td>${b.count}</td><td>¥${amt}</td><td>${b.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openBeautyRecordModal(${idx})">✏️ 修改</button> <button class="row-del-btn" onclick="deleteBeautyRecord(${idx})">🗑</button></td></tr>`;
+        const dateStr = (b.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+        bhtml += `
+          <div class="fin-flow-row">
+            <div class="card-actions">
+              <button class="row-edit-btn" onclick="openBeautyRecordModal(${idx})" aria-label="修改">✏️</button>
+              <button class="row-del-btn" onclick="deleteBeautyRecord(${idx})" aria-label="删除">🗑</button>
+            </div>
+            <div class="fin-flow-line1">
+              <div class="fin-flow-cat">
+                <span class="rank-icon" style="background:#ff8db8;color:#fff;">${ICON_SVGS.palette || ''}</span>
+                <span class="fin-flow-cat-name">美化档 ×${b.count}</span>
+              </div>
+              <span class="fin-flow-amt income">¥${fmtMoney(amt)}</span>
+            </div>
+            <div class="fin-flow-line2">
+              <span class="fin-flow-date">${dateStr}</span>
+              <span class="fin-flow-time">${b.note ? '📝 ' + b.note : '单价 ¥' + MOD_PRICE}</span>
+            </div>
+          </div>`;
       });
-      bhtml += '</tbody></table></div>';
       if (recs.length > ACC_PAGE) {
         bhtml += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;">
           <button class="flow-toggle-btn" type="button" onclick="beautyGo(-1)" ${__beautyPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
@@ -12439,46 +12463,26 @@ function toggleStatsMode() {
 // 之前"默认3笔 + 展开全部一次铺几百条"既让主人误以为只存了3条，又一翻到底很累。
 // 改为**每页8条 + 上一页/下一页**：数据永远全量保存(三重备份)，只是分页浏览更清楚。
 const ACC_PAGE = 4;                 // v26 主人要求每页 4 条
-let accountFlowPage = 0;            // 消费日期列表当前页码(0-based)
-let accountTimelinePage = 0;        // 时间线列表当前页码(0-based)
-function accFlowGo(delta) {
-  const n = (store.accountRecords || []).length;
+let accountExpensePage = 0;         // v31 支出账本当前页码(0-based)
+let accountIncomePage = 0;          // v31 收入账本当前页码(0-based)
+function accExpenseGo(delta) {
+  const n = (store.accountRecords || []).filter(r => r.type === 'expense').length;
   const maxPage = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
-  accountFlowPage = Math.max(0, Math.min((accountFlowPage || 0) + delta, maxPage));
+  accountExpensePage = Math.max(0, Math.min((accountExpensePage || 0) + delta, maxPage));
   try { renderAccount(); } catch (e) {}
 }
-function accTimelineGo(delta) {
-  const monthEl = document.getElementById('account-month');
-  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
-  const pool = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month)));
-  const maxPage = Math.max(0, Math.ceil(pool.length / ACC_PAGE) - 1);
-  accountTimelinePage = Math.max(0, Math.min((accountTimelinePage || 0) + delta, maxPage));
+function accIncomeGo(delta) {
+  const n = (store.accountRecords || []).filter(r => r.type === 'income').length;
+  const maxPage = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  accountIncomePage = Math.max(0, Math.min((accountIncomePage || 0) + delta, maxPage));
   try { renderAccount(); } catch (e) {}
 }
 // 月份切换/新增/删除/编辑后重置页码到第一页，避免"翻到第3页看半天才发现是旧数据"
-function accResetPages() { accountFlowPage = 0; accountTimelinePage = 0; }
+function accResetPages() { accountExpensePage = 0; accountIncomePage = 0; }
 function renderAccount() {
   try { bindFinanceEvents(); } catch(e) {}
   const monthEl = document.getElementById('account-month');
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
-  // 头部折叠小按钮文案：默认折叠→提示"展开 N 笔"；展开后提示"收起"
-  try {
-    const flowFlipEl = document.getElementById('account-flow-flip');
-    if (flowFlipEl) {
-      // 渲染只参考当月 inMonth 数；与下方同步
-      const _probe = (store.accountRecords || []).filter(r => month === 'all' || (r.date && r.date.startsWith(month)));
-      // v25 分页：不再"展开全部一次铺满"，右上角改显示当前页/总页数（点击翻到下一段）
-      if (_probe.length > 0) {
-        const _mp = Math.max(0, Math.ceil(_probe.length / ACC_PAGE) - 1);
-        const _pg = Math.min(accountFlowPage || 0, _mp);
-        const _parts = [];
-        if (_probe.length > ACC_PAGE) _parts.push('第 ' + (_pg + 1) + '/' + (_mp + 1) + ' 页');
-        _parts.push('共 ' + _probe.length + ' 笔');
-        flowFlipEl.textContent = _parts.join(' · ');
-        flowFlipEl.onclick = function () { accFlowGo(1); };
-      } else flowFlipEl.textContent = '';
-    }
-  } catch (e) {}
   const records = (store.accountRecords || []).slice().sort((a, b) => {
     const d = (b.date || '').localeCompare(a.date || '');   // 先按账目日期：近 → 远
     if (d !== 0) return d;
@@ -12487,8 +12491,6 @@ function renderAccount() {
     return (b.ts || 0) - (a.ts || 0);                        // 最后按操作时间兜底
   });
   const inMonth = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
-  // v25：月份变了就把页码归零，避免停在老页
-  if (accountFlowPage > 0 && accountFlowPage >= Math.ceil((inMonth.length || 0) / ACC_PAGE)) accountFlowPage = 0;
 
   // 手动收入（不含旧"模拟人生定制单"分类——历史迁移已删，不重复计入）
   const manualIncome = inMonth.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
@@ -12539,105 +12541,55 @@ function renderAccount() {
     </div>
   `;
 
-  // 流水
-  const flowEl = document.getElementById('account-flow-table');
-  if (!flowEl) return;
-  let flowHtml = '';
-  if (inMonth.length === 0) {
-    flowHtml = `<div class="empty-state"><div class="big-icon"></div><p style="color:#8a6270;margin-top:8px;">暂无记录</p><p style="font-size:12px;margin-top:6px;">点「记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
-  } else {
-    // v25 分页：一页 ACC_PAGE 条，全部数据都在 store，翻到底能看全（不丢）
-    const maxPage = Math.max(0, Math.ceil(inMonth.length / ACC_PAGE) - 1);
-    if (accountFlowPage > maxPage) accountFlowPage = maxPage;
-    const start = accountFlowPage * ACC_PAGE;
-    const list = inMonth.slice(start, start + ACC_PAGE);
-    list.forEach(r => {
-      const realIdx = store.accountRecords.indexOf(r);  // 真实 store 索引（r 是 store 里同一对象引用）
-      const c = getCategoryInfo(r.category, r.type);
-      const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
-      const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
-      const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
-      const timeStr = (r.time || '').substring(0, 5);
-      flowHtml += `
-        <div class="fin-flow-row">
-          <div class="card-actions">
-            <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
-            <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})" aria-label="删除">🗑</button>
-          </div>
-          <div class="fin-flow-line1">
-            <div class="fin-flow-cat">
-              <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
-              <span class="fin-flow-cat-name">${c.name}</span>
-            </div>
-            <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
-          </div>
-          <div class="fin-flow-line2">
-            <span class="fin-flow-date">${dateStr}</span>
-            <span class="fin-flow-time">${timeStr}</span>
-          </div>
-        </div>
-      `;
-    });
-    // 底部分页条：上一页 / 页码指示 / 下一页
-    if (inMonth.length > ACC_PAGE) {
-      flowHtml += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-        <button class="flow-toggle-btn" type="button" onclick="accFlowGo(-1)" ${accountFlowPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-        <span style="font-size:12px;color:#8a6270;">第 ${accountFlowPage + 1}/${maxPage + 1} 页 · 共 ${inMonth.length} 笔</span>
-        <button class="flow-toggle-btn" type="button" onclick="accFlowGo(1)" ${accountFlowPage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
-      </div>`;
-    }
-  }
-  flowEl.innerHTML = flowHtml;
+  // v31：支出账本 + 收入账本（两个独立账本，全部按操作顺序 ts desc，每页 ACC_PAGE=4 条）
+  renderExpenseLedger();
+  renderIncomeLedger();
 
-  // ===== 时间线记账记录（v2026-09-06-19 新增）=====
-  // 与"近期记录"的区别：
-  //   近期记录 → 按账目日期 desc（同一日期内按时间 desc，最后按 ts 兜底）
-  //   时间线  → 完全按主人"操作顺序" desc（用每条记录自带的 ts = 写入时刻；编辑不改 ts，删除后 ts 永远留在原地）
-  // 默认只展开前 3 笔，剩余折叠 — 主人在键盘上随手记完想回看最新 3 条就够，再往下点"展开"看。
-  const tlEl = document.getElementById('account-timeline-table');
-  const tlFlip = document.getElementById('account-timeline-flip');
-  if (tlEl) {
-    // 时间线也要按主人的月筛选走（与近期记录一致，避免同面板里两个列表口径不一致）
-    // 排序：ts desc（操作时间最晚在最上）；ts 缺失时按 date+time 兜底
-    const tlAll = (inMonth || []).slice().sort((a, b) => {
+  renderInlineStats('expense');
+}
+
+// ==================== 支出账本（v31 新设计）====================
+// 与【时间线记账记录】同款 fin-flow-row 样式；只显示 type==='expense' 的手动支出记录
+// 按 ts desc 排序（操作时间最晚在最上）；翻到底一定能看全（数据全量在 store.accountRecords，三重备份，不丢）
+function renderExpenseLedger() {
+  const el = document.getElementById('account-expense-ledger');
+  const flipEl = document.getElementById('account-expense-flip');
+  if (!el) return;
+  const all = (store.accountRecords || []).filter(r => r.type === 'expense')
+    .slice().sort((a, b) => {
       const at = (a.ts || 0), bt = (b.ts || 0);
       if (bt !== at) return bt - at;
       const d = (b.date || '').localeCompare(a.date || '');
       if (d !== 0) return d;
       return (b.time || '').localeCompare(a.time || '');
     });
-    if (tlAll.length === 0) {
-      tlEl.innerHTML = `<div class="empty-state"><p style="color:#8a6270;font-size:12px;">暂无操作记录</p></div>`;
-      if (tlFlip) tlFlip.textContent = '';
-    } else {
-      // v25 分页：每页 ACC_PAGE 条，数据全量在 store，翻到底看全不丢
-      const showList = (function () {
-        const maxPage = Math.max(0, Math.ceil(tlAll.length / ACC_PAGE) - 1);
-        if (accountTimelinePage > maxPage) accountTimelinePage = maxPage;
-        const s = accountTimelinePage * ACC_PAGE;
-        return tlAll.slice(s, s + ACC_PAGE);
-      })();
-      let tlHtml = '';
-      showList.forEach(r => {
-        const realIdx = store.accountRecords.indexOf(r);
-        const c = getCategoryInfo(r.category, r.type);
-        const typeCls = r.type === 'income' ? 'income' : (r.type === 'transfer' ? 'transfer' : 'expense');
-        const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
-        const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
-        const timeStr = (r.time || '').substring(0, 5);
-        // 时间线展示"记账当天日期"，但用淡淡的"操作时间"做辅助，告诉主人这是哪天记的
-        const tlAt = r.ts ? (function () {
-          try {
-            const dt = new Date(r.ts);
-            const yy = dt.getFullYear(), mm = String(dt.getMonth() + 1).padStart(2, '0'), dd = String(dt.getDate()).padStart(2, '0');
-            const hh = String(dt.getHours()).padStart(2, '0'), mi = String(dt.getMinutes()).padStart(2, '0');
-            const todayYmd = new Date().toLocaleDateString('sv-SE');
-            const opYmd = yy + '-' + mm + '-' + dd;
-            const dateChip = (opYmd === todayYmd) ? '今天' : (mm + '/' + dd);
-            return `<span style="color:#b58a98;font-size:10.5px;">（${dateChip} ${hh}:${mi} 记）</span>`;
-          } catch (e) { return ''; }
-        })() : '';
-        tlHtml += `
+  if (all.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:18px 8px;"><div class="big-icon">🧾</div><p style="color:#8a6270;margin-top:8px;">这本支出账本还是空的</p><p style="font-size:12px;margin-top:6px;">点上方「➕ 记一笔」或在指令栏跟我说"午饭花了25"开始~</p></div>`;
+    if (flipEl) { flipEl.textContent = ''; flipEl.onclick = null; }
+    return;
+  }
+  const maxPage = Math.max(0, Math.ceil(all.length / ACC_PAGE) - 1);
+  if (accountExpensePage > maxPage) accountExpensePage = maxPage;
+  const start = accountExpensePage * ACC_PAGE;
+  const pageList = all.slice(start, start + ACC_PAGE);
+  let html = '';
+  pageList.forEach(r => {
+    const realIdx = store.accountRecords.indexOf(r);
+    const c = getCategoryInfo(r.category, r.type);
+    const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+    const timeStr = (r.time || '').substring(0, 5);
+    const opTip = r.ts ? (function () {
+      try {
+        const dt = new Date(r.ts);
+        const mm = String(dt.getMonth() + 1).padStart(2, '0'), dd = String(dt.getDate()).padStart(2, '0');
+        const hh = String(dt.getHours()).padStart(2, '0'), mi = String(dt.getMinutes()).padStart(2, '0');
+        const todayYmd = new Date().toLocaleDateString('sv-SE');
+        const opYmd = dt.getFullYear() + '-' + mm + '-' + dd;
+        const chip = (opYmd === todayYmd) ? '今天' : (mm + '/' + dd);
+        return `<span style="color:#b58a98;font-size:10.5px;">（${chip} ${hh}:${mi} 记）</span>`;
+      } catch (e) { return ''; }
+    })() : '';
+    html += `
         <div class="fin-flow-row">
           <div class="card-actions">
             <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
@@ -12648,33 +12600,104 @@ function renderAccount() {
               <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
               <span class="fin-flow-cat-name">${c.name}</span>
             </div>
-            <span class="fin-flow-amt ${typeCls}">${sign}¥${fmtMoney(r.amount)}</span>
+            <span class="fin-flow-amt expense">-¥${fmtMoney(r.amount)}</span>
           </div>
           <div class="fin-flow-line2">
             <span class="fin-flow-date">${dateStr}</span>
             <span class="fin-flow-time">${timeStr}</span>
-            ${tlAt}
+            ${opTip}
           </div>
         </div>
       `;
-      });
-      // v25 分页条
-      if (tlAll.length > ACC_PAGE) {
-        const maxPage = Math.max(0, Math.ceil(tlAll.length / ACC_PAGE) - 1);
-        tlHtml += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-          <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(-1)" ${accountTimelinePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-          <span style="font-size:12px;color:#8a6270;">第 ${accountTimelinePage + 1}/${maxPage + 1} 页 · 共 ${tlAll.length} 笔（按操作顺序）</span>
-          <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(1)" ${accountTimelinePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
-        </div>`;
-      }
-      tlEl.innerHTML = tlHtml;
-      if (tlFlip) tlFlip.textContent = '共 ' + tlAll.length + ' 笔';
-      // 头部右上角点击 = 翻到下一页（若有）
-      if (tlFlip) tlFlip.onclick = function () { accTimelineGo(1); };
-    }
+  });
+  if (all.length > ACC_PAGE) {
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+      <button class="flow-toggle-btn" type="button" onclick="accExpenseGo(-1)" ${accountExpensePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${accountExpensePage + 1}/${maxPage + 1} 页 · 共 ${all.length} 笔</span>
+      <button class="flow-toggle-btn" type="button" onclick="accExpenseGo(1)" ${accountExpensePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
   }
+  el.innerHTML = html;
+  if (flipEl) {
+    flipEl.textContent = '共 ' + all.length + ' 笔';
+    flipEl.onclick = function () { accExpenseGo(1); };
+  }
+}
 
-  renderInlineStats('expense');
+// ==================== 收入账本（v31 新设计）====================
+// 与【时间线记账记录】同款 fin-flow-row 样式；只显示 type==='income' 的手动收入记录
+// （定制单/美化档收入在【模拟人生总收入】面板单独管理，避免重复记账）
+function renderIncomeLedger() {
+  const el = document.getElementById('account-income-ledger');
+  const flipEl = document.getElementById('account-income-flip');
+  if (!el) return;
+  const all = (store.accountRecords || []).filter(r => r.type === 'income')
+    .slice().sort((a, b) => {
+      const at = (a.ts || 0), bt = (b.ts || 0);
+      if (bt !== at) return bt - at;
+      const d = (b.date || '').localeCompare(a.date || '');
+      if (d !== 0) return d;
+      return (b.time || '').localeCompare(a.time || '');
+    });
+  if (all.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:18px 8px;"><div class="big-icon">💰</div><p style="color:#8a6270;margin-top:8px;">这本收入账本还是空的</p><p style="font-size:12px;margin-top:6px;">手动收入记得告诉我"收了 800"；定制单/美化档在【模拟人生总收入】面板~</p></div>`;
+    if (flipEl) { flipEl.textContent = ''; flipEl.onclick = null; }
+    return;
+  }
+  const maxPage = Math.max(0, Math.ceil(all.length / ACC_PAGE) - 1);
+  if (accountIncomePage > maxPage) accountIncomePage = maxPage;
+  const start = accountIncomePage * ACC_PAGE;
+  const pageList = all.slice(start, start + ACC_PAGE);
+  let html = '';
+  pageList.forEach(r => {
+    const realIdx = store.accountRecords.indexOf(r);
+    const c = getCategoryInfo(r.category, r.type);
+    const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+    const timeStr = (r.time || '').substring(0, 5);
+    const opTip = r.ts ? (function () {
+      try {
+        const dt = new Date(r.ts);
+        const mm = String(dt.getMonth() + 1).padStart(2, '0'), dd = String(dt.getDate()).padStart(2, '0');
+        const hh = String(dt.getHours()).padStart(2, '0'), mi = String(dt.getMinutes()).padStart(2, '0');
+        const todayYmd = new Date().toLocaleDateString('sv-SE');
+        const opYmd = dt.getFullYear() + '-' + mm + '-' + dd;
+        const chip = (opYmd === todayYmd) ? '今天' : (mm + '/' + dd);
+        return `<span style="color:#b58a98;font-size:10.5px;">（${chip} ${hh}:${mi} 记）</span>`;
+      } catch (e) { return ''; }
+    })() : '';
+    html += `
+        <div class="fin-flow-row">
+          <div class="card-actions">
+            <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
+            <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})" aria-label="删除">🗑</button>
+          </div>
+          <div class="fin-flow-line1">
+            <div class="fin-flow-cat">
+              <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
+              <span class="fin-flow-cat-name">${c.name}</span>
+            </div>
+            <span class="fin-flow-amt income">+¥${fmtMoney(r.amount)}</span>
+          </div>
+          <div class="fin-flow-line2">
+            <span class="fin-flow-date">${dateStr}</span>
+            <span class="fin-flow-time">${timeStr}</span>
+            ${opTip}
+          </div>
+        </div>
+      `;
+  });
+  if (all.length > ACC_PAGE) {
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+      <button class="flow-toggle-btn" type="button" onclick="accIncomeGo(-1)" ${accountIncomePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <span style="font-size:12px;color:#8a6270;">第 ${accountIncomePage + 1}/${maxPage + 1} 页 · 共 ${all.length} 笔</span>
+      <button class="flow-toggle-btn" type="button" onclick="accIncomeGo(1)" ${accountIncomePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    </div>`;
+  }
+  el.innerHTML = html;
+  if (flipEl) {
+    flipEl.textContent = '共 ' + all.length + ' 笔';
+    flipEl.onclick = function () { accIncomeGo(1); };
+  }
 }
 
 function renderInlineStats(type) {
