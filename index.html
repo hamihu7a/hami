@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-07-33">
+<meta name="hami-build" content="2026-09-07-34">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -681,6 +681,10 @@
   .panel.has-custom-bg .tip-box { background: rgba(255,255,255,0.5) !important; }
   .panel.has-custom-bg .stat-card { background: rgba(255,255,255,0.55) !important; }
   .panel.has-custom-bg .month-selector select { background: rgba(255,255,255,0.7) !important; }
+
+  /* v34：首页/主面板默认背景改为柔和马卡龙粉渐变——没设背景图时也绝不露刺眼白，模块间隙=粉不是白 */
+  #panel-desktop { background: linear-gradient(160deg, #fff3f8 0%, #ffe9f2 100%); }
+  .main { background: linear-gradient(160deg, #fff3f8 0%, #ffe9f2 100%); }
 
   /* 弱化背景：仅仅模糊那张背景图片（::before 图层），文字与其他内容保持清晰 */
   .has-custom-bg.weakened::before {
@@ -3719,7 +3723,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-07-33';
+  var BUILD_VER = '2026-09-07-34';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -5403,7 +5407,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
         <!-- 🛟 背景图备份/恢复（跨设备迁移、丢失找回专用） -->
         <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,228,236,.55);border:1.5px dashed var(--c-pink-deep,#d14b73);">
           <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;">🛟 背景图备份 · 跨设备同步 · 丢失找回</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.6;margin-bottom:8px;">背景图默认只存本机浏览器（IndexedDB），换设备或清理浏览数据会丢失。<b>点「📤 上传背景到云端」可让背景图跟着工作台一起跨设备同步</b>；换设备后或发现没背景时，再点「📥 从云端拉回背景」一键还原。</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.6;margin-bottom:8px;">背景图会自动存到本机并同步云端。换设备或清缓存后，点「📥 从云端拉回背景」即可一键还原。</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">📤 上传背景到云端</button>
             <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" style="flex:1;padding:9px 12px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;">📥 从云端拉回背景</button>
@@ -5416,57 +5420,14 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
           </button>
         </div>
         <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,138,166,0.10);border:1.5px solid rgba(209,75,115,0.30);">
-          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:4px;">🔑 进阶加密密码（已停用）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.5;margin-bottom:8px;">为保证手机和电脑<b>始终能互相看到数据</b>，云端同步已统一使用默认加密，<b>无需、也不能再设密码</b>。之前因手机/电脑密码不一致导致数据互不可见、同步失败的问题已彻底修复。</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="settings-sync-pwd" type="password" placeholder="已停用 · 同步已统一加密" disabled style="flex:1 1 160px;min-width:0;padding:10px 12px;border:1.5px solid var(--c-line,#ffe4ec);border-radius:10px;font-size:13px;min-height:42px;background:#f3f3f3;color:#999;cursor:not-allowed;">
-            <button id="settings-sync-pwd-save" disabled style="padding:10px 16px;border:none;border-radius:10px;background:#ccc;color:#fff;font-size:13px;font-weight:700;cursor:not-allowed;white-space:nowrap;">已停用</button>
-          </div>
-          <div id="settings-sync-pwd-status" style="margin-top:8px;font-size:12px;color:var(--c-pink-deep,#d14b73);">✅ 同步密码已统一，手机电脑自动互通，无需任何设置。</div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button id="settings-cloud-test" style="padding:10px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;">
-            🧪 测试连接
-          </button>
-          <button id="settings-cloud-upload" style="padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
-            ⬆️ 合并并上传本机
-          </button>
-          <span id="settings-cloud-status" style="font-size:12px;color:var(--c-pink-deep,#d14b73);"></span>
-        </div>
-
-        <!-- ===== 同步自检：一眼看清手机/电脑到底通没通 ===== -->
-        <div style="margin-top:12px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,138,166,0.10);border:1.5px solid rgba(209,75,115,0.30);">
-          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:8px;line-height:1.5;">🔍 同步自检（手机/电脑对不上、数据记不住时，先点它）</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-            <button id="settings-sync-check" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">
-              查一下同步通不通
-            </button>
-            <button id="settings-sync-force" style="padding:8px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;">
-              强制重新同步
-            </button>
-            <button id="settings-sync-report" style="padding:8px 14px;border:1.5px solid #8a6270;border-radius:10px;background:#fff;color:#5a3a48;font-size:12.5px;font-weight:700;cursor:pointer;">
-              📮 一键上报问题给我
-            </button>
-            <button id="settings-cloud-purge" style="padding:8px 14px;border:1.5px solid #c25f5f;border-radius:10px;background:#fff;color:#c25f5f;font-size:12.5px;font-weight:700;cursor:pointer;">
-              🧹 清掉旧云端档案
-            </button>
-          </div>
-          <div id="hami-sync-check-out" style="font-size:12px;color:#8a6270;line-height:1.7;"></div>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button id="settings-cloud-open-system" style="padding:8px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;">
-            🪟 用系统浏览器打开（推荐）
-          </button>
-          <span style="font-size:12px;color:#c98aa3;">⚠️ 不要在 WorkBuddy 预览里测试 fetch，会被拦截</span>
+          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;line-height:1.5;">🔑 云端同步状态</div>
+          <div id="settings-cloud-status" style="font-size:12px;color:var(--c-pink-deep,#d14b73);line-height:1.6;"></div>
         </div>
 
         <!-- ===== 数据备份与恢复：云同步 ≠ 备份，这里才是真正存成一份文件 ===== -->
         <div style="margin-top:16px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,255,255,0.78);border:1.5px solid var(--c-line,#ffe4ec);">
           <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;">数据备份（建议每月点一次）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:12px;">
-            云同步只是让手机和电脑保持一致，<b>它不等于备份</b>——云端出问题时一样会跟着错。<br>
-            点「下载备份文件」会把你所有记录存成一个文件放进手机/电脑，万一哪天数据出意外，用「从备份恢复」就能原样找回来。
-          </div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:12px;">云同步不等于备份。点「下载备份文件」存一份到手机/电脑，万一数据出意外可一键找回。</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button id="settings-export-data" style="padding:11px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(209,75,115,0.3);min-height:44px;">
               下载备份文件
@@ -5483,10 +5444,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
         <!-- ===== 数据急救：从浏览器内部备份一键找回 ===== -->
         <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,240,243,0.9);border:1.5px solid #d14b73;">
           <div style="font-size:14px;font-weight:800;color:#d14b73;margin-bottom:6px;">🚑 数据急救（数据不见了先点这里）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">
-            工作台每次保存都会自动在浏览器里留一份内部备份。如果哪天打开页面发现记录空了，
-            先来这里看看备份还在不在——只要备份还在，就能一键把数据原样找回来。
-          </div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">打开页面发现记录空了？先点下面按钮，从浏览器内部备份一键找回。</div>
           <div id="data-rescue-info" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">
             正在检查内部备份…
           </div>
@@ -6345,6 +6303,12 @@ function compressImage(file, cb) {
 // 表现就是"页面提示已记录，刷新后数据没了"。这正是本次数据丢失的根因之一。
 // 方案：背景图改存 IndexedDB（容量可达几百 MB），localStorage 只留给业务数据；启动时自动迁移旧图。
 const BG_CACHE = {};   // 内存缓存：启动时一次性载入，供各处同步读取，避免改造成异步
+// v34 根治「背景图反复消失」：把背景图以【同步可靠】的 localStorage 聚合键为主存
+// （IndexedDB 在微信/Safari 隐私模式/预览环境经常读不到，正是图老丢的真凶），IDB 与云端仅作冗余备份。
+const BG_ALL_KEY = 'hami_bg_all';
+function _bgAllRead() { try { return JSON.parse(localStorage.getItem(BG_ALL_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function _bgAllWrite() { try { localStorage.setItem(BG_ALL_KEY, JSON.stringify(BG_CACHE)); } catch (e) {} }
+function _bgAllDel(key) { try { const o = _bgAllRead(); delete o[key]; localStorage.setItem(BG_ALL_KEY, JSON.stringify(o)); } catch (e) {} }
 const HAMI_BG_DB = 'hami_bgs_db';
 const HAMI_BG_STORE = 'bgs';
 function openBgIDB() {
@@ -6403,9 +6367,10 @@ function bgIdbGetAll() {
     });
   }).catch(function () { return {}; });
 }
-// 统一写入口：更新内存缓存 + 异步写 IndexedDB（不再占用 localStorage）
+// 统一写入口：更新内存缓存 + 同步写 localStorage（主存，可靠）+ 异步写 IndexedDB（冗余备份）
 function setBgStored(key, dataUrl) {
   BG_CACHE[key] = dataUrl;
+  _bgAllWrite();   // v34：同步写入 localStorage 聚合键（主存），避免依赖不可靠的 IndexedDB
   BG_IDB_TS[key] = Date.now();
   try { bgIdbSet(key, dataUrl); } catch (e) {}
   try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
@@ -6426,9 +6391,10 @@ function setBgStored(key, dataUrl) {
     }
   } catch (e) {}
 }
-// 统一删除入口：清缓存 + 清 IndexedDB + 兼容清理 localStorage 旧副本
+// 统一删除入口：清缓存 + 清 localStorage 主存 + 清 IndexedDB + 兼容清理 localStorage 旧副本
 function delBgStored(key) {
   delete BG_CACHE[key];
+  _bgAllDel(key);   // v34：同步从 localStorage 主存删除，保证推送时不会把已删的图重新带上云
   delete BG_IDB_TS[key];
   try { bgIdbDel(key); } catch (e) {}
   try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}
@@ -6598,6 +6564,12 @@ function hamiBgRecoveryToast(level, msg) {
 const BG_IDB_TS = {};
 
 async function initBgCacheAndMigrate() {
+  // v34：【最关键一步】先同步从 localStorage 聚合键取回背景图。localStorage 是同步、可靠的，
+  // 不依赖异步的 IndexedDB——无论 IDB 是否可用，本地图都先就位，applyAllBgs 绝不会再误清空图。
+  try {
+    const ls = _bgAllRead();
+    Object.keys(ls).forEach(function (k) { if (ls[k]) BG_CACHE[k] = ls[k]; });
+  } catch (e) {}
   // 加载 IDB 写入时间戳（用于"云端 vs 本地"新旧比较，决定是否覆盖本地背景图）
   try {
     const tsRaw = localStorage.getItem('hami_bg_idb_ts');
@@ -6654,8 +6626,9 @@ function applyAllBgs() {
       const cfg = loadEmbeddedBgConfig();
       if (cfg.bgs && cfg.bgs[key]) { applyBg(key, cfg.bgs[key]); return; }
     } catch (e) {}
-    // 没有可用来源时恢复默认纯色，避免残留旧状态
-    try { clearBg(key); } catch (e) {}
+    // v34：不再主动 clearBg。BG_CACHE 未就绪/暂无图时，保留页面默认状态即可，
+    // 否则会在 IndexedDB 还没加载完时误把已显示的背景图清掉（这就是"图反复消失"的来源）。
+    // 删除操作已由 delBgStored/clearBg 同步清理内存+localStorage+IDB，不会残留旧图。
   });
   // v33：若首页整体没有单独设背景图，但首页任一区域（hero/天气/运势/自媒体/体重日历）有背景图，
   // 就把第一张可用背景图继承到首页整体，避免模块间隙露白；主人只需传一张图，首页就能整体透出。
@@ -6705,7 +6678,9 @@ async function bgUploadAllToCloud() {
       if (!_syncBusy && !_commitBusy) break;
       await new Promise(r => setTimeout(r, 250));
     }
-    const bgs = await bgIdbGetAll();
+    // v34：优先用 BG_CACHE（已由 localStorage 主存保证可靠），再以 IndexedDB 兜底补全
+    const bgs = Object.assign({}, BG_CACHE);
+    try { const idbBgs = await bgIdbGetAll(); Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k] && !bgs[k]) bgs[k] = idbBgs[k]; }); } catch (e) {}
     const keys = Object.keys(bgs || {}).filter(k => bgs[k]);
     if (!keys.length) { if (statusEl) statusEl.textContent = '⚠️ 本地浏览器里没有背景图，无须上传。请先在「主面板镜像 · 点击板块改背景」上传几张图。'; return; }
     let total = 0; keys.forEach(k => total += (bgs[k] || '').length);
@@ -7230,8 +7205,20 @@ async function pushNow() {
         await pullAndMerge();
         const payload = { v: 1, updatedAt: Date.now(), store: store };
         // 把背景图也带上云端（base64 字串 ≤30KB/张；主人换设备 / 清缓存时能一键拉回）
+        // v34：【根治背景图消失】背景图以本地 BG_CACHE 为准（已由 localStorage 主存保证可靠），
+        // 直接写入云端，删除的图也不会被带上云 → 云端等于本地全集。
+        // 仅当本地 BG_CACHE 极端情况下完全为空时，才保留云端已有图、绝不静默清空。
         try {
-          const bgs = await bgIdbGetAll();
+          let bgs = Object.assign({}, BG_CACHE);
+          if (!Object.keys(bgs).length) {
+            try {
+              const got = await _ghGet();
+              if (got) {
+                const r = await decryptStore(got.content.replace(/\s+/g, ''), '');
+                if (r && r.bgBackups) bgs = r.bgBackups;
+              }
+            } catch (e2) {}
+          }
           if (bgs && Object.keys(bgs).length) {
             payload.bgBackups = bgs;
             payload.bgBackupsAt = Date.now();
