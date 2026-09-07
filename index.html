@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-07-30">
+<meta name="hami-build" content="2026-09-07-33">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3719,7 +3719,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-07-32';
+  var BUILD_VER = '2026-09-07-33';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6487,7 +6487,18 @@ async function syncBgsFromCloudOnBoot() {
       }
     }
     if (!remote || !remote.bgBackups || typeof remote.bgBackups !== 'object') {
-        hamiBgRecoveryToast('none', '云端没存过背景图（请在背景图面板上传一次）');
+        // v33：本地已经有背景图时，云端没备份只是“没上传过”，不该吓唬主人；只在“本地也没有”才提示
+        const hasLocalBg = Object.keys(BG_CACHE).some(function (k) { return !!BG_CACHE[k]; });
+        if (!hasLocalBg) {
+          hamiBgRecoveryToast('none', '云端没存过背景图（请在背景图面板上传一次）');
+        } else {
+          // 本地有图但云端没备份：静默刷一次应用，并在设置面板给出温和提示
+          try { applyAllBgs(); } catch (e) {}
+          try {
+            const statusEl = document.getElementById('settings-bg-cloud-status');
+            if (statusEl) statusEl.textContent = '☁️ 本地有背景图，但云端还没备份。换设备前请点「📤 上传背景到云端」一次。';
+          } catch (e) {}
+        }
         return;
       }
     const keys = Object.keys(remote.bgBackups);
@@ -6646,13 +6657,20 @@ function applyAllBgs() {
     // 没有可用来源时恢复默认纯色，避免残留旧状态
     try { clearBg(key); } catch (e) {}
   });
-  // v32：若首页整体没有背景图，但 hero 有，则把 hero 背景图继承到首页整体，避免模块间隙露白
+  // v33：若首页整体没有单独设背景图，但首页任一区域（hero/天气/运势/自媒体/体重日历）有背景图，
+  // 就把第一张可用背景图继承到首页整体，避免模块间隙露白；主人只需传一张图，首页就能整体透出。
   try {
     const cfg = loadEmbeddedBgConfig();
-    const heroData = BG_CACHE['hero'] || (cfg.bgs && cfg.bgs['hero'] ? cfg.bgs['hero'] : null);
+    const homeKeys = ['hero', 'weather', 'fortune', 'accounts', 'panel-fitness'];
+    let firstHomeBg = null;
+    for (let i = 0; i < homeKeys.length; i++) {
+      const k = homeKeys[i];
+      const d = BG_CACHE[k] || (cfg.bgs && cfg.bgs[k] ? cfg.bgs[k] : null);
+      if (d) { firstHomeBg = d; break; }
+    }
     const hasPanelDesktop = BG_CACHE['panel-desktop'] || (cfg.bgs && cfg.bgs['panel-desktop']);
-    if (heroData && !hasPanelDesktop) {
-      applyBg('panel-desktop', heroData);
+    if (firstHomeBg && !hasPanelDesktop) {
+      applyBg('panel-desktop', firstHomeBg);
     }
   } catch (e) {}
 }
