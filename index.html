@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-06-29">
+<meta name="hami-build" content="2026-09-07-30">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1780,6 +1780,12 @@
   #media-stats .stat-card { padding: 14px 10px; }
   #media-stats .stat-card .value { font-size: 20px; }
   #media-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
+  /* v2026-09-07-30 健康记录 4 张卡「上2下2 紧密」：主人要求紧密排版 */
+  #fitness-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  #fitness-stats .stat-card { padding: 12px 8px; }
+  #fitness-stats .stat-card .value { font-size: 19px; }
+  #fitness-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
+  #fitness-stats .stat-card .unit { font-size: 11px; }
   /* v2026-09-06-28 历史推荐表：标题列允许换行且不溢出；表头紧凑 */
   #inspire-history td:first-child,
   #inspire-history td:nth-child(2),
@@ -2989,6 +2995,19 @@
   body.hami-force-narrow .weight-cal-cell { min-height: 56px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
+  /* v2026-09-07-30 首页(panel-desktop)统一紧凑：主人说"间隔太宽" */
+  #panel-desktop > .todo-card,
+  #panel-desktop > .card { margin-bottom: 6px; }
+  #panel-desktop > .checkin-grid { margin-bottom: 6px; }
+  #panel-desktop > .stats-grid { margin-bottom: 6px; }
+  #panel-desktop > .accounts-wrap { margin-bottom: 6px; }
+  /* 修补 desktop-todo 之类的内联空容器引起的视觉大空白 */
+  #panel-desktop #desktop-countdown,
+  #panel-desktop #home-weather-fortune,
+  #panel-desktop #desktop-accounts-wrap { margin-bottom: 6px; }
+  /* 体重日历那个 card 单独加底距，避免底下还堆很大空白 */
+  #panel-desktop #home-weight-cal { margin-bottom: 8px; }
+
   body.hami-force-narrow .weight-cal-change { font-size: 9px !important; }
   body.hami-force-narrow table { font-size: 12px; }
   body.hami-force-narrow th, body.hami-force-narrow td { padding: 6px 4px; }
@@ -3301,10 +3320,11 @@
   .tm-modal-title { font-size: 16px; font-weight: 800; color: #d14b73; text-align: center; margin-bottom: 14px; }
   .tm-city-switcher { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: -6px 0 14px; }
   .tm-city-chip {
-    display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.2;
-    padding: 4px 14px; border-radius: 14px; border: 1px solid rgba(209,75,115,0.25);
+    display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; line-height: 1.3;
+    padding: 5px 14px; border-radius: 14px; border: 1px solid rgba(209,75,115,0.25);
     background: rgba(255,255,255,0.5); color: #7d4a5a; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all .15s ease; user-select: none;
+    white-space: nowrap; max-width: 100%;
   }
   .tm-city-chip:hover { background: rgba(209,75,115,0.1); border-color: rgba(209,75,115,0.4); }
   .tm-city-chip.active { background: rgba(209,75,115,0.18); border-color: rgba(209,75,115,0.5); color: #d14b73; font-weight: 700; }
@@ -3698,7 +3718,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-06-29';
+  var BUILD_VER = '2026-09-07-30';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4705,12 +4725,11 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     </div>
 
     <div class="todo-card" id="account-disposable-card" style="padding:16px 18px;background:linear-gradient(135deg,#fff5f8,#ffe9f1);border:1.5px solid #ffd6e3;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:nowrap;">
         <span style="font-size:18px;">💎</span>
-        <h3 style="font-size:15px;font-weight:800;color:#d14b73;">可支配余额</h3>
-        <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:8px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;">✏️ 修改</button>
-        <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;">💾 保存</button>
-        <span style="margin-left:auto;font-size:11px;color:#a8788a;">本金 + 所有账单自动算</span>
+        <h3 style="font-size:15px;font-weight:800;color:#d14b73;white-space:nowrap;">可支配余额</h3>
+        <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:6px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;">✏️ 修改</button>
+        <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;">💾 保存</button>
       </div>
       <div id="account-disposable-display" style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:#fff;border:1.5px dashed #ffc2d6;border-radius:14px;">
         <span style="font-size:13px;color:#7d4a5a;font-weight:600;">当前可支配余额</span>
@@ -6368,8 +6387,22 @@ function setBgStored(key, dataUrl) {
   BG_IDB_TS[key] = Date.now();
   try { bgIdbSet(key, dataUrl); } catch (e) {}
   try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
-  // 主人再也不用手动按"📤 上传背景到云端"：每次新上传/替换背景图，30 秒内自动推到云端
+  // v2026-09-07-30: 主人 N+1 次抱怨"背景图又消失"。改 30s 延迟为 3s，最大化"自动同步"体感
   try { hamiScheduleBgAutoUpload(); } catch (e) {}
+  // 额外兜底：如果云已经 ready 且当前没有正在上传，立即推一次（不等 3s debounce）
+  try {
+    if (typeof hamiCloudEnabled === 'function' && hamiCloudEnabled() && typeof hamiSyncReady !== 'undefined' && hamiSyncReady) {
+      const _bui = (typeof _bgUploadInFlight === 'undefined') ? false : _bgUploadInFlight;
+      if (!_bui) {
+        // 等当前 store 推送链路释放（最坏 2s），再立即推背景图
+        setTimeout(function () {
+          bgUploadAllToCloud().catch(function (e) {
+            try { console.warn('[背景图立即上传] 失败：', e && e.message); } catch (e2) {}
+          });
+        }, 500);
+      }
+    }
+  } catch (e) {}
 }
 // 统一删除入口：清缓存 + 清 IndexedDB + 兼容清理 localStorage 旧副本
 function delBgStored(key) {
@@ -6391,6 +6424,7 @@ function hamiScheduleBgAutoUpload() {
     if (!hamiSyncReady) { _hamiBgAutoUploadPending = true; return; }
     if (_bgUploadInFlight) { _hamiBgAutoUploadPending = true; return; }
     if (_hamiBgAutoUploadTimer) clearTimeout(_hamiBgAutoUploadTimer);
+    // v2026-09-07-30: 主人 N 次抱怨"背景图又消失"，延迟从 30s 缩到 3s，最大化"自动同步"体感
     _hamiBgAutoUploadTimer = setTimeout(function () {
       _hamiBgAutoUploadTimer = null;
       // 走独立上传通道（不影响 store 数据同步，避免并发抢 sha 报 409）
@@ -6400,7 +6434,7 @@ function hamiScheduleBgAutoUpload() {
         // 上传完后再检查一次"期间是否又有新图要传"，形成串行防丢
         if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); }
       });
-    }, 30000);
+    }, 3000);
   } catch (e) {}
 }
 // 启动时：载入 IndexedDB 里的背景图，并把 localStorage 里的旧背景图迁移过去、立刻腾出 5MB 配额
@@ -6518,11 +6552,13 @@ function hamiBgRecoveryToast(level, msg) {
       '<span id="hami-bg-recovery-close" style="cursor:pointer;opacity:.6;padding:0 4px;">✕</span>';
     const closeBtn = document.getElementById('hami-bg-recovery-close');
     if (closeBtn) closeBtn.onclick = function () { try { el.remove(); } catch (e) {} };
+    // v2026-09-07-30: 'none'(警告) 级别显示更久（30s）并加持久小黄条；'ok'/'fail' 还是 6s
+    const hideMs = (level === 'none') ? 30000 : 6000;
     _hamiBgRecoveryHideTimer = setTimeout(function () {
       const e2 = document.getElementById('hami-bg-recovery');
       if (e2) e2.remove();
       _hamiBgRecoveryHideTimer = null;
-    }, 6000);
+    }, hideMs);
   } catch (e) {}
 }
 // 记录每张背景图在本地 IDB 的写入时间戳，用于「云端 vs 本地」新旧比较
@@ -10091,11 +10127,32 @@ function fillMonthSelect(sel, includeAll) {
 }
 
 function switchPanel(name, navEl) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (navEl) navEl.classList.add('active');
-  document.getElementById('sidebar').classList.remove('open');
+  try {
+    const target = document.getElementById('panel-' + name);
+    if (!target) {
+      try { hamiToast('面板未找到：' + name); } catch (e) {}
+      return;
+    }
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navEl) {
+      navEl.classList.add('active');
+    } else {
+      // 没有传入 navEl 时，按 name 自动给侧栏对应 nav-item 加 active
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(n => {
+        const oc = n.getAttribute('onclick') || '';
+        if (oc.indexOf("switchPanel('" + name + "'") >= 0) n.classList.add('active');
+      });
+    }
+    document.getElementById('sidebar').classList.remove('open');
+    // 滚到顶部
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+  } catch (e) {
+    try { hamiToast('切换失败：' + (e.message || e)); } catch (e2) {}
+    return;
+  }
   // 切到「模拟人生总收入 / 自媒体更新记录」面板，强制把月份下拉设为当月（与个人支出与收入面板同款）
   if (name === 'income') {
     try {
@@ -14878,7 +14935,7 @@ function openWeatherSearchCity() {
     'font-size:13px;border:1px solid #f3d8e2;color:#5b3848';
   pop.innerHTML = `
     <div style="font-weight:800;color:#d14b73;font-size:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
-      <span>🔍 切换城市</span>
+      <span>切换城市</span>
       <span style="cursor:pointer;color:#9b6878;font-weight:600;font-size:16px;line-height:1;" onclick="document.getElementById('hami-city-search-pop').remove()">×</span>
     </div>
     <div style="display:flex;gap:6px;">
@@ -14892,35 +14949,160 @@ function openWeatherSearchCity() {
   `;
   document.body.appendChild(pop);
   document.getElementById('hami-city-input').focus();
+  // 内置热门城市库（用于在 open-meteo 模糊匹配失灵时给出精确结果，例如主人搜"河源"会直接匹配"广东河源"而不是重庆/云南的同名小地名）
+  const HAMI_CITY_DB = [
+    // 直辖市
+    { name: '北京', admin1: '北京市', lat: 39.9042, lon: 116.4074, pri: 1 },
+    { name: '上海', admin1: '上海市', lat: 31.2304, lon: 121.4737, pri: 1 },
+    { name: '天津', admin1: '天津市', lat: 39.3434, lon: 117.3616, pri: 1 },
+    { name: '重庆', admin1: '重庆市', lat: 29.5630, lon: 106.5516, pri: 1 },
+    // 广东省（含主人常驻河源 + 周边）
+    { name: '广州', admin1: '广东省', lat: 23.1291, lon: 113.2644, pri: 1 },
+    { name: '深圳', admin1: '广东省', lat: 22.5431, lon: 114.0579, pri: 1 },
+    { name: '河源', admin1: '广东省', lat: 23.7434, lon: 114.6975, pri: 1 },
+    { name: '汕尾', admin1: '广东省', lat: 22.7864, lon: 115.3754, pri: 1 },
+    { name: '东莞', admin1: '广东省', lat: 23.0207, lon: 113.7518, pri: 1 },
+    { name: '佛山', admin1: '广东省', lat: 23.0218, lon: 113.1219, pri: 1 },
+    { name: '珠海', admin1: '广东省', lat: 22.2710, lon: 113.5767, pri: 1 },
+    { name: '惠州', admin1: '广东省', lat: 23.1115, lon: 114.4161, pri: 1 },
+    { name: '汕头', admin1: '广东省', lat: 23.3535, lon: 116.6818, pri: 1 },
+    { name: '揭阳', admin1: '广东省', lat: 23.5498, lon: 116.3728, pri: 1 },
+    { name: '梅州', admin1: '广东省', lat: 24.2886, lon: 116.1226, pri: 1 },
+    { name: '韶关', admin1: '广东省', lat: 24.8108, lon: 113.5972, pri: 1 },
+    { name: '湛江', admin1: '广东省', lat: 21.2710, lon: 110.3594, pri: 1 },
+    { name: '茂名', admin1: '广东省', lat: 21.6629, lon: 110.9255, pri: 1 },
+    { name: '肇庆', admin1: '广东省', lat: 23.0470, lon: 112.4651, pri: 1 },
+    { name: '清远', admin1: '广东省', lat: 23.6817, lon: 113.0563, pri: 1 },
+    { name: '中山', admin1: '广东省', lat: 22.5176, lon: 113.3927, pri: 1 },
+    { name: '江门', admin1: '广东省', lat: 22.5787, lon: 113.0817, pri: 1 },
+    { name: '阳江', admin1: '广东省', lat: 21.8587, lon: 111.9826, pri: 1 },
+    { name: '潮州', admin1: '广东省', lat: 23.6618, lon: 116.6224, pri: 1 },
+    { name: '云浮', admin1: '广东省', lat: 22.9151, lon: 112.0444, pri: 1 },
+    // 其它省代表
+    { name: '杭州', admin1: '浙江省', lat: 30.2741, lon: 120.1551, pri: 1 },
+    { name: '宁波', admin1: '浙江省', lat: 29.8683, lon: 121.5440, pri: 1 },
+    { name: '温州', admin1: '浙江省', lat: 27.9938, lon: 120.6993, pri: 1 },
+    { name: '南京', admin1: '江苏省', lat: 32.0603, lon: 118.7969, pri: 1 },
+    { name: '苏州', admin1: '江苏省', lat: 31.2989, lon: 120.5853, pri: 1 },
+    { name: '无锡', admin1: '江苏省', lat: 31.4912, lon: 120.3119, pri: 1 },
+    { name: '武汉', admin1: '湖北省', lat: 30.5928, lon: 114.3055, pri: 1 },
+    { name: '长沙', admin1: '湖南省', lat: 28.2282, lon: 112.9388, pri: 1 },
+    { name: '成都', admin1: '四川省', lat: 30.5728, lon: 104.0668, pri: 1 },
+    { name: '重庆', admin1: '重庆市', lat: 29.5630, lon: 106.5516, pri: 1 },
+    { name: '西安', admin1: '陕西省', lat: 34.3416, lon: 108.9398, pri: 1 },
+    { name: '郑州', admin1: '河南省', lat: 34.7466, lon: 113.6253, pri: 1 },
+    { name: '济南', admin1: '山东省', lat: 36.6512, lon: 117.1201, pri: 1 },
+    { name: '青岛', admin1: '山东省', lat: 36.0671, lon: 120.3826, pri: 1 },
+    { name: '厦门', admin1: '福建省', lat: 24.4798, lon: 118.0894, pri: 1 },
+    { name: '福州', admin1: '福建省', lat: 26.0745, lon: 119.2965, pri: 1 },
+    { name: '南昌', admin1: '江西省', lat: 28.6820, lon: 115.8579, pri: 1 },
+    { name: '合肥', admin1: '安徽省', lat: 31.8206, lon: 117.2272, pri: 1 },
+    { name: '昆明', admin1: '云南省', lat: 25.0389, lon: 102.7183, pri: 1 },
+    { name: '贵阳', admin1: '贵州省', lat: 26.6470, lon: 106.6302, pri: 1 },
+    { name: '南宁', admin1: '广西', lat: 22.8170, lon: 108.3669, pri: 1 },
+    { name: '海口', admin1: '海南省', lat: 20.0444, lon: 110.1992, pri: 1 },
+    { name: '三亚', admin1: '海南省', lat: 18.2528, lon: 109.5119, pri: 1 },
+    { name: '乌鲁木齐', admin1: '新疆', lat: 43.8256, lon: 87.6168, pri: 1 },
+    { name: '拉萨', admin1: '西藏', lat: 29.6469, lon: 91.1175, pri: 1 },
+    { name: '哈尔滨', admin1: '黑龙江省', lat: 45.8038, lon: 126.5350, pri: 1 },
+    { name: '长春', admin1: '吉林省', lat: 43.8171, lon: 125.3235, pri: 1 },
+    { name: '沈阳', admin1: '辽宁省', lat: 41.8057, lon: 123.4315, pri: 1 },
+    { name: '大连', admin1: '辽宁省', lat: 38.9140, lon: 121.6147, pri: 1 },
+    { name: '青岛', admin1: '山东省', lat: 36.0671, lon: 120.3826, pri: 1 },
+    { name: '太原', admin1: '山西省', lat: 37.8706, lon: 112.5489, pri: 1 },
+    { name: '兰州', admin1: '甘肃省', lat: 36.0611, lon: 103.8343, pri: 1 },
+    { name: '西宁', admin1: '青海省', lat: 36.6232, lon: 101.7804, pri: 1 },
+    { name: '银川', admin1: '宁夏', lat: 38.4872, lon: 106.2309, pri: 1 },
+    { name: '呼和浩特', admin1: '内蒙古', lat: 40.8426, lon: 111.7490, pri: 1 }
+  ];
+  function searchLocalCity(q) {
+    q = (q || '').trim();
+    if (!q) return [];
+    const hits = [];
+    HAMI_CITY_DB.forEach(function (c) {
+      if (c.name === q || c.name.indexOf(q) === 0) hits.push(c);   // 完全匹配或开头匹配最优先
+      else if (c.name.indexOf(q) >= 0) hits.push(c);                 // 包含也算次优
+    });
+    // 优先 pri 小的（pri=1 都是地级市以上）；同名去重（同一名字在 DB 里只留第一个匹配）
+    const seen = new Set();
+    return hits.filter(function (c) { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
+  }
   const doSearch = function() {
     const q = (document.getElementById('hami-city-input').value || '').trim();
     if (!q) return;
     const rEl = document.getElementById('hami-city-results');
     rEl.innerHTML = '<span style="color:#9b6878;">🔄 搜索中...</span>';
+    // 1) 本地库先匹配（精准、主人常搜的优先）
+    const localHits = searchLocalCity(q);
+    // 2) open-meteo 模糊匹配（兜底找其它/国外城市）
     fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=10&language=zh&format=json')
       .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)); })
       .then(function(data){
-        const list = (data && data.results) || [];
-        if (list.length === 0) { rEl.innerHTML = '<span style="color:#9b6878;">没找到，换个名字再试</span>'; return; }
+        const remote = (data && data.results) || [];
+        if (localHits.length === 0 && remote.length === 0) {
+          rEl.innerHTML = '<span style="color:#9b6878;">没找到，换个名字再试（如"河源""上海"）</span>';
+          return;
+        }
         rEl.innerHTML = '';
-        list.forEach(function(it){
-          // 拼中文显示名；priority 给中国城市优先
-          const disp = (it.name || '') + (it.admin1 && it.admin1 !== it.name ? ' · ' + it.admin1 : '') + (it.country ? ' · ' + it.country : '');
-          const lat = it.latitude, lon = it.longitude;
+        // 先渲染本地库命中（标记「推荐」）
+        localHits.forEach(function (c) {
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.style.cssText = 'padding:5px 10px;border-radius:9px;border:1px solid #f3d8e2;background:#fff;cursor:pointer;font-size:12px;color:#5b3848;';
-          btn.textContent = disp;
+          btn.style.cssText = 'padding:6px 11px;border-radius:9px;border:1px solid #d14b73;background:rgba(255,225,234,0.55);cursor:pointer;font-size:12px;color:#5b3848;font-weight:700;display:inline-flex;align-items:center;gap:5px;';
+          btn.innerHTML = '<span style="background:#d14b73;color:#fff;font-size:10px;padding:1px 5px;border-radius:6px;line-height:1.2;">推荐</span>' + c.name + ' · ' + c.admin1;
           btn.onclick = function() {
-            applyWeatherCity(it.name, lat, lon, true);
+            applyWeatherCity(c.name, c.lat, c.lon, true);
             const p = document.getElementById('hami-city-search-pop');
             if (p) p.remove();
           };
           rEl.appendChild(btn);
         });
+        // 合并去重后再渲染 open-meteo 结果（中国城市排前 + 高人口排前）
+        const localNames = new Set(localHits.map(function (c) { return c.name; }));
+        const remoteSorted = remote
+          .filter(function (it) { return !localNames.has(it.name); })  // 本地库已有的不再重复
+          .sort(function (a, b) {
+            const ca = (a.country_code === 'CN' || (a.country || '').indexOf('中国') >= 0) ? 0 : 1;
+            const cb = (b.country_code === 'CN' || (b.country || '').indexOf('中国') >= 0) ? 0 : 1;
+            if (ca !== cb) return ca - cb;
+            return (b.population || 0) - (a.population || 0);
+          });
+        remoteSorted.forEach(function (it) {
+          const disp = (it.name || '') + (it.admin1 && it.admin1 !== it.name ? ' · ' + it.admin1 : '') + (it.country ? ' · ' + it.country : '');
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.cssText = 'padding:5px 10px;border-radius:9px;border:1px solid #f3d8e2;background:#fff;cursor:pointer;font-size:12px;color:#5b3848;';
+          btn.textContent = disp;
+          btn.onclick = function() {
+            applyWeatherCity(it.name, it.latitude, it.longitude, true);
+            const p = document.getElementById('hami-city-search-pop');
+            if (p) p.remove();
+          };
+          rEl.appendChild(btn);
+        });
+        if (rEl.children.length === 0) {
+          rEl.innerHTML = '<span style="color:#9b6878;">没找到更多结果</span>';
+        }
       })
       .catch(function(){
-        rEl.innerHTML = '<span style="color:#d14b73;">搜索失败，可能是网络问题</span>';
+        // 网络失败时只用本地库结果
+        if (localHits.length === 0) {
+          rEl.innerHTML = '<span style="color:#d14b73;">搜索失败，可能是网络问题</span>';
+          return;
+        }
+        rEl.innerHTML = '';
+        localHits.forEach(function (c) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.cssText = 'padding:6px 11px;border-radius:9px;border:1px solid #d14b73;background:rgba(255,225,234,0.55);cursor:pointer;font-size:12px;color:#5b3848;font-weight:700;display:inline-flex;align-items:center;gap:5px;';
+          btn.innerHTML = '<span style="background:#d14b73;color:#fff;font-size:10px;padding:1px 5px;border-radius:6px;line-height:1.2;">推荐</span>' + c.name + ' · ' + c.admin1;
+          btn.onclick = function() {
+            applyWeatherCity(c.name, c.lat, c.lon, true);
+            const p = document.getElementById('hami-city-search-pop');
+            if (p) p.remove();
+          };
+          rEl.appendChild(btn);
+        });
       });
   };
   document.getElementById('hami-city-go').onclick = doSearch;
@@ -15383,14 +15565,13 @@ function renderDesktopWeight() {
     }
 
     const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1.5px #f0c040;' : '';
-    // 主人要的版式：↑0.8（变化）一行 + 89.2（体重）一行，两行清晰各自一行，不强行单行
+    // v2026-09-07-30: 重做 cell 布局 —— 严格两行：上行"变化"、下行"体重"，全部 nowrap + 字体小
     const cellTitle = `${dateStr}${weightText ? ' · 体重 ' + weightText : ''}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''} · 点击修改`;
-    // v17:每个 cell 钉死尺寸——避免任何 CSS 把单个 cell 撑成全宽导致 grid 变成一长列
     html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;min-height:54px;min-width:0;max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:2px 1px;border:1px solid #f5e8ee;border-radius:6px;overflow:hidden;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
-      <div class="weight-cal-day" style="font-size:12px;font-weight:700;line-height:1.1;color:${isToday ? '#c08020' : '#5a3a48'};">${d}</div>
-      <div class="weight-cal-stack" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1;min-height:22px;flex:1;width:100%;">
-        ${weightText ? `<div class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}" style="font-size:11px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 3px;line-height:1.2;">${weightText}</div>` : '<div class="weight-cal-weight weight-cal-weight-empty" style="visibility:hidden;line-height:1.2;background:transparent;">&nbsp;</div>'}
-        ${changeText ? `<div class="weight-cal-change" style="font-size:10px;font-weight:600;line-height:1.2;white-space:nowrap;color:${changeColor};">${changeText}</div>` : '<div class="weight-cal-change weight-cal-change-empty" style="visibility:hidden;line-height:1.2;">&nbsp;</div>'}
+      <div class="weight-cal-day" style="font-size:11.5px;font-weight:700;line-height:1.1;color:${isToday ? '#c08020' : '#5a3a48'};white-space:nowrap;">${d}</div>
+      <div class="weight-cal-stack" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.05;min-height:26px;flex:1;width:100%;">
+        <div class="weight-cal-change${changeText ? '' : ' weight-cal-change-empty'}" style="font-size:9.5px;font-weight:700;line-height:1.05;white-space:nowrap;color:${changeColor};overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;">${changeText || ' '}</div>
+        <div class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}${weightText ? '' : ' weight-cal-weight-empty'}" style="font-size:10.5px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 2px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;">${weightText || '—'}</div>
       </div>
       <div class="weight-cal-ex" style="display:flex;gap:1px;line-height:1;">${exIcons}</div>
     </div>`;
