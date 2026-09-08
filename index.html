@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-55">
+<meta name="hami-build" content="2026-09-08-56">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-55';
+  var BUILD_VER = '2026-09-08-56';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6637,12 +6637,20 @@ function _promiseTimeout(p, ms, fallback) {
   ]);
 }
 // 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
+// v56：彻底不弹 toast（v35 铁律：调试提示不上首页），所有状态只在设置面板二级文字显示
 async function syncBgsFromCloudOnBoot() {
   try {
     if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
     const got = await _ghGet();
     if (!got) {
-        hamiBgRecoveryToast('none', '云端连不上（GitHub 返回空），先等等或去设置面板点"立即同步"');
+        // 云端空：本地也没图才在设置面板温和提示一次
+        const hasLocalBg = Object.keys(BG_CACHE).some(function (k) { return !!BG_CACHE[k]; });
+        if (!hasLocalBg) {
+          try {
+            const statusEl = document.getElementById('settings-bg-cloud-status');
+            if (statusEl) statusEl.textContent = '☁️ 还没连上云端，先等等或在设置面板点「立即同步」';
+          } catch (e) {}
+        }
         return;
       }
     let remote = null;
@@ -6650,17 +6658,22 @@ async function syncBgsFromCloudOnBoot() {
     catch (e1) {
       try { remote = await decryptStore(got.content.replace(/\s+/g, ''), (typeof hamiSyncPassword === 'string' ? hamiSyncPassword : '')); }
       catch (e2) {
-        hamiBgRecoveryToast('fail', '云端备份存在但解密失败（密码变了？）');
+        // 解密失败：仅在设置面板提示，不弹首页
+        try {
+          const statusEl = document.getElementById('settings-bg-cloud-status');
+          if (statusEl) statusEl.textContent = '⚠️ 云端备份存在但解密失败，可能改了密码？去设置面板检查';
+        } catch (e) {}
         return;
       }
     }
     if (!remote || !remote.bgBackups || typeof remote.bgBackups !== 'object') {
-        // v33：本地已经有背景图时，云端没备份只是“没上传过”，不该吓唬主人；只在“本地也没有”才提示
         const hasLocalBg = Object.keys(BG_CACHE).some(function (k) { return !!BG_CACHE[k]; });
         if (!hasLocalBg) {
-          hamiBgRecoveryToast('none', '云端没存过背景图（请在背景图面板上传一次）');
+          try {
+            const statusEl = document.getElementById('settings-bg-cloud-status');
+            if (statusEl) statusEl.textContent = '☁️ 云端还没存过背景图（请在背景图面板上传一次）';
+          } catch (e) {}
         } else {
-          // 本地有图但云端没备份：静默刷一次应用，并在设置面板给出温和提示
           try { applyAllBgs(); } catch (e) {}
           try {
             const statusEl = document.getElementById('settings-bg-cloud-status');
@@ -6671,10 +6684,12 @@ async function syncBgsFromCloudOnBoot() {
       }
     const keys = Object.keys(remote.bgBackups);
     if (!keys.length) {
-        hamiBgRecoveryToast('none', '云端背景图备份为空');
+        try {
+          const statusEl = document.getElementById('settings-bg-cloud-status');
+          if (statusEl) statusEl.textContent = '☁️ 云端背景图备份为空';
+        } catch (e) {}
         return;
       }
-    // 先盘点本地到底缺几张，避免"云端有但本地 IDB 也有"的假阳性提示
     let localMissing = 0;
     keys.forEach(function (k) {
       const data = remote.bgBackups[k];
@@ -6685,7 +6700,6 @@ async function syncBgsFromCloudOnBoot() {
       if (need) localMissing++;
     });
     if (localMissing === 0) {
-      // 本地比云端新，无需恢复；只悄悄刷一次 applyAllBgs 避免旧的"消失"假象
       try { applyAllBgs(); } catch (e) {}
       return;
     }
@@ -6709,57 +6723,35 @@ async function syncBgsFromCloudOnBoot() {
         if (applied > 0) {
           try { applyAllBgs(); } catch (e) {}
           try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
-          hamiBgRecoveryToast('ok', '☁️ 已自动从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）' + (failed ? '，失败 ' + failed + ' 张' : ''));
+          // v56：不弹首页 toast。状态写设置面板二级文字，主人主动去看才看得到
           try {
             const statusEl = document.getElementById('settings-bg-cloud-status');
-            if (statusEl) statusEl.textContent = '☁️ 启动时已从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）';
+            if (statusEl) statusEl.textContent = '☁️ 已从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）' + (failed ? '，失败 ' + failed + ' 张' : '');
           } catch (e) {}
         } else if (failed > 0) {
-          hamiBgRecoveryToast('fail', '背景图恢复失败 ' + failed + ' 张，请去设置面板手动重试');
+          try {
+            const statusEl = document.getElementById('settings-bg-cloud-status');
+            if (statusEl) statusEl.textContent = '⚠️ 背景图恢复失败 ' + failed + ' 张，请去设置面板手动重试';
+          } catch (e) {}
         }
       } catch (e) {}
     }
   } catch (e) {
-    hamiBgRecoveryToast('fail', '背景图云端恢复异常：' + (e && e.message ? e.message : e));
+    try {
+      const statusEl = document.getElementById('settings-bg-cloud-status');
+      if (statusEl) statusEl.textContent = '⚠️ 背景图云端恢复异常：' + (e && e.message ? e.message : e);
+    } catch (e2) {}
   }
 }
 
-// 背景图恢复提示条：主人必须能看见背景图到底恢复没，否则"消失了"就完全摸不着头脑
-// 位置：右上角小悬浮条，绿色背景=成功 / 橙色=警告 / 红色=失败；4 秒后自动消失，可手动叉掉
+// v56：彻底废弃首页"背景图云端恢复"toast（v35 铁律：调试提示不上首页）
+// 状态统一只放在设置面板的 #settings-bg-cloud-status 二级文字里，主人主动去看才看得到
 var _hamiBgRecoveryHideTimer = null;
 function hamiBgRecoveryToast(level, msg) {
+  // 留个空壳以防其它位置误调；不再 appendChild、不再 setTimeout 弹出
   try {
-    let el = document.getElementById('hami-bg-recovery');
-    if (_hamiBgRecoveryHideTimer) { clearTimeout(_hamiBgRecoveryHideTimer); _hamiBgRecoveryHideTimer = null; }
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'hami-bg-recovery';
-      el.style.cssText = 'position:fixed;top:14px;right:14px;z-index:100100;' +
-        'border-radius:12px;padding:8px 14px;font-size:12px;line-height:1.5;' +
-        'box-shadow:0 6px 18px rgba(160,80,110,.18);max-width:78vw;display:flex;align-items:center;gap:8px;';
-      document.body.appendChild(el);
-    }
-    const palette = {
-      ok:   { bg: '#e7f7ec', bd: '#7fc59a', fg: '#2e7d4f', icon: '🌿' },
-      none: { bg: '#fff7e6', bd: '#e8b56e', fg: '#a36414', icon: 'ℹ️' },
-      fail: { bg: '#fde8ee', bd: '#e890a8', fg: '#b3325c', icon: '⚠️' }
-    };
-    const p = palette[level] || palette.none;
-    el.style.background = p.bg;
-    el.style.border = '1px solid ' + p.bd;
-    el.style.color = p.fg;
-    el.innerHTML = '<span style="font-size:14px;">' + p.icon + '</span>' +
-      '<span>' + (msg || '') + '</span>' +
-      '<span id="hami-bg-recovery-close" style="cursor:pointer;opacity:.6;padding:0 4px;">✕</span>';
-    const closeBtn = document.getElementById('hami-bg-recovery-close');
-    if (closeBtn) closeBtn.onclick = function () { try { el.remove(); } catch (e) {} };
-    // v2026-09-07-30: 'none'(警告) 级别显示更久（30s）并加持久小黄条；'ok'/'fail' 还是 6s
-    const hideMs = (level === 'none') ? 30000 : 6000;
-    _hamiBgRecoveryHideTimer = setTimeout(function () {
-      const e2 = document.getElementById('hami-bg-recovery');
-      if (e2) e2.remove();
-      _hamiBgRecoveryHideTimer = null;
-    }, hideMs);
+    const statusEl = document.getElementById('settings-bg-cloud-status');
+    if (statusEl && msg) statusEl.textContent = msg;
   } catch (e) {}
 }
 // 记录每张背景图在本地 IDB 的写入时间戳，用于「云端 vs 本地」新旧比较
