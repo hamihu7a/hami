@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-36">
+<meta name="hami-build" content="2026-09-08-37">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3745,7 +3745,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-36';
+  var BUILD_VER = '2026-09-08-37';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -8552,11 +8552,16 @@ function sendHamiCmd() {
         hints.push('选题库');
         acted = true;
         break;
-      case 'importantDate':
-        store.importantDates.push({ type: it.kind, name: it.name, date: it.date, remark: it.lunar ? '农历' : '公历' });
+      case 'importantDate': {
+        // 同名同类型视为更新，避免"修改生日"变成新增一条
+        const existing = store.importantDates.findIndex(x => x.type === it.kind && x.name === it.name);
+        const rec = { type: it.kind, name: it.name, date: it.date, remark: it.lunar ? '农历' : '公历', isLunar: !!it.lunar };
+        if (existing >= 0) store.importantDates[existing] = rec;
+        else store.importantDates.push(rec);
         hints.push(it.kind === 'anniversary' ? '纪念日' : '生日提醒');
         acted = true;
         break;
+      }
       case 'todo':
         if (!store.userTodos) store.userTodos = [];
         store.userTodos.push({ date: date, text: it.text, done: false, category: getTodoCat(it.text) });
@@ -13482,15 +13487,43 @@ function calcDateInfo(d, today) {
 
   if (isBirthday) {
     if (!hasYear) {
-      // 无年份生日（如妈妈 10-30）：只按月日算今年剩余天数
-      const [m, day] = [parseInt(parts[0]) - 1, parseInt(parts[1])];
-      let thisYear = new Date(today.getFullYear(), m, day);
-      if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1);
-      const daysLeft = Math.ceil((thisYear - today) / 86400000);
+      // 无年份生日：按历法（农历/公历）分别算今年/明年目标日
+      let lunarMd = isLunar ? parseLunarFromRemark(d.remark) : null;
+      const [m, day] = [parseInt(parts[0]), parseInt(parts[1])];
+      let tgt;
+      if (isLunar) {
+        const lm = lunarMd ? lunarMd.month : m;
+        const ld = lunarMd ? lunarMd.day : day;
+        const leap = lunarMd ? lunarMd.isLeap : false;
+        tgt = findSolarForLunar(lm, ld, leap, today.getFullYear());
+        if (!tgt || tgt < today) tgt = findSolarForLunar(lm, ld, leap, today.getFullYear() + 1);
+      }
+      if (!tgt) {
+        tgt = new Date(today.getFullYear(), m - 1, day);
+        if (tgt < today) tgt.setFullYear(today.getFullYear() + 1);
+      }
+      const daysLeft = Math.ceil((tgt - today) / 86400000);
       const isToday = daysLeft === 0;
       return { daysLeft, isToday, totalDays: null, sortKey: daysLeft, isLunar, hasYear: false };
     }
     const date = new Date(d.date);
+    if (isLunar) {
+      // 农历生日：备注里有具体月日优先用备注；否则把出生公历反推为农历月日
+      let lunarMd = parseLunarFromRemark(d.remark);
+      if (!lunarMd) {
+        lunarMd = hlFromSolar(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      }
+      let tgt = findSolarForLunar(lunarMd.month, lunarMd.day, lunarMd.isLeap, today.getFullYear());
+      if (!tgt || tgt < today) tgt = findSolarForLunar(lunarMd.month, lunarMd.day, lunarMd.isLeap, today.getFullYear() + 1);
+      if (!tgt) {
+        tgt = new Date(today.getFullYear(), date.getMonth(), date.getDate());
+        if (tgt < today) tgt.setFullYear(today.getFullYear() + 1);
+      }
+      const daysLeft = Math.ceil((tgt - today) / 86400000);
+      const totalDays = Math.floor((today - date) / 86400000);
+      const isToday = daysLeft === 0;
+      return { daysLeft, isToday, totalDays, sortKey: daysLeft, isLunar, hasYear: true };
+    }
     let thisYearBday = new Date(today.getFullYear(), date.getMonth(), date.getDate());
     if (thisYearBday < today) thisYearBday.setFullYear(today.getFullYear() + 1);
     const daysLeft = Math.ceil((thisYearBday - today) / 86400000);
@@ -13498,11 +13531,22 @@ function calcDateInfo(d, today) {
     const isToday = daysLeft === 0;
     return { daysLeft, isToday, totalDays, sortKey: daysLeft, isLunar, hasYear: true };
   } else {
-    // 纪念日
+    // 纪念日 / 其他提醒
     const date = new Date(d.date);
     const totalDays = Math.floor((today - date) / 86400000);
-    let thisYearAnniv = new Date(today.getFullYear(), date.getMonth(), date.getDate());
-    if (thisYearAnniv < today) thisYearAnniv.setFullYear(today.getFullYear() + 1);
+    let thisYearAnniv;
+    if (isLunar && hasYear) {
+      let lunarMd = parseLunarFromRemark(d.remark);
+      if (!lunarMd) {
+        lunarMd = hlFromSolar(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      }
+      thisYearAnniv = findSolarForLunar(lunarMd.month, lunarMd.day, lunarMd.isLeap, today.getFullYear());
+      if (!thisYearAnniv || thisYearAnniv < today) thisYearAnniv = findSolarForLunar(lunarMd.month, lunarMd.day, lunarMd.isLeap, today.getFullYear() + 1);
+    }
+    if (!thisYearAnniv) {
+      thisYearAnniv = new Date(today.getFullYear(), date.getMonth(), date.getDate());
+      if (thisYearAnniv < today) thisYearAnniv.setFullYear(today.getFullYear() + 1);
+    }
     const daysLeft = Math.ceil((thisYearAnniv - today) / 86400000);
     const isToday = daysLeft === 0;
     return { daysLeft, isToday, totalDays, sortKey: daysLeft, isLunar, hasYear: true };
@@ -13516,12 +13560,10 @@ function checkReminderAlerts() {
   const dates = store.importantDates || [];
   const travels = store.travelPlans || [];
 
-  // 生日提醒（提前4天 + 当天）
+  // 生日提醒（提前4天 + 当天），农历/公历均按正确历法计算
   dates.forEach(d => {
     if (d.type !== 'birthday') return;
     const info = calcDateInfo(d, today);
-    // 农历生日不自动算倒计时，只显示原日期
-    if (info.isLunar && !info.isToday) return;
     if (info.daysLeft === 0) {
       banners.push({ icon: '🎂', text: `今天是 ${d.name} 的生日！`, color: '#721c24', bg: '#f8d7da' });
     } else if (info.daysLeft <= 4) {
@@ -14490,6 +14532,8 @@ function dmPickCalendar(c) {
 }
 function openDateModal(idx) {
   dmEditIdx = (typeof idx === 'number') ? idx : -1;
+  const m = document.getElementById('date-modal');
+  if (m) m.dataset.editIdx = String(dmEditIdx);
   document.getElementById('date-modal-title').textContent = dmEditIdx >= 0 ? '编辑日期' : '新增日期';
   if (!store.importantDates) store.importantDates = [];
   const d = dmEditIdx >= 0 ? store.importantDates[dmEditIdx] : null;
@@ -14500,7 +14544,6 @@ function openDateModal(idx) {
   dmCalendar = (d && d.isLunar) ? 'lunar' : 'solar';
   dmPickType(dmType);
   dmPickCalendar(dmCalendar);
-  const m = document.getElementById('date-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
   setTimeout(function () { try { document.getElementById('dm-name').focus(); } catch (e) {} }, 50);
 }
@@ -14516,10 +14559,23 @@ function submitDateRecord() {
   if (!name) { finToast('请填写名称'); return; }
   if (!date) { finToast('请选择日期'); return; }
   if (!store.importantDates) store.importantDates = [];
+  // 提交时锁定编辑索引：优先用弹窗 dataset，避免全局变量被意外覆盖导致"编辑变新增"
+  const m = document.getElementById('date-modal');
+  let editIdx = dmEditIdx;
+  if (m && m.dataset.editIdx) {
+    const parsed = parseInt(m.dataset.editIdx, 10);
+    if (!isNaN(parsed)) editIdx = parsed;
+  }
   const obj = { name: name, date: date, type: dmType, isLunar: dmCalendar === 'lunar' };
   if (remark) obj.remark = remark;
-  if (dmEditIdx >= 0) store.importantDates[dmEditIdx] = obj;
-  else store.importantDates.push(obj);
+  if (editIdx >= 0 && store.importantDates[editIdx]) {
+    store.importantDates[editIdx] = obj;
+  } else {
+    // 新增时若已有同名同类型记录，直接更新，避免重复条目
+    const dup = store.importantDates.findIndex(x => x.type === obj.type && x.name === obj.name);
+    if (dup >= 0) store.importantDates[dup] = obj;
+    else store.importantDates.push(obj);
+  }
   try { saveData(); } catch (e) {}
   renderReminder();
   closeDateModal();
@@ -14845,6 +14901,42 @@ var HL_YEAR_DAYS = HL_YEAR_INFOS.map(hlYearInfo2yearDay);
 function* hlEnumMonth(yi){ var months=[]; for(var i=1;i<=12;i++) months.push([i,0]); var lm=yi%16; if(lm>0&&lm<=12) months.splice(lm,0,[lm,1]); for(var k=0;k<months.length;k++){ var m=months[k][0],il=months[k][1]; var days; if(il) days=((yi>>16)%2)+29; else days=((yi>>(16-m))%2)+29; yield [m,days,il]; } }
 function hlFromOffset(offset){ offset=Math.floor(offset); var idx=0; for(var i=0;i<HL_YEAR_DAYS.length;i++){ if(offset<HL_YEAR_DAYS[i]){idx=i;break;} offset-=HL_YEAR_DAYS[i]; idx=i; } var year=1900+idx; var yi=HL_YEAR_INFOS[idx]; var month=1,day=1,isLeapMonth=false; for(var em of hlEnumMonth(yi)){ if(offset<em[1]){month=em[0];day=offset+1;isLeapMonth=em[2];break;} offset-=em[1]; } return {year:year,month:month,day:day,isLeapMonth:isLeapMonth}; }
 function hlFromSolar(y,m,d){ var start=Date.UTC(1900,0,31); var tgt=Date.UTC(y,m-1,d); return hlFromOffset(Math.round((tgt-start)/86400000)); }
+// 农历 → 公历：在指定公历年份内查找对应农历月/日（含闰月）的公历日期
+function findSolarForLunar(lunarMonth, lunarDay, isLeap, solarYear){
+  var start=new Date(solarYear,0,1); var end=new Date(solarYear,11,31);
+  var wantLeap = isLeap ? 1 : 0;
+  for(var d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    var L=hlFromSolar(d.getFullYear(), d.getMonth()+1, d.getDate());
+    if(L.month===lunarMonth && L.day===lunarDay && L.isLeapMonth===wantLeap) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  // 若指定闰月在该年不存在，fallback 到同月非闰
+  if(isLeap){
+    for(var d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      var L=hlFromSolar(d.getFullYear(), d.getMonth()+1, d.getDate());
+      if(L.month===lunarMonth && L.day===lunarDay && L.isLeapMonth===0) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+  }
+  return null;
+}
+// 从备注文本解析农历月日（如"农历七月十九" → {month:7, day:19, isLeap:false}）
+function parseLunarFromRemark(remark){
+  if(!remark) return null;
+  var m=remark.match(/农历\s*(闰)?\s*([正一二三四五六七八九十冬腊]|十一|十二)\s*月\s*([初十廿][一二三四五六七八九十]|二十[一二三四五六七八九]?|三十)/);
+  if(!m) return null;
+  var isLeap=!!m[1];
+  var mc=m[2], dc=m[3];
+  var monthMap={'正':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'冬':11,'腊':12,'十一':11,'十二':12};
+  var month=monthMap[mc];
+  var num={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  var day=0;
+  if(dc.charAt(0)==='初') day=num[dc.charAt(1)]||0;
+  else if(dc.charAt(0)==='十') day=(dc.length===1?10:10+(num[dc.charAt(1)]||0));
+  else if(dc.charAt(0)==='廿') day=(dc.length===1?20:20+(num[dc.charAt(1)]||0));
+  else if(dc.indexOf('二十')===0) day=(dc.length===2?20:20+(num[dc.charAt(2)]||0));
+  else if(dc==='三十') day=30;
+  if(!month || !day || day>30) return null;
+  return {month:month, day:day, isLeap:isLeap};
+}
 
 var HL_GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
 var HL_ZHI=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
