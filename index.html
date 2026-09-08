@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-48">
+<meta name="hami-build" content="2026-09-08-49">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2152,12 +2152,6 @@
     display: flex; flex-wrap: wrap; gap: 12px;
     font-size: 12px; color: #8a6270;
   }
-  /* v44 经期预测校准按钮 */
-  .period-cal-btn {
-    font-size: 12px; color: #fff; background: var(--c-pink-deep);
-    border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer;
-  }
-  .period-cal-btn:hover { background: #b0385c; }
   /* 经期：当前进行中卡片高亮 + 分组标题 */
   .period-section-title {
     font-size: 12px; font-weight: 700; color: #c08020;
@@ -3094,6 +3088,7 @@
       display: grid !important;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 14px !important;
+      align-items: start !important;
     }
     .panel.active .stats-grid,
     .panel.active .checkin-grid,
@@ -3119,6 +3114,7 @@
       display: grid !important;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 8px !important;
+      align-items: start !important;
     }
     .panel.active .stats-grid,
     .panel.active .checkin-grid,
@@ -3936,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-48';
+  var BUILD_VER = '2026-09-08-49';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4800,16 +4796,6 @@
     <div class="card">
       <div class="card-title"><span>🔮</span> 经期预测与提醒</div>
       <div id="period-predict"></div>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #ffd0dc;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:12px;color:#8a6270;">预测不准？</span>
-        <button class="period-cal-btn" onclick="recalPeriodPredict()" type="button">🔧 用最近 1 条记录重算</button>
-        <label style="font-size:12px;color:#8a6270;display:flex;align-items:center;gap:4px;">
-          或手动周期
-          <input type="number" id="period-custom-cycle" min="21" max="45" step="1" placeholder="28" style="width:56px;padding:4px 6px;border:1.5px solid #ffd0dc;border-radius:6px;font-size:13px;">
-          <span>天</span>
-          <button class="period-cal-btn" onclick="recalPeriodPredictWith()" type="button">应用</button>
-        </label>
-      </div>
     </div>
 
     <div class="card">
@@ -13597,9 +13583,7 @@ function renderPeriod() {
 
   if (periods.length > 0) {
     // v44 优先用主人手动设置的周期（如主人自己知道周期 28 天）
-    if (store.periodManualCycle >= 21 && store.periodManualCycle <= 45) {
-      avgCycle = store.periodManualCycle;
-    } else if (periods.length >= 2) {
+    if (periods.length >= 2) {
       // 只用相邻期距在 21-45 天内的合理周期算平均，过滤掉异常录入
       const intervals = [];
       for (let i = 1; i < periods.length; i++) {
@@ -13659,9 +13643,6 @@ function renderPeriod() {
   }
   document.getElementById('period-predict').innerHTML = predictHtml;
 
-  // 把当前预测参数写到自定义框里，方便主人看到本次算的是几天
-  const cycleInput = document.getElementById('period-custom-cycle');
-  if (cycleInput && avgCycle > 0 && cycleInput.value === '') cycleInput.value = avgCycle;
 
   if (periods.length === 0) {
     document.getElementById('period-table').innerHTML = `<div class="empty-state"><div class="big-icon">🌸</div><p>暂无经期记录</p><p style="font-size:12px;margin-top:6px;">来月经时告诉我开始日期</p></div>`;
@@ -16756,42 +16737,6 @@ function endOpenPeriod() {
   if (eEl) eEl.value = '';
   saveData(); renderPeriod(); renderFitness(); rerenderSynced();
   hamiToast('✅ 已结束本次经期：' + open.start + ' → ' + e);
-}
-
-// v44：忽略历史异常记录，只用最近 1 条经期日 + 自定义周期，重新预测下次日期
-function recalPeriodPredict() {
-  const periods = [...(store.periodRecords || [])].sort((a, b) => (a.start || '').localeCompare(b.start || '')).filter(p => p && p.start);
-  if (periods.length === 0) { hamiToast('暂无任何经期记录，请先记一次开始日期'); return; }
-  const last = periods[periods.length - 1];
-  const cycle = parseInt(document.getElementById('period-custom-cycle').value, 10);
-  const cyc = (cycle >= 21 && cycle <= 45) ? cycle : 28;
-  const next = new Date(last.start);
-  next.setDate(next.getDate() + cyc);
-  const iso = next.toISOString().split('T')[0];
-  hamiToast('🔧 已用最近 1 条 (' + last.start + ') + ' + cyc + ' 天周期，下次预测：' + iso);
-  const inp = document.getElementById('period-custom-cycle');
-  if (inp) inp.value = cyc;
-  // 直接把 last.start 重置到今天（仅当主人还在等月经时清理历史干扰用）：不擅自覆盖
-  renderPeriod();
-}
-
-// v44：让主人用自定义周期数值覆盖所有自动计算（忽略所有历史记录）
-function recalPeriodPredictWith() {
-  const inp = document.getElementById('period-custom-cycle');
-  if (!inp) return;
-  const v = parseInt(inp.value, 10);
-  if (!(v >= 21 && v <= 45)) { hamiToast('请填入 21~45 之间的数字（正常周期范围）'); inp.focus(); return; }
-  const periods = [...(store.periodRecords || [])].sort((a, b) => (a.start || '').localeCompare(b.start || '')).filter(p => p && p.start);
-  if (periods.length === 0) { hamiToast('暂无任何经期记录'); return; }
-  const last = periods[periods.length - 1];
-  const next = new Date(last.start);
-  next.setDate(next.getDate() + v);
-  const iso = next.toISOString().split('T')[0];
-  // 标记为"人工校准"，下次算法除非再次过滤，否则以此为准
-  store.periodManualCycle = v;
-  try { saveData(); } catch (e) {}
-  hamiToast('✅ 已应用周期 ' + v + ' 天，下次预测：' + iso);
-  renderPeriod();
 }
 
 // 进行中的经期卡片内：结束本次（默认今天）
