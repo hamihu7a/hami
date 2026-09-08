@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-45">
+<meta name="hami-build" content="2026-09-08-46">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2216,8 +2216,9 @@
   /* 洗头记录卡片 */
   .wash-card-list { display: flex; flex-direction: column; gap: 6px; }
   .wash-card {
+    position: relative;
     background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
-    padding: 9px 11px; display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 11px; padding-right: 64px; display: flex; align-items: center; justify-content: space-between;
     gap: 8px;
   }
   .wash-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -2258,8 +2259,9 @@
   /* 如厕记录卡片 */
   .toilet-card-list { display: flex; flex-direction: column; gap: 6px; }
   .toilet-card {
+    position: relative;
     background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
-    padding: 9px 11px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 9px 11px; padding-right: 80px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
   }
   .toilet-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .toilet-card-date { font-size: 14px; font-weight: 800; color: #5a3a48; white-space: nowrap; }
@@ -3985,7 +3987,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-45';
+  var BUILD_VER = '2026-09-08-46';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -10022,46 +10024,6 @@ function renderTodoListForCat(cat) {
     </div>`;
   }
 
-  // ========== 游玩清单（合并到游玩计划卡片后面，统一折叠）==========
-  const travels = store.travelPlans || [];
-  if (travels.length > 0) {
-    const travelsSorted = travels.slice().sort((a,b) => (a.date||'').localeCompare(b.date));
-    const chkExpanded = !!__checklistExpanded;
-    let checkHtml = '';
-    travelsSorted.forEach(function(t){
-      const idx = store.travelPlans.indexOf(t);
-      const travelDate = new Date(t.date);
-      const daysLeft = Math.ceil((travelDate - today) / 86400000);
-      let statusClass, statusText;
-      if (daysLeft < 0) { statusClass='travel-status-ended'; statusText='已结束'; }
-      else if (daysLeft === 0) { statusClass='travel-status-today'; statusText='📍 今天出发'; }
-      else if (daysLeft <= 5) { statusClass='travel-status-soon'; statusText='⚠️ '+daysLeft+'天后'; }
-      else if (daysLeft <= 10) { statusClass='travel-status-soon'; statusText='🔔 '+daysLeft+'天后'; }
-      else { statusClass='travel-status-far'; statusText='📅 '+daysLeft+'天后'; }
-      const hotelHtml = t.hotel ? '<span class="travel-hotel done">🏨 已订</span>' : '<span class="travel-hotel pending">🏨 未订</span>';
-      let checklistHtml = '';
-      if (t.checklist && t.checklist.length > 0) {
-        const done = t.checklist.filter(function(i){return i.done;}).length;
-        const total = t.checklist.length;
-        checklistHtml = '<div class="travel-checklist">';
-        t.checklist.forEach(function(item, ci){
-          const toggleFn='toggleChecklist('+idx+','+ci+')';
-          checklistHtml += '<div class="travel-check-item '+(item.done?'done':'')+'" onclick="'+toggleFn+'">'+(item.done?'✅':'⬜')+' '+item.name+'</div>';
-        });
-        checklistHtml += '</div><div class="travel-check-summary">已完成 '+done+'/'+total+'</div>';
-      } else {
-        checklistHtml = '<div class="travel-check-summary">📦 无准备清单</div>';
-      }
-      checkHtml += '        <div class="travel-card">          <div class="card-actions">            <button class="row-edit-btn" onclick="openTravelModal('+idx+')" type="button" aria-label="编辑">✏️</button>            <button class="row-del-btn" onclick="deleteTravelRecord('+idx+')" type="button" aria-label="删除">🗑</button>          </div>          <div class="travel-card-dest">📍 '+t.destination+'</div>          <div class="travel-card-meta">            <span class="travel-card-status '+statusClass+'">'+statusText+'</span>            <span>📅 '+t.date+'</span>            '+hotelHtml+'          </div>          '+checklistHtml+'        </div>';
-    });
-
-    html += '      <div class="trip-card" style="margin-top:10px;">        <div class="trip-header" style="cursor:pointer;" onclick="toggleChecklistExpand()">          <div style="flex:1;min-width:0;">            <div class="trip-title">📦 出游清单</div>            <div class="trip-subtitle"><span>共 '+travelsSorted.length+' 条出游记录</span></div>          </div>        </div>        <div class="trip-expand-toggle" onclick="toggleChecklistExpand()">          <span>'+(chkExpanded?'▲ 收起':'▼ 展开')+'</span>          <span style="font-size:12px;color:#8a6270;">'+(chkExpanded?'点击收起全部清单':'点击查看全部清单')+'</span>        </div>';
-    if (chkExpanded) {
-      html += '<div class="travel-card-list">'+checkHtml+'</div>';
-    }
-    html += '      </div>';
-  }
-
   el.innerHTML = html;
 }
 function renderTodoPanel() {
@@ -14263,6 +14225,7 @@ function renderTripPlans() {
   const el = document.getElementById('trip-plans');
   if (!el) return;
   const trips = store.trips || [];
+  const travels = store.travelPlans || [];
   if (trips.length === 0) {
     __tripPage = 0;
     el.innerHTML = '<div class="trip-empty"><div class="big-icon">🗺️</div><p>暂无游玩行程</p><p style="font-size:12px;margin-top:6px;">点右上角「➕ 新建行程」，记录城市、日期和每天安排~</p></div>';
@@ -14324,7 +14287,7 @@ function renderTripPlans() {
                   ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
                   ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
                 </div>
-                <button class="row-edit-btn" onclick="event.stopPropagation();exportTripItemImage(${realIdx}, ${di}, ${ii})" type="button" title="导出此地点" style="margin-left:4px;flex-shrink:0;font-size:12px;">📤</button>
+                
               </div>`;
           });
         }
@@ -14384,6 +14347,44 @@ function renderTripPlans() {
       <span style="font-size:12px;color:#8a6270;">第 ${(__tripPage || 0) + 1}/${maxPg + 1} 页 · 共 ${sorted.length} 个行程</span>
       <button class="flow-toggle-btn" type="button" onclick="tripGo(1)" ${(__tripPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
     </div>`;
+  }
+  // ====== 游玩清单（与行程一起折叠在游玩计划卡片底部）======
+  if (travels.length > 0) {
+    const travelsSorted = travels.slice().sort((a,b) => (a.date||'').localeCompare(b.date));
+    const chkExpanded = !!__checklistExpanded;
+    let checkHtml = '';
+    travelsSorted.forEach(function(t){
+      const idx = store.travelPlans.indexOf(t);
+      const travelDate = new Date(t.date);
+      const daysLeft = Math.ceil((travelDate - today) / 86400000);
+      let statusClass, statusText;
+      if (daysLeft < 0) { statusClass='travel-status-ended'; statusText='已结束'; }
+      else if (daysLeft === 0) { statusClass='travel-status-today'; statusText='📍 今天出发'; }
+      else if (daysLeft <= 5) { statusClass='travel-status-soon'; statusText='⚠️ '+daysLeft+'天后'; }
+      else if (daysLeft <= 10) { statusClass='travel-status-soon'; statusText='🔔 '+daysLeft+'天后'; }
+      else { statusClass='travel-status-far'; statusText='📅 '+daysLeft+'天后'; }
+      const hotelHtml = t.hotel ? '<span class="travel-hotel done">🏨 已订</span>' : '<span class="travel-hotel pending">🏨 未订</span>';
+      let checklistHtml = '';
+      if (t.checklist && t.checklist.length > 0) {
+        const done = t.checklist.filter(function(i){return i.done;}).length;
+        const total = t.checklist.length;
+        checklistHtml = '<div class="travel-checklist">';
+        t.checklist.forEach(function(item, ci){
+          const toggleFn='toggleChecklist('+idx+','+ci+')';
+          checklistHtml += '<div class="travel-check-item '+(item.done?'done':'')+'" onclick="'+toggleFn+'">'+(item.done?'✅':'⬜')+' '+escapeHtml(item.name)+'</div>';
+        });
+        checklistHtml += '</div><div class="travel-check-summary">已完成 '+done+'/'+total+'</div>';
+      } else {
+        checklistHtml = '<div class="travel-check-summary">📦 无准备清单</div>';
+      }
+      checkHtml += '<div class="travel-card"><div class="card-actions"><button class="row-edit-btn" onclick="openTravelModal('+idx+')" type="button" aria-label="编辑">✏️</button><button class="row-del-btn" onclick="deleteTravelRecord('+idx+')" type="button" aria-label="删除">🗑</button></div><div class="travel-card-dest">📍 '+escapeHtml(t.destination||'')+'</div><div class="travel-card-meta"><span class="travel-card-status '+statusClass+'">'+statusText+'</span><span>📅 '+t.date+'</span> '+hotelHtml+'</div>'+checklistHtml+'</div>';
+    });
+
+    html += '<div class="trip-card" style="margin-top:10px;"><div class="trip-header" style="cursor:pointer;" onclick="toggleChecklistExpand()"><div style="flex:1;min-width:0;"><div class="trip-title">📦 出游清单</div><div class="trip-subtitle"><span>共 '+travelsSorted.length+' 条出游记录</span></div></div></div><div class="trip-expand-toggle" onclick="toggleChecklistExpand()"><span>'+(chkExpanded?'▲ 收起':'▼ 展开')+'</span><span style="font-size:12px;color:#8a6270;">'+(chkExpanded?'点击收起全部清单':'点击查看全部清单')+'</span></div>';
+    if (chkExpanded) {
+      html += '<div class="travel-card-list">'+checkHtml+'</div>';
+    }
+    html += '</div>';
   }
   el.innerHTML = html;
 }
