@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-40">
+<meta name="hami-build" content="2026-09-08-41">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3931,7 +3931,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-40';
+  var BUILD_VER = '2026-09-08-41';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -10575,6 +10575,14 @@ function toggleDarkMode(on) {
 }
 function applyDarkModePref() {
   try {
+    // v40 修复：之前主人从未主动开过夜间模式，但 localStorage 里残留了 'hami_dark_mode=1'，
+    // 导致每次刷新都自动进入暗色，主人看到"底色变蓝/紫黑"。这里在 v40 升级时一次性清掉残留，
+    // 让主人下次刷新回到浅粉主题。主人之后仍可在设置面板手动开启（开关功能保留）。
+    var cleared = localStorage.getItem('hami_dark_mode_v40_cleared');
+    if (!cleared) {
+      localStorage.removeItem('hami_dark_mode');
+      localStorage.setItem('hami_dark_mode_v40_cleared', '1');
+    }
     var on = localStorage.getItem('hami_dark_mode') === '1';
     if (on) document.body.classList.add('dark-mode');
     var sw = document.getElementById('dark-mode-switch');
