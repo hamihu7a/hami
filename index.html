@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-56">
+<meta name="hami-build" content="2026-09-08-57">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-56';
+  var BUILD_VER = '2026-09-08-57';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7153,13 +7153,74 @@ function _dedupKey(k, it) {
     default: return 'x_' + JSON.stringify(it);
   }
 }
+// v57：内容键（标题+日期+账号），用于 futurePosts 幽灵记录清理
+// 主键（_dedupKey）只能识别「id 相同」的记录；但早期云端脏数据往往 id 是 null/old 形式，
+// 仅靠主键算墓碑过滤不到这些幽灵。本函数给「内容上一样的记录」一个稳定 hash，
+// 让墓碑 / 合并 / 渲染前的 dedup 都能从多个角度抓住同一份数据。
+function _contentKey(k, it) {
+  if (!it || typeof it !== 'object') return '';
+  if (k === 'futurePosts') {
+    return 'fpC:' + String(it.title || '').trim() + '|' + String(it.date || '') + '|' + String(it.account || 'big');
+  }
+  if (k === 'weightRecords') return 'wC_' + (it.date || '');
+  if (k === 'exerciseRecords') return 'eC_' + (it.date || '');
+  if (k === 'mediaRecords') return 'mrC_' + (it.date || '') + '|' + String(it.title || '');
+  if (k === 'inspireRecords') return 'irC_' + (it.date || '') + '|' + String(it.title || '');
+  if (k === 'periodRecords') return 'prC_' + (it.start || '');
+  if (k === 'importantDates') return 'idC_' + (it.type || '') + '|' + String(it.name || '');
+  return '';
+}
+// v57：计算一条记录**所有**可能的去重 key（含主键 + 内容键）。
+// 墓碑 / 合并时只要任一命中就认为"是同一条"，彻底杜绝幽灵复活。
+function _allDedupKeys(k, it) {
+  const out = [];
+  const main = _dedupKey(k, it);
+  if (main) out.push(main);
+  const cnt = _contentKey(k, it);
+  if (cnt && out.indexOf(cnt) < 0) out.push(cnt);
+  return out;
+}
+// v57：启动加载阶段按本地墓碑剔一遍所有被删记录。
+// 防止"云端旧数据里残留被删条目"在主页面渲染后又出现。
+function applyTombOnLoad() {
+  if (!store.__deleted || typeof store.__deleted !== 'object') return;
+  let changed = false;
+  Object.keys(store.__deleted).forEach(function (listKey) {
+    const keys = store.__deleted[listKey];
+    if (!Array.isArray(keys) || !keys.length) return;
+    if (!Array.isArray(store[listKey])) return;
+    const tomb = new Set(keys);
+    const before = store[listKey].length;
+    store[listKey] = store[listKey].filter(function (it) {
+      if (it == null) return false;
+      const ks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(listKey, it) : [((typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : JSON.stringify(it))];
+      for (let i = 0; i < ks.length; i++) if (ks[i] && tomb.has(ks[i])) return false;
+      return true;
+    });
+    if (store[listKey].length !== before) changed = true;
+  });
+  if (changed) {
+    try { saveData(true); } catch (e) {}
+  }
+}
 function unionArrays(la, ra, key) {
   const seen = {}; const out = [];
   (la || []).concat(ra || []).forEach(function (it) {
     if (it == null) return;   // 丢弃 null/undefined 脏数据，避免后续访问 .date 等字段抛错、搞崩面板
     if (typeof it !== 'object') { out.push(it); return; }
-    const dk = _dedupKey(key, it);
-    if (seen[dk]) return; seen[dk] = true; out.push(it);
+    // v57：主键 + 内容键任一命中已 seen 即跳过
+    const ks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(key, it) : [((typeof _dedupKey === 'function') ? _dedupKey(key, it) : JSON.stringify(it))];
+    let dup = false;
+    for (let i = 0; i < ks.length; i++) {
+      const dk = ks[i];
+      if (dk && seen[dk]) { dup = true; break; }
+    }
+    if (dup) return;
+    for (let i = 0; i < ks.length; i++) {
+      const dk = ks[i];
+      if (dk) seen[dk] = true;
+    }
+    out.push(it);
   });
   return out;
 }
@@ -7173,30 +7234,40 @@ function unionArrays(la, ra, key) {
 // 正确做法：始终按「内容键（标题+日期+账号）」去重，id 不同但内容一样的只留第一条。
 function dedupFuturePosts() {
   if (!Array.isArray(store.futurePosts)) return;
-  // 第一遍：建 id → 保留最新一条的索引映射（保证重复条目里编辑过的那个留下来）
+  // v57：先用本地墓碑过滤一遍（避免"已删除的"幽灵又被保留）
+  try {
+    const t = (store.__deleted && store.__deleted.futurePosts) || [];
+    if (t.length) {
+      const tomb = new Set(t);
+      store.futurePosts = store.futurePosts.filter(function (p) {
+        if (!p) return false;
+        const ks = (typeof _allDedupKeys === 'function') ? _allDedupKeys('futurePosts', p) : [((typeof _dedupKey === 'function') ? _dedupKey('futurePosts', p) : JSON.stringify(p))];
+        for (let i = 0; i < ks.length; i++) if (ks[i] && tomb.has(ks[i])) return false;
+        return true;
+      });
+    }
+  } catch (e) {}
+  // 第一遍：建 id → 保留最晚出现位置（远端覆盖本地，所以 unionArrays 中后到的就是最新版本）
   const idLatestIdx = {};
   for (let i = 0; i < store.futurePosts.length; i++) {
     const p = store.futurePosts[i];
     if (p && p.id) idLatestIdx[p.id] = i;
   }
-  // 第二遍：按 id 优先去重，缺 id 的再按内容键（title+date+account）
-  const seenId = new Set();
+  // 第二遍：同 id 只保留最后；缺 id 的按内容键去重
   const seenKey = new Set();
   const out = [];
   for (let i = 0; i < store.futurePosts.length; i++) {
     const p = store.futurePosts[i];
     if (!p) continue;
     if (p.id) {
-      if (seenId.has(p.id)) continue;
-      // 只在原 id 是「被 dedup 视为重复保留的那条」时才放行——即 i 必须是 idLatestIdx[p.id]
-      // 否则说明此前已有一条更新版本，跳过此旧副本
       if (idLatestIdx[p.id] !== i) continue;
-      seenId.add(p.id);
+      const ck = _contentKey('futurePosts', p);
+      if (ck) seenKey.add(ck);
       out.push(p);
     } else {
-      const key = 't:' + String(p.title || '').trim() + '|' + String(p.date || '') + '|' + String(p.account || 'big');
-      if (seenKey.has(key)) continue;
-      seenKey.add(key);
+      const ck = _contentKey('futurePosts', p);
+      if (ck && seenKey.has(ck)) continue;
+      if (ck) seenKey.add(ck);
       out.push(p);
     }
   }
@@ -7268,21 +7339,24 @@ function mergeStoreInto(local, remote) {
         const keys = ld[listKey];
         if (!Array.isArray(keys) || !keys.length) return;
         const keySet = new Set(keys);
+        // v57：任一 dedup key 命中墓碑即过滤（主键 + 内容键）
+        const matchTomb = function (it) {
+          if (it == null) return false;
+          if (typeof _allDedupKeys === 'function') {
+            const ks = _allDedupKeys(listKey, it);
+            for (let i = 0; i < ks.length; i++) if (ks[i] && keySet.has(ks[i])) return true;
+            return false;
+          }
+          const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : (JSON.stringify(it));
+          return !!(dk && keySet.has(dk));
+        };
         // 本地数组剔除
         if (Array.isArray(local[listKey])) {
-          local[listKey] = local[listKey].filter(function (it) {
-            if (it == null) return false;
-            const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : (JSON.stringify(it));
-            return !(dk && keySet.has(dk));
-          });
+          local[listKey] = local[listKey].filter(function (it) { return !matchTomb(it); });
         }
         // 远端数组剔除（不留复活源头）
         if (remote && Array.isArray(remote[listKey])) {
-          remote[listKey] = remote[listKey].filter(function (it) {
-            if (it == null) return false;
-            const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : (JSON.stringify(it));
-            return !(dk && keySet.has(dk));
-          });
+          remote[listKey] = remote[listKey].filter(function (it) { return !matchTomb(it); });
         }
       });
     }
@@ -7346,10 +7420,14 @@ function hamiTombAdd(listKey, item) {
     if (!item) return;
     if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
     if (!Array.isArray(store.__deleted[listKey])) store.__deleted[listKey] = [];
-    const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, item) : JSON.stringify(item);
-    if (!dk) return;
-    if (store.__deleted[listKey].indexOf(dk) < 0) store.__deleted[listKey].push(dk);
-    if (store.__deleted[listKey].length > 300) store.__deleted[listKey] = store.__deleted[listKey].slice(-300);
+    // v57：写主键 + 内容键两个墓碑，任一命中就过滤
+    // 解决"云端幽灵 id 与本地 id 不同"导致墓碑失效、刷新又复活
+    const keys = (typeof _allDedupKeys === 'function') ? _allDedupKeys(listKey, item) : [((typeof _dedupKey === 'function') ? _dedupKey(listKey, item) : JSON.stringify(item))];
+    keys.forEach(function (dk) {
+      if (!dk) return;
+      if (store.__deleted[listKey].indexOf(dk) < 0) store.__deleted[listKey].push(dk);
+    });
+    if (store.__deleted[listKey].length > 600) store.__deleted[listKey] = store.__deleted[listKey].slice(-600);
   } catch (e) {}
 }
 // 删除后双向同步：先本地存档，再立刻推云端（带墓碑），再拉云端剔除，杜绝"刷新又回来"
@@ -9021,6 +9099,10 @@ function loadData() {
     ['weightRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
+    // v57：启动加载阶段就按墓碑剔一遍被删记录（即使云端旧备份把幽灵塞回来也立刻清掉）
+    try { applyTombOnLoad(); } catch (e) {}
+    // v57：未来图文加载后再 dedup 一次（清掉同 id / 同内容重复）
+    try { dedupFuturePosts(); } catch (e) {}
     // 工作代办去重：因早期种子/同步 bug，同一文本可能重复出现（主人截图显示 4 条重复 N 次），
     // 这里按「文本+分类」保留第一条，清理重复。
     try {
