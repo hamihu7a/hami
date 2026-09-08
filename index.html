@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-54">
+<meta name="hami-build" content="2026-09-08-55">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-54';
+  var BUILD_VER = '2026-09-08-55';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7181,15 +7181,33 @@ function unionArrays(la, ra, key) {
 // 正确做法：始终按「内容键（标题+日期+账号）」去重，id 不同但内容一样的只留第一条。
 function dedupFuturePosts() {
   if (!Array.isArray(store.futurePosts)) return;
-  const seen = new Set();
+  // 第一遍：建 id → 保留最新一条的索引映射（保证重复条目里编辑过的那个留下来）
+  const idLatestIdx = {};
+  for (let i = 0; i < store.futurePosts.length; i++) {
+    const p = store.futurePosts[i];
+    if (p && p.id) idLatestIdx[p.id] = i;
+  }
+  // 第二遍：按 id 优先去重，缺 id 的再按内容键（title+date+account）
+  const seenId = new Set();
+  const seenKey = new Set();
   const out = [];
-  store.futurePosts.forEach(function (p) {
-    if (!p) return;
-    const key = 't:' + String(p.title || '').trim() + '|' + String(p.date || '') + '|' + String(p.account || 'big');
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push(p);
-  });
+  for (let i = 0; i < store.futurePosts.length; i++) {
+    const p = store.futurePosts[i];
+    if (!p) continue;
+    if (p.id) {
+      if (seenId.has(p.id)) continue;
+      // 只在原 id 是「被 dedup 视为重复保留的那条」时才放行——即 i 必须是 idLatestIdx[p.id]
+      // 否则说明此前已有一条更新版本，跳过此旧副本
+      if (idLatestIdx[p.id] !== i) continue;
+      seenId.add(p.id);
+      out.push(p);
+    } else {
+      const key = 't:' + String(p.title || '').trim() + '|' + String(p.date || '') + '|' + String(p.account || 'big');
+      if (seenKey.has(key)) continue;
+      seenKey.add(key);
+      out.push(p);
+    }
+  }
   if (out.length !== store.futurePosts.length) {
     store.futurePosts = out;
     try { saveData(true); } catch (e) {}
@@ -11495,8 +11513,14 @@ function setFuturePostMode(mode) {
     el.classList.toggle('active', el.getAttribute('data-fp-mode') === mode);
   });
 }
-function openFuturePostModal(idx) {
-  editingFpIdx = (typeof idx === 'number' && idx >= 0 && store.futurePosts && store.futurePosts[idx]) ? idx : -1;
+function openFuturePostModal(idxOrId) {
+  let idx = -1;
+  if (typeof idxOrId === 'number' && idxOrId >= 0 && store.futurePosts && store.futurePosts[idxOrId]) {
+    idx = idxOrId;
+  } else if (typeof idxOrId === 'string' && idxOrId) {
+    idx = (store.futurePosts || []).findIndex(function (p) { return p && p.id === idxOrId; });
+  }
+  editingFpIdx = idx;
   fpMode = 'single';
   setFuturePostMode('single');
   const modal = document.getElementById('future-post-modal');
@@ -11597,10 +11621,22 @@ function submitFuturePost() {
     data.createdAt = Date.now();
     store.futurePosts.push(data);
   }
-  saveData(); closeFuturePostModal(); renderFuturePosts();
+  saveData(); closeFuturePostModal();
+  try { dedupFuturePosts(); } catch (e) {}
+  renderFuturePosts();
   // 如果该计划已完成且已有联动记录，同步更新联动记录的账号/同步状态
   if (editingFpIdx >= 0) syncFuturePostMediaRecord(data.id);
   hamiToast('✅ 已保存：' + title);
+}
+function findFuturePostIdx(idOrIdx) {
+  if (typeof idOrIdx === 'number' && idOrIdx >= 0 && store.futurePosts && store.futurePosts[idOrIdx]) {
+    return idOrIdx;
+  }
+  if (typeof idOrIdx === 'string' && idOrIdx && store.futurePosts) {
+    const i = store.futurePosts.findIndex(function (p) { return p && p.id === idOrIdx; });
+    if (i >= 0) return i;
+  }
+  return -1;
 }
 function syncFuturePostMediaRecord(fpId) {
   if (!fpId || !store.futurePosts || !store.mediaRecords) return;
@@ -11620,8 +11656,9 @@ function syncFuturePostMediaRecord(fpId) {
     r.title = p.title || r.title;
   });
 }
-async function deleteFuturePost(idx) {
-  if (!store.futurePosts || !store.futurePosts[idx]) return;
+async function deleteFuturePost(idOrIdx) {
+  const idx = findFuturePostIdx(idOrIdx);
+  if (idx < 0 || !store.futurePosts[idx]) return;
   const p = store.futurePosts[idx];
   if (!await hamiConfirm('确定删除「' + (p.title || '这条图文计划') + '」吗？')) return;
   hamiDeleteRecord('futurePosts', idx, {
@@ -11630,8 +11667,9 @@ async function deleteFuturePost(idx) {
   });
   hamiToast('🗑️ 已删除');
 }
-function toggleFuturePostDone(idx) {
-  if (!store.futurePosts || !store.futurePosts[idx]) return;
+function toggleFuturePostDone(idOrIdx) {
+  const idx = findFuturePostIdx(idOrIdx);
+  if (idx < 0 || !store.futurePosts[idx]) return;
   const p = store.futurePosts[idx];
   p.done = !p.done;
   saveData(); renderFuturePosts();
@@ -11687,6 +11725,8 @@ function futureGo(delta) {
   renderFuturePosts();
 }
 function renderFuturePosts() {
+  // 先去重，再渲染——保证删除/编辑按钮的 idx 与 store 严格一一对应，不错位
+  try { dedupFuturePosts(); } catch (e) {}
   const box = document.getElementById('future-post-list');
   if (!box) return;
   const list = (store.futurePosts || []).slice().sort(function (a, b) {
@@ -11705,6 +11745,8 @@ function renderFuturePosts() {
   let html = '';
   pageList.forEach(function (p) {
     const originalIdx = (store.futurePosts || []).indexOf(p);
+    // 优先按 id 找 idx（按 id 精确，不会因为去重/排序错位）
+    const fpRef = p.id ? "'" + p.id.replace(/'/g, "\\'") + "'" : String(originalIdx);
     const isOverdue = p.date && p.date < today && !p.done;
     const tagsHtml = (p.tags || '').split(/\s+/).filter(Boolean).map(function (t) {
       return '<span class="future-post-tag">' + crEscapeHtml(t) + '</span>';
@@ -11725,12 +11767,12 @@ function renderFuturePosts() {
       + '</div>'
       + (contentPreview ? '<div class="future-post-content">' + contentPreview + '</div>' : '')
       + '<div class="future-post-actions">'
-      +   '<button class="fp-edit-btn" onclick="openFuturePostModal(' + originalIdx + ')">✏️ 编辑</button>'
-      +   '<button class="fp-check-btn" onclick="checkFuturePostTitle(' + originalIdx + ')" title="标题评分+违禁词自检">🏆 检查</button>'
-      +   '<button class="fp-done-btn" onclick="toggleFuturePostDone(' + originalIdx + ')" title="标记已完成/未完成">' + doneIcon + ' ' + doneLabel + '</button>'
-      +   '<button class="fp-del-btn" onclick="deleteFuturePost(' + originalIdx + ')">🗑 删除</button>'
+      +   '<button class="fp-edit-btn" onclick="openFuturePostModal(' + fpRef + ')">✏️ 编辑</button>'
+      +   '<button class="fp-check-btn" onclick="checkFuturePostTitle(' + fpRef + ')" title="标题评分+违禁词自检">🏆 检查</button>'
+      +   '<button class="fp-done-btn" onclick="toggleFuturePostDone(' + fpRef + ')" title="标记已完成/未完成">' + doneIcon + ' ' + doneLabel + '</button>'
+      +   '<button class="fp-del-btn" onclick="deleteFuturePost(' + fpRef + ')">🗑 删除</button>'
       + '</div>'
-      + '<div id="fp-check-result-' + originalIdx + '" class="fp-check-result" style="display:none;"></div>'
+      + '<div id="fp-check-result-' + (p.id || originalIdx) + '" class="fp-check-result" style="display:none;"></div>'
       + '</div>';
   });
   if (list.length > ACC_PAGE) {
@@ -11784,9 +11826,12 @@ function analyzeFuturePost(p) {
 }
 
 // 单条未来图文检查：在卡片内展开结果（标题评分 + 文案违禁词）
-function checkFuturePostTitle(idx) {
-  const p = store.futurePosts && store.futurePosts[idx];
-  const box = document.getElementById('fp-check-result-' + idx);
+function checkFuturePostTitle(idOrIdx) {
+  const idx = findFuturePostIdx(idOrIdx);
+  if (idx < 0) return;
+  const p = store.futurePosts[idx];
+  const key = (p && p.id) ? p.id : String(idx);
+  const box = document.getElementById('fp-check-result-' + key) || document.getElementById('fp-check-result-' + idx);
   if (!p || !box) return;
   const ar = analyzeFuturePost(p);
   let html = '';
