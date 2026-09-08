@@ -7170,6 +7170,29 @@ function unionArrays(la, ra, key) {
   });
   return out;
 }
+// v50：未来更新图文记录去重
+// 根因：云端 sync/hami-store.json 早期因重复 push 累积了多份同一 id 的记录，
+// unionArrays 用 _dedupKey (id||title) 只能合并 id 完全相同的，遇到不同 id 的重复就全留下。
+// 表现：主人本来 7 条，结果云端合并后变 42 条。
+// 修法：合并完成后按「id 优先、缺 id 用 title+date+account 兜底」再过一遍去重，保留第一次出现的版本。
+function dedupFuturePosts() {
+  if (!Array.isArray(store.futurePosts)) return;
+  const seen = new Set();
+  const out = [];
+  store.futurePosts.forEach(function (p) {
+    if (!p) return;
+    const key = p.id
+      ? ('id:' + p.id)
+      : ('t:' + (p.title || '') + '|' + (p.date || '') + '|' + (p.account || ''));
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(p);
+  });
+  if (out.length !== store.futurePosts.length) {
+    store.futurePosts = out;
+    try { saveData(true); } catch (e) {}
+  }
+}
 function deepMergeObjects(a, b) {
   const out = (Array.isArray(a) ? a.slice() : Object.assign({}, a));
   Object.keys(b || {}).forEach(function (k) {
@@ -7418,6 +7441,7 @@ async function pullAndMerge() {
   }
   if (remote && remote.store) {
     mergeStoreInto(store, remote.store);
+    try { dedupFuturePosts(); } catch (e) {}
     try { saveData(true); } catch (e) {}   // 传 true：云端合并自己存盘不再回推，防死循环
     // 云端合并完成后重渲全部面板（旧代码只重渲主页，其它面板仍显示本地旧数据）
     try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e) {}
