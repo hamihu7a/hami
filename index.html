@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-44">
+<meta name="hami-build" content="2026-09-08-45">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1367,10 +1367,20 @@
   #weight-table-wrap { overflow-x: auto; }
   #weight-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
   #weight-table-wrap th, #weight-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #weight-table-wrap th:nth-child(1), #weight-table-wrap td:nth-child(1) { width: 30%; }
-  #weight-table-wrap th:nth-child(2), #weight-table-wrap td:nth-child(2) { width: 20%; }
-  #weight-table-wrap th:nth-child(3), #weight-table-wrap td:nth-child(3) { width: 32%; }
+  #weight-table-wrap th:nth-child(1), #weight-table-wrap td:nth-child(1) { width: 28%; }
+  #weight-table-wrap th:nth-child(2), #weight-table-wrap td:nth-child(2) { width: 18%; text-align: center; }
+  #weight-table-wrap th:nth-child(3), #weight-table-wrap td:nth-child(3) { width: 36%; }
   #weight-table-wrap th:nth-child(4), #weight-table-wrap td:nth-child(4) { width: 18%; text-align: center; }
+  /* 敷面膜记录：紧凑无空白列 */
+  #mask-table-wrap { overflow-x: auto; }
+  #mask-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
+  #mask-table-wrap th, #mask-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #mask-table-wrap th:nth-child(1), #mask-table-wrap td:nth-child(1) { width: 50%; }
+  #mask-table-wrap th:nth-child(2), #mask-table-wrap td:nth-child(2) { width: 30%; }
+  #mask-table-wrap th:nth-child(3), #mask-table-wrap td:nth-child(3) { width: 20%; text-align: center; }
+  /* 游玩清单：合并到游玩计划后去掉外边距 */
+  #travel-reminders { margin-top: 0; padding-top: 0; }
+  .travel-card-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
   /* 运动明细：分类筛选 + 紧凑表格 */
   .exercise-detail-section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #ffe4ec; }
   .exercise-detail-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -3976,7 +3986,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-44';
+  var BUILD_VER = '2026-09-08-45';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4954,7 +4964,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <div class="card">
       <div class="card-title"><span>📋</span> 敷面膜记录</div>
-      <div style="overflow-x:auto;">
+      <div id="mask-table-wrap">
         <table>
           <thead><tr><th>日期</th><th>星期</th><th>操作</th></tr></thead>
           <tbody id="mask-table"></tbody>
@@ -5192,11 +5202,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
         <button class="date-add-btn" onclick="openTripModal()" type="button">➕ 新建行程</button>
         <button class="date-add-btn" onclick="openTravelModal()" type="button">➕ 记一次</button>
       </div>
-      <div style="font-size:14px;font-weight:800;color:#d14b73;margin:8px 0 4px;">📋 计划（行程安排）</div>
       <div id="trip-plans"></div>
-      <div style="height:10px;"></div>
-      <div style="font-size:14px;font-weight:800;color:#d14b73;margin:10px 0 4px;">🧳 清单（出游记录）</div>
-      <div id="travel-reminders"></div>
     </div>
   </div>
 
@@ -10016,6 +10022,47 @@ function renderTodoListForCat(cat) {
       <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',1)" ${(__todoPage[cat] || 0) >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
     </div>`;
   }
+
+  // ========== 游玩清单（合并到游玩计划卡片后面，统一折叠）==========
+  const travels = store.travelPlans || [];
+  if (travels.length > 0) {
+    const travelsSorted = travels.slice().sort((a,b) => (a.date||'').localeCompare(b.date));
+    const chkExpanded = !!__checklistExpanded;
+    let checkHtml = '';
+    travelsSorted.forEach(function(t){
+      const idx = store.travelPlans.indexOf(t);
+      const travelDate = new Date(t.date);
+      const daysLeft = Math.ceil((travelDate - today) / 86400000);
+      let statusClass, statusText;
+      if (daysLeft < 0) { statusClass='travel-status-ended'; statusText='已结束'; }
+      else if (daysLeft === 0) { statusClass='travel-status-today'; statusText='📍 今天出发'; }
+      else if (daysLeft <= 5) { statusClass='travel-status-soon'; statusText='⚠️ '+daysLeft+'天后'; }
+      else if (daysLeft <= 10) { statusClass='travel-status-soon'; statusText='🔔 '+daysLeft+'天后'; }
+      else { statusClass='travel-status-far'; statusText='📅 '+daysLeft+'天后'; }
+      const hotelHtml = t.hotel ? '<span class="travel-hotel done">🏨 已订</span>' : '<span class="travel-hotel pending">🏨 未订</span>';
+      let checklistHtml = '';
+      if (t.checklist && t.checklist.length > 0) {
+        const done = t.checklist.filter(function(i){return i.done;}).length;
+        const total = t.checklist.length;
+        checklistHtml = '<div class="travel-checklist">';
+        t.checklist.forEach(function(item, ci){
+          const toggleFn='toggleChecklist('+idx+','+ci+')';
+          checklistHtml += '<div class="travel-check-item '+(item.done?'done':'')+'" onclick="'+toggleFn+'">'+(item.done?'✅':'⬜')+' '+item.name+'</div>';
+        });
+        checklistHtml += '</div><div class="travel-check-summary">已完成 '+done+'/'+total+'</div>';
+      } else {
+        checklistHtml = '<div class="travel-check-summary">📦 无准备清单</div>';
+      }
+      checkHtml += '        <div class="travel-card">          <div class="card-actions">            <button class="row-edit-btn" onclick="openTravelModal('+idx+')" type="button" aria-label="编辑">✏️</button>            <button class="row-del-btn" onclick="deleteTravelRecord('+idx+')" type="button" aria-label="删除">🗑</button>          </div>          <div class="travel-card-dest">📍 '+t.destination+'</div>          <div class="travel-card-meta">            <span class="travel-card-status '+statusClass+'">'+statusText+'</span>            <span>📅 '+t.date+'</span>            '+hotelHtml+'          </div>          '+checklistHtml+'        </div>';
+    });
+
+    html += '      <div class="trip-card" style="margin-top:10px;">        <div class="trip-header" style="cursor:pointer;" onclick="toggleChecklistExpand()">          <div style="flex:1;min-width:0;">            <div class="trip-title">📦 出游清单</div>            <div class="trip-subtitle"><span>共 '+travelsSorted.length+' 条出游记录</span></div>          </div>        </div>        <div class="trip-expand-toggle" onclick="toggleChecklistExpand()">          <span>'+(chkExpanded?'▲ 收起':'▼ 展开')+'</span>          <span style="font-size:12px;color:#8a6270;">'+(chkExpanded?'点击收起全部清单':'点击查看全部清单')+'</span>        </div>';
+    if (chkExpanded) {
+      html += '<div class="travel-card-list">'+checkHtml+'</div>';
+    }
+    html += '      </div>';
+  }
+
   el.innerHTML = html;
 }
 function renderTodoPanel() {
@@ -14186,68 +14233,7 @@ function renderReminder() {
     document.getElementById('important-dates').innerHTML = html;
   }
 
-  // ========== 外出游玩（卡片形式，超过 5 条自动折叠；不按月，免得藏起未来行程）==========
-  const travels = store.travelPlans || [];
-  if (travels.length === 0) {
-    document.getElementById('travel-reminders').innerHTML = `<div class="empty-state"><div class="big-icon">✈️</div><p>暂无出游计划</p><p style="font-size:12px;margin-top:6px;">告诉我出游日期和目的地~</p></div>`;
-  } else {
-    const travelsSorted = travels.slice().sort((a,b) => (a.date||'').localeCompare(b.date)); // 近→远（最先出发的排前）
-    const travelHtml = foldRecords('travel', travelsSorted, function (t) {
-      const idx = store.travelPlans.indexOf(t);
-      const travelDate = new Date(t.date);
-      const daysLeft = Math.ceil((travelDate - today) / 86400000);
 
-      // 状态
-      let statusClass, statusText;
-      if (daysLeft < 0) {
-        statusClass = 'travel-status-ended'; statusText = '已结束';
-      } else if (daysLeft === 0) {
-        statusClass = 'travel-status-today'; statusText = '📍 今天出发';
-      } else if (daysLeft <= 5) {
-        statusClass = 'travel-status-soon'; statusText = `⚠️ ${daysLeft}天后`;
-      } else if (daysLeft <= 10) {
-        statusClass = 'travel-status-soon'; statusText = `🔔 ${daysLeft}天后`;
-      } else {
-        statusClass = 'travel-status-far'; statusText = `📅 ${daysLeft}天后`;
-      }
-
-      // 酒店
-      const hotelHtml = t.hotel
-        ? '<span class="travel-hotel done">🏨 已订</span>'
-        : '<span class="travel-hotel pending">🏨 未订</span>';
-
-      // 准备清单
-      let checklistHtml = '';
-      if (t.checklist && t.checklist.length > 0) {
-        const done = t.checklist.filter(i => i.done).length;
-        const total = t.checklist.length;
-        checklistHtml = '<div class="travel-checklist">';
-        t.checklist.forEach((item, ci) => {
-          const toggleFn = `toggleChecklist(${idx},${ci})`;
-          checklistHtml += `<div class="travel-check-item ${item.done ? 'done' : ''}" onclick="${toggleFn}">${item.done ? '✅' : '⬜'} ${item.name}</div>`;
-        });
-        checklistHtml += `</div><div class="travel-check-summary">已完成 ${done}/${total}</div>`;
-      } else {
-        checklistHtml = '<div class="travel-check-summary">📦 无准备清单</div>';
-      }
-
-      return `
-        <div class="travel-card">
-          <div class="card-actions">
-            <button class="row-edit-btn" onclick="openTravelModal(${idx})" type="button" aria-label="编辑">✏️</button>
-            <button class="row-del-btn" onclick="deleteTravelRecord(${idx})" type="button" aria-label="删除">🗑</button>
-          </div>
-          <div class="travel-card-dest">📍 ${t.destination}</div>
-          <div class="travel-card-meta">
-            <span class="travel-card-status ${statusClass}">${statusText}</span>
-            <span>📅 ${t.date}</span>
-            ${hotelHtml}
-          </div>
-          ${checklistHtml}
-        </div>`;
-    });
-    document.getElementById('travel-reminders').innerHTML = '<div class="travel-card-list">' + travelHtml + '</div><div style="margin-top:10px;font-size:12px;color:#8a6270;text-align:center;">💡 点击准备清单项可勾选/取消勾选</div>';
-  }
 
   // 游玩计划时间轴
   renderTripPlans();
@@ -14259,7 +14245,9 @@ function renderReminder() {
 // ==================== 游玩计划：行程 + 每日安排 ====================
 let _tripActiveDay = {}; // { tripIndex: dayIndex }
 let __tripPage = 0;      // v26 行程卡分页
-let __tripExpanded = {}; // 行程折叠状态：key=realIdx，value=是否展开
+let __tripExpanded = {};
+let __checklistExpanded = false;
+function toggleChecklistExpand(){ __checklistExpanded = !__checklistExpanded; try { renderTripPlans(); } catch(e) {} } // 行程折叠状态：key=realIdx，value=是否展开
 function toggleTripExpand(realIdx) {
   try {
     __tripExpanded[realIdx] = !__tripExpanded[realIdx];
