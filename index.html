@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-47">
+<meta name="hami-build" content="2026-09-08-48">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -124,10 +124,10 @@
     --c-muted: #7d4a5a;
     --c-text-2: #5a3a48;
     --c-line: #ffe4ec;
-    --gap: 12px;
+    --gap: 8px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
        之间的垂直距离都用 var(--space-block)，避免"有的黏在一起、有的隔太远"——design token */
-    --space-block: 5px;
+    --space-block: 4px;
     --pad: 20px;
     --t: .25s ease;
   }
@@ -1977,7 +1977,7 @@
     font-size: 15px;
     font-weight: 700;
     color: var(--c-pink-deep);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1986,8 +1986,8 @@
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-bottom: 6px;
   }
   /* v2026-09-06-29 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
   #income-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
@@ -3118,7 +3118,7 @@
     .panel.active {
       display: grid !important;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 12px !important;
+      gap: 8px !important;
     }
     .panel.active .stats-grid,
     .panel.active .checkin-grid,
@@ -3936,7 +3936,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-47';
+  var BUILD_VER = '2026-09-08-48';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -6845,22 +6845,9 @@ function applyAllBgs() {
     // 否则会在 IndexedDB 还没加载完时误把已显示的背景图清掉（这就是"图反复消失"的来源）。
     // 删除操作已由 delBgStored/clearBg 同步清理内存+localStorage+IDB，不会残留旧图。
   });
-  // v33：若首页整体没有单独设背景图，但首页任一区域（hero/天气/运势/自媒体/体重日历）有背景图，
-  // 就把第一张可用背景图继承到首页整体，避免模块间隙露白；主人只需传一张图，首页就能整体透出。
-  try {
-    const cfg = loadEmbeddedBgConfig();
-    const homeKeys = ['hero', 'weather', 'fortune', 'accounts', 'panel-fitness'];
-    let firstHomeBg = null;
-    for (let i = 0; i < homeKeys.length; i++) {
-      const k = homeKeys[i];
-      const d = BG_CACHE[k] || (cfg.bgs && cfg.bgs[k] ? cfg.bgs[k] : null);
-      if (d) { firstHomeBg = d; break; }
-    }
-    const hasPanelDesktop = BG_CACHE['panel-desktop'] || (cfg.bgs && cfg.bgs['panel-desktop']);
-    if (firstHomeBg && !hasPanelDesktop) {
-      applyBg('panel-desktop', firstHomeBg);
-    }
-  } catch (e) {}
+  // v48：主人明确反馈"不要把图片自动铺到首页背景上"。
+  // 背景图只应显示在它自己被设置的区域（hero/天气/运势/自媒体/体重日历等），
+  // 不自动继承到 panel-desktop（整个首页）。若主人想要首页整体有图，需单独给"首页整体"上传。
 }
 
 function clearBg(key) {
