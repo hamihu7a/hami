@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-46">
+<meta name="hami-build" content="2026-09-08-47">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1977,7 +1977,7 @@
     font-size: 15px;
     font-weight: 700;
     color: var(--c-pink-deep);
-    margin-bottom: 14px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1985,9 +1985,9 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
   }
   /* v2026-09-06-29 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
   #income-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
@@ -3117,8 +3117,8 @@
   @media (min-width: 1000px) {
     .panel.active {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 18px !important;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 12px !important;
     }
     .panel.active .stats-grid,
     .panel.active .checkin-grid,
@@ -3905,57 +3905,6 @@
    "恢复原底色、不要擅自改视觉"，故此块已删除。主人从未使用该功能，删除不影响
    任何主人期望的能力。下方仍保留「手动夜间模式」开关 CSS（设置面板开关默认关闭）。 */
 
-/* ===== 手动夜间护眼模式：优先级高于系统设置，由设置面板开关控制 ===== */
-body.dark-mode { background: #241a20; color: #f0dde6; }
-body.dark-mode .sidebar { background: #1f151b; }
-body.dark-mode .main, body.dark-mode .panel, body.dark-mode .card, body.dark-mode .todo-card, body.dark-mode .fin-topbar, body.dark-mode .tip-box, body.dark-mode .empty-state, body.dark-mode .co-box, body.dark-mode .co-modal {
-  background: #2c1f26 !important; color: #f0dde6 !important; border-color: #3a2a32 !important;
-}
-body.dark-mode .tip-box, body.dark-mode .empty-state { background: rgba(255,158,188,.08) !important; color: #e6cdd6 !important; }
-body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode .card-title, body.dark-mode .stat-card .label, body.dark-mode .nav-item, body.dark-mode .nav-group-title, body.dark-mode .nav-title, body.dark-mode .nav-motto {
-  color: #f0dde6 !important;
-}
-body.dark-mode input, body.dark-mode textarea, body.dark-mode select {
-  background: #2c1f26 !important; color: #f0dde6 !important; border-color: #3a2a32 !important;
-}
-body.dark-mode table th, body.dark-mode table td { color: #e6cdd6 !important; border-color: #3a2a32 !important; }
-body.dark-mode .stat-card, body.dark-mode .progress-bar-container { background: #241a20 !important; }
-body.dark-mode .backup-tip, body.dark-mode .tip { color: #e6cdd6 !important; }
-body.dark-mode .future-post-title { color: #ff9eb5 !important; }
-body.dark-mode .future-post-content { color: #e6cdd6 !important; }
-body.dark-mode .future-post-date { color: #e6cdd6 !important; background: rgba(255,158,188,.12) !important; }
-body.dark-mode .future-post-tag { color: #ff9eb5 !important; background: rgba(255,158,188,.12) !important; border-color: rgba(255,158,188,.25) !important; }
-
-/* ===== 深色模式补强：覆盖内联硬编码色（解决"深底配深字看不见"） ===== */
-/* 说明：页面大量颜色写在行内 style 属性里，优先级高于上面的类选择器，
-   这里用属性选择器按"内联写法"精确命中并提亮/压暗，且只改颜色、不动任何尺寸排版。 */
-/* —— 文字色：深色 → 亮色 —— */
-body.dark-mode [style*="color:#d14b73"], body.dark-mode [style*="color: #d14b73"] { color:#ff9ab4 !important; }
-body.dark-mode [style*="color:#8a6270"], body.dark-mode [style*="color: #8a6270"] { color:#c9a8b6 !important; }
-body.dark-mode [style*="color:#5a3a48"], body.dark-mode [style*="color: #5a3a48"] { color:#eadde4 !important; }
-body.dark-mode [style*="color:#7d4a5a"], body.dark-mode [style*="color: #7d4a5a"] { color:#d9bcc8 !important; }
-body.dark-mode [style*="color:#4a3340"], body.dark-mode [style*="color: #4a3340"] { color:#eadde4 !important; }
-body.dark-mode [style*="color:#c75b86"], body.dark-mode [style*="color: #c75b86"] { color:#ff9ab4 !important; }
-body.dark-mode [style*="color:#856404"], body.dark-mode [style*="color: #856404"] { color:#ffd98a !important; }
-body.dark-mode [style*="color:#721c24"], body.dark-mode [style*="color: #721c24"] { color:#ffb0bd !important; }
-body.dark-mode [style*="color:#e6cdd6"], body.dark-mode [style*="color: #e6cdd6"] { color:#d9bcc8 !important; }
-/* —— 背景色：白/浅粉 → 深色 —— */
-body.dark-mode [style*="background:#fff"], body.dark-mode [style*="background: #fff"] { background:#2c1f26 !important; }
-body.dark-mode [style*="background-color:#fff"], body.dark-mode [style*="background-color: #fff"] { background-color:#2c1f26 !important; }
-body.dark-mode [style*="background:#fff0f5"], body.dark-mode [style*="background: #fff0f5"] { background:#33242c !important; }
-body.dark-mode [style*="background:#fff8fa"], body.dark-mode [style*="background: #fff8fa"] { background:#2c1f26 !important; }
-body.dark-mode [style*="background:#ffd6e0"], body.dark-mode [style*="background: #ffd6e0"] { background:#33242c !important; }
-body.dark-mode [style*="background:#ffd9e4"], body.dark-mode [style*="background: #ffd9e4"] { background:#33242c !important; }
-body.dark-mode [style*="background:#fdf6f1"], body.dark-mode [style*="background: #fdf6f1"] { background:#241a20 !important; }
-body.dark-mode [style*="background:#fff3cd"], body.dark-mode [style*="background: #fff3cd"] { background:#3d3320 !important; }
-body.dark-mode [style*="background:#f8d7da"], body.dark-mode [style*="background: #f8d7da"] { background:#40262c !important; }
-/* —— 主题切换：整体平滑过渡（只过渡颜色，不动画布局） —— */
-body, .panel, .card, .todo-card, .tip-box, .sidebar, .main, input, textarea, select, button {
-  transition: background-color .28s ease, color .28s ease, border-color .28s ease;
-}
-/* 深色下给有背景图的区域加柔光遮罩，避免夜间的图太刺眼（inset 阴影不影响子元素） */
-body.dark-mode .panel, body.dark-mode .mirror-block { box-shadow: inset 0 0 0 999px rgba(26,18,24,.48); }
-body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px rgba(0,0,0,.5); }
 
 /* ===== 微动效：内容错落进场 · 只动透明度与位移，不改变任何尺寸排版 ===== */
 @keyframes hamiCardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -3987,7 +3936,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-46';
+  var BUILD_VER = '2026-09-08-47';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -5743,7 +5692,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
               <div style="font-size:12px;color:#8a6270;">开启后界面变暗色护眼，不跟随系统</div>
             </div>
             <label class="settings-switch">
-              <input type="checkbox" id="dark-mode-switch" onchange="toggleDarkMode(this.checked)">
+              <input type="checkbox" id="dark-mode-switch" disabled title="v47 已废除：夜间模式不是主人要求的功能，已被彻底移除。如确有需要请跟小助理单独说。">
               <span class="settings-switch-slider"></span>
             </label>
           </div>
@@ -10614,25 +10563,25 @@ function switchPanel(name, navEl) {
 }
 function toggleSidebar() { document.body.classList.toggle('sidebar-collapsed'); }
 function toggleDarkMode(on) {
-  if (on) document.body.classList.add('dark-mode');
-  else document.body.classList.remove('dark-mode');
-  try { localStorage.setItem('hami_dark_mode', on ? '1' : '0'); } catch (e) {}
+  // v47 彻底废除：手动夜间模式功能被主人 v17 以后从未要求过、现在 v47 已彻底移除。
+  // 保留空函数是防止设置面板 onchange="toggleDarkMode(this.checked)" 抛 ReferenceError。
+  // 主人真有需要时，跟小助理说，不要让 body.dark-mode 自己浮出来。
+  try { document.body.classList.remove('dark-mode'); } catch (e) {}
+  try { localStorage.removeItem('hami_dark_mode'); } catch (e) {}
 }
 function applyDarkModePref() {
+  // v47 彻底废除：手动夜间模式从来不是主人要求的功能，主人从未主动开过，
+  // 但 v17 时代小助理擅自加了它，导致 localStorage 残留 + body.dark-mode class 触发，
+  // 主人 iPhone 一进暗色系统/任一触发就全页变蓝紫。彻底清残留、彻底不再触发。
   try {
-    // v40 修复：之前主人从未主动开过夜间模式，但 localStorage 里残留了 'hami_dark_mode=1'，
-    // 导致每次刷新都自动进入暗色，主人看到"底色变蓝/紫黑"。这里在 v40 升级时一次性清掉残留，
-    // 让主人下次刷新回到浅粉主题。主人之后仍可在设置面板手动开启（开关功能保留）。
-    var cleared = localStorage.getItem('hami_dark_mode_v40_cleared');
-    if (!cleared) {
-      localStorage.removeItem('hami_dark_mode');
-      localStorage.setItem('hami_dark_mode_v40_cleared', '1');
-    }
-    var on = localStorage.getItem('hami_dark_mode') === '1';
-    if (on) document.body.classList.add('dark-mode');
+    localStorage.removeItem('hami_dark_mode');
+    localStorage.removeItem('hami_dark_mode_v40_cleared');
+    localStorage.removeItem('hami_dark_mode_v47_removed');
+    document.body.classList.remove('dark-mode');
     var sw = document.getElementById('dark-mode-switch');
-    if (sw) sw.checked = on;
+    if (sw) sw.checked = false;
   } catch (e) {}
+  // 主人若是哪天真的想要夜间模式，请直接跟小助理说，不要用任何"自动/跟随系统"的入口。
 }
 
 // 左侧菜单音效：点击左侧任务栏任意一项（一·财务记录 ~ 七·设置工具，含"左侧宽度"等），都触发独立可爱音效。
