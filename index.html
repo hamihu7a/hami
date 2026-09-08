@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-38">
+<meta name="hami-build" content="2026-09-09-39">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3948,7 +3948,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-38';
+  var BUILD_VER = '2026-09-09-39';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7206,7 +7206,7 @@ function _dedupKey(k, it) {
     case 'periodRecords': return 'pr_' + (it.start || '') + '_' + (it.end || '');
     case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (it.destination || '');
     case 'trips': return 'tr_' + (it.date || '') + '_' + (it.destination || '');
-    case 'importantDates': return 'id_' + (it.type || '') + '_' + (it.name || '') + '_' + (it.date || '');
+    case 'importantDates': return 'id_' + (it.type || '') + '_' + (it.name || '');
     case 'topicLibrary': return 'tl_' + (it.id || it.name || '');
     case 'userTodos': return 'ut_' + (it.date || '') + '_' + (it.text || '');
     default: return 'x_' + JSON.stringify(it);
@@ -7258,6 +7258,53 @@ function deepMergeUnion(a, b) {
 }
 function mergeStoreInto(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
+  // ===== 通用删除墓碑（v39 根治「所有板块删了又复活」）=====
+  // 任一条记录被删除时，把它的"去重键"写进 local.__deleted[列表名]。
+  // 合并前先把本地/云端的墓碑并集，再从两个方向的对应数组里剔除这些键，
+  // 保证任何设备拉取时都不会把主人已删的记录并回来（不像账本只有 accountDeleted）。
+  // 注意：必须在下方 unionArrays / deepMergeUnion 之前执行。
+  try {
+    // 并集墓碑：remote.__deleted ∪ local.__deleted
+    const rd = (remote && typeof remote === 'object') ? (remote.__deleted || null) : null;
+    if (rd && typeof rd === 'object') {
+      if (!local.__deleted || typeof local.__deleted !== 'object') local.__deleted = {};
+      Object.keys(rd).forEach(function (listKey) {
+        const rarr = rd[listKey];
+        if (!Array.isArray(rarr) || !rarr.length) return;
+        if (!local.__deleted[listKey]) local.__deleted[listKey] = [];
+        const seen = new Set(local.__deleted[listKey]);
+        rarr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.__deleted[listKey].push(k); } });
+        // 每列表墓碑最多保留 300 条
+        if (local.__deleted[listKey].length > 300) local.__deleted[listKey] = local.__deleted[listKey].slice(-300);
+      });
+    }
+    // 用墓碑剔除本地 & 远端
+    const ld = (local && typeof local === 'object') ? (local.__deleted || null) : null;
+    if (ld) {
+      Object.keys(ld).forEach(function (listKey) {
+        const keys = ld[listKey];
+        if (!Array.isArray(keys) || !keys.length) return;
+        const keySet = new Set(keys);
+        // 本地数组剔除
+        if (Array.isArray(local[listKey])) {
+          local[listKey] = local[listKey].filter(function (it) {
+            if (it == null) return false;
+            const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : (JSON.stringify(it));
+            return !(dk && keySet.has(dk));
+          });
+        }
+        // 远端数组剔除（不留复活源头）
+        if (remote && Array.isArray(remote[listKey])) {
+          remote[listKey] = remote[listKey].filter(function (it) {
+            if (it == null) return false;
+            const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : (JSON.stringify(it));
+            return !(dk && keySet.has(dk));
+          });
+        }
+      });
+    }
+  } catch (e) {}
+  // ===== 旧版账本专用墓碑（accountDeleted），保留兼容 =====
   // 删除标记传播：先把"本机删过的"和"云端删过的"墓碑取并集，
   // 再从本地 & 远程的记账数组里同时剔除被删记录，杜绝"删了2秒又复活"。
   // 注意：必须在下方 deepMergeUnion 之前执行（合并后 store.accountRecords 已被替换引用，需先处理旧引用）。
@@ -7305,6 +7352,28 @@ function mergeStoreInto(local, remote) {
     }
   });
   return local;
+}
+
+// ===== v39 通用删除墓碑（根治「所有板块删了又复活」）=====
+// 任一条记录被删前，把它在所属列表里的"去重键"写进 store.__deleted[列表名]。
+// mergeStoreInto 会在合并前用这些键把本地/云端里同键记录剔掉，确保删除不复活。
+// 删除完成后立即推一次云端 + 拉一次云端做双向确认（和账本 deleteAccountRecord 同款）。
+function hamiTombAdd(listKey, item) {
+  try {
+    if (!item) return;
+    if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
+    if (!Array.isArray(store.__deleted[listKey])) store.__deleted[listKey] = [];
+    const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, item) : JSON.stringify(item);
+    if (!dk) return;
+    if (store.__deleted[listKey].indexOf(dk) < 0) store.__deleted[listKey].push(dk);
+    if (store.__deleted[listKey].length > 300) store.__deleted[listKey] = store.__deleted[listKey].slice(-300);
+  } catch (e) {}
+}
+// 删除后双向同步：先本地存档，再立刻推云端（带墓碑），再拉云端剔除，杜绝"刷新又回来"
+function hamiDeleteSync() {
+  try { saveData(); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+  try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
 }
 
 function cloudStatus(text, color) {
@@ -11911,8 +11980,9 @@ async function deleteMediaRecord(idx) {
   if (!store.mediaRecords || !store.mediaRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
   const r = store.mediaRecords[idx];
   if (!await hamiConfirm('确定删除 ' + (r.account==='big'?'美化档大号':'定制人物小号') + ' 的更新记录吗？')) return;
+  hamiTombAdd('mediaRecords', r);    // v39 墓碑
   store.mediaRecords.splice(idx, 1);
-  saveData();
+  hamiDeleteSync();
   try { renderMedia(); } catch (e) {}
   finToast('🗑️ 已删除更新记录');
 }
@@ -11991,8 +12061,9 @@ async function deleteExerciseItem(idx) {
   if (!store.exerciseItems || !store.exerciseItems[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
   const it = store.exerciseItems[idx];
   if (!await hamiConfirm('确定删除「' + (it.name || it.date) + '」这条运动记录吗？')) return;
+  hamiTombAdd('exerciseItems', it);   // v39 墓碑
   store.exerciseItems.splice(idx, 1);
-  saveData();
+  hamiDeleteSync();
   try { renderFitness(); } catch(e) {}
   finToast('🗑️ 已删除运动记录');
 }
@@ -12087,8 +12158,9 @@ async function deleteWeightRecord(idx) {
   const w = store.weightRecords && store.weightRecords[idx];
   if (!w) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + w.date + ' 的体重记录吗？')) return;
+  hamiTombAdd('weightRecords', w);   // v39 墓碑：删除不复活
   store.weightRecords.splice(idx, 1);
-  saveData();
+  hamiDeleteSync();                  // 存档 + 立即推云端 + 拉云端双向确认
   refreshWeightViews();   // 统一刷新：首页日历 / 三·健康记录 / 首页打卡卡 / 提醒
   finToast('🗑 已删除体重记录');
 }
@@ -12222,8 +12294,9 @@ async function deleteToiletRecord(idx) {
   const r = store.toiletRecords && store.toiletRecords[idx];
   if (!r) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + r.date + ' 的如厕记录吗？')) return;
+  hamiTombAdd('toiletRecords', r);   // v39 墓碑
   store.toiletRecords.splice(idx, 1);
-  saveData();
+  hamiDeleteSync();
   try { renderToilet(); } catch(e) {}
   try { rerenderSynced(); } catch(e) {}
   finToast('🗑 已删除如厕记录');
@@ -12263,8 +12336,9 @@ async function deleteMaskRecord(idx) {
   const r = store.maskRecords && store.maskRecords[idx];
   if (!r) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + r.date + ' 的面膜记录吗？')) return;
+  hamiTombAdd('maskRecords', r);   // v39 墓碑
   store.maskRecords.splice(idx, 1);
-  saveData();
+  hamiDeleteSync();
   try { renderMask(); } catch(e) {}
   try { rerenderSynced(); } catch(e) {}
   finToast('🗑 已删除面膜记录');
@@ -14866,14 +14940,12 @@ function submitDateRecord() {
   }
   const obj = { name: name, date: date, type: dmType, isLunar: dmCalendar === 'lunar' };
   if (remark) obj.remark = remark;
-  if (editIdx >= 0 && store.importantDates[editIdx]) {
-    store.importantDates[editIdx] = obj;
-  } else {
-    // 新增时若已有同名同类型记录，直接更新，避免重复条目
-    const dup = store.importantDates.findIndex(x => x.type === obj.type && x.name === obj.name);
-    if (dup >= 0) store.importantDates[dup] = obj;
-    else store.importantDates.push(obj);
-  }
+  // v39 根治「修改日期/重复保存会冒出第二条」：重要日期以「类型+名字」为唯一身份，
+  // 保存时一律先剔除同「类型+名字」的旧条目，再追加最新一条（编辑/新增都走同一逻辑）。
+  store.importantDates = store.importantDates.filter(function (x) {
+    return !(x && x.type === obj.type && x.name === obj.name);
+  });
+  store.importantDates.push(obj);
   try { saveData(); } catch (e) {}
   renderReminder();
   closeDateModal();
@@ -14881,10 +14953,17 @@ function submitDateRecord() {
 }
 async function deleteDateRecord(idx) {
   if (!store.importantDates || !store.importantDates[idx]) return;
-  const name = store.importantDates[idx].name || '这条';
+  const target = store.importantDates[idx];
+  const name = target.name || '这条';
   if (!await hamiConfirm('确定删除「' + name + '」吗？')) return;
-  store.importantDates.splice(idx, 1);
-  try { saveData(); } catch (e) {}
+  // v39 墓碑：以「类型+名字」为身份键写入墓碑，云端并集时会把这位的所有旧记录一并剔掉，
+  // 彻底根治「同一个人因改过日期而残留多条 / 删了又复活」。
+  hamiTombAdd('importantDates', { type: target.type, name: target.name });
+  // 顺手把本地同「类型+名字」的多余残留一起清掉（同一个人只留一次）
+  store.importantDates = store.importantDates.filter(function (x) {
+    return !(x && x.type === target.type && x.name === target.name);
+  });
+  hamiDeleteSync();
   renderReminder();
   try { finToast('已删除「' + name + '」'); } catch (e) {}
 }
@@ -14972,10 +15051,12 @@ function submitTravelRecord() {
 }
 async function deleteTravelRecord(idx) {
   if (!store.travelPlans || !store.travelPlans[idx]) return;
-  const name = store.travelPlans[idx].destination || '这条';
+  const target = store.travelPlans[idx];
+  const name = target.destination || '这条';
   if (!await hamiConfirm('确定删除出游计划「' + name + '」吗？')) return;
+  hamiTombAdd('travelPlans', target);   // v39 墓碑
   store.travelPlans.splice(idx, 1);
-  try { saveData(); } catch (e) {}
+  hamiDeleteSync();
   renderReminder();
   try { finToast('已删除出游计划「' + name + '」'); } catch (e) {}
 }
@@ -16757,8 +16838,9 @@ async function deletePeriodRecord(i) {
   const p = store.periodRecords && store.periodRecords[i];
   if (!p) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + p.start + ' 的经期记录吗？')) return;
+  hamiTombAdd('periodRecords', p);   // v39 墓碑
   store.periodRecords.splice(i, 1);
-  saveData();
+  hamiDeleteSync();
   try { renderPeriod(); } catch(e) {}
   try { renderFitness(); } catch(e) {}  // 经期会影响"健身天数"和运动状态
   try { rerenderSynced(); } catch(e) {}
@@ -16773,8 +16855,9 @@ async function deleteWashRecord(i) {
   const w = store.washRecords && store.washRecords[i];
   if (!w) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + w.date + ' 的洗头记录吗？')) return;
+  hamiTombAdd('washRecords', w);   // v39 墓碑
   store.washRecords.splice(i, 1);
-  saveData();
+  hamiDeleteSync();
   try { renderPeriod(); } catch(e) {}
   try { rerenderSynced(); } catch(e) {}
   finToast('🗑 已删除洗头记录');
