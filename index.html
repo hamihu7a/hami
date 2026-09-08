@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-53">
+<meta name="hami-build" content="2026-09-08-54">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-53';
+  var BUILD_VER = '2026-09-08-54';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4844,8 +4844,9 @@
     <div class="card">
       <div class="card-title"><span>📋</span> 洗头记录</div>
       <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>日期</th><th>距上次</th></tr></thead>
+        <table style="table-layout:fixed;width:100%;min-width:0;">
+          <colgroup><col style="width:35%;"><col style="width:45%;"><col style="width:20%;"></colgroup>
+          <thead><tr><th>日期</th><th>距上次</th><th style="text-align:right;padding-right:4px;">操作</th></tr></thead>
           <tbody id="wash-table"></tbody>
         </table>
       </div>
@@ -7347,6 +7348,20 @@ function hamiDeleteSync() {
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
 }
+// v54：统一删除收尾。把「加墓碑 + 本地 splice + 存档并推云端 + 立刻刷新面板」封装起来，
+// 让所有删除按钮行为一致，避免有的面板删后没反应、有的删了又从云端复活。
+function hamiDeleteRecord(listKey, idx, options) {
+  options = options || {};
+  const arr = store[listKey];
+  const item = arr && arr[idx];
+  if (!item) return false;
+  hamiTombAdd(listKey, item);
+  arr.splice(idx, 1);
+  if (typeof options.afterLocal === 'function') { try { options.afterLocal(item); } catch(e){} }
+  hamiDeleteSync();
+  if (typeof options.render === 'function') { try { options.render(); } catch(e){} }
+  return true;
+}
 
 function cloudStatus(text, color) {
   const el = document.getElementById('settings-cloud-status');
@@ -7406,7 +7421,7 @@ var _lastCloudRenderCount = -1;
 function renderAllFromCloud() {
   if (!_hamiBootDone || _cloudRendering) return;                 // 重入锁
   const now = Date.now();
-  if (now - _lastCloudRenderAt < 5000) return;                   // 节流：5 秒内最多重渲一次
+  if (now - _lastCloudRenderAt < 1000) return;                   // 节流：1 秒内最多重渲一次
   // 主人正在输入时不重渲，避免打断打字、也避免输入框内容被覆盖
   const ae = document.activeElement;
   if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
@@ -7420,7 +7435,7 @@ function renderAllFromCloud() {
   try {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
       'renderCreate', 'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
-      'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
+      'renderTripPlans', 'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
     });
@@ -10910,9 +10925,7 @@ async function deleteCustomOrder(idx) {
   if (!store.customOrders || !store.customOrders[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
   const o = store.customOrders[idx];
   if (!await hamiConfirm('确定删除定制单「' + (o.desc || o.date) + ' ¥' + o.amount + '」吗？删除后不可恢复哦~')) return;
-  store.customOrders.splice(idx, 1);
-  saveData();
-  try { renderIncome(); } catch (e) {}
+  hamiDeleteRecord('customOrders', idx, { render: renderIncome });
   finToast('🗑️ 已删除定制单');
 }
 
@@ -10982,9 +10995,7 @@ async function deleteBeautyRecord(idx) {
   if (!store.beautyRecords || !store.beautyRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
   const b = store.beautyRecords[idx];
   if (!await hamiConfirm('确定删除美化档「' + b.date + ' ' + b.count + '档 ¥' + (b.amount != null ? b.amount : b.count * MOD_PRICE) + '」吗？')) return;
-  store.beautyRecords.splice(idx, 1);
-  saveData();
-  try { renderIncome(); } catch (e) {}
+  hamiDeleteRecord('beautyRecords', idx, { render: renderIncome });
   finToast('🗑️ 已删除美化档记录');
 }
 // ESC 关闭记定制单弹窗
@@ -11613,10 +11624,11 @@ async function deleteFuturePost(idx) {
   if (!store.futurePosts || !store.futurePosts[idx]) return;
   const p = store.futurePosts[idx];
   if (!await hamiConfirm('确定删除「' + (p.title || '这条图文计划') + '」吗？')) return;
-  store.futurePosts.splice(idx, 1);
-  // 同步删除自媒体更新记录里的联动记录
-  if (p && p.id) removeLinkedMediaRecord(p.id);
-  saveData(); renderFuturePosts(); hamiToast('🗑️ 已删除');
+  hamiDeleteRecord('futurePosts', idx, {
+    afterLocal: function (item) { if (item && item.id) removeLinkedMediaRecord(item.id); },
+    render: renderFuturePosts
+  });
+  hamiToast('🗑️ 已删除');
 }
 function toggleFuturePostDone(idx) {
   if (!store.futurePosts || !store.futurePosts[idx]) return;
@@ -12240,10 +12252,7 @@ async function deleteExerciseRecord(idx) {
   const e = store.exerciseRecords && store.exerciseRecords[idx];
   if (!e) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + e.date + ' 的运动打卡吗？')) return;
-  store.exerciseRecords.splice(idx, 1);
-  saveData();
-  try { renderFitness(); } catch(e) {}
-  try { rerenderSynced(); } catch(e) {}
+  hamiDeleteRecord('exerciseRecords', idx, { render: renderFitness });
   finToast('🗑 已删除运动打卡');
 }
 
@@ -13758,7 +13767,7 @@ function renderPeriod() {
 
   const allWashes = [...store.washRecords].sort((a,b) => b.date.localeCompare(a.date));
   if (allWashes.length === 0) {
-    document.getElementById('wash-table').innerHTML = `<div class="empty-state"><p>暂无洗头记录</p></div>`;
+    document.getElementById('wash-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>暂无洗头记录</p></div></td></tr>`;
   } else {
     const tbodyHtml = foldRecordsTable('wash', allWashes, function (w) {
       const i = allWashes.indexOf(w);
@@ -14681,10 +14690,10 @@ async function deleteTripRecord(idx) {
   if (!store.trips || !store.trips[idx]) return;
   const city = store.trips[idx].city || '这个行程';
   if (!await hamiConfirm('确定删除「' + city + '」吗？会一起删掉所有每日安排。')) return;
-  store.trips.splice(idx, 1);
-  delete _tripActiveDay[idx];
-  try { saveData(); } catch (e) {}
-  renderTripPlans();
+  hamiDeleteRecord('trips', idx, {
+    afterLocal: function () { delete _tripActiveDay[idx]; },
+    render: renderTripPlans
+  });
   try { finToast('已删除「' + city + '」'); } catch (e) {}
 }
 
@@ -14700,6 +14709,7 @@ async function deleteTripDay(tripIdx, dayIdx) {
     if (dayIdx >= trip.days.length - 1) trip.end = trip.days[trip.days.length - 1].date;
   }
   try { saveData(); } catch (e) {}
+  try { hamiDeleteSync(); } catch (e) {}
   renderTripPlans();
 }
 
@@ -14773,6 +14783,7 @@ async function deleteTripDayItem(tripIdx, dayIdx, itemIdx) {
   if (!await hamiConfirm('确定删除「' + title + '」吗？')) return;
   trip.days[dayIdx].items.splice(itemIdx, 1);
   try { saveData(); } catch (e) {}
+  try { hamiDeleteSync(); } catch (e) {}
   renderTripPlans();
   try { finToast('已删除「' + title + '」'); } catch (e) {}
 }
