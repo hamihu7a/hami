@@ -986,7 +986,7 @@
     display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     box-sizing: border-box; overflow: hidden;
   }
-  .weight-cal-empty { border: none; background: transparent !important; }
+  .weight-cal-empty { border: 1px dashed #f5e8ee; background: rgba(255,255,255,0.35); }
   .weight-cal-day { font-size: 12px; font-weight: 700; line-height: 1.1; }
   /* 主人要的版式：体重在上、变化值（↑0.8/↓0.8/—）在下，两行各自完整一行，不再挤成单字符串 */
   .weight-cal-stack {
@@ -2208,14 +2208,14 @@
   .flow-toggle-btn:active { transform: translateY(1px); }
 
   /* 洗头记录卡片 */
-  .wash-card-list { display: flex; flex-direction: column; gap: 6px; }
+  .wash-card-list { display: flex; flex-direction: column; gap: 4px; }
   .wash-card {
     position: relative;
     background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
-    padding: 9px 11px; padding-right: 64px; display: flex; align-items: center; justify-content: space-between;
-    gap: 8px;
+    padding: 8px 10px; padding-right: 44px; display: flex; align-items: center; justify-content: space-between;
+    gap: 6px;
   }
-  .wash-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .wash-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .wash-card-date {
     font-size: 14px; font-weight: 800; color: #5a3a48;
     white-space: nowrap;
@@ -2900,7 +2900,7 @@
       .weight-cal-cell { min-height: 42px; border-radius: 5px; padding: 1px 0; }
       .weight-cal-day { font-size: 10px; line-height: 1; }
       /* 超小屏：日期/变化/体重整体微缩，保证窄格也能看清 */
-      .weight-cal-stack { gap: 0; min-height: 22px; transform: scale(0.88); transform-origin: center center; }
+      .weight-cal-stack { gap: 0; min-height: 22px; transform: none; transform-origin: center center; }
       .weight-cal-change, .weight-cal-weight { font-size: 8px !important; padding: 0 !important; line-height: 1.15; }
       .weight-cal-ex { gap: 0; transform: scale(0.85); transform-origin: center center; }
       .weight-cal-legend { font-size: 10px; margin-top: 3px; padding-top: 3px; }
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-49';
+  var BUILD_VER = '2026-09-08-50';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -13627,19 +13627,31 @@ function renderPeriod() {
   if (startBtn) startBtn.disabled = hasOpen;
   if (endBtn) endBtn.disabled = !hasOpen;
 
+  // v50：经期预测改回正常实用版本
   let predictHtml = '';
-  if (nextPredict) {
-    const daysUntil = Math.round((new Date(nextPredict) - todayDate) / 86400000);
-    if (daysUntil > 0) {
-      const isSoon = daysUntil <= 3;
-      predictHtml = `<div style="padding:14px;background:${isSoon ? '#fff3cd' : '#fff8fa'};border-radius:12px;border:1px solid ${isSoon ? '#ffc107' : '#ffe4ec'};"><div style="font-size:14px;font-weight:600;color:${isSoon ? '#856404' : '#d14b73'};">${isSoon ? '⚠️ 月经快来了！' : '📅 下次预测'}</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">预计 <b>${fmtMD(nextPredict)}</b> 来月经（还有${daysUntil}天）<br>${isSoon ? '🌸 提前备好卫生巾，注意保暖~' : '保持好心情，规律作息~'}</div></div>`;
-    } else if (daysUntil < 0 && daysUntil >= -3) {
-      predictHtml = `<div style="padding:14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:600;color:#856404;">⚠️ 月经已延期${Math.abs(daysUntil)}天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">预测日期是 ${fmtMD(nextPredict)}，已过${Math.abs(daysUntil)}天还没来，注意身体~</div></div>`;
-    } else if (daysUntil < -3) {
-      predictHtml = `<div style="padding:14px;background:#f8d7da;border-radius:12px;border:1px solid #e85f7a;"><div style="font-size:14px;font-weight:600;color:#721c24;">❌ 月经已延期${Math.abs(daysUntil)}天！</div><div style="font-size:13px;color:#721c24;margin-top:6px;">超过预期3天以上，建议关注身体状况，必要时就医~</div></div>`;
-    }
+  const pinfo = getNextPeriodInfo();
+  if (!pinfo) {
+    predictHtml = `<div class="empty-state" style="padding:12px 0;"><p>记录经期开始/结束日期后，<br>小助理会自动预测下次时间~</p></div>`;
+  } else if (pinfo.inProgress) {
+    const startStr = fmtMD(lastPeriod.start);
+    const dayN = pinfo.dayN || Math.max(1, Math.round((todayDate - new Date(lastPeriod.start + 'T00:00:00')) / 86400000) + 1);
+    const durs = periods.filter(p => p.start && p.end).map(p => Math.round((new Date(p.end + 'T00:00:00') - new Date(p.start + 'T00:00:00')) / 86400000) + 1);
+    const avgDur = durs.length ? Math.round(durs.slice(-6).reduce((a,b)=>a+b,0) / Math.min(durs.length,6)) : 0;
+    const remain = avgDur ? Math.max(0, avgDur - dayN + 1) : 0;
+    predictHtml = `<div style="padding:14px;background:#ffe4ec;border-radius:12px;border:1px solid #ffb3c6;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🩸 本次经期第 ${dayN} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">开始于 ${startStr}${avgDur ? '，预计还有 ' + remain + ' 天结束' : ''}。<br>结束后记得点「结束本次」~</div></div>`;
   } else {
-    predictHtml = `<div class="empty-state"><p>暂无足够数据预测<br>记录2次以上经期后可自动预测周期</p></div>`;
+    const daysUntil = pinfo.daysUntilStart;
+    const nextStr = fmtMD(pinfo.date);
+    const weekday = ['日','一','二','三','四','五','六'][pinfo.date.getDay()];
+    if (daysUntil > 3) {
+      predictHtml = `<div style="padding:14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:600;color:#d14b73;">📅 下次月经预计 ${nextStr}（周${weekday}）</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">还有 ${daysUntil} 天，平均周期 ${pinfo.avgCycle} 天。保持好心情~</div></div>`;
+    } else if (daysUntil >= 1) {
+      predictHtml = `<div style="padding:14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:600;color:#856404;">⚠️ 月经快来了</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">预计 ${nextStr}（周${weekday}）来，还有 ${daysUntil} 天，提前备好卫生巾~</div></div>`;
+    } else if (daysUntil === 0) {
+      predictHtml = `<div style="padding:14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:600;color:#856404;">💕 预计今天来月经</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">今天是预测日，注意身体、备好卫生巾~</div></div>`;
+    } else {
+      predictHtml = `<div style="padding:14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🌸 月经推迟了 ${Math.abs(daysUntil)} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">本应在 ${nextStr}（周${weekday}）来，平均周期 ${pinfo.avgCycle} 天。再观察几天，注意身体~</div></div>`;
+    }
   }
   document.getElementById('period-predict').innerHTML = predictHtml;
 
@@ -16559,37 +16571,38 @@ function renderDesktopMovieTickets() {
 // 经期：推算下一次（仅1条记录时用28天周期兜底）
 // remind：是否处于"前3天+经期当天/期间"提醒窗口
 function getNextPeriodInfo() {
-  const periods = [...(store.periodRecords||[])].sort((a,b)=>a.start.localeCompare(b.start));
+  const periods = [...(store.periodRecords||[])].filter(p => p && p.start).sort((a,b)=>a.start.localeCompare(b.start));
   if (periods.length === 0) return null;
   const todayDate = new Date(todayStr() + 'T00:00:00');
-  // 是否正在经期中
+  // 是否正在经期中（有结束日按区间；没结束日按进行中）
   for (const p of periods) {
-    if (p.start && p.end) {
-      const s = new Date(p.start + 'T00:00:00');
+    const s = new Date(p.start + 'T00:00:00');
+    if (p.end) {
       const en = new Date(p.end + 'T00:00:00');
       if (todayDate >= s && todayDate <= en) {
-        return { date: todayDate, inProgress: true, remind: true, daysUntilStart: 0 };
+        const dayN = Math.max(1, Math.round((todayDate - s) / 86400000) + 1);
+        return { date: todayDate, inProgress: true, remind: false, daysUntilStart: 0, dayN, avgCycle: 0 };
       }
+    } else {
+      const dayN = Math.max(1, Math.round((todayDate - s) / 86400000) + 1);
+      return { date: todayDate, inProgress: true, remind: false, daysUntilStart: 0, dayN, avgCycle: 0 };
     }
+  }
+  // 计算平均周期：只取 21-45 天内的合理间隔，避免异常记录拉偏
+  const intervals = [];
+  for (let i = 1; i < periods.length; i++) {
+    const d = Math.round((new Date(periods[i].start + 'T00:00:00') - new Date(periods[i-1].start + 'T00:00:00')) / 86400000);
+    if (d >= 21 && d <= 45) intervals.push(d);
+  }
+  let avg = 28;
+  if (intervals.length > 0) {
+    avg = Math.round(intervals.slice(-6).reduce((a,b)=>a+b,0) / Math.min(intervals.length, 6));
   }
   const last = periods[periods.length - 1];
-  if (!last.start) return null;
-  let avg = 0;
-  if (periods.length >= 2) {
-    let total = 0;
-    for (let i = 1; i < periods.length; i++) {
-      total += (new Date(periods[i].start) - new Date(periods[i-1].start)) / 86400000;
-    }
-    avg = Math.round(total / (periods.length - 1));
-  }
-  if (avg <= 0) avg = 28;
-  let next = new Date(last.start + 'T00:00:00');
+  const next = new Date(last.start + 'T00:00:00');
   next.setDate(next.getDate() + avg);
-  while (next < todayDate) next.setDate(next.getDate() + avg);
   const daysUntilStart = Math.round((next - todayDate) / 86400000);
-  // 提醒窗口：经期来的前3天 + 当天（daysUntilStart 0~3）
-  const remind = daysUntilStart >= 0 && daysUntilStart <= 3;
-  return { date: next, inProgress: false, remind, daysUntilStart };
+  return { date: next, inProgress: false, remind: daysUntilStart >= 0 && daysUntilStart <= 3, daysUntilStart, avgCycle: avg };
 }
 
 // 洗头：间隔3天，超3天即"该洗头了"
@@ -17041,7 +17054,7 @@ function renderCountdown() {
   if (pages.length > 1) {
     if (window.__countdownTimer) clearInterval(window.__countdownTimer);
     window.__countdownTimer = setInterval(() => {
-      const w = document.getElementById('countdown-bar');
+      const w = document.getElementById('desktop-countdown');
       if (!w) return;
       // 给当前容器加 out 类做向上淡出
       const cur = w.firstElementChild;
@@ -17052,7 +17065,7 @@ function renderCountdown() {
         window.__countdownPage = (window.__countdownPage + 1) % pages.length;
         renderCountdown();
         // 新页做从下推入的动画
-        const nw = document.getElementById('countdown-bar');
+        const nw = document.getElementById('desktop-countdown');
         if (nw && nw.firstElementChild) {
           nw.firstElementChild.classList.add('countdown-page-in');
           setTimeout(() => { try { nw.firstElementChild.classList.remove('countdown-page-in'); } catch (e) {} }, 380);
