@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-42">
+<meta name="hami-build" content="2026-09-08-43">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2199,19 +2199,58 @@
   .flow-toggle-btn:active { transform: translateY(1px); }
 
   /* 洗头记录卡片 */
-  .wash-card-list { gap: 8px; }
+  .wash-card-list { display: flex; flex-direction: column; gap: 6px; }
   .wash-card {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px;
+    background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 9px 11px; display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
   }
+  .wash-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .wash-card-date {
-    font-size: 14px; font-weight: 700; color: var(--c-text-2);
+    font-size: 14px; font-weight: 800; color: #5a3a48;
     white-space: nowrap;
   }
   .wash-card-gap {
-    font-size: 12px; color: #8a6270; flex: 1; text-align: center;
+    font-size: 12px; color: #8a6270;
     white-space: nowrap;
   }
+
+  /* 月度收入明细：卡片式，无表格空白列 */
+  .monthly-income-list { display: flex; flex-direction: column; gap: 6px; }
+  .monthly-income-row {
+    background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 9px 11px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .mi-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .mi-month {
+    font-size: 14px; font-weight: 800; color: #5a3a48; white-space: nowrap;
+  }
+  .mi-total {
+    font-size: 15px; font-weight: 800; color: #b8a0a8; white-space: nowrap;
+  }
+  .mi-total.has { color: #34a853; }
+  .mi-detail {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    font-size: 12px; color: #8a6270;
+  }
+  .mi-item { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .mi-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .mi-dot.custom { background: #b48bf2; }
+  .mi-dot.beauty { background: #ff9eb5; }
+
+  /* 如厕记录卡片 */
+  .toilet-card-list { display: flex; flex-direction: column; gap: 6px; }
+  .toilet-card {
+    background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 9px 11px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .toilet-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .toilet-card-date { font-size: 14px; font-weight: 800; color: #5a3a48; white-space: nowrap; }
+  .toilet-card-meta { font-size: 12px; color: #8a6270; white-space: nowrap; }
+  .toilet-card-count { margin-right: 10px; }
+  .toilet-card-gap { color: #a67d8d; }
 
   /* 外出游玩卡片 */
   .travel-card { border-radius: 14px; }
@@ -3931,7 +3970,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-42';
+  var BUILD_VER = '2026-09-08-43';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4305,23 +4344,8 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     </div>
 
     <div class="card">
-      <div class="card-title"><span>🎨</span> 美化档月度记录</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>月份</th><th>销量</th><th>单价</th><th>收入</th></tr></thead>
-          <tbody id="mod-sales-table"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span>📈</span> 月度收入汇总</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>月份</th><th>定制单</th><th>美化档</th><th>总收入</th></tr></thead>
-          <tbody id="monthly-summary-table"></tbody>
-        </table>
-      </div>
+      <div class="card-title"><span>📈</span> 月度收入明细</div>
+      <div id="monthly-income-list"></div>
     </div>
 
   </div>
@@ -4888,12 +4912,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 
     <div class="card">
       <div class="card-title"><span>📋</span> 如厕记录</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>日期</th><th>次数</th><th>距上次</th><th>操作</th></tr></thead>
-          <tbody id="toilet-table"></tbody>
-        </table>
-      </div>
+      <div id="toilet-table"></div>
     </div>
 
   </div>
@@ -9915,8 +9934,8 @@ function switchTodoCat(cat) {
   todoCurCat = cat;
   // 旧入口保留，避免其他代码调用报错；新 UI 已无需 Tab 切换
 }
-// v26 待办也改每页 4 条翻页（主人要求所有记录列表每页 4 条、数据永不丢）
-const TODO_PAGE = 4;
+// v42 待办改每页 3 条翻页（主人要求所有记录列表每页 3 条、数据永不丢）
+const TODO_PAGE = 3;
 const __todoPage = {};
 function todoGo(cat, delta) {
   const items = (store.userTodos || [])
@@ -10771,20 +10790,26 @@ function renderIncome() {
   }
 
   const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
-  let modHtml = '';
-  months.forEach(m => {
-    const c = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0);
-    modHtml += `<tr><td>${m}</td><td>${c}</td><td>¥${MOD_PRICE}</td><td>¥${c*MOD_PRICE}</td></tr>`;
-  });
-  document.getElementById('mod-sales-table').innerHTML = modHtml;
-
-  let sumHtml = '';
+  let miHtml = '<div class="monthly-income-list">';
   months.forEach(m => {
     const mc = store.customOrders.filter(o => o.date.startsWith(m) && o.status === 'done').reduce((s,o)=>s+o.amount, 0);
     const mm = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0) * MOD_PRICE;
-    sumHtml += `<tr><td>${m}</td><td>¥${mc}</td><td>¥${mm}</td><td><b>¥${mc+mm}</b></td></tr>`;
+    const total = mc + mm;
+    const monthLabel = m.replace('-', '年') + '月';
+    miHtml += `
+      <div class="monthly-income-row">
+        <div class="mi-head">
+          <span class="mi-month">${monthLabel}</span>
+          <span class="mi-total ${total > 0 ? 'has' : ''}">${total > 0 ? '¥' + fmtMoney(total) : '¥0'}</span>
+        </div>
+        <div class="mi-detail">
+          <span class="mi-item"><i class="mi-dot custom"></i>定制单 ${mc > 0 ? '¥' + fmtMoney(mc) : '—'}</span>
+          <span class="mi-item"><i class="mi-dot beauty"></i>美化档 ${mm > 0 ? '¥' + fmtMoney(mm) : '—'}</span>
+        </div>
+      </div>`;
   });
-  document.getElementById('monthly-summary-table').innerHTML = sumHtml;
+  miHtml += '</div>';
+  document.getElementById('monthly-income-list').innerHTML = miHtml;
 
   // 美化档明细表
   const beautyTableEl = document.getElementById('beauty-records-table');
@@ -11162,8 +11187,13 @@ function renderFitness() {
     const monthExercisesDesc = monthExercises.slice().reverse(); // 近→远
     const exHtml = foldRecords('exercise', monthExercisesDesc, function (e) {
       const idx = store.exerciseRecords.indexOf(e);  // 真实 store 索引
-      const isRest = restDays.includes(e.date);
-      const statusBadge = isRest ? '<span class="badge rest">经期休息</span>' : '<span class="badge done">已完成</span>';
+      const hasAny = e.aerobics || e.cardio || e.weights;
+      const isRest = restDays.includes(e.date) || !hasAny;
+      let statusText, statusClass;
+      if (isRest) { statusText = '休息日'; statusClass = 'rest'; }
+      else if (hasAny) { statusText = '已完成'; statusClass = 'done'; }
+      else { statusText = '待打卡'; statusClass = 'pending'; }
+      const statusBadge = `<span class="badge ${statusClass}">${statusText}</span>`;
       const tags = [];
       if (e.aerobics) tags.push(`有氧操${e.duration ? ' ' + e.duration : ''}`);
       if (e.cardio) tags.push(`爬坡 / 椭圆机${e.cardioType ? '·' + e.cardioType : ''}${e.duration ? ' ' + e.duration : ''}`);
@@ -12895,7 +12925,7 @@ function toggleStatsMode() {
 // v2026-09-06-25：主人强烈要求"所有记账都要永远在，太多了就翻页看，别只给前几条还要能看全"。
 // 之前"默认3笔 + 展开全部一次铺几百条"既让主人误以为只存了3条，又一翻到底很累。
 // 改为**每页8条 + 上一页/下一页**：数据永远全量保存(三重备份)，只是分页浏览更清楚。
-const ACC_PAGE = 4;                 // v26 主人要求每页 4 条
+const ACC_PAGE = 3;                 // v42 主人要求每页 3 条
 let accountFlowPage = 0;            // 消费日期列表当前页码(0-based)
 let accountTimelinePage = 0;        // 时间线列表当前页码(0-based)
 let accountExpensePage = 0;         // v31 支出账本当前页码(0-based)
@@ -13402,7 +13432,7 @@ function renderInlineStats(type) {
 // 供各日常/健康记录列表复用。数据全量在 store，只是分页浏览（主人 2026-09-06-25 强烈要求）
 const __foldState = {};
 const __foldPage = {};            // 每个列表当前页码(0-based)
-const FOLD_PAGE = 4;              // v26 主人要求每页 4 条
+const FOLD_PAGE = 3;              // v42 主人要求每页 3 条
 function toggleFold(key) {
   __foldState[key] = !__foldState[key];
   if (!__foldState[key]) __foldPage[key] = 0;   // 收起回到第1页
@@ -13748,10 +13778,12 @@ function renderPeriod() {
       return `
         <div class="wash-card">
           <div class="card-actions">
-            <button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" type="button" aria-label="删除">🗑</button>
+            <button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" type="button" aria-label="删除">删</button>
           </div>
-          <div class="wash-card-date">📅 ${w.date}</div>
-          <div class="wash-card-gap">距上次：${gap}</div>
+          <div class="wash-card-main">
+            <div class="wash-card-date">${w.date}</div>
+            <div class="wash-card-gap">距上次：${gap}</div>
+          </div>
         </div>`;
     });
     document.getElementById('wash-table').innerHTML = '<div class="wash-card-list">' + washHtml + '</div>';
@@ -13783,16 +13815,29 @@ function renderToilet() {
 
   const allRecs = [...store.toiletRecords].sort((a,b)=>b.date.localeCompare(a.date));
   if (allRecs.length === 0) {
-    document.getElementById('toilet-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>暂无如厕记录</p></div></td></tr>`;
+    document.getElementById('toilet-table').innerHTML = `<div class="empty-state"><p>暂无如厕记录</p></div>`;
   } else {
-    const html = foldRecordsTable('toilet', allRecs, function (r) {
+    const html = foldRecords('toilet', allRecs, function (r) {
       const i = allRecs.indexOf(r);
       let gap = '—';
       if (i >= 0 && i < allRecs.length - 1) gap = Math.round((new Date(r.date) - new Date(allRecs[i+1].date)) / 86400000) + '天';
       const tIdx = store.toiletRecords.indexOf(r);
-      return `<tr><td>${r.date}</td><td>${r.count || 1}</td><td>${gap}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openToiletEditModal(${tIdx})">✏️</button> <button class="row-del-btn" onclick="deleteToiletRecord(${tIdx})">🗑</button></td></tr>`;
-    }, 4);
-    document.getElementById('toilet-table').innerHTML = html;
+      return `
+        <div class="toilet-card">
+          <div class="card-actions">
+            <button class="row-edit-btn" onclick="openToiletEditModal(${tIdx})" aria-label="修改">改</button>
+            <button class="row-del-btn" onclick="deleteToiletRecord(${tIdx})" aria-label="删除">删</button>
+          </div>
+          <div class="toilet-card-main">
+            <div class="toilet-card-date">${r.date}</div>
+            <div class="toilet-card-meta">
+              <span class="toilet-card-count">次数 ${r.count || 1}</span>
+              <span class="toilet-card-gap">距上次 ${gap}</span>
+            </div>
+          </div>
+        </div>`;
+    });
+    document.getElementById('toilet-table').innerHTML = '<div class="toilet-card-list">' + html + '</div>';
   }
 }
 
