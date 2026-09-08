@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-49">
+<meta name="hami-build" content="2026-09-08-53">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-52';
+  var BUILD_VER = '2026-09-08-53';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7419,7 +7419,7 @@ function renderAllFromCloud() {
   _cloudRendering = true;
   try {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
-      'renderCreate', 'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
+      'renderCreate', 'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
       'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
@@ -13760,23 +13760,18 @@ function renderPeriod() {
   if (allWashes.length === 0) {
     document.getElementById('wash-table').innerHTML = `<div class="empty-state"><p>暂无洗头记录</p></div>`;
   } else {
-    const washHtml = foldRecords('wash', allWashes, function (w) {
+    const tbodyHtml = foldRecordsTable('wash', allWashes, function (w) {
       const i = allWashes.indexOf(w);
       let gap = '—';
       if (i >= 0 && i < allWashes.length - 1) gap = Math.round((new Date(w.date) - new Date(allWashes[i+1].date)) / 86400000) + '天';
       const wIdx = store.washRecords.indexOf(w);
-      return `
-        <div class="wash-card">
-          <div class="card-actions">
-            <button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" type="button" aria-label="删除">删</button>
-          </div>
-          <div class="wash-card-main">
-            <div class="wash-card-date">${w.date}</div>
-            <div class="wash-card-gap">距上次：${gap}</div>
-          </div>
-        </div>`;
-    });
-    document.getElementById('wash-table').innerHTML = '<div class="wash-card-list">' + washHtml + '</div>';
+      return `<tr>
+        <td style="white-space:nowrap;color:#5a3a48;font-weight:700;">${w.date}</td>
+        <td style="white-space:nowrap;color:#8a6270;">距上次：${gap}</td>
+        <td style="white-space:nowrap;text-align:right;"><button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" type="button" aria-label="删除">删</button></td>
+      </tr>`;
+    }, 3);
+    document.getElementById('wash-table').innerHTML = tbodyHtml;
   }
 }
 
@@ -16691,12 +16686,13 @@ function logWash() {
   if (idx >= 0) {
     store.washRecords.splice(idx, 1);
     saveData();
-    renderPeriod(); renderCountdown();
+    renderWash(); renderPeriod(); renderCountdown();
     hamiToast('🧴 已取消今天的洗头记录~');
     return;
   }
   store.washRecords.push({ date: today });
   saveData();
+  renderWash();
   renderPeriod();
   renderCountdown();
   try { playSound('task'); } catch (e) {}
@@ -16866,6 +16862,7 @@ async function deleteWashRecord(i) {
   hamiTombAdd('washRecords', w);   // v39 墓碑
   store.washRecords.splice(i, 1);
   hamiDeleteSync();
+  try { renderWash(); } catch(e) {}
   try { renderPeriod(); } catch(e) {}
   try { rerenderSynced(); } catch(e) {}
   finToast('🗑 已删除洗头记录');
