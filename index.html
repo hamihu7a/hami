@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-07-35">
+<meta name="hami-build" content="2026-09-08-36">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -127,7 +127,7 @@
     --gap: 12px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
        之间的垂直距离都用 var(--space-block)，避免"有的黏在一起、有的隔太远"——design token */
-    --space-block: 7px;
+    --space-block: 5px;
     --pad: 20px;
     --t: .25s ease;
   }
@@ -315,12 +315,14 @@
     font-size: 18px;
     min-width: 22px;
     text-align: center;
+    pointer-events: none;
   }
   .nav-item .nav-text {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     transition: opacity .2s;
+    pointer-events: none;
   }
   .nav-item .nav-text.nav-text-wrap {
     white-space: normal;
@@ -349,7 +351,7 @@
     right: 0;
     bottom: 0;
     width: auto;                           /* 宽度自动 = 视口 - 侧栏 */
-    padding: 24px 28px;
+    padding: 18px 22px;
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -1791,6 +1793,18 @@
   #fitness-stats .stat-card .value { font-size: 19px; }
   #fitness-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
   #fitness-stats .stat-card .unit { font-size: 11px; }
+  /* v2026-09-08 经期记录 4 张卡「上2下2 紧密」 */
+  #period-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  #period-stats .stat-card { padding: 12px 8px; }
+  #period-stats .stat-card .value { font-size: 19px; }
+  #period-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
+  #period-stats .stat-card .unit { font-size: 11px; }
+  /* v2026-09-08 如厕/敷面膜 3 张卡横向并排 */
+  #toilet-stats, #mask-stats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+  #toilet-stats .stat-card, #mask-stats .stat-card { padding: 10px 4px; }
+  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 16px; white-space: nowrap; }
+  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 10px; margin-bottom: 2px; }
+  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 10px; }
   /* v2026-09-06-28 历史推荐表：标题列允许换行且不溢出；表头紧凑 */
   #inspire-history td:first-child,
   #inspire-history td:nth-child(2),
@@ -2154,6 +2168,16 @@
     border: 1.5px dashed #ffd0dc; border-radius: 10px; padding: 5px 10px;
     cursor: pointer; margin-top: 4px;
   }
+  /* 行程卡折叠/展开触发器：默认收起，点一下看全部安排 */
+  .trip-expand-toggle {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin: 6px 0 4px; padding: 6px 10px; cursor: pointer; user-select: none;
+    background: #fff6fa; border: 1px solid #ffd9e3; border-radius: 12px;
+    font-size: 13px; font-weight: 700; color: var(--c-pink-deep);
+    transition: background .12s;
+  }
+  .trip-expand-toggle:hover { background: #ffe9f0; }
+  .trip-expand-toggle span:last-child { font-weight: 500; }
   .trip-actions-row {
     display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
   }
@@ -2609,26 +2633,24 @@
       .account-card .ac-detail { font-size: 11px; flex-wrap: wrap; gap: 2px 4px; justify-content: flex-start; }
       .account-card .ac-detail b { font-weight: 700; }
 
-      /* 体重记录与变化日历：收窄内边距，把宽度让给格子 */
-      #home-weight-cal { padding: 10px 8px; }
+      /* 体重记录与变化日历：进一步收窄内边距，把宽度让给格子 */
+      #home-weight-cal { padding: 8px 4px; }
       #home-weight-cal h3 { font-size: 13px; text-align: center; text-wrap: balance; margin-bottom: 4px; }
       .weight-cal-header { gap: 5px; margin-bottom: 4px; }
       .weight-cal-month { font-size: 13px; }
       .weight-cal-nav, .weight-cal-today { width: 20px; height: 20px; font-size: 11px; }
       .weight-cal-badge { padding: 1px 5px; border-radius: 5px; }
       .weight-cal-badge-num, .weight-cal-badge-label { font-size: 11px; }
-      .weight-cal-weekdays { gap: 2px; }
-      .weight-cal-weekdays > div { font-size: 11px; }
-      .weight-cal-grid { gap: 2px; }
-      .weight-cal-cell { min-height: 36px; border-radius: 5px; padding: 1px 0 2px; }
-      .weight-cal-day { font-size: 11px; line-height: 1; }
-      /* 超小屏：变化值+体重合并单 span 强制单行，绝不再换行 */
-      .weight-cal-stack { gap: 0; min-height: 20px; }
-      .weight-cal-body { font-size: 9px; padding: 0; line-height: 1; min-height: 11px; }
-      .weight-cal-change, .weight-cal-weight { font-size: 9px; padding: 0 2px; line-height: 1.2; }
-      .weight-cal-ex-dot { font-size: 7px; }
-      .weight-cal-ex { gap: 0; }
-      .weight-cal-legend { font-size: 11px; margin-top: 4px; padding-top: 3px; }
+      .weight-cal-weekdays { gap: 1px; }
+      .weight-cal-weekdays > div { font-size: 10px; }
+      .weight-cal-grid { gap: 1px; }
+      .weight-cal-cell { min-height: 42px; border-radius: 5px; padding: 1px 0; }
+      .weight-cal-day { font-size: 10px; line-height: 1; }
+      /* 超小屏：日期/变化/体重整体微缩，保证窄格也能看清 */
+      .weight-cal-stack { gap: 0; min-height: 22px; transform: scale(0.88); transform-origin: center center; }
+      .weight-cal-change, .weight-cal-weight { font-size: 8px !important; padding: 0 !important; line-height: 1.15; }
+      .weight-cal-ex { gap: 0; transform: scale(0.85); transform-origin: center center; }
+      .weight-cal-legend { font-size: 10px; margin-top: 3px; padding-top: 3px; }
 
       /* 内容卡片 & 顶栏：超小屏收窄留白，别浪费横向空间 */
       .card, .todo-card { padding: 14px 12px; }
@@ -3002,16 +3024,16 @@
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
   /* v2026-09-07-30 首页(panel-desktop)统一紧凑：主人说"间隔太宽" */
   #panel-desktop > .todo-card,
-  #panel-desktop > .card { margin-bottom: 6px; }
-  #panel-desktop > .checkin-grid { margin-bottom: 6px; }
-  #panel-desktop > .stats-grid { margin-bottom: 6px; }
-  #panel-desktop > .accounts-wrap { margin-bottom: 6px; }
+  #panel-desktop > .card { margin-bottom: 4px; }
+  #panel-desktop > .checkin-grid { margin-bottom: 4px; }
+  #panel-desktop > .stats-grid { margin-bottom: 4px; }
+  #panel-desktop > .accounts-wrap { margin-bottom: 4px; }
   /* 修补 desktop-todo 之类的内联空容器引起的视觉大空白 */
   #panel-desktop #desktop-countdown,
   #panel-desktop #home-weather-fortune,
-  #panel-desktop #desktop-accounts-wrap { margin-bottom: 6px; }
+  #panel-desktop #desktop-accounts-wrap { margin-bottom: 4px; }
   /* 体重日历那个 card 单独加底距，避免底下还堆很大空白 */
-  #panel-desktop #home-weight-cal { margin-bottom: 8px; }
+  #panel-desktop #home-weight-cal { margin-bottom: 6px; }
 
   body.hami-force-narrow .weight-cal-change { font-size: 9px !important; }
   body.hami-force-narrow table { font-size: 12px; }
@@ -10172,8 +10194,13 @@ function switchPanel(name, navEl) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     target.classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if (navEl) {
-      navEl.classList.add('active');
+    // 兼容 iPhone 点中子元素导致 navEl 不是 button：向上找 .nav-item
+    let activeBtn = navEl;
+    if (activeBtn && !activeBtn.classList.contains('nav-item')) {
+      activeBtn = activeBtn.closest ? activeBtn.closest('.nav-item') : null;
+    }
+    if (activeBtn) {
+      activeBtn.classList.add('active');
     } else {
       // 没有传入 navEl 时，按 name 自动给侧栏对应 nav-item 加 active
       const navItems = document.querySelectorAll('.nav-item');
@@ -10182,7 +10209,8 @@ function switchPanel(name, navEl) {
         if (oc.indexOf("switchPanel('" + name + "'") >= 0) n.classList.add('active');
       });
     }
-    document.getElementById('sidebar').classList.remove('open');
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.classList.remove('open');
     // 滚到顶部
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
   } catch (e) {
@@ -13381,7 +13409,7 @@ function renderToilet() {
   document.getElementById('toilet-stats').innerHTML = `
     <div class="stat-card"><div class="label">今日次数</div><div class="value">${info.todayCount}</div><div class="unit">次</div></div>
     <div class="stat-card"><div class="label">距上次</div><div class="value">${info.has ? info.daysSince : '—'}</div><div class="unit">天 ${info.state==='alert'?'⚠️':(info.state==='warn'?'⚠️':'')}</div></div>
-    <div class="stat-card"><div class="label">健康状态</div><div class="value" style="font-size:18px;color:${s.color}">${s.icon}${s.label}</div><div class="unit">${info.state==='healthy'?'✅正常':(info.state==='none'?'待记录':'需关注')}</div></div>
+    <div class="stat-card"><div class="label">健康状态</div><div class="value" style="font-size:20px;color:${s.color}">${s.icon}</div><div class="unit">${s.label}</div></div>
   `;
 
   const allRecs = [...store.toiletRecords].sort((a,b)=>b.date.localeCompare(a.date));
@@ -13426,7 +13454,7 @@ function renderMask() {
   document.getElementById('mask-stats').innerHTML = `
     <div class="stat-card"><div class="label">本周进度</div><div class="value">${info.count}<span style="font-size:13px;color:#b87088;">/${info.goal}</span></div><div class="unit">${done?'✅完成':'进行中'}</div></div>
     <div class="stat-card"><div class="label">还需</div><div class="value">${info.goal - info.count}</div><div class="unit">次</div></div>
-    <div class="stat-card"><div class="label">当前星期</div><div class="value" style="font-size:16px;">周${wn[info.weekdayNum-1]}</div><div class="unit">${info.needRemind?'⚠️提醒':'正常'}</div></div>
+    <div class="stat-card"><div class="label">当前星期</div><div class="value" style="font-size:18px;">周${wn[info.weekdayNum-1]}</div><div class="unit">${info.needRemind?'⚠️提醒':'正常'}</div></div>
   `;
 
   const allRecs = [...store.maskRecords].sort((a,b)=>b.date.localeCompare(a.date));
@@ -13643,10 +13671,7 @@ function renderReminder() {
       // 显示日期
       const dateDisplay = d.hasYear ? d.date : (d.date + '（无年份）');
 
-      // 过期样式（daysLeft > 180 的排到后面灰色显示）
-      const isFar = d.sortKey > 180;
-
-      const itemHtml = `<div style="padding:12px 14px;background:#fff8fa;border-radius:14px;margin-bottom:10px;border:1px solid #ffe4ec;${isFar ? 'opacity:0.55;' : ''}">
+      const itemHtml = `<div style="padding:12px 14px;background:#fff8fa;border-radius:14px;margin-bottom:10px;border:1px solid #ffe4ec;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
@@ -13755,6 +13780,13 @@ function renderReminder() {
 // ==================== 游玩计划：行程 + 每日安排 ====================
 let _tripActiveDay = {}; // { tripIndex: dayIndex }
 let __tripPage = 0;      // v26 行程卡分页
+let __tripExpanded = {}; // 行程折叠状态：key=realIdx，value=是否展开
+function toggleTripExpand(realIdx) {
+  try {
+    __tripExpanded[realIdx] = !__tripExpanded[realIdx];
+    renderTripPlans();
+  } catch (e) {}
+}
 function tripGo(delta) {
   const n = (store.trips || []).length;
   const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
@@ -13793,71 +13825,86 @@ function renderTripPlans() {
     else if (today > end) { statusClass = 'trip-status-past'; statusText = '已结束'; }
     else if (days.length && today >= days[0].date && today <= days[days.length-1].date) { statusClass = 'trip-status-ongoing'; statusText = '进行中'; }
 
-    // 每个 Day 一个独立模块，纵向排列、全部展开，不再点标签切换
+    const expanded = !!__tripExpanded[realIdx];
+
     const TYPE_MAP = {
       play: ['🎡','游玩'], food: ['🍜','餐饮'], traffic: ['🚇','交通'],
       stay: ['🏨','住宿'], shop: ['🛍️','购物'], other: ['📌','其他']
     };
-    const dayBlocks = (days || []).map((day, di) => {
-      const items = (day.items || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
-      let timelineHtml = '<div class="trip-timeline">';
-      if (items.length === 0) {
-        timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
-      } else {
-        items.forEach((it) => {
-          const done = !!it.done;
-          const tm = TYPE_MAP[it.type] || TYPE_MAP.other;
-          const cls = 'trip-item' + (done ? ' done' : '');
-          timelineHtml += `
-            <div class="${cls}">
-              <div class="trip-item-dot"></div>
-              <div class="trip-item-main">
-                <div class="trip-item-top">
-                  <span class="trip-item-time">${it.time || '全天'}</span>
-                  <span class="trip-item-type">${tm[0]} ${tm[1]}</span>
-                  ${it.duration ? `<span class="trip-item-dur">⏱️${escapeHtml(it.duration)}</span>` : ''}
+
+    let dayBlocks = '';
+    if (expanded) {
+      dayBlocks = (days || []).map((day, di) => {
+        const items = (day.items || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
+        let timelineHtml = '<div class="trip-timeline">';
+        if (items.length === 0) {
+          timelineHtml += '<div class="trip-empty" style="padding:10px 0;">这一天还没有安排，点下面「➕ 添加行程」吧~</div>';
+        } else {
+          items.forEach((it, ii) => {
+            const done = !!it.done;
+            const tm = TYPE_MAP[it.type] || TYPE_MAP.other;
+            const cls = 'trip-item' + (done ? ' done' : '');
+            timelineHtml += `
+              <div class="${cls}">
+                <div class="trip-item-dot"></div>
+                <div class="trip-item-main">
+                  <div class="trip-item-top">
+                    <span class="trip-item-time">${it.time || '全天'}</span>
+                    <span class="trip-item-type">${tm[0]} ${tm[1]}</span>
+                    ${it.duration ? `<span class="trip-item-dur">⏱️${escapeHtml(it.duration)}</span>` : ''}
+                  </div>
+                  <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
+                  ${it.place ? `<div class="trip-item-place">🗺️ ${escapeHtml(it.place)}</div>` : ''}
+                  ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
+                  ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
                 </div>
-                <div class="trip-item-title">${escapeHtml(it.title || '')}</div>
-                ${it.place ? `<div class="trip-item-place">🗺️ ${escapeHtml(it.place)}</div>` : ''}
-                ${it.transport ? `<div class="trip-item-trans">🚇 ${escapeHtml(it.transport)}</div>` : ''}
-                ${it.note ? `<div class="trip-item-note">${escapeHtml(it.note)}</div>` : ''}
+                <button class="row-edit-btn" onclick="event.stopPropagation();exportTripItemImage(${realIdx}, ${di}, ${ii})" type="button" title="导出此地点" style="margin-left:4px;flex-shrink:0;font-size:12px;">📤</button>
+              </div>`;
+          });
+        }
+        timelineHtml += '</div>';
+        return `
+          <div class="trip-day-block">
+            <div class="trip-day-head">
+              <div class="trip-day-title-row">
+                <span class="trip-day-idx">Day ${di+1}</span>
+                <span class="trip-day-title">${escapeHtml(day.title || '')}</span>
               </div>
-            </div>`;
-        });
-      }
-      timelineHtml += '</div>';
-      return `
-        <div class="trip-day-block">
-          <div class="trip-day-head">
-            <div class="trip-day-title-row">
-              <span class="trip-day-idx">Day ${di+1}</span>
-              <span class="trip-day-title">${escapeHtml(day.title || '')}</span>
+              <div class="trip-day-meta-row">
+                <span class="trip-day-date">${fmtMD(day.date)}</span>
+                <span class="trip-day-actions">
+                  <button onclick="editTripDayAll(${realIdx}, ${di})" title="修改当天全部">✏️</button>
+                  <button onclick="openTripDayModal(${realIdx}, ${di})" title="添加行程">➕</button>
+                  <button onclick="deleteTripDay(${realIdx}, ${di})" title="删除当天">🗑</button>
+                </span>
+              </div>
             </div>
-            <div class="trip-day-meta-row">
-              <span class="trip-day-date">${fmtMD(day.date)}</span>
-              <span class="trip-day-actions">
-                <button onclick="editTripDayAll(${realIdx}, ${di})" title="修改当天全部">✏️</button>
-                <button onclick="openTripDayModal(${realIdx}, ${di})" title="添加行程">➕</button>
-                <button onclick="deleteTripDay(${realIdx}, ${di})" title="删除当天">🗑</button>
-              </span>
-            </div>
-          </div>
-          ${timelineHtml}
-        </div>`;
-    }).join('');
+            ${timelineHtml}
+          </div>`;
+      }).join('');
+    }
+
+    const totalItems = days.reduce((sum, d) => sum + (d.items || []).length, 0);
+    const summary = days.length
+      ? `共 ${days.length} 天 · ${totalItems} 个安排`
+      : '暂无每日安排';
 
     html += `
       <div class="trip-card">
-        <div class="trip-header">
-          <div>
+        <div class="trip-header" style="cursor:pointer;" onclick="toggleTripExpand(${realIdx})">
+          <div style="flex:1;min-width:0;">
             <div class="trip-title">🗺️ ${escapeHtml(trip.city || '未命名行程')}</div>
-            <div class="trip-subtitle"><span class="trip-status-tag ${statusClass}">${statusText}</span><span>📅 ${start}${end && end !== start ? ' ~ ' + end : ''}</span>${trip.remark ? `<span>📝 ${escapeHtml(trip.remark)}</span>` : ''}</div>
+            <div class="trip-subtitle"><span class="trip-status-tag ${statusClass}">${statusText}</span><span>📅 ${start}${end && end !== start ? ' ~ ' + end : ''} · ${summary}</span>${trip.remark ? `<span>📝 ${escapeHtml(trip.remark)}</span>` : ''}</div>
           </div>
-          <div class="card-actions" style="position:static;flex-direction:row;gap:4px;">
+          <div class="card-actions" style="position:static;flex-direction:row;gap:4px;" onclick="event.stopPropagation();">
             <button class="row-edit-btn" onclick="openTripModal(${realIdx})" type="button" aria-label="编辑">✏️</button>
             <button class="row-edit-btn" onclick="exportTripImage(${realIdx})" type="button" aria-label="导出图片" title="导出为图片">📤</button>
             <button class="row-del-btn" onclick="deleteTripRecord(${realIdx})" type="button" aria-label="删除">🗑</button>
           </div>
+        </div>
+        <div class="trip-expand-toggle" onclick="toggleTripExpand(${realIdx})">
+          <span>${expanded ? '▲ 收起' : '▼ 展开'}</span>
+          <span style="font-size:12px;color:#8a6270;">${expanded ? '点击收起全部安排' : '点击查看全部安排'}</span>
         </div>
         ${dayBlocks}
       </div>`;
@@ -14031,6 +14078,109 @@ function exportTripImage(realIdx) {
     ctx.fillText('—— 来自 Hami 工作台 · 我的旅行手账 ——', PAD + 12, totalH - PAD - 6);
 
     showExportImage(canvas.toDataURL('image/png'), trip.city || '行程');
+  } catch (e) {
+    alert('导出图片失败了：' + (e && e.message ? e.message : e));
+  }
+}
+
+// 导出单个地点（某天某条行程）为单独图片，与 exportTripImage 同款样式
+function exportTripItemImage(realIdx, di, ii) {
+  try {
+    var trip = store.trips && store.trips[realIdx];
+    if (!trip) { alert('没有找到这个行程哦~'); return; }
+    var days = (trip.days || []).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+    var day = days[di];
+    if (!day) { alert('没有找到这一天哦~'); return; }
+    var items = (day.items || []).slice().sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+    var it = items[ii];
+    if (!it) { alert('没有找到这个地点安排哦~'); return; }
+
+    var W = 720, PAD = 30, FONT = 'PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif';
+    var contentW = W - PAD * 2;
+
+    function wrap(text, fontSize, maxW) {
+      var c = document.createElement('canvas').getContext('2d');
+      c.font = fontSize + 'px ' + FONT;
+      var lines = [], cur = '';
+      for (var i = 0; i < text.length; i++) {
+        var ch = text[i];
+        var test = cur + ch;
+        if (c.measureText(test).width > maxW && cur) { lines.push(cur); cur = ch; }
+        else { cur = test; }
+      }
+      if (cur) lines.push(cur);
+      return lines.length ? lines : [''];
+    }
+
+    var TYPE_MAP = { play:['🎡','游玩'], food:['🍜','餐饮'], traffic:['🚇','交通'], stay:['🏨','住宿'], shop:['🛍️','购物'], other:['📌','其他'] };
+    var tm = TYPE_MAP[it.type] || TYPE_MAP.other;
+    var ops = [];
+    ops.push({ k:'title', text: '🗺️ 单地点行程 · ' + (trip.city || '未命名行程') });
+    ops.push({ k:'sub', text: 'Day ' + (di+1) + '　' + fmtMD(day.date) + (day.title ? '　' + day.title : '') });
+    ops.push({ k:'gap' });
+    ops.push({ k:'itemhead', text:(it.time || '全天') + '　' + tm[0] + tm[1] + (it.done ? '　✅' : ''), title: it.title || '' });
+    if (it.duration) ops.push({ k:'meta', text:'⏱️ 时长 ' + it.duration });
+    if (it.place) ops.push({ k:'meta', text:'🗺️ ' + it.place });
+    if (it.transport) ops.push({ k:'meta', text:'🚇 ' + it.transport });
+    if (it.note) ops.push({ k:'note', text: it.note });
+    if (!it.place && !it.transport && !it.note && !it.duration) {
+      ops.push({ k:'muted', text:'（这个地点没有更多备注信息）' });
+    }
+
+    ops.forEach(function(op){
+      if (op.k === 'gap') { op._h = 16; return; }
+      if (op.k === 'title') { op._fs = 26; op._lines = wrap(op.text, op._fs, contentW); op._h = op._lines.length * 34 + 6; return; }
+      if (op.k === 'sub') { op._fs = 15; op._lines = wrap(op.text, op._fs, contentW); op._h = op._lines.length * 24 + 6; return; }
+      if (op.k === 'muted') { op._fs = 14; op._lines = wrap(op.text, op._fs, contentW - 16); op._h = op._lines.length * 22 + 4; op._indent = 16; return; }
+      op._fs = op.k === 'itemhead' ? 16 : 14;
+      op._indent = (op.k === 'meta' || op.k === 'note') ? 20 : 0;
+      var full = op.title ? (op.text + '　' + op.title) : op.text;
+      op._lines = wrap(full, op._fs, contentW - op._indent);
+      op._h = op._lines.length * (op._fs + 8) + 2;
+    });
+    var totalH = PAD * 2 + 14;
+    ops.forEach(function(op){ totalH += op._h; });
+
+    var scale = Math.min(window.devicePixelRatio || 1, 3);
+    var canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = totalH * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    var grd = ctx.createLinearGradient(0, 0, 0, totalH);
+    grd.addColorStop(0, '#ffeef3');
+    grd.addColorStop(1, '#fff6f9');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, totalH);
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    ctx.fillStyle = '#ffffff';
+    rr(PAD/2, PAD/2, W - PAD, totalH - PAD, 24); ctx.fill();
+
+    var cy = PAD + 14;
+    ctx.textBaseline = 'top';
+    ops.forEach(function(op){
+      var ix = PAD + 10 + (op._indent || 0);
+      if (op.k === 'gap') { cy += op._h; return; }
+      if (op.k === 'title') { ctx.fillStyle = '#d14b73'; ctx.font = '800 ' + op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12, cy + i*34); }); cy += op._h; return; }
+      if (op.k === 'sub') { ctx.fillStyle = '#8a6270'; ctx.font = op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12, cy + i*24); }); cy += op._h; return; }
+      if (op.k === 'muted') { ctx.fillStyle = '#b09aa3'; ctx.font = op._fs + 'px ' + FONT; op._lines.forEach(function(ln,i){ ctx.fillText(ln, PAD+12 + op._indent, cy + i*22); }); cy += op._h; return; }
+      ctx.fillStyle = op.k === 'itemhead' ? '#3d2b33' : '#7a5560';
+      ctx.font = (op.k === 'itemhead' ? '800 ' : '') + op._fs + 'px ' + FONT;
+      op._lines.forEach(function(ln, i){ ctx.fillText(ln, ix, cy + i*(op._fs + 8)); });
+      cy += op._h;
+    });
+    ctx.fillStyle = '#c9a9b3'; ctx.font = '12px ' + FONT;
+    ctx.fillText('—— 来自 Hami 工作台 · 我的旅行手账 ——', PAD + 12, totalH - PAD - 6);
+
+    showExportImage(canvas.toDataURL('image/png'), (trip.city || '行程') + '-Day' + (di+1));
   } catch (e) {
     alert('导出图片失败了：' + (e && e.message ? e.message : e));
   }
@@ -15800,11 +15950,11 @@ function renderDesktopWeight() {
     const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1.5px #f0c040;' : '';
     // v2026-09-07-30: 重做 cell 布局 —— 严格两行：上行"变化"、下行"体重"，全部 nowrap + 字体小
     const cellTitle = `${dateStr}${weightText ? ' · 体重 ' + weightText : ''}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''} · 点击修改`;
-    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;min-height:54px;min-width:0;max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:2px 1px;border:1px solid #f5e8ee;border-radius:6px;overflow:hidden;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
+    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;min-height:54px;min-width:0;max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:1px 0;border:1px solid #f5e8ee;border-radius:6px;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
       <div class="weight-cal-day" style="font-size:11.5px;font-weight:700;line-height:1.1;color:${isToday ? '#c08020' : '#5a3a48'};white-space:nowrap;">${d}</div>
       <div class="weight-cal-stack" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.05;min-height:26px;flex:1;width:100%;">
-        <div class="weight-cal-change${changeText ? '' : ' weight-cal-change-empty'}" style="font-size:9.5px;font-weight:700;line-height:1.05;white-space:nowrap;color:${changeColor};overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;">${changeText || ' '}</div>
-        <div class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}${weightText ? '' : ' weight-cal-weight-empty'}" style="font-size:10.5px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 2px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;">${weightText || '—'}</div>
+        <div class="weight-cal-change${changeText ? '' : ' weight-cal-change-empty'}" style="font-size:9.5px;font-weight:700;line-height:1.05;color:${changeColor};width:100%;text-align:center;">${changeText || ' '}</div>
+        <div class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}${weightText ? '' : ' weight-cal-weight-empty'}" style="font-size:10.5px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 1px;line-height:1.15;width:100%;text-align:center;">${weightText || '—'}</div>
       </div>
       <div class="weight-cal-ex" style="display:flex;gap:1px;line-height:1;">${exIcons}</div>
     </div>`;
