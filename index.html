@@ -999,7 +999,7 @@
   .weight-cal-weight-empty, .weight-cal-change-empty { visibility: hidden; line-height: 1.2; }
   .weight-cal-weight.weight-cal-weight-empty { background: transparent; }
   /* 当天没打卡、自动沿用前一天体重的格子：淡一档，和真实打卡一眼能区分 */
-  .weight-cal-weight.weight-cal-weight-fill { color:#b6a0ac; background:#faf6f8; font-weight:600; }
+  .weight-cal-weight.weight-cal-weight-fill { color:#b6a0ac !important; background:#faf6f8 !important; font-weight:600; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; }
   .weight-cal-ex-dot { font-size: 12px; }
   .weight-cal-legend {
@@ -2502,7 +2502,7 @@
   }
 
   @media (max-width: 420px) {
-    .co-card, .ex-card, .period-card, .wash-card, .travel-card { padding: 10px 12px; padding-right: 64px; }
+    .co-card, .ex-card, .period-card, .wash-card, .travel-card { padding: 10px 12px; padding-right: 44px; }
     .card-actions { top: 8px; right: 8px; gap: 3px; }
     .card-actions .row-edit-btn,
     .card-actions .row-del-btn { padding: 3px 6px; font-size: 11px; }
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-50';
+  var BUILD_VER = '2026-09-08-52';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7175,15 +7175,16 @@ function unionArrays(la, ra, key) {
 // unionArrays 用 _dedupKey (id||title) 只能合并 id 完全相同的，遇到不同 id 的重复就全留下。
 // 表现：主人本来 7 条，结果云端合并后变 42 条。
 // 修法：合并完成后按「id 优先、缺 id 用 title+date+account 兜底」再过一遍去重，保留第一次出现的版本。
+// v52 修正：v51 用「id 优先」去重是无效的——云端幽灵记录每条 id 都不同，
+// 按 id 比永远认为是不同记录，42 条一条不少。
+// 正确做法：始终按「内容键（标题+日期+账号）」去重，id 不同但内容一样的只留第一条。
 function dedupFuturePosts() {
   if (!Array.isArray(store.futurePosts)) return;
   const seen = new Set();
   const out = [];
   store.futurePosts.forEach(function (p) {
     if (!p) return;
-    const key = p.id
-      ? ('id:' + p.id)
-      : ('t:' + (p.title || '') + '|' + (p.date || '') + '|' + (p.account || ''));
+    const key = 't:' + String(p.title || '').trim() + '|' + String(p.date || '') + '|' + String(p.account || 'big');
     if (seen.has(key)) return;
     seen.add(key);
     out.push(p);
