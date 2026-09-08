@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-37">
+<meta name="hami-build" content="2026-09-08-38">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1114,6 +1114,62 @@
   .todo-date-input:focus { border-color: #d14b73; }
   .todo-btn.mini { padding: 3px 7px; font-size: 12px; }
 
+  /* ============ 工作代办面板 版面升级 ============ */
+  .todo-panel-head {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+    flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .todo-panel-head-left { min-width: 0; }
+  .todo-panel-title {
+    font-size: 17px; font-weight: 800; color: #5a3a48; letter-spacing: .5px; line-height: 1.2;
+  }
+  .todo-panel-sub {
+    font-size: 11px; color: #a89a9a; font-weight: 600; letter-spacing: 1px; margin-top: 2px;
+  }
+  .todo-summary { display: flex; gap: 6px; flex-wrap: wrap; }
+  .todo-sum-chip {
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .todo-sum-chip.doing { background: #fff0f4; color: #d14b73; }
+  .todo-sum-chip.done { background: #e8f7ec; color: #2fb350; }
+  .todo-sum-chip.late { background: #ffe0e0; color: #e0413e; }
+  /* 面板里的单条待办：卡片化、文字更清晰 */
+  #todo-list-work .todo-item,
+  #todo-list-daily .todo-item {
+    align-items: flex-start; gap: 9px;
+    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 11px 12px; margin-bottom: 7px;
+    transition: box-shadow .14s ease, transform .14s ease;
+  }
+  #todo-list-work .todo-item:last-child,
+  #todo-list-daily .todo-item:last-child { margin-bottom: 0; border-bottom: 1px solid #ffe4ec; }
+  #todo-list-work .todo-item:hover,
+  #todo-list-daily .todo-item:hover { box-shadow: 0 3px 10px rgba(209,75,115,0.08); }
+  #todo-list-work .todo-body .todo-text,
+  #todo-list-daily .todo-body .todo-text {
+    font-size: 14px; font-weight: 600; line-height: 1.45; color: #4a3340; letter-spacing: .2px;
+  }
+  #todo-list-work .todo-check,
+  #todo-list-daily .todo-check { width: 22px; height: 22px; margin-top: 1px; font-size: 13px; }
+  #todo-list-work .todo-act .todo-btn,
+  #todo-list-daily .todo-act .todo-btn {
+    font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 8px;
+  }
+  #todo-list-work .todo-item.todo-item-overdue,
+  #todo-list-daily .todo-item.todo-item-overdue {
+    background: rgba(255,224,224,0.7); border-color: #f5c6c6; border-radius: 12px;
+    padding: 11px 12px; margin: 0 0 7px;
+  }
+  .todo-empty {
+    padding: 26px 14px; text-align: center; color: #a89a9a; font-size: 13px; font-weight: 600;
+    background: rgba(255,255,255,0.5); border: 1px dashed #ffd0dc; border-radius: 12px;
+  }
+  @media (max-width: 420px) {
+    .todo-panel-title { font-size: 15px; }
+    .todo-panel-head { align-items: flex-start; }
+    .todo-sum-chip { font-size: 10px; padding: 2px 7px; }
+  }
+
   @media (max-width: 420px) {
     .todo-add-row input { font-size: 12px; padding: 6px 8px; }
     .todo-two-col { flex-direction: column; gap: 8px; }
@@ -1260,6 +1316,153 @@
     transition: transform 0.12s ease;
   }
   .media-add-btn:active { transform: scale(0.97); }
+
+  /* ============ 自媒体更新记录 精简卡片式明细 ============ */
+  .media-record-list { display: flex; flex-direction: column; gap: 8px; }
+  .media-record-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 11px 13px; transition: background .12s ease, box-shadow .12s ease;
+  }
+  .media-record-item:hover { background: #fff0f5; box-shadow: 0 3px 10px rgba(209,75,115,0.08); }
+  .media-record-main {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+    flex-wrap: wrap;
+  }
+  .media-record-date {
+    font-size: 12px; color: #8a6270; font-weight: 600; min-width: 76px;
+  }
+  .media-record-account {
+    font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .media-record-account.acc-big { background: #ffe4ec; color: #d14b73; }
+  .media-record-account.acc-small { background: #eaf6fc; color: #5a85a6; }
+  .media-record-account.acc-douyin { background: #f5f5f5; color: #444; }
+  .media-record-sync { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .media-record-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .media-record-btn {
+    border: none; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: filter .12s ease;
+  }
+  .media-record-btn.edit { background: #fff0f4; color: #d14b73; }
+  .media-record-btn.del { background: #ffe0e0; color: #c25f5f; }
+  .media-record-btn:hover { filter: brightness(0.96); }
+  .media-backfill-tip {
+    margin-bottom: 10px; font-size: 12px; padding: 8px 10px; border-radius: 10px;
+    background: #fff0f4; color: #d14b73; font-weight: 600;
+  }
+  .media-progress-row { margin-bottom: 14px; }
+  .media-progress-row:last-child { margin-bottom: 0; }
+  .media-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+  .media-progress-label {
+    display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #5a3a48;
+  }
+  .media-progress-num { font-size: 12px; color: #8a6270; font-weight: 600; white-space: nowrap; }
+  .media-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  #media-history-wrap { overflow-x: auto; }
+  #media-history-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
+  #media-history-wrap th, #media-history-wrap td { white-space: nowrap; text-align: center; font-size: 12px; padding: 8px 4px; }
+  #media-history-wrap th:first-child, #media-history-wrap td:first-child { text-align: left; }
+  /* 每日体重表：内容不多，撑满整宽，不再左右滑动 */
+  #weight-table-wrap { overflow-x: auto; }
+  #weight-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
+  #weight-table-wrap th, #weight-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #weight-table-wrap th:nth-child(1), #weight-table-wrap td:nth-child(1) { width: 30%; }
+  #weight-table-wrap th:nth-child(2), #weight-table-wrap td:nth-child(2) { width: 20%; }
+  #weight-table-wrap th:nth-child(3), #weight-table-wrap td:nth-child(3) { width: 32%; }
+  #weight-table-wrap th:nth-child(4), #weight-table-wrap td:nth-child(4) { width: 18%; text-align: center; }
+  /* 运动明细：分类筛选 + 紧凑表格 */
+  .exercise-detail-section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #ffe4ec; }
+  .exercise-detail-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .exercise-detail-title { font-size: 13px; font-weight: 700; color: #d14b73; }
+  .exercise-filter-tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .exercise-filter-tab {
+    font-size: 11px; font-weight: 700; color: #a07080; background: #fff;
+    border: 1px solid #ffd0dc; border-radius: 20px; padding: 3px 10px; cursor: pointer;
+    transition: all .12s ease;
+  }
+  .exercise-filter-tab.active { background: linear-gradient(90deg, #ff9eb5, #ff7f9e); color: #fff; border-color: transparent; }
+  #exercise-items-table-wrap { overflow-x: auto; }
+  #exercise-items-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
+  #exercise-items-table-wrap th, #exercise-items-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+  #exercise-items-table-wrap th:nth-child(1), #exercise-items-table-wrap td:nth-child(1) { width: 22%; }
+  #exercise-items-table-wrap th:nth-child(2), #exercise-items-table-wrap td:nth-child(2) { width: 22%; }
+  #exercise-items-table-wrap th:nth-child(3), #exercise-items-table-wrap td:nth-child(3) { width: 34%; white-space: normal; }
+  #exercise-items-table-wrap th:nth-child(4), #exercise-items-table-wrap td:nth-child(4) { width: 12%; }
+  #exercise-items-table-wrap th:nth-child(5), #exercise-items-table-wrap td:nth-child(5) { width: 10%; text-align: center; }
+  .ex-type-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .ex-type-badge.cat-aerobics { background: #ffe4ec; color: #d14b73; }
+  .ex-type-badge.cat-cardio { background: #eaf6fc; color: #5a85a6; }
+  .ex-type-badge.cat-weights { background: #f3eafc; color: #8a5cb8; }
+  .ex-item-extra { display: block; font-size: 10px; color: #a89a9a; font-weight: 500; line-height: 1.3; }
+  /* 月度运动统计：三张分类小卡，撑满整宽 */
+  .ex-goal-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+  .ex-goal-label { font-size: 13px; font-weight: 700; color: #5a3a48; }
+  .ex-goal-num { font-size: 12px; color: #8a6270; font-weight: 600; }
+  .ex-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+  .ex-stat-card {
+    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 10px 8px; cursor: pointer; transition: box-shadow .12s ease, transform .12s ease;
+  }
+  .ex-stat-card:hover { box-shadow: 0 3px 10px rgba(209,75,115,0.10); transform: translateY(-1px); }
+  .ex-stat-label { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #7d4a5a; margin-bottom: 4px; }
+  .ex-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .cat-aerobics .ex-dot { background: #ff7f9e; }
+  .cat-cardio .ex-dot { background: #7fb3d5; }
+  .cat-weights .ex-dot { background: #a97fd5; }
+  .ex-stat-value { font-size: 20px; font-weight: 700; color: #d14b73; line-height: 1.1; }
+  .ex-stat-unit { font-size: 11px; color: #8a6270; font-weight: 600; margin-left: 2px; }
+  .ex-stat-bar { height: 5px; border-radius: 3px; background: #ffe4ec; overflow: hidden; margin: 6px 0 4px; }
+  .ex-stat-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #ff9eb5, #ff7f9e); }
+  .cat-cardio .ex-stat-bar-fill { background: linear-gradient(90deg, #a8d8ea, #7fb3d5); }
+  .cat-weights .ex-stat-bar-fill { background: linear-gradient(90deg, #c9a8ea, #a97fd5); }
+  /* 三类运动总览卡 */
+  .ex-cat-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .ex-cat-card {
+    background: linear-gradient(180deg, #fffdfd, #fff5f8);
+    border: 1px solid #ffe4ec; border-radius: 14px; padding: 12px 10px;
+    display: flex; flex-direction: column; gap: 4px;
+    transition: box-shadow .14s ease, transform .14s ease;
+  }
+  .ex-cat-card:hover { box-shadow: 0 4px 14px rgba(209,75,115,0.10); transform: translateY(-1px); }
+  .ex-cat-head { display: flex; align-items: center; gap: 5px; }
+  .ex-cat-name { font-size: 12px; font-weight: 700; color: #5a3a48; }
+  .ex-cat-num { font-size: 22px; font-weight: 700; color: #d14b73; line-height: 1.1; }
+  .cat-cardio .ex-cat-num { color: #4a7fa6; }
+  .cat-weights .ex-cat-num { color: #8a5cb8; }
+  .ex-cat-unit { font-size: 11px; color: #8a6270; font-weight: 600; margin-left: 2px; }
+  .ex-cat-sub { font-size: 10px; color: #a89a9a; font-weight: 600; line-height: 1.3; min-height: 26px; }
+  .ex-cat-meta { font-size: 10px; color: #8a6270; font-weight: 600; }
+  .ex-cat-add {
+    margin-top: 4px; border: none; border-radius: 9px; padding: 6px 0; width: 100%;
+    font-size: 12px; font-weight: 700; cursor: pointer; color: #fff;
+    background: linear-gradient(90deg, #ff9eb5, #ff7f9e); transition: filter .12s ease;
+  }
+  .cat-cardio .ex-cat-add { background: linear-gradient(90deg, #a8d8ea, #7fb3d5); }
+  .cat-weights .ex-cat-add { background: linear-gradient(90deg, #c9a8ea, #a97fd5); }
+  .ex-cat-add:hover { filter: brightness(1.05); }
+  @media (max-width: 420px) {
+    .ex-cat-overview { gap: 6px; }
+    .ex-cat-card { padding: 10px 6px; }
+    .ex-cat-num { font-size: 18px; }
+    .ex-cat-name { font-size: 11px; }
+    .ex-cat-sub { min-height: 24px; font-size: 9px; }
+    .ex-cat-add { font-size: 11px; padding: 5px 0; }
+  }
+  .ex-stat-rate { font-size: 10px; color: #a89a9a; font-weight: 600; }
+  @media (max-width: 420px) {
+    .ex-stat-value { font-size: 17px; }
+    .ex-stat-label { font-size: 10px; }
+    .exercise-filter-tab { font-size: 10px; padding: 3px 7px; }
+  }
+  @media (max-width: 420px) {
+    .media-record-main { gap: 6px; }
+    .media-record-date { min-width: 68px; font-size: 11px; }
+    .media-record-account { font-size: 11px; padding: 2px 7px; }
+    .media-record-sync { font-size: 11px; }
+    .media-record-actions { gap: 4px; }
+    .media-record-btn { padding: 4px 7px; font-size: 11px; }
+  }
 
   /* ============ 未来更新图文记录 ============ */
   .fp-mode-tabs { display: flex; gap: 8px; margin-bottom: 4px; }
@@ -3745,7 +3948,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-37';
+  var BUILD_VER = '2026-09-08-38';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -3837,7 +4040,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       <span class="nav-icon">⚖️</span>
       <span class="nav-text">体重记录<br>与变化</span>
     </button>
-    <button class="nav-item" type="button" onclick="switchPanel('fitness', this)">
+    <button class="nav-item" type="button" onclick="switchPanel('exercise', this)">
       <span class="nav-icon">🏃‍♀️</span>
       <span class="nav-text">有氧运动<br>器械打卡</span>
     </button>
@@ -4067,13 +4270,16 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
   <!-- ==================== 工作代办 ==================== -->
   <div id="panel-todo-work" class="panel">
     <div class="card todo-section">
-      <div class="todo-section-head">
-        <div class="card-title">💼 工作代办</div>
-        <span class="todo-section-tip">自媒体 / 接单 / 运营</span>
+      <div class="todo-panel-head">
+        <div class="todo-panel-head-left">
+          <div class="todo-panel-title">工作代办</div>
+          <div class="todo-panel-sub">自媒体 · 接单 · 运营</div>
+        </div>
+        <div class="todo-summary" id="todo-summary-work"></div>
       </div>
       <div class="todo-add-row">
-        <input id="todo-input-work" type="text" placeholder="写点工作要推进的事…" onkeydown="if(event.key==='Enter')addUserTodo('work')">
-        <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选，留空=无期限）">
+        <input id="todo-input-work" type="text" placeholder="要推进什么事？" onkeydown="if(event.key==='Enter')addUserTodo('work')">
+        <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选）">
         <button class="todo-add-btn" onclick="addUserTodo('work')">添加</button>
       </div>
       <div id="todo-list-work"></div>
@@ -4220,31 +4426,31 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
       </div>
       <div class="co-body">
         <div class="co-field">
-          <label>📅 日期</label>
+          <label>日期</label>
           <input type="date" id="ei-date" />
         </div>
         <div class="co-field">
           <label>类型</label>
           <div class="co-status" id="ei-type-wrap">
-            <span class="co-status-opt active" data-t="健身操" onclick="setEiType('健身操')">健身操</span>
-            <span class="co-status-opt" data-t="有氧" onclick="setEiType('有氧')">有氧</span>
+            <span class="co-status-opt active" data-t="有氧操" onclick="setEiType('有氧操')">有氧操</span>
+            <span class="co-status-opt" data-t="爬坡/椭圆机" onclick="setEiType('爬坡/椭圆机')">爬坡/椭圆机</span>
             <span class="co-status-opt" data-t="器械" onclick="setEiType('器械')">器械</span>
           </div>
         </div>
         <div class="co-field">
-          <label>🏋️ 项目名</label>
+          <label>项目名</label>
           <input type="text" id="ei-name" placeholder="如：椭圆机 / 哑铃 / 帕梅拉" />
         </div>
         <div class="co-field">
-          <label>⏱️ 时长（分钟）</label>
+          <label>时长（分钟）</label>
           <input type="number" id="ei-duration" inputmode="decimal" min="0" step="1" placeholder="如 30" />
         </div>
         <div class="co-field">
-          <label>🔁 组数</label>
+          <label>组数</label>
           <input type="text" id="ei-sets" placeholder="如 3组×15" />
         </div>
         <div class="co-field">
-          <label>📝 备注</label>
+          <label>备注</label>
           <input type="text" id="ei-note" placeholder="如：心率140" />
         </div>
       </div>
@@ -4387,7 +4593,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
   <div id="panel-fitness" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：每天只记一次体重。运动分三类打卡：健身操/有氧/器械。经期5天休~ 下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>，点日历标题旁的 ❮ ❯ 可切换月份查看历史，「今」按钮回到今天所在月。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。
+      💕 <b>使用说明</b>：每天只记一次体重。下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>，点日历标题旁的 ❮ ❯ 可切换月份查看历史，「今」按钮回到今天所在月。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。运动打卡请进左侧「有氧运动器械打卡」。
     </div>
 
     <div class="goal-row" id="weight-goal-row">
@@ -4418,27 +4624,44 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     </div>
 
     <div class="card">
-      <div class="card-title"><span>📋</span> 每日体重
-        <button class="media-add-btn" style="margin-left:auto;" onclick="openWeightEditModal()">➕ 记一项</button>
+      <div class="card-title">每日体重
+        <button class="media-add-btn" style="margin-left:auto;" onclick="openWeightEditModal()">记一项</button>
       </div>
-      <div style="overflow-x:auto;">
+      <div id="weight-table-wrap">
         <table>
-          <thead><tr><th>日期</th><th>体重 (kg)</th><th>备注</th><th>操作</th></tr></thead>
+          <thead><tr><th>日期</th><th>体重</th><th>备注</th><th>操作</th></tr></thead>
           <tbody id="weight-table"></tbody>
         </table>
       </div>
     </div>
 
+  <!-- ==================== 有氧运动 · 器械打卡（独立面板） ==================== -->
+  <div id="panel-exercise" class="panel">
+
+    <div class="tip-box">
+      <b>使用说明</b>：运动分三类打卡 —— ①<b>有氧操</b> ②<b>爬坡 / 椭圆机</b> ③<b>器械</b>。点「记一项」选类型、填项目和时长；下方三张分类卡点一下可只看该类记录。
+    </div>
+
+    <div class="ex-cat-overview" id="exercise-cat-overview"></div>
+
     <div class="card">
-      <div class="card-title"><span>🏃‍♀️</span> 每日运动打卡
-        <button class="media-add-btn" style="margin-left:auto;" onclick="openExerciseItemModal()">➕ 记一项</button>
+      <div class="card-title">每日运动打卡
+        <button class="media-add-btn" style="margin-left:auto;" onclick="openExerciseItemModal()">记一项</button>
       </div>
       <div id="exercise-table"></div>
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;font-weight:700;color:#d14b73;margin-bottom:8px;">📋 详细记录（器械 / 有氧明细）</div>
-        <div style="overflow-x:auto;">
+      <div class="exercise-detail-section">
+        <div class="exercise-detail-head">
+          <span class="exercise-detail-title">详细记录</span>
+          <div class="exercise-filter-tabs">
+            <span class="exercise-filter-tab active" data-ex-filter="all" onclick="setExerciseFilter('all')">全部</span>
+            <span class="exercise-filter-tab" data-ex-filter="aerobics" onclick="setExerciseFilter('aerobics')">有氧操</span>
+            <span class="exercise-filter-tab" data-ex-filter="cardio" onclick="setExerciseFilter('cardio')">爬坡/椭圆机</span>
+            <span class="exercise-filter-tab" data-ex-filter="weights" onclick="setExerciseFilter('weights')">器械</span>
+          </div>
+        </div>
+        <div id="exercise-items-table-wrap">
           <table>
-            <thead><tr><th>日期</th><th>类型</th><th>项目</th><th>时长</th><th>组数</th><th>备注</th><th>操作</th></tr></thead>
+            <thead><tr><th>日期</th><th>类型</th><th>项目</th><th>时长</th><th>操作</th></tr></thead>
             <tbody id="exercise-items-table"></tbody>
           </table>
         </div>
@@ -4446,7 +4669,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     </div>
 
     <div class="card">
-      <div class="card-title"><span>📊</span> 月度运动统计</div>
+      <div class="card-title">月度运动统计</div>
       <div id="exercise-stats"></div>
     </div>
 
@@ -4477,24 +4700,19 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
     <div class="stats-grid" id="media-stats"></div>
 
     <div class="card">
-      <div class="card-title"><span>📊</span> 本月更新进度</div>
+      <div class="card-title">本月更新进度</div>
       <div id="media-progress"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span>📝</span> 更新明细记录</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <div id="media-backfill-tip" style="margin-bottom:10px;font-size:12px;display:none;"></div>
-          <thead><tr><th>日期</th><th>账号</th><th>标题</th><th>笔记内容</th><th>同步抖音</th><th>赞/藏/评</th><th>链接</th><th>备注</th><th>操作</th></tr></thead>
-          <tbody id="media-table"></tbody>
-        </table>
-      </div>
+      <div class="card-title">更新明细记录</div>
+      <div id="media-backfill-tip" class="media-backfill-tip" style="display:none;"></div>
+      <div id="media-table" class="media-record-list"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span>📈</span> 历史统计</div>
-      <div style="overflow-x:auto;">
+      <div class="card-title">历史统计</div>
+      <div id="media-history-wrap">
         <table>
           <thead><tr><th>月份</th><th>美化档大号</th><th>定制人物小号</th><th>抖音</th><th>合计</th></tr></thead>
           <tbody id="media-history"></tbody>
@@ -4518,15 +4736,15 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
           <div style="display:flex;gap:10px;">
             <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
               <input type="radio" name="mr-account" value="big" checked style="display:none;">
-              <span class="co-status-opt active" data-mr-acc="big" onclick="mrPickAccount('big')">🎨 美化档大号</span>
+              <span class="co-status-opt active" data-mr-acc="big" onclick="mrPickAccount('big')">美化档大号</span>
             </label>
             <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
               <input type="radio" name="mr-account" value="small" style="display:none;">
-              <span class="co-status-opt" data-mr-acc="small" onclick="mrPickAccount('small')">👤 定制人物小号</span>
+              <span class="co-status-opt" data-mr-acc="small" onclick="mrPickAccount('small')">定制人物小号</span>
             </label>
             <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;min-width:90px;">
               <input type="radio" name="mr-account" value="douyin" style="display:none;">
-              <span class="co-status-opt" data-mr-acc="douyin" onclick="mrPickAccount('douyin')">🎵 抖音</span>
+              <span class="co-status-opt" data-mr-acc="douyin" onclick="mrPickAccount('douyin')">抖音</span>
             </label>
           </div>
         </div>
@@ -4544,7 +4762,7 @@ body.dark-mode .modal-card, body.dark-mode .arm-modal { box-shadow: 0 18px 50px 
         </div>
         <div class="co-field">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
-            <input type="checkbox" id="mr-douyin" style="width:18px;height:18px;"> 🎵 是否同步抖音
+            <input type="checkbox" id="mr-douyin" style="width:18px;height:18px;"> 是否同步抖音
           </label>
         </div>
         <div class="co-field">
@@ -9661,9 +9879,21 @@ function renderTodoListForCat(cat) {
   const items = (store.userTodos || [])
     .map((ut, i) => ({ ut, i }))
     .filter(o => (o.ut.category || 'daily') === cat);
+  // 顶部小计：未完成 / 已完成 / 逾期
+  const sumEl = document.getElementById('todo-summary-' + cat);
+  if (sumEl) {
+    const undone = items.filter(o => !o.ut.done).length;
+    const doneN = items.length - undone;
+    const late = items.filter(o => !o.ut.done && todoDeadlineInfo(o.ut).overdue).length;
+    sumEl.innerHTML = `
+      <span class="todo-sum-chip doing">待办 ${undone}</span>
+      <span class="todo-sum-chip done">完成 ${doneN}</span>
+      ${late > 0 ? '<span class="todo-sum-chip late">逾期 ' + late + '</span>' : ''}
+    `;
+  }
   if (items.length === 0) {
     __todoPage[cat] = 0;
-    el.innerHTML = `<div class="todo-empty">这里还没有${cat === 'work' ? '工作' : '日常'}待办，下面加一条吧~</div>`;
+    el.innerHTML = `<div class="todo-empty">还没有${cat === 'work' ? '工作' : '日常'}待办，在上面输入框添加一条吧</div>`;
     return;
   }
   const sorted = sortTodos(items);
@@ -9684,9 +9914,9 @@ function renderTodoListForCat(cat) {
         <div class="todo-deadline ${info.cls}">${info.label}</div>
       </div>
       <span class="todo-act">
-        <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">✏️</button>
-        <button class="todo-btn mini" onclick="setTodoDeadline(${o.i})" title="设置 / 修改完成期限">⏰</button>
-        <button class="todo-btn del" onclick="removeUserTodo(${o.i})">✕</button>
+        <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">改</button>
+        <button class="todo-btn mini" onclick="setTodoDeadline(${o.i})" title="设置或修改完成期限">期限</button>
+        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
       </span>
     </div>`;
   });
@@ -10241,6 +10471,10 @@ function switchPanel(name, navEl) {
   }
   if (name === 'create') {
     try { renderCreate(); } catch (e) {}
+  }
+  // 体重面板 / 有氧运动器械打卡面板：共用 renderFitness，每次点开强制重渲
+  if (name === 'fitness' || name === 'exercise') {
+    try { renderFitness(); } catch (e) {}
   }
   // 每次点开「设置」自动跑一次同步自检，让同步状态永远看得见（不用主人猜）
   if (name === 'settings') {
@@ -10850,7 +11084,7 @@ function renderFitness() {
     .filter(w => w.v != null)
     .sort((a, b) => b.rec.date.localeCompare(a.rec.date));
   if (allWeightsDesc.length === 0) {
-    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="big-icon">⚖️</div><p>还没有体重记录，今天记一笔吧～</p></div></td></tr>`;
+    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>还没有体重记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div></td></tr>`;
   } else {
     const html = foldRecordsTable('weight', allWeightsDesc, function (it) {
       const w = it.rec;
@@ -10862,7 +11096,7 @@ function renderFitness() {
   }
 
   if (monthExercises.length === 0) {
-    document.getElementById('exercise-table').innerHTML = `<div class="empty-state"><div class="big-icon">🏃‍♀️</div><p>本月暂无运动记录</p></div>`;
+    document.getElementById('exercise-table').innerHTML = `<div class="empty-state"><p>本月暂无运动记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」开始打卡</p></div>`;
   } else {
     const monthExercisesDesc = monthExercises.slice().reverse(); // 近→远
     const exHtml = foldRecords('exercise', monthExercisesDesc, function (e) {
@@ -10870,17 +11104,17 @@ function renderFitness() {
       const isRest = restDays.includes(e.date);
       const statusBadge = isRest ? '<span class="badge rest">经期休息</span>' : '<span class="badge done">已完成</span>';
       const tags = [];
-      if (e.aerobics) tags.push('健身操 ✓');
-      if (e.cardio) tags.push(`有氧${e.cardioType ? '·' + e.cardioType : ''}${e.duration ? ' ' + e.duration : ''}`);
+      if (e.aerobics) tags.push(`有氧操${e.duration ? ' ' + e.duration : ''}`);
+      if (e.cardio) tags.push(`爬坡 / 椭圆机${e.cardioType ? '·' + e.cardioType : ''}${e.duration ? ' ' + e.duration : ''}`);
       if (e.weights) tags.push(`器械${e.weightsContent ? '·' + e.weightsContent : ''}${e.sets ? ' ' + e.sets + '组' : ''}`);
       const tagsHtml = tags.length ? tags.map(t => `<span class="ex-tag">${t}</span>`).join('') : '<span class="ex-tag empty">今日无运动内容</span>';
       return `
         <div class="ex-card">
           <div class="card-actions">
-            <button class="row-edit-btn" onclick="openExerciseEditModal(${idx})" aria-label="编辑">✏️</button>
-            <button class="row-del-btn" onclick="deleteExerciseRecord(${idx})" aria-label="删除">🗑</button>
+            <button class="row-edit-btn" onclick="openExerciseEditModal(${idx})" aria-label="编辑">改</button>
+            <button class="row-del-btn" onclick="deleteExerciseRecord(${idx})" aria-label="删除">删</button>
           </div>
-          <div class="ex-card-date">📅 ${e.date}</div>
+          <div class="ex-card-date">${e.date}</div>
           <div class="ex-card-status">${statusBadge}</div>
           <div class="ex-card-tags">${tagsHtml}</div>
         </div>`;
@@ -10888,20 +11122,24 @@ function renderFitness() {
     document.getElementById('exercise-table').innerHTML = '<div class="ex-card-list">' + exHtml + '</div>';
   }
 
-  // 运动详细记录（记一项）
+  // 运动详细记录（记一项）— 支持三类筛选：有氧操 / 爬坡·椭圆机 / 器械
   const itemsEl = document.getElementById('exercise-items-table');
   if (itemsEl) {
     if (!store.exerciseItems) store.exerciseItems = [];
-    const items = store.exerciseItems.filter(it => it.date && it.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date));
+    const allItems = store.exerciseItems.filter(it => it.date && it.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date));
+    const filter = window.__exFilter || 'all';
+    const items = filter === 'all' ? allItems : allItems.filter(it => exItemCategory(it) === filter);
     if (items.length === 0) {
-      itemsEl.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="big-icon">🏋️</div><p>本月暂无详细记录</p><p style="font-size:12px;margin-top:6px;">点「记一项」记录具体器械/有氧明细</p></div></td></tr>`;
+      itemsEl.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>本月暂无${filter === 'all' ? '' : exCatName(filter)}记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div></td></tr>`;
     } else {
       let ih = '';
       items.forEach(it => {
         const idx = store.exerciseItems.indexOf(it);  // 真实 store 索引
-        const typeName = it.type || '器械';
+        const cat = exItemCategory(it);
+        const typeName = exCatName(cat);
         const dur = (it.duration != null && !isNaN(it.duration)) ? (it.duration + '分') : '—';
-        ih += `<tr><td>${it.date}</td><td>${typeName}</td><td>${it.name||'—'}</td><td>${dur}</td><td>${it.sets||'—'}</td><td>${it.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseItemModal(${idx})">✏️</button> <button class="row-del-btn" onclick="deleteExerciseItem(${idx})">🗑</button></td></tr>`;
+        const extra = [it.sets, it.note].filter(Boolean).join(' · ');
+        ih += `<tr><td>${it.date}</td><td><span class="ex-type-badge cat-${cat}">${typeName}</span></td><td>${it.name||'—'}${extra ? '<span class="ex-item-extra">'+escTodo(extra)+'</span>' : ''}</td><td>${dur}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseItemModal(${idx})" aria-label="修改">改</button> <button class="row-del-btn" onclick="deleteExerciseItem(${idx})" aria-label="删除">删</button></td></tr>`;
       });
       itemsEl.innerHTML = ih;
     }
@@ -10911,25 +11149,84 @@ function renderFitness() {
   const totalGoal = WEEKLY_GOAL * weeksInMonth;
   const achRate = totalGoal > 0 ? Math.min(100, (exerciseDays/totalGoal)*100).toFixed(0) : 0;
 
+  // 三类运动总览卡（有氧操 / 爬坡·椭圆机 / 器械）：每类显示本月次数 + 时长 + 快捷记一项
+  const catOverviewEl = document.getElementById('exercise-cat-overview');
+  if (catOverviewEl) {
+    const monthItemsAll = (store.exerciseItems || []).filter(it => it.date && it.date.startsWith(month));
+    const catStat = cat => {
+      const list = monthItemsAll.filter(it => exItemCategory(it) === cat);
+      const mins = list.reduce((s, it) => s + ((it.duration != null && !isNaN(it.duration)) ? Number(it.duration) : 0), 0);
+      return { n: list.length, mins: mins };
+    };
+    const ovCard = (cat, label, desc) => {
+      const st = catStat(cat);
+      return `<div class="ex-cat-card cat-${cat}">
+        <div class="ex-cat-head"><span class="ex-dot"></span><span class="ex-cat-name">${label}</span></div>
+        <div class="ex-cat-num">${st.n}<span class="ex-cat-unit">次</span></div>
+        <div class="ex-cat-sub">${desc}</div>
+        <div class="ex-cat-meta">本月累计 ${st.mins} 分钟</div>
+        <button class="ex-cat-add" onclick="quickAddExercise('${cat}')">记一项</button>
+      </div>`;
+    };
+    catOverviewEl.innerHTML =
+      ovCard('aerobics', '有氧操', '跳操 / 帕梅拉 / 刘畊宏') +
+      ovCard('cardio', '爬坡 / 椭圆机', '跑步机爬坡 / 椭圆机') +
+      ovCard('weights', '器械', '哑铃 / 器械区');
+  }
+
+  const catRate = n => (exerciseDays>0 ? ((n/exerciseDays)*100).toFixed(0) : 0);
+  const catCard = (cat, label, count) => {
+    const r = catRate(count);
+    return `<div class="ex-stat-card cat-${cat}" onclick="setExerciseFilter('${cat}')" title="点一下只看这类记录">
+      <div class="ex-stat-label"><span class="ex-dot"></span>${label}</div>
+      <div class="ex-stat-value">${count}<span class="ex-stat-unit">天</span></div>
+      <div class="ex-stat-bar"><div class="ex-stat-bar-fill" style="width:${r}%;"></div></div>
+      <div class="ex-stat-rate">占运动日 ${r}%</div>
+    </div>`;
+  };
   document.getElementById('exercise-stats').innerHTML = `
-    <div style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
-        <span style="font-weight:600;">🌸 健身目标完成率</span>
-        <span>${exerciseDays} / ${totalGoal} 次</span>
-      </div>
-      <div class="progress-bar-container">
-        <div class="progress-bar" style="width:${achRate}%;">${achRate}%</div>
-      </div>
+    <div class="ex-goal-row">
+      <div class="ex-goal-label">健身目标完成率</div>
+      <div class="ex-goal-num">${exerciseDays} / ${totalGoal} 次</div>
     </div>
-    <div style="overflow-x:auto;"><table>
-      <thead><tr><th>运动类型</th><th>本月天数</th><th>占比</th></tr></thead>
-      <tbody>
-        <tr><td>🤸 健身操</td><td>${aerobicsCount} 天</td><td>${exerciseDays>0?((aerobicsCount/exerciseDays)*100).toFixed(0):0}%</td></tr>
-        <tr><td>🚴 有氧</td><td>${cardioCount} 天</td><td>${exerciseDays>0?((cardioCount/exerciseDays)*100).toFixed(0):0}%</td></tr>
-        <tr><td>🏋️ 器械</td><td>${weightsCount} 天</td><td>${exerciseDays>0?((weightsCount/exerciseDays)*100).toFixed(0):0}%</td></tr>
-      </tbody>
-    </table></div>
+    <div class="progress-bar-container"><div class="progress-bar" style="width:${achRate}%;">${achRate}%</div></div>
+    <div class="ex-stat-grid">
+      ${catCard('aerobics','有氧操',aerobicsCount)}
+      ${catCard('cardio','爬坡 / 椭圆机',cardioCount)}
+      ${catCard('weights','器械',weightsCount)}
+    </div>
   `;
+}
+
+// 运动明细归类：主人三类 —— 有氧操 / 爬坡·椭圆机 / 器械
+const EX_CAT_NAME = { aerobics: '有氧操', cardio: '爬坡 / 椭圆机', weights: '器械' };
+function exCatName(cat) { return EX_CAT_NAME[cat] || '器械'; }
+// 旧数据 type 字段可能是「健身操/有氧/器械」，这里统一映射到三类
+function exItemCategory(it) {
+  const t = (it.type || '').trim();
+  if (t === '健身操' || t === '有氧操') return 'aerobics';
+  if (t === '有氧' || t === '爬坡' || t === '椭圆机' || t === '爬坡/椭圆机') return 'cardio';
+  if (t === '器械') return 'weights';
+  return 'weights';
+}
+// 切换运动明细分类筛选
+function setExerciseFilter(cat) {
+  window.__exFilter = (cat === (window.__exFilter || 'all')) ? 'all' : cat;
+  document.querySelectorAll('.exercise-filter-tab').forEach(function (el) {
+    el.classList.toggle('active', el.getAttribute('data-ex-filter') === (window.__exFilter || 'all'));
+  });
+  try { renderFitness(); } catch (e) {}
+  // 筛选后滚到明细表，让主人立刻看到结果
+  try {
+    const wrap = document.getElementById('exercise-items-table-wrap');
+    if (wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {}
+}
+// 分类卡上的「记一项」：预选好类型再打开弹窗
+function quickAddExercise(cat) {
+  const nameMap = { aerobics: '有氧操', cardio: '爬坡/椭圆机', weights: '器械' };
+  try { openExerciseItemModal(-1); } catch (e) {}
+  try { setEiType(nameMap[cat] || '器械'); } catch (e) {}
 }
 
 // ==================== 体重图 ====================
@@ -11011,49 +11308,50 @@ function renderMedia() {
   const douyinRate = monthGoal > 0 ? Math.min(100, (douyinCount / (monthGoal/3)) * 100).toFixed(0) : 0;
 
   document.getElementById('media-progress').innerHTML = `
-    <div style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
-        <span style="font-weight:600;">🎨 美化档大号</span>
-        <span>${bigCount} / ${(monthGoal/3).toFixed(0)} 条</span>
+    <div class="media-progress-row">
+      <div class="media-progress-head">
+        <div class="media-progress-label"><span class="media-dot" style="background:#ff9eb5;"></span>美化档大号</div>
+        <div class="media-progress-num">${bigCount} / ${(monthGoal/3).toFixed(0)} 条</div>
       </div>
-      <div class="progress-bar-container">
-        <div class="progress-bar" style="width:${bigRate}%;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);">${bigRate}%</div>
-      </div>
+      <div class="progress-bar-container"><div class="progress-bar" style="width:${bigRate}%;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);">${bigRate}%</div></div>
     </div>
-    <div style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
-        <span style="font-weight:600;">👤 定制人物小号</span>
-        <span>${smallCount} / ${(monthGoal/3).toFixed(0)} 条</span>
+    <div class="media-progress-row">
+      <div class="media-progress-head">
+        <div class="media-progress-label"><span class="media-dot" style="background:#7fb3d5;"></span>定制人物小号</div>
+        <div class="media-progress-num">${smallCount} / ${(monthGoal/3).toFixed(0)} 条</div>
       </div>
-      <div class="progress-bar-container">
-        <div class="progress-bar" style="width:${smallRate}%;background:linear-gradient(90deg,#a8d8ea,#7fb3d5);">${smallRate}%</div>
-      </div>
+      <div class="progress-bar-container"><div class="progress-bar" style="width:${smallRate}%;background:linear-gradient(90deg,#a8d8ea,#7fb3d5);">${smallRate}%</div></div>
     </div>
-    <div style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
-        <span style="font-weight:600;">🎵 抖音</span>
-        <span>${douyinCount} / ${(monthGoal/3).toFixed(0)} 条</span>
+    <div class="media-progress-row">
+      <div class="media-progress-head">
+        <div class="media-progress-label"><span class="media-dot" style="background:#4a4a4a;"></span>抖音</div>
+        <div class="media-progress-num">${douyinCount} / ${(monthGoal/3).toFixed(0)} 条</div>
       </div>
-      <div class="progress-bar-container">
-        <div class="progress-bar" style="width:${douyinRate}%;background:linear-gradient(90deg,#2c2c2c,#4a4a4a);">${douyinRate}%</div>
-      </div>
+      <div class="progress-bar-container"><div class="progress-bar" style="width:${douyinRate}%;background:linear-gradient(90deg,#2c2c2c,#4a4a4a);">${douyinRate}%</div></div>
     </div>
   `;
 
-  // 明细表（当月 >5 条自动折叠）
+  // 明细记录（卡片式，只显示：日期 / 账号 / 同步抖音 / 操作）
   if (monthRecords.length === 0) {
-    document.getElementById('media-table').innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="big-icon">📱</div><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后告诉我：哪个号、发了什么、是否同步抖音</p></div></td></tr>`;
+    document.getElementById('media-table').innerHTML = `<div class="empty-state"><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后点上方「记一条」添加：哪个号、是否同步抖音</p></div>`;
   } else {
     const monthRecordsDesc = monthRecords.slice().reverse(); // 近→远
-    const html = foldRecordsTable('media', monthRecordsDesc, function (r) {
+    const html = foldRecords('media', monthRecordsDesc, function (r) {
       const idx = store.mediaRecords.indexOf(r);
-      const accName = r.account === 'big' ? '🎨 美化档大号' : r.account === 'small' ? '👤 定制人物小号' : '🎵 抖音';
-      const dyMark = r.douyin ? '<span class="check-yes">✓ 是</span>' : '<span class="check-no">✗ 否</span>';
-      const dataMark = (r.likes||r.collects||r.comments) ? ('👍'+(r.likes||0)+' ⭐'+(r.collects||0)+' 💬'+(r.comments||0)) : '<span class="check-no">未填</span>';
-      const linkMark = r.link ? ('<a href="'+crEscapeHtml(r.link)+'" target="_blank" style="color:var(--c-pink-deep,#d14b73);text-decoration:none;">🔗</a>') : '—';
-      const titleMark = r.title ? crEscapeHtml(r.title) : '<span class="check-no">未命名</span>';
-      return `<tr><td>${r.date}</td><td>${accName}</td><td>${titleMark}</td><td>${r.content}${(r.count&&r.count>1)?' ('+r.count+'条)':''}</td><td>${dyMark}</td><td>${dataMark}</td><td>${linkMark}</td><td>${r.note?crEscapeHtml(r.note):'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openMediaRecordModal(${idx})">✏️ 修改</button> <button class="row-del-btn" onclick="deleteMediaRecord(${idx})">🗑</button></td></tr>`;
-    }, 9);
+      const accName = r.account === 'big' ? '美化档大号' : r.account === 'small' ? '定制人物小号' : '抖音';
+      const dyMark = r.douyin ? '<span class="sync-badge yes">已同步</span>' : '<span class="sync-badge no">未同步</span>';
+      return `<div class="media-record-item">
+        <div class="media-record-main">
+          <div class="media-record-date">${r.date}</div>
+          <div class="media-record-account acc-${r.account}">${accName}</div>
+          <div class="media-record-sync">${dyMark}</div>
+        </div>
+        <div class="media-record-actions">
+          <button class="media-record-btn edit" onclick="openMediaRecordModal(${idx})" aria-label="修改">修改</button>
+          <button class="media-record-btn del" onclick="deleteMediaRecord(${idx})" aria-label="删除">删除</button>
+        </div>
+      </div>`;
+    });
     document.getElementById('media-table').innerHTML = html;
   }
 
@@ -11075,7 +11373,7 @@ function renderMedia() {
     const pending = store.mediaRecords.filter(function (r) { return r.createdAt && (now - r.createdAt) >= 7*86400000 && (now - r.createdAt) < 30*86400000 && !(r.likes||r.collects||r.comments); });
     const tip = document.getElementById('media-backfill-tip');
     if (tip) {
-      if (pending.length > 0) { tip.style.display = 'block'; tip.style.color = '#d14b73'; tip.innerHTML = '🔔 有 ' + pending.length + ' 条笔记发布超过 7 天还没填数据（赞/藏/评），记得回去补一下，复盘才准~'; }
+      if (pending.length > 0) { tip.style.display = 'block'; tip.style.color = '#d14b73'; tip.innerHTML = '有 ' + pending.length + ' 条笔记发布超过 7 天还没填数据（赞/藏/评），记得回去补一下，复盘才准~'; }
       else { tip.style.display = 'none'; }
     }
   } catch (e) {}
@@ -11620,7 +11918,7 @@ async function deleteMediaRecord(idx) {
 }
 
 // ==================== 运动详细记录「记一项」 ====================
-let eiType = '健身操';
+let eiType = '有氧操';
 let editingEiIdx = -1;
 function setEiType(t) {
   eiType = t;
@@ -11643,8 +11941,8 @@ function openExerciseItemModal(idx) {
     if (durEl) durEl.value = (it.duration != null ? it.duration : '');
     if (sEl) sEl.value = it.sets || '';
     if (noteEl) noteEl.value = it.note || '';
-    setEiType(it.type || '健身操');
-    if (title) title.textContent = '✏️ 修改运动记录';
+    setEiType(it.type || '有氧操');
+    if (title) title.textContent = '修改运动记录';
     const m = document.getElementById('exercise-item-modal');
     if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     return;
@@ -11654,8 +11952,8 @@ function openExerciseItemModal(idx) {
   if (durEl) durEl.value = '';
   if (sEl) sEl.value = '';
   if (noteEl) noteEl.value = '';
-  setEiType('健身操');
-  if (title) title.textContent = '➕ 记一项运动';
+  setEiType('有氧操');
+  if (title) title.textContent = '记一项运动';
   const m = document.getElementById('exercise-item-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
