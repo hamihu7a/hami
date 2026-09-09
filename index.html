@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-61">
+<meta name="hami-build" content="2026-09-09-62">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-61';
+  var BUILD_VER = '2026-09-09-62';
 // v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
 try {
   document.addEventListener('DOMContentLoaded', function () {
@@ -7173,10 +7173,18 @@ function _dedupKey(k, it) {
     case 'inspireRecords': return 'ir_' + (it.date || '') + '_' + (it.title || '');
     case 'periodRecords': return 'pr_' + (it.start || '') + '_' + (it.end || '');
     case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (it.destination || '');
-    case 'trips': return 'tr_' + (it.date || '') + '_' + (it.destination || '');
+    // v62 修正：行程对象的字段是 city/start，不是 date/destination！
+    // 旧写法算出「tr__」——所有行程的键都一样，云端并集时只保留第一条，
+    // 主人建了多个行程就会「只剩一个 / 删不掉（删哪个都被当成同一个）」。
+    case 'trips': return 'tr_' + (it.city || it.destination || '') + '_' + (it.start || it.date || '');
     case 'importantDates': return 'id_' + (it.type || '') + '_' + (it.name || '');
     case 'topicLibrary': return 'tl_' + (it.id || it.name || '');
-    case 'userTodos': return 'ut_' + (it.date || '') + '_' + (it.text || '');
+    case 'userTodos': return 'ut_' + (it.id || ((it.date || '') + '_' + (it.text || '')));
+    // v62：补上这两个漏掉的列表。以前它们走 default 的 JSON.stringify(整对象) 当键，
+    // 主人改任何一个字段（金额/档数/项目名/时长…）键就变，云端那条旧记录会被并回来，
+    // 表现就是「改了变新增 / 改了刷新回退」。改用稳定 id 优先。
+    case 'beautyRecords': return 'br_' + (it.id || '') + '_' + (it.date || '');
+    case 'exerciseItems': return 'ei_' + (it.id || '') + '_' + (it.date || '') + '_' + (it.name || '');
     default: return 'x_' + JSON.stringify(it);
   }
 }
@@ -7199,6 +7207,17 @@ function _contentKey(k, it) {
   // 主键 ar_<date>_<type>_<amount>_<note> 含金额/备注，云端幽灵一旦金额/备注字段被改就漏；
   // 加一个不含金额/备注的内容键兜底，让墓碑/合并/渲染前 dedup 都能从多角度抓住同一条。
   if (k === 'accountRecords') return 'arC_' + (it.date || '') + '|' + (it.type || '') + '|' + (it.category || '');
+  // v62：补齐其余列表的内容键。以前这些列表只有一个主键（且主键里混着可编辑字段），
+  // 云端那份"id 不一致的幽灵"在合并时抓不住，删除后刷新又复活。
+  // 内容键一律只用「日期」这类稳定字段，绝不含金额/标题/备注等主人可改的内容。
+  if (k === 'toiletRecords') return 'tC_' + (it.date || '');
+  if (k === 'maskRecords') return 'mC_' + (it.date || '');
+  if (k === 'travelPlans') return 'tpC_' + (it.date || '');
+  // v62 修正：行程字段是 city/start，内容键用「城市+开始日期」才能区分不同行程
+  if (k === 'trips') return 'trC_' + (it.city || '') + '|' + (it.start || '');
+  if (k === 'customOrders') return 'coC_' + (it.date || '');
+  if (k === 'beautyRecords') return 'brC_' + (it.date || '');
+  if (k === 'exerciseItems') return 'eiC_' + (it.date || '') + '|' + String(it.name || '');
   return '';
 }
 // v57：计算一条记录**所有**可能的去重 key（含主键 + 内容键）。
@@ -7530,6 +7549,53 @@ function hamiDeleteRecord(listKey, idx, options) {
   hamiDeleteSync();
   if (typeof options.render === 'function') { try { options.render(); } catch(e){} }
   return true;
+}
+// v62：统一「编辑保存」收尾。根治全站「改了变新增 / 改完刷新又回退」。
+// 原理：云端合并是并集（unionArrays），编辑一旦让记录的去重键变了，
+// 云端那条旧记录就会被当成「另一条」重新并回来 —— 主人看到的就是「多出一条」或「改了没生效」。
+// 做法：保存新版本之前，先把旧版本独有的键写进墓碑，云端旧记录从此再也并不回来。
+// 同时对有 id 的记录强制继承原 id（防止编辑时 id 丢失导致身份漂移）。
+function hamiEditRecord(listKey, idx, newItem, renderFn) {
+  try {
+    const arr = store[listKey];
+    if (!Array.isArray(arr) || !(idx >= 0) || !arr[idx]) return false;
+    const oldItem = arr[idx];
+    if (!newItem || typeof newItem !== 'object') return false;
+    // 强制继承原 id：只要旧记录有 id，新版本必须用同一个 id，身份永不漂移
+    if (oldItem && oldItem.id && !newItem.id) newItem.id = oldItem.id;
+    if (typeof hamiTombOldVersion === 'function') hamiTombOldVersion(listKey, oldItem, newItem);
+    arr[idx] = newItem;
+    if (typeof hamiDeleteSync === 'function') hamiDeleteSync();
+    if (typeof renderFn === 'function') { try { renderFn(); } catch (e) {} }
+    return true;
+  } catch (e) { return false; }
+}
+// v62：原地改字段（不是整体替换）的编辑收尾。
+// 用法：先改完字段，再调 hamiEditInPlace(listKey, idx, renderFn)，
+// 它会自动拿改动前的快照写旧版墓碑，保证云端旧记录不再并回来。
+function hamiEditInPlace(listKey, idx, renderFn) {
+  try {
+    const arr = store[listKey];
+    if (!Array.isArray(arr) || !(idx >= 0) || !arr[idx]) return false;
+    if (typeof hamiDeleteSync === 'function') hamiDeleteSync();
+    if (typeof renderFn === 'function') { try { renderFn(); } catch (e) {} }
+    return true;
+  } catch (e) { return false; }
+}
+// v62：编辑前拍快照，配合 hamiEditInPlace 使用。
+function hamiSnapshot(listKey, idx) {
+  try {
+    const arr = store[listKey];
+    if (!Array.isArray(arr) || !(idx >= 0) || !arr[idx]) return null;
+    return JSON.parse(JSON.stringify(arr[idx]));
+  } catch (e) { return null; }
+}
+// v62：把「改动前的快照」独有的键写进墓碑（原地编辑场景）。
+function hamiTombSnapshot(listKey, snapshot, newItem) {
+  try {
+    if (!snapshot || !newItem) return;
+    if (typeof hamiTombOldVersion === 'function') hamiTombOldVersion(listKey, snapshot, newItem);
+  } catch (e) {}
 }
 
 function cloudStatus(text, color) {
@@ -10309,7 +10375,12 @@ function editUserTodo(idx) {
   const v = (r || '').trim();
   if (!v) { try { finToast('内容不能为空，已取消修改'); } catch (e) {} return; }
   if (v === ut.text) return;
+  const _oldTodo = hamiSnapshot('userTodos', idx);   // v62：改动前拍快照
   ut.text = v;
+  // v62：待办的身份键是「日期+文字」，改文字 = 换键，云端那条旧待办会被当成另一条并回来。
+  // 把旧键写进墓碑，之后再推/拉云端确认。
+  hamiTombSnapshot('userTodos', _oldTodo, ut);
+  try { hamiDeleteSync(); } catch (e) {}
   saveData();
   try { renderTodoPanel(); } catch (e) {}
   try { renderHomeTodo(); } catch (e) {}
@@ -10325,10 +10396,15 @@ function toggleUserTodo(idx) {
 }
 function removeUserTodo(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
-  store.userTodos.splice(idx, 1);
-  __todoPage.daily = 0; __todoPage.work = 0;
-  saveData(); try { renderHomeTodo(); } catch (e) {}
-  try { renderTodoPanel(); } catch (e) {}
+  // v62：以前只是本地 splice + 推云端，没写墓碑 → 下次拉云端时这条又被并回来（删了没用）。
+  // 改用统一删除收尾：写墓碑 + 本地删 + 立刻推/拉云端双向确认。
+  hamiDeleteRecord('userTodos', idx, {
+    afterLocal: function () { __todoPage.daily = 0; __todoPage.work = 0; },
+    render: function () {
+      try { renderHomeTodo(); } catch (e) {}
+      try { renderTodoPanel(); } catch (e) {}
+    }
+  });
   // 删除是"不可逆"操作：本地再保存只是候选，必须第一时间把"云端已经没有这条"的版本强推上去，
   // 避免下次拉云端又把被删的条目并回来（根治"删了没用"）。
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
@@ -11170,9 +11246,11 @@ function submitCustomOrder() {
   if (editingCoIdx >= 0 && store.customOrders[editingCoIdx]) {
     // 原地修改：保留原 id，仅更新字段
     const orig = store.customOrders[editingCoIdx];
-    store.customOrders[editingCoIdx] = Object.assign({}, orig, {
+    const _newCo = Object.assign({}, orig, {
       date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc
     });
+    // v62：统一编辑收尾（改金额/日期/描述都会换键 → 旧键写墓碑，云端旧记录不再并回来）
+    hamiEditRecord('customOrders', editingCoIdx, _newCo, null);
   } else {
     if (!store.customOrders[editingCoIdx]) {
       store.customOrders.push({ id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
@@ -11244,7 +11322,9 @@ function submitBeautyRecord() {
   if (editingBeautyIdx >= 0 && store.beautyRecords[editingBeautyIdx]) {
     // 原地修改：保留原 id，仅更新字段
     const orig = store.beautyRecords[editingBeautyIdx];
-    store.beautyRecords[editingBeautyIdx] = Object.assign({}, orig, { date: date, count: count, amount: amount, note: note, status: 'done' });
+    const _newBea = Object.assign({}, orig, { date: date, count: count, amount: amount, note: note, status: 'done' });
+    // v62：统一编辑收尾（改档数/日期会换键 → 旧键写墓碑，云端旧记录不再并回来）
+    hamiEditRecord('beautyRecords', editingBeautyIdx, _newBea, null);
   } else {
     store.beautyRecords.push({ id: 'bea_' + Date.now(), date: date, count: count, amount: amount, note: note, status: 'done' });
   }
@@ -12251,9 +12331,12 @@ function submitMediaRecord() {
   if (editingMrIdx >= 0 && store.mediaRecords[editingMrIdx]) {
     // 原地修改：保留原 id，仅更新字段
     const orig = store.mediaRecords[editingMrIdx];
-    store.mediaRecords[editingMrIdx] = Object.assign({}, orig, {
+    const _newMr = Object.assign({}, orig, {
       date: date, account: mrAccount, title: title, content: '更新' + count + '条', douyin: douyin, link: link, likes: likes, collects: collects, comments: comments, note: note, count: count
     });
+    // v62：走统一编辑收尾 —— 继承原 id + 旧版本独有键写墓碑 + 立刻推/拉云端。
+    // 以前直接赋值，改标题/日期后云端那条旧记录会被当成另一条并回来（改了变新增）。
+    hamiEditRecord('mediaRecords', editingMrIdx, _newMr, null);
   } else {
     store.mediaRecords.push({
       id: 'mr_' + Date.now(),
@@ -12347,9 +12430,12 @@ function submitExerciseItem() {
   if (editingEiIdx >= 0 && store.exerciseItems[editingEiIdx]) {
     // 原地修改：保留原 id，仅更新字段
     const orig = store.exerciseItems[editingEiIdx];
-    store.exerciseItems[editingEiIdx] = Object.assign({}, orig, {
+    const _newEi = Object.assign({}, orig, {
       date: date, type: eiType, name: name, duration: duration, sets: sets, note: note
     });
+    // v62：统一编辑收尾（旧版本独有键写墓碑 + 立刻推/拉云端）
+    // exerciseItems 的去重键含项目名/时长/组数，改任一项都会换键 → 云端旧记录否则必并回来
+    hamiEditRecord('exerciseItems', editingEiIdx, _newEi, null);
   } else {
     store.exerciseItems.push({ id: 'ei_' + Date.now(), date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
   }
@@ -12435,12 +12521,17 @@ function submitWeightEdit() {
   if (weightEditIdx >= 0) {
     // 修改模式：原地覆盖、按日期去重（不创建新记录）
     if (!store.weightRecords[weightEditIdx]) { finToast('记录不存在'); return; }
+    const _oldW = hamiSnapshot('weightRecords', weightEditIdx);   // v62：改动前拍快照
     const w = store.weightRecords[weightEditIdx];
     w.date = date;
     w.value = val;
     w.after = val;  // 兼容旧字段
     w.note = note;
     store.weightRecords = store.weightRecords.filter((r, i) => i === weightEditIdx || r.date !== date);
+    // v62：把旧版本独有的键写进墓碑 + 立刻推/拉云端。
+    // 否则云端那条「旧日期/旧体重」的记录会被当成另一条重新并回来 → 改了刷新又回退。
+    hamiTombSnapshot('weightRecords', _oldW, w);
+    try { hamiDeleteSync(); } catch (e) {}
     finToast('✅ 已更新体重 ' + val.toFixed(1) + ' kg');
   } else {
     // 新增模式：若同日已有记录则拒绝（避免误建重复条），引导主人用「✏️ 修改」去更新
@@ -12526,6 +12617,7 @@ function submitExerciseEdit() {
   const sets = (document.getElementById('ee-sets').value || '').trim();
   const duration = (document.getElementById('ee-duration').value || '').trim();
   if (!aerobics && !cardio && !weights) { finToast('请至少勾选一种运动类型'); return; }
+  const _oldE = hamiSnapshot('exerciseRecords', exerciseEditIdx);   // v62：改动前拍快照
   const e = store.exerciseRecords[exerciseEditIdx];
   e.date = date;
   e.aerobics = aerobics;
@@ -12537,6 +12629,9 @@ function submitExerciseEdit() {
   e.duration = duration;
   // 若改了日期且已有同日期记录，删掉重复（同 idx 保留，其余过滤）
   store.exerciseRecords = store.exerciseRecords.filter((r, i) => i === exerciseEditIdx || r.date !== date);
+  // v62：旧版本独有的键写墓碑 + 立刻推/拉云端，根治「改了日期/内容刷新又回退」
+  hamiTombSnapshot('exerciseRecords', _oldE, e);
+  try { hamiDeleteSync(); } catch (e2) {}
   saveData();
   closeExerciseEditModal();
   try { renderFitness(); } catch(e) {}
@@ -12577,11 +12672,15 @@ function submitToiletEdit() {
   const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
   const count = parseInt(cEl ? cEl.value : '1') || 1;
   if (count < 1) { finToast('次数需≥1'); return; }
+  const _oldT = hamiSnapshot('toiletRecords', toiletEditIdx);   // v62：改动前拍快照
   const r = store.toiletRecords[toiletEditIdx];
   r.date = date;
   r.count = count;
   // 若改了日期且已有同日期记录，删掉重复（同 idx 保留）
   store.toiletRecords = store.toiletRecords.filter((x, i) => i === toiletEditIdx || x.date !== date);
+  // v62：旧版本独有的键写墓碑 + 立刻推/拉云端（改次数/改日期都会换键，云端旧记录否则会并回来）
+  hamiTombSnapshot('toiletRecords', _oldT, r);
+  try { hamiDeleteSync(); } catch (e2) {}
   saveData();
   closeToiletEditModal();
   try { renderToilet(); } catch(e) {}
@@ -12621,9 +12720,13 @@ function submitMaskEdit() {
   if (maskEditIdx < 0 || !store.maskRecords || !store.maskRecords[maskEditIdx]) { finToast('记录不存在'); return; }
   const dEl = document.getElementById('me-date');
   const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const _oldM = hamiSnapshot('maskRecords', maskEditIdx);   // v62：改动前拍快照
   const r = store.maskRecords[maskEditIdx];
   r.date = date;
   store.maskRecords = store.maskRecords.filter((x, i) => i === maskEditIdx || x.date !== date);
+  // v62：改日期会换键 → 旧键写墓碑 + 立刻推/拉云端，否则云端旧日期那条会并回来
+  hamiTombSnapshot('maskRecords', _oldM, r);
+  try { hamiDeleteSync(); } catch (e2) {}
   saveData();
   closeMaskEditModal();
   try { renderMask(); } catch(e) {}
@@ -15011,7 +15114,9 @@ function submitTripRecord() {
   if (tripEditIdx >= 0) {
     const old = store.trips[tripEditIdx];
     obj.days = old.days || [];
-    store.trips[tripEditIdx] = obj;
+    // v62：统一编辑收尾。行程身份键是「城市+开始日期」，改名/改日期都会换键，
+    // 旧键写进墓碑后云端那条旧行程才不会被当成另一个行程并回来。
+    hamiEditRecord('trips', tripEditIdx, obj, null);
     ensureTripDays(obj);
     finToast('🗺️ 行程已更新');
   } else {
@@ -15109,6 +15214,8 @@ function submitTripDayRecord() {
   else trip.days[dayIdx].items.push(obj);
 
   try { saveData(); } catch (e) {}
+  // v62：整条行程作为一个对象存储，改完立刻推/拉云端，保证云端同步到最新版本
+  try { hamiDeleteSync(); } catch (e) {}
   renderTripPlans();
   closeTripDayModal();
   try { finToast(itemIdx >= 0 ? '安排已更新' : '安排已添加'); } catch (e) {}
@@ -15227,6 +15334,8 @@ function submitTripDayAll() {
   day.title = titleVal;
   day.items = out;
   try { saveData(); } catch (e) {}
+  // v62：整条行程是「一个对象」存的，改完立刻推/拉云端，让云端同步到最新版本
+  try { hamiDeleteSync(); } catch (e) {}
   renderTripPlans();
   closeTripDayEditAll();
   try { finToast('已保存 Day ' + (di + 1) + ' 的全部安排'); } catch (e) {}
@@ -15290,6 +15399,12 @@ function submitDateRecord() {
   }
   const obj = { name: name, date: date, type: dmType, isLunar: dmCalendar === 'lunar' };
   if (remark) obj.remark = remark;
+  // v62：编辑模式下先把「旧版本独有的键」写进墓碑。
+  // 重要日期的身份键是「类型+名字」，主人一改名，云端那条「旧名字」的记录
+  // 就会被当成另一条重新并回来 —— 表现为「改完名字多出一条 / 改了没生效」。
+  if (editIdx >= 0 && store.importantDates && store.importantDates[editIdx]) {
+    try { hamiTombOldVersion('importantDates', store.importantDates[editIdx], obj); } catch (e) {}
+  }
   // v39 根治「修改日期/重复保存会冒出第二条」：重要日期以「类型+名字」为唯一身份，
   // 保存时一律先剔除同「类型+名字」的旧条目，再追加最新一条（编辑/新增都走同一逻辑）。
   store.importantDates = store.importantDates.filter(function (x) {
@@ -15297,6 +15412,7 @@ function submitDateRecord() {
   });
   store.importantDates.push(obj);
   try { saveData(); } catch (e) {}
+  try { hamiDeleteSync(); } catch (e) {}   // v62：立刻推/拉云端，让墓碑马上生效
   renderReminder();
   closeDateModal();
   try { finToast('🎉 已保存日期「' + name + '」'); } catch (e) {}
@@ -15390,7 +15506,9 @@ function submitTravelRecord() {
       const oldMap = {}; old.checklist.forEach(i => oldMap[i.name] = i.done);
       checklist.forEach(i => { if (oldMap[i.name]) i.done = true; });
     }
-    store.travelPlans[tmEditIdx] = obj;
+    // v62：统一编辑收尾。改目的地/日期都会换去重键（tp_<date>_<destination>），
+    // 旧键写进墓碑后云端那条旧计划才不会被当成「另一条」并回来。
+    hamiEditRecord('travelPlans', tmEditIdx, obj, null);
   } else {
     store.travelPlans.push(obj);
   }
@@ -17155,8 +17273,12 @@ function logPeriodHistory() {
   }
   if (e && e < s) { hamiToast('结束日期不能早于开始日期哦~'); return; }
   if (editingPeriodIdx >= 0 && store.periodRecords[editingPeriodIdx]) {
+    const _oldP = hamiSnapshot('periodRecords', editingPeriodIdx);   // v62：改动前拍快照
     store.periodRecords[editingPeriodIdx].start = s;
     store.periodRecords[editingPeriodIdx].end = e;
+    // v62：经期身份键含 start/end，改日期 = 换键 → 旧键写墓碑，云端那条旧记录不再并回来
+    hamiTombSnapshot('periodRecords', _oldP, store.periodRecords[editingPeriodIdx]);
+    try { hamiDeleteSync(); } catch (e2) {}
   } else {
     store.periodRecords.push({ start: s, end: e });
   }
