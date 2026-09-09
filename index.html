@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-62';
+  var BUILD_VER = '2026-09-09-63';
 // v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
 try {
   document.addEventListener('DOMContentLoaded', function () {
@@ -12033,8 +12033,15 @@ function addLinkedMediaRecord(p) {
 function removeLinkedMediaRecord(fpId) {
   if (!store.mediaRecords || !fpId) return;
   const before = store.mediaRecords.length;
+  const removed = store.mediaRecords.filter(function (r) { return r.futurePostId === fpId; });
   store.mediaRecords = store.mediaRecords.filter(function (r) { return r.futurePostId !== fpId; });
   if (store.mediaRecords.length < before) {
+    // v63：写墓碑 + 立推云端，避免云端把这条联动记录又并回来（根治「撤销了又复活/删不掉」）
+    removed.forEach(function (r) { try { hamiTombAdd('mediaRecords', r); } catch (e) {} });
+    try { hamiTombMirrorSave(); } catch (e) {}
+    try { hamiDeleteSync(); } catch (e) {}
+    try { saveData(); } catch (e) {}
+    try { if (typeof renderMediaRecords === 'function') renderMediaRecords(); } catch (e) {}
     hamiToast('↩️ 已撤销完成，联动记录已同步移除');
   }
 }
@@ -12042,9 +12049,18 @@ function syncAllFuturePostMediaLinks() {
   if (!store.futurePosts || !store.mediaRecords) return;
   // 清理没有对应 futurePost 的孤儿联动记录
   const validIds = new Set((store.futurePosts || []).map(function (p) { return p.id; }).filter(Boolean));
+  const before = store.mediaRecords.length;
+  const removed = store.mediaRecords.filter(function (r) { return r.futurePostId && !validIds.has(r.futurePostId); });
   store.mediaRecords = store.mediaRecords.filter(function (r) {
     return !r.futurePostId || validIds.has(r.futurePostId);
   });
+  if (store.mediaRecords.length < before) {
+    // v63：孤儿记录也写墓碑，防止被云端旧数据复活
+    removed.forEach(function (r) { try { hamiTombAdd('mediaRecords', r); } catch (e) {} });
+    try { hamiTombMirrorSave(); } catch (e) {}
+    try { hamiDeleteSync(); } catch (e) {}
+    try { saveData(); } catch (e) {}
+  }
 }
 // v26：未来图文也每页 4 条翻页（数据永不丢）
 let __futurePage = 0;
