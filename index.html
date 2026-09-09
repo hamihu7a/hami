@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-08-57">
+<meta name="hami-build" content="2026-09-09-59">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,17 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-08-57';
+  var BUILD_VER = '2026-09-09-59';
+// v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
+try {
+  document.addEventListener('DOMContentLoaded', function () {
+    const el = document.createElement('div');
+    el.id = 'hami-build-debug';
+    el.textContent = 'v58';
+    el.style.cssText = 'position:fixed;top:6px;left:6px;z-index:999999;font-size:10px;color:#b3325c;background:rgba(255,255,255,.8);padding:2px 6px;border-radius:6px;pointer-events:none;';
+    document.body.appendChild(el);
+  });
+} catch (e) {}
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -5658,6 +5668,23 @@
               重新检查
             </button>
           </div>
+        </div>
+
+        <!-- ===== v58：一键清理「未来图文」幽灵记录 ===== -->
+        <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,248,250,0.95);border:1.5px solid #e890a8;">
+          <div style="font-size:14px;font-weight:800;color:#b3325c;margin-bottom:6px;">🧹 一键清理「未来图文」幽灵记录</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">
+            如果有"删了又出现"的幽灵笔记，点下面按钮：
+            <br>① 先按「当前真实内容」覆盖云端（让云端与本地一致）
+            <br>② 再把本地列表里所有重复内容合并，只保留最新一条
+            <br>③ 把删不掉的旧条目全写进墓碑，下次合并直接过滤
+          </div>
+          <div id="future-ghost-status" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">
+            点下面按钮开始清理…
+          </div>
+          <button onclick="purgeFutureGhost()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);">
+            🧹 立即清理幽灵记录
+          </button>
         </div>
       </div>
 
@@ -9180,6 +9207,77 @@ function tryRecoverStoreFromIDB() {
 }
 
 // ==================== 数据急救：内部备份比当前数据更全时，一键找回 ====================
+function purgeFutureGhost() {
+  const status = document.getElementById('future-ghost-status');
+  if (!hamiCloudEnabled()) {
+    if (status) status.textContent = '⚠️ 云同步未启用，无法覆盖云端。请先在设置面板开启云同步。';
+    return;
+  }
+  if (!confirm('这会强制让「未来图文」只保留本地当前看到的这几条，并把其它（包括云端旧幽灵）全部永久删除。确定继续吗？')) return;
+  try {
+    // 1. 先 dedup 一次，让 store.futurePosts 是"主人真实看到的"
+    try { dedupFuturePosts(); } catch (e) {}
+    const keep = (store.futurePosts || []).slice();
+    // 2. 把"本地之前出现过但当前不在保留列表里的"条目全部写墓碑（包括从历史 store 里抓的）
+    //    做法：从云端拉一次，把云端所有 futurePosts 中"不在 keep 里的"都写墓碑
+    _ghGet().then(function (got) {
+      (async function () {
+        let remote = null;
+        if (got) {
+          try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
+          catch (e1) {
+            try { remote = await decryptStore(got.content.replace(/\s+/g, ''), (typeof hamiSyncPassword === 'string' ? hamiSyncPassword : '')); } catch (e2) {}
+          }
+        }
+        const keepKeys = new Set();
+        keep.forEach(function (p) {
+          (typeof _allDedupKeys === 'function' ? _allDedupKeys('futurePosts', p) : []).forEach(function (k) { if (k) keepKeys.add(k); });
+        });
+        // 把远端所有 futurePosts 中"不在 keep 里"的全部写墓碑
+        let tombAdded = 0;
+        if (remote && remote.store && Array.isArray(remote.store.futurePosts)) {
+          remote.store.futurePosts.forEach(function (p) {
+            if (!p) return;
+            const ks = typeof _allDedupKeys === 'function' ? _allDedupKeys('futurePosts', p) : [];
+            let inKeep = false;
+            for (let i = 0; i < ks.length; i++) if (ks[i] && keepKeys.has(ks[i])) { inKeep = true; break; }
+            if (!inKeep) {
+              try {
+                if (!store.__deleted) store.__deleted = {};
+                if (!Array.isArray(store.__deleted.futurePosts)) store.__deleted.futurePosts = [];
+                ks.forEach(function (k) {
+                  if (k && store.__deleted.futurePosts.indexOf(k) < 0) {
+                    store.__deleted.futurePosts.push(k);
+                    tombAdded++;
+                  }
+                });
+              } catch (e) {}
+            }
+          });
+        }
+        // 3. saveData + commitToCloud（强制覆盖云端为"当前真实内容"）
+        try { saveData(); } catch (e) {}
+        if (typeof commitToCloud === 'function') {
+          commitToCloud().then(function () {
+            if (status) status.textContent = '✅ 已清理！本地保留 ' + keep.length + ' 条，写墓碑 ' + tombAdded + ' 个键，云端已强制覆盖。刷新页面也不会复活。';
+            try { renderFuturePosts(); } catch (e) {}
+          }).catch(function (e) {
+            if (status) status.textContent = '⚠️ 清理失败：' + (e && e.message ? e.message : e);
+          });
+        } else {
+          if (status) status.textContent = '✅ 已写墓碑 ' + tombAdded + ' 个键（云端覆盖稍候自动同步）';
+          try { renderFuturePosts(); } catch (e) {}
+        }
+      })().catch(function (e) {
+        if (status) status.textContent = '⚠️ 清理失败：' + (e && e.message ? e.message : e);
+      });
+    }).catch(function (e) {
+      if (status) status.textContent = '⚠️ 拉云端失败：' + (e && e.message ? e.message : e);
+    });
+  } catch (e) {
+    if (status) status.textContent = '⚠️ 清理失败：' + (e && e.message ? e.message : e);
+  }
+}
 function restoreFromIDBBackup() {
   if (!window.indexedDB) { try { hamiToast('当前浏览器不支持内部备份'); } catch (e) {} return; }
   loadStoreFromIDB().then(async function (rec) {
@@ -17320,9 +17418,23 @@ setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e)
   }
   if (!store.exerciseItems) store.exerciseItems = [];
 
-  // 注入主人 2026-08-12 提供的 7 条连更图文计划（按标题+日期去重，避免重复添加）
+  // 注入主人 2026-08-12 提供的 7 条连更图文计划
+  // ⚠️ v59 铁律（血的教训）：这里曾经「每次刷新都跑 + 只按标题+日期判重」，
+  // 导致：主人一改标题 → 判重失败 → 又 push 一条新版；主人一删除 → 刷新又 push 回来。
+  // 主人从 v51 到 v58 反复投诉「删不掉 / 改了变新增」，真凶就是这段，不是墓碑逻辑。
+  // 三条保险：① 一次性哨兵，一辈子只注入一次；② 墓碑里有的永不复活；③ 当天已有任意一条就跳过。
   if (!store.futurePosts) store.futurePosts = [];
   (function seedFuturePosts() {
+    var SEED_FLAG = 'hami_fp_seeded_v2';
+    var already = false;
+    try { already = localStorage.getItem(SEED_FLAG) === '1'; } catch (e) {}
+    // 墓碑：主人删过的示例条目，永远不再生成
+    var tomb = {};
+    try {
+      var td = (store.__deleted && store.__deleted.futurePosts) || [];
+      td.forEach(function (k) { if (k) tomb[k] = true; });
+    } catch (e) {}
+    if (already) return;   // 已注入过 → 永不重复注入
     var start = '2026-08-12';
     function addDate(d, n) {
       var dt = new Date(d + 'T00:00:00');
@@ -17338,22 +17450,32 @@ setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e)
       { title: '倒计时1天 攒了半年的脸 明天一次性给你', content: '钩子：定闹钟蹲链接 首发前20名赠定制+首周9折', tags: '#倒计时 #首发 #定制福利', offset: 5 },
       { title: 'EA风美化档正式发售 安装即玩+永久更新（首发限时）', content: '钩子：限时福利 评论区答疑', tags: '#EA风 #美化档 #正式发售', offset: 6 }
     ];
+    var added = 0;
     plans.forEach(function (plan) {
+      var date = addDate(start, plan.offset);
+      // ① 墓碑命中 → 主人删过，永不复活
+      var ck = 'fpC:' + String(plan.title || '').trim() + '|' + date + '|big';
+      if (tomb[ck]) return;
+      // ② 同一天已经有任意一条图文计划 → 视为已存在，不再注入
+      //    （主人可能改过标题，按标题判重必然失败，所以按日期判）
       var exists = store.futurePosts.some(function (p) {
-        return p.title === plan.title && p.date === addDate(start, plan.offset);
+        return p && p.date === date;
       });
-      if (!exists) {
-        store.futurePosts.push({
-          id: 'fp_seed_' + plan.offset + '_' + Date.now(),
-          title: plan.title,
-          content: plan.content,
-          tags: plan.tags,
-          date: addDate(start, plan.offset),
-          done: false,
-          createdAt: Date.now() + plan.offset
-        });
-      }
+      if (exists) return;
+      store.futurePosts.push({
+        id: 'fp_seed_' + plan.offset + '_' + Date.now(),
+        title: plan.title,
+        content: plan.content,
+        tags: plan.tags,
+        date: date,
+        done: false,
+        createdAt: Date.now() + plan.offset
+      });
+      added++;
     });
+    // ③ 无论是否真的新增，都打上一次性哨兵：以后任何刷新都不再跑这段
+    try { localStorage.setItem(SEED_FLAG, '1'); } catch (e) {}
+    if (added) { try { saveData(); } catch (e) {} }
   })();
 
   try { saveData(); } catch (e) {}
