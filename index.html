@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-67">
+<meta name="hami-build" content="2026-09-09-68">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3940,7 +3940,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-67';
+  var BUILD_VER = '2026-09-09-68';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -14769,6 +14769,7 @@ function renderTripPlans() {
     let dayBlocks = '';
     if (expanded) {
       dayBlocks = (days || []).map((day, di) => {
+        if (day.removed) return '';   // v68：被删除的某天不渲染（标记移除，避免 ensureTripDays 复活）
         const items = (day.items || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
         let timelineHtml = '<div class="trip-timeline">';
         if (items.length === 0) {
@@ -14818,9 +14819,10 @@ function renderTripPlans() {
       }).join('');
     }
 
-    const totalItems = days.reduce((sum, d) => sum + (d.items || []).length, 0);
-    const summary = days.length
-      ? `共 ${days.length} 天 · ${totalItems} 个安排`
+    const activeDays = (days || []).filter(d => !d.removed);
+    const totalItems = activeDays.reduce((sum, d) => sum + (d.items || []).length, 0);
+    const summary = activeDays.length
+      ? `共 ${activeDays.length} 天 · ${totalItems} 个安排`
       : '暂无每日安排';
 
     html += `
@@ -14965,6 +14967,7 @@ function exportTripImage(realIdx) {
     var days = (trip.days || []).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
     if (days.length === 0) ops.push({ k:'muted', text:'（暂无每日安排）' });
     days.forEach(function(day, di){
+      if (day.removed) return;   // v68：导出图片也跳过被删除的某天
       ops.push({ k:'dayhead', text:'Day ' + (di+1) + '　' + fmtMD(day.date) + (day.title ? '　' + day.title : '') });
       var items = (day.items || []).slice().sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
       if (items.length === 0) { ops.push({ k:'muted', text:'　（这天还没安排）' }); return; }
@@ -15250,16 +15253,25 @@ async function deleteTripDay(tripIdx, dayIdx) {
   if (!store.trips || !store.trips[tripIdx] || !store.trips[tripIdx].days || !store.trips[tripIdx].days[dayIdx]) return;
   const trip = store.trips[tripIdx];
   const day = trip.days[dayIdx];
-  if (!await hamiConfirm('确定删除「Day ' + (dayIdx + 1) + '（' + (day.title || '') + '）」吗？这一天的所有安排都会被删掉。')) return;
-  trip.days.splice(dayIdx, 1);
-  // 删除边界日期后同步更新 start/end，避免 ensureTripDays 再次把 deleted day 补回来
-  if (trip.days.length > 0) {
-    if (dayIdx === 0) trip.start = trip.days[0].date;
-    if (dayIdx >= trip.days.length - 1) trip.end = trip.days[trip.days.length - 1].date;
+  const dayTitle = day.title || day.date || ('Day ' + (dayIdx + 1));
+  if (!await hamiConfirm('确定删除「' + dayTitle + '」吗？这一天的所有安排都会被删掉。')) return;
+  // 关键修复：标记移除而非物理删除。
+  // 旧逻辑用 splice 删掉该天，但 renderTripPlans 每次都会调 ensureTripDays，它会按 start~end 日期范围
+  // 把「缺失的某天」重新补回来 → 表现为「删不掉」。改为打 removed 标记后，ensureTripDays 发现当天已存在
+  // （只是被标记移除）就不会补内容，渲染/导出/统计也都跳过它，彻底根治复活。
+  trip.days[dayIdx].removed = true;
+  trip.days[dayIdx].title = '';
+  trip.days[dayIdx].items = [];
+  // 删首尾时同步收窄 start/end，保证概览日期正确（中间天无需改动，由 removed 标记隐藏）
+  const remaining = trip.days.filter(function (d) { return !d.removed; });
+  if (remaining.length > 0) {
+    if (dayIdx === 0) trip.start = remaining[0].date;
+    if (dayIdx === trip.days.length - 1) trip.end = remaining[remaining.length - 1].date;
   }
   try { saveData(); } catch (e) {}
   try { hamiDeleteSync(); } catch (e) {}
   renderTripPlans();
+  try { finToast('已删除「' + dayTitle + '」'); } catch (e) {}
 }
 
 function openTripDayModal(tripIdx, dayIdx, itemIdx) {
