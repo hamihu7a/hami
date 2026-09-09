@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-59">
+<meta name="hami-build" content="2026-09-09-60">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-59';
+  var BUILD_VER = '2026-09-09-60';
 // v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
 try {
   document.addEventListener('DOMContentLoaded', function () {
@@ -7457,8 +7457,58 @@ function hamiTombAdd(listKey, item) {
     if (store.__deleted[listKey].length > 600) store.__deleted[listKey] = store.__deleted[listKey].slice(-600);
   } catch (e) {}
 }
+// v60：编辑旧版本墓碑。
+// 场景：记录没有稳定 id 时，合并是靠「内容键」认人的（记账的键里包含金额/备注）。
+// 主人一改金额 → 新记录的键变了 → 云端那份旧记录在合并时被当成「另一条」又并回来，
+// 表现为「改了没生效、刷新还是旧数字」。
+// 做法：保存新版本前，把「旧版本独有的键」写进墓碑（新旧共用的键绝不写，否则会把新记录一起删掉）。
+function hamiTombOldVersion(listKey, oldItem, newItem) {
+  try {
+    if (!oldItem || !newItem || oldItem === newItem) return;
+    if (typeof _allDedupKeys !== 'function') return;
+    const newSet = new Set(_allDedupKeys(listKey, newItem));
+    const oldKeys = _allDedupKeys(listKey, oldItem);
+    if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
+    if (!Array.isArray(store.__deleted[listKey])) store.__deleted[listKey] = [];
+    let added = 0;
+    oldKeys.forEach(function (k) {
+      if (!k) return;
+      if (newSet.has(k)) return;                    // 新旧共用（如同 id）→ 绝不能墓碑
+      if (store.__deleted[listKey].indexOf(k) < 0) { store.__deleted[listKey].push(k); added++; }
+    });
+    if (added && store.__deleted[listKey].length > 600) {
+      store.__deleted[listKey] = store.__deleted[listKey].slice(-600);
+    }
+  } catch (e) {}
+}
+// v60：墓碑镜像写进独立 localStorage 键。
+// 即使 store.__deleted 被云端合并 / IndexedDB 恢复整块覆盖，墓碑也能从这里捞回来，
+// 杜绝「删了又复活」。
+var TOMB_MIRROR_KEY = 'hami_tomb_mirror_v1';
+function hamiTombMirrorSave() {
+  try {
+    if (!store.__deleted || typeof store.__deleted !== 'object') return;
+    localStorage.setItem(TOMB_MIRROR_KEY, JSON.stringify(store.__deleted));
+  } catch (e) {}
+}
+function hamiTombMirrorMerge() {
+  try {
+    let cur = {};
+    try { cur = JSON.parse(localStorage.getItem(TOMB_MIRROR_KEY) || '{}') || {}; } catch (e) { cur = {}; }
+    if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
+    Object.keys(cur).forEach(function (lk) {
+      const arr = cur[lk];
+      if (!Array.isArray(arr) || !arr.length) return;
+      if (!Array.isArray(store.__deleted[lk])) store.__deleted[lk] = [];
+      const seen = new Set(store.__deleted[lk]);
+      arr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__deleted[lk].push(k); } });
+    });
+    localStorage.setItem(TOMB_MIRROR_KEY, JSON.stringify(store.__deleted));
+  } catch (e) {}
+}
 // 删除后双向同步：先本地存档，再立刻推云端（带墓碑），再拉云端剔除，杜绝"刷新又回来"
 function hamiDeleteSync() {
+  try { hamiTombMirrorSave(); } catch (e) {}
   try { saveData(); } catch (e) {}
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
@@ -9127,6 +9177,8 @@ function loadData() {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
     // v57：启动加载阶段就按墓碑剔一遍被删记录（即使云端旧备份把幽灵塞回来也立刻清掉）
+    // v60：先从独立镜像键捞回墓碑（防止 store.__deleted 被云端合并/备份恢复整块覆盖而丢失）
+    try { if (typeof hamiTombMirrorMerge === 'function') hamiTombMirrorMerge(); } catch (e) {}
     try { applyTombOnLoad(); } catch (e) {}
     // v57：未来图文加载后再 dedup 一次（清掉同 id / 同内容重复）
     try { dedupFuturePosts(); } catch (e) {}
@@ -9179,18 +9231,35 @@ function tryRecoverStoreFromIDB() {
   if (!window.indexedDB) return;
   loadStoreFromIDB().then(function (rec) {
     if (!rec || !rec.store) return;
-    const localTs = store._lastSavedAt || 0;
-    const idbTs = rec.savedAt || 0;
-    // IBD 备份比本地新才恢复，避免旧备份覆盖新数据
-    if (idbTs <= localTs) return;
+    const localCount = (typeof countStoreRecords === 'function') ? countStoreRecords(store) : 0;
+    const idbCount = (typeof countStoreRecords === 'function') ? countStoreRecords(rec.store) : 0;
+    // v60 铁律：只有在「本地真的丢了大片数据」时才恢复。
+    // 旧逻辑只比时间戳，而 IDB 备份的 savedAt 几乎总比本地新（同一次 save 里后写），
+    // 于是每次刷新都会拿备份整块覆盖 → 主人刚删的/刚改的全被还原，表现就是「删了又回来」。
+    // 删几条属于正常变少，绝不能触发恢复；只有本地几乎空了、或备份条数是本地 2 倍以上才算真丢。
+    if (localCount > 0 && idbCount <= localCount * 2) return;
     // 用 IBD 备份覆盖当前 store（保留当前运行时的默认值结构）
     const backup = rec.store;
+    // 墓碑必须保留（否则已删除的记录会随备份一起复活）
+    const keepTomb = store.__deleted;
     for (const key in store) {
       if (backup[key] !== undefined) store[key] = backup[key];
     }
     for (const key in backup) {
       if (!(key in store)) store[key] = backup[key];
     }
+    if (keepTomb && Object.keys(keepTomb).length) {
+      store.__deleted = Object.assign({}, keepTomb, store.__deleted || {});
+      Object.keys(keepTomb).forEach(function (lk) {
+        const a = keepTomb[lk];
+        if (!Array.isArray(a) || !a.length) return;
+        if (!Array.isArray(store.__deleted[lk])) store.__deleted[lk] = [];
+        const seen = new Set(store.__deleted[lk]);
+        a.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__deleted[lk].push(k); } });
+      });
+    }
+    // 用墓碑再剔一遍，确保备份里被删过的记录不会复活
+    try { applyTombOnLoad(); } catch (e) {}
     try {
       saveData();
       hamiToast('已从浏览器内部备份找回最新数据（体重/打卡等）\n如果仍不对，请去设置恢复完整备份');
@@ -11784,10 +11853,15 @@ function submitFuturePost() {
   };
   if (!store.futurePosts) store.futurePosts = [];
   if (editingFpIdx >= 0 && store.futurePosts[editingFpIdx]) {
-    data.id = store.futurePosts[editingFpIdx].id;
-    data.done = store.futurePosts[editingFpIdx].done;
-    data.createdAt = store.futurePosts[editingFpIdx].createdAt || Date.now();
-    store.futurePosts[editingFpIdx] = Object.assign({}, store.futurePosts[editingFpIdx], data);
+    const _oldFp = store.futurePosts[editingFpIdx];
+    data.id = _oldFp.id;
+    data.done = _oldFp.done;
+    data.createdAt = _oldFp.createdAt || Date.now();
+    store.futurePosts[editingFpIdx] = Object.assign({}, _oldFp, data);
+    // v60：改标题后「内容键」会变，旧标题那条若还留在云端就会被并回来。
+    // 把旧版本独有的键写墓碑（id 是共用的，不会被误删）。
+    if (typeof hamiTombOldVersion === 'function') hamiTombOldVersion('futurePosts', _oldFp, store.futurePosts[editingFpIdx]);
+    try { hamiTombMirrorSave(); } catch (e) {}
   } else {
     data.id = 'fp_' + Date.now();
     data.createdAt = Date.now();
@@ -12997,9 +13071,15 @@ function commitRecord(closeIt) {
   if (!store.accountRecords) store.accountRecords = [];
   if (addModalEditingIdx >= 0 && store.accountRecords[addModalEditingIdx]) {
     // 原地修改：保留原 id + ts，仅覆盖业务字段
-    rec.id = store.accountRecords[addModalEditingIdx].id;
-    rec.ts = store.accountRecords[addModalEditingIdx].ts || rec.ts;
+    const _oldRec = store.accountRecords[addModalEditingIdx];
+    rec.id = _oldRec.id;
+    rec.ts = _oldRec.ts || rec.ts;
     store.accountRecords[addModalEditingIdx] = rec;
+    // v60：把「旧版本独有的身份键」写墓碑。
+    // 记账的身份键包含金额/备注，改金额后键就变了；不墓碑的话，
+    // 云端那份旧金额记录会在下次合并时被当成「另一条」并回来 → 表现为「改了没生效」。
+    if (typeof hamiTombOldVersion === 'function') hamiTombOldVersion('accountRecords', _oldRec, rec);
+    try { hamiTombMirrorSave(); } catch (e) {}
   } else {
     if (!rec.id) rec.id = 'fr_' + Date.now();
     store.accountRecords.push(rec);
