@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-64">
+<meta name="hami-build" content="2026-09-09-65">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3940,7 +3940,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-64';
+  var BUILD_VER = '2026-09-09-65';
 // v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
 try {
   document.addEventListener('DOMContentLoaded', function () {
@@ -12059,9 +12059,28 @@ function toggleFuturePostDone(idOrIdx) {
   const idx = findFuturePostIdx(idOrIdx);
   if (idx < 0 || !store.futurePosts[idx]) return;
   const p = store.futurePosts[idx];
-  p.done = !p.done;
-  saveData(); renderFuturePosts();
-  hamiToast(p.done ? '✅ 已标记为已完成' : '↩️ 已取消完成标记');
+  const nowDone = !p.done;
+  p.done = nowDone;
+  if (nowDone) {
+    // 标记完成 → 自动联动一条到「自媒体更新记录」
+    // addLinkedMediaRecord 内部按 futurePostId 去重，重复点击完成不会重复创建
+    if (!p.date) {
+      hamiToast('⚠️ 这条图文还没设日期，先点「编辑」补上日期，才能完成联动');
+    } else {
+      addLinkedMediaRecord(p);
+    }
+  } else {
+    // 撤销完成 → 同步移除「自媒体更新记录」里的联动记录
+    // removeLinkedMediaRecord 已写墓碑+存档+重渲染，刷新/换设备都不会再复活
+    removeLinkedMediaRecord(p.id);
+  }
+  // addLinkedMediaRecord 自身不存档，这里统一兜底保存；removeLinkedMediaRecord 已自存档（再存一次无害）
+  try { saveData(); } catch (e) {}
+  try { renderFuturePosts(); } catch (e) {}
+  try { renderMedia(); } catch (e) {}   // 立即刷新「自媒体更新记录」面板，主人点完立刻能看到
+  // 立刻推云端 + 拉合并，保证联动记录在刷新/换设备后依然存在
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+  try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
 }
 function addLinkedMediaRecord(p) {
   if (!p || !p.id || !p.date) return;
