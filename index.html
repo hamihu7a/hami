@@ -3932,7 +3932,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-60';
+  var BUILD_VER = '2026-09-09-61';
 // v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
 try {
   document.addEventListener('DOMContentLoaded', function () {
@@ -7195,6 +7195,10 @@ function _contentKey(k, it) {
   if (k === 'inspireRecords') return 'irC_' + (it.date || '') + '|' + String(it.title || '');
   if (k === 'periodRecords') return 'prC_' + (it.start || '');
   if (k === 'importantDates') return 'idC_' + (it.type || '') + '|' + String(it.name || '');
+  // v61：记账按「日期+类型+分类」作内容键。
+  // 主键 ar_<date>_<type>_<amount>_<note> 含金额/备注，云端幽灵一旦金额/备注字段被改就漏；
+  // 加一个不含金额/备注的内容键兜底，让墓碑/合并/渲染前 dedup 都能从多角度抓住同一条。
+  if (k === 'accountRecords') return 'arC_' + (it.date || '') + '|' + (it.type || '') + '|' + (it.category || '');
   return '';
 }
 // v57：计算一条记录**所有**可能的去重 key（含主键 + 内容键）。
@@ -12837,6 +12841,10 @@ function finToast(text) {
 }
 
 // 删除记账（按真实 store 索引）
+// v61：旧版墓碑只写 accountDeleted + recAccountKey（对有 id 的记录只返回 id:xxx），
+// 多设备/多浏览器累积的幽灵记录 id 不同 → 剔不干净 → 删了又复活。
+// 改为同时写新版 __deleted.accountRecords 多键墓碑（_allDedupKeys 主键+内容键），
+// 云端合并时新版墓碑会从多个角度认人；并镜像保存到独立 localStorage 键防被覆盖丢失。
 async function deleteAccountRecord(idx) {
   const r = store.accountRecords && store.accountRecords[idx];
   if (!r) { finToast('记录不存在'); return; }
@@ -12844,24 +12852,33 @@ async function deleteAccountRecord(idx) {
   const sign = r.type === 'income' ? '+' : (r.type === 'transfer' ? '⇄' : '-');
   const tip = '确定删除这条记账吗？\n' + dateStr + ' ' + sign + '¥' + (r.amount || 0).toFixed(2);
   if (!await hamiConfirm(tip)) return;
-  // 删除标记（墓碑）：先把这条记账的唯一指纹存进 store.accountDeleted，
-  // 云端合并（pullAndMerge → mergeStoreInto）和 push 都会拿墓碑把对应记录剔掉，
-  // 保证任何设备拉取时都不再把这条"复活"回来。这是根治"删了2秒又回来"的关键。
+  // ① 新版多键墓碑（__deleted）：主键+内容键，覆盖云端幽灵 id 不一致的情况
+  try {
+    if (typeof hamiTombAdd === 'function') hamiTombAdd('accountRecords', r);
+    else {
+      if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
+      if (!Array.isArray(store.__deleted.accountRecords)) store.__deleted.accountRecords = [];
+      const ks = (typeof _allDedupKeys === 'function') ? _allDedupKeys('accountRecords', r) : [((typeof _dedupKey === 'function') ? _dedupKey('accountRecords', r) : JSON.stringify(r))];
+      ks.forEach(function (k) { if (k && store.__deleted.accountRecords.indexOf(k) < 0) store.__deleted.accountRecords.push(k); });
+      if (store.__deleted.accountRecords.length > 600) store.__deleted.accountRecords = store.__deleted.accountRecords.slice(-600);
+    }
+  } catch (e) {}
+  // ② 旧版墓碑（accountDeleted）保留兼容（mergeStoreInto 旧版路径还会用 recAccountKey 过滤）
   try {
     if (!store.accountDeleted) store.accountDeleted = [];
     store.accountDeleted.push(recAccountKey(r));
-    // 墓碑只保留最近 200 条，避免无限膨胀
     if (store.accountDeleted.length > 200) store.accountDeleted = store.accountDeleted.slice(-200);
   } catch (e) {}
+  // ③ 墓碑镜像到 localStorage 独立键，避免被云端合并/备份恢复整块覆盖弄丢
+  try { hamiTombMirrorSave(); } catch (e) {}
+  // ④ splice：真正从 store.accountRecords 删掉
   store.accountRecords.splice(idx, 1);
-  // 顺带把云端/本地里可能与这条同键的历史残留一并压掉（保险）
+  // ⑤ 用【新版+旧版双墓碑】从本地数组里再剔一遍（防云端合并前残留幽灵）
   try { accountPruneByDeleted(); } catch (e) {}
   try { accResetPages(); } catch (e) {}
   try { saveData(); } catch(e) {}
-  try { renderAccount(); } catch(e) {}
-  // 关键：删除后不依赖 300ms 防抖，立刻主动推一次云端 + 拉一次云端双向同步，
-  // 保证云端立刻收到墓碑和剔过的记录，pull 拉回的也是空的，
-  // 不再出现"删了 2 秒后又回来 / 刷新两三次才真删"的情况。
+  try { renderAccount(); } catch(e) {}    // 联动渲染所有记账面板（时间线/消费日期/支出/收入/统计/可支配余额）
+  // ⑥ 立即推云端 + 拉云端双向同步，确保云端立刻收到墓碑 + 剔过的记录
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e2) {}
   try { if (typeof pullAndMerge === 'function') pullAndMerge().then(function(){ try{renderAccount();}catch(e){} }).catch(function(){}); } catch (e3) {}
   finToast('🗑 已删除');
@@ -12878,14 +12895,34 @@ function recAccountKey(r) {
       'tm:' + (r.time || ''), 'ts:' + (r.ts || 0)].join('|');
   } catch (e) { return ''; }
 }
-// 依据 store.accountDeleted 墓碑，从本地数组里剔除已被主人删除过的记录。
+// 依据【新版 __deleted.accountRecords + 旧版 accountDeleted】双墓碑，
+// 从本地数组里剔除已被主人删除过的记录。
+// v61：旧逻辑只按 recAccountKey（对有 id 的记录只返回 id:xxx）单 key 过滤，
+// 云端幽灵 id 不一致就漏掉。改为 _allDedupKeys 多键（含内容键）认人；
+// 同时合并两份墓碑（新版主、旧版兜底兼容），确保云端合并/记账添加后本地立刻剔干净。
 function accountPruneByDeleted() {
-  if (!store.accountDeleted || !store.accountDeleted.length) return;
+  // 合并双墓碑
+  const tomb = new Set();
+  try {
+    const newT = (store.__deleted && Array.isArray(store.__deleted.accountRecords)) ? store.__deleted.accountRecords : [];
+    newT.forEach(function (k) { if (k) tomb.add(k); });
+    const oldT = (Array.isArray(store.accountDeleted)) ? store.accountDeleted : [];
+    oldT.forEach(function (k) { if (k) tomb.add(k); });
+  } catch (e) {}
+  if (tomb.size === 0) return;
   if (!Array.isArray(store.accountRecords)) return;
-  const tombstones = new Set(store.accountDeleted);
+  // 任一 _allDedupKeys 命中即视为"同一条"，剔除
   store.accountRecords = store.accountRecords.filter(function (r) {
-    const k = recAccountKey(r);
-    return !(k && tombstones.has(k));
+    if (!r) return false;
+    let ks;
+    if (typeof _allDedupKeys === 'function') ks = _allDedupKeys('accountRecords', r);
+    else if (typeof _dedupKey === 'function') ks = [_dedupKey('accountRecords', r)];
+    else ks = [JSON.stringify(r)];
+    for (let i = 0; i < ks.length; i++) {
+      const k = ks[i];
+      if (k && tomb.has(k)) return false;
+    }
+    return true;
   });
 }
 
@@ -13314,7 +13351,10 @@ function renderAccount() {
   renderExpenseLedger();
   renderIncomeLedger();
 
+  // v61：补齐收入内联统计联动——之前只渲染了支出统计，删收入记录时收入排行榜/环形图不会刷新。
+  // 收入/支出统计都已和 store.accountRecords 实时联动计算。
   renderInlineStats('expense');
+  renderInlineStats('income');
 }
 
 // ==================== 消费日期近期记录（v32 恢复）====================
