@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-63">
+<meta name="hami-build" content="2026-09-09-64">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2227,6 +2227,14 @@
 
   /* 月度收入明细：卡片式，无表格空白列 */
   .monthly-income-list { display: flex; flex-direction: column; gap: 6px; }
+  /* v64：未来图文文案框加高 + 大屏编辑弹层 */
+  #fp-content.fp-content-area { min-height: 200px; width: 100%; resize: vertical; line-height: 1.7; font-size: 14px; box-sizing: border-box; }
+  .fp-bigedit-btn { border: none; background: #ffe1ea; color: #d14b73; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .fp-bigeditor-mask { position: fixed; inset: 0; background: rgba(60,30,45,.55); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+  .fp-bigeditor-card { background: #fff; width: min(720px, 96vw); max-height: 90vh; border-radius: 18px; display: flex; flex-direction: column; overflow: hidden; }
+  .fp-bigeditor-card textarea { flex: 1; width: 100%; border: none; resize: none; padding: 16px; font-size: 16px; line-height: 1.8; outline: none; min-height: 52vh; box-sizing: border-box; font-family: inherit; }
+  .fp-bigeditor-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #ffe1ea; }
+  .fp-bigeditor-actions { display: flex; gap: 10px; padding: 12px 16px; border-top: 1px solid #ffe1ea; }
   .monthly-income-row {
     background: #fff7fa; border: 1px solid #ffe4ec; border-radius: 12px;
     padding: 9px 11px; display: flex; flex-direction: column; gap: 4px;
@@ -5518,8 +5526,10 @@ try {
             <input type="text" id="fp-title" placeholder="如：模拟人生4 清冷系捏脸教程">
           </div>
           <div class="co-field">
-            <label>文案</label>
-            <textarea id="fp-content" rows="4" placeholder="把正文内容写在这里，发布时直接复制..."></textarea>
+            <label style="display:flex;align-items:center;justify-content:space-between;width:100%;">文案
+              <button type="button" class="fp-bigedit-btn" onclick="openFpBigEditor()">📝 大屏编辑</button>
+            </label>
+            <textarea id="fp-content" rows="10" class="fp-content-area" placeholder="把正文内容写在这里，发布时直接复制...（点右上「大屏编辑」可写超长文案）"></textarea>
           </div>
           <div class="co-field">
             <label>标签</label>
@@ -5570,6 +5580,21 @@ try {
       <div class="co-actions">
         <button class="co-cancel" onclick="closeFuturePostModal()">取消</button>
         <button class="co-save" onclick="submitFuturePost()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 未来图文「大屏编辑文案」弹层 ==================== -->
+  <div id="fp-bigeditor" class="fp-bigeditor-mask" style="display:none;" onclick="if(event.target===this)closeFpBigEditor()">
+    <div class="fp-bigeditor-card">
+      <div class="fp-bigeditor-head">
+        <b style="color:#5a3a48;font-size:15px;">📝 大屏编辑文案</b>
+        <button type="button" onclick="closeFpBigEditor()" style="border:none;background:#ffe1ea;color:#d14b73;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;">✕</button>
+      </div>
+      <textarea id="fp-bigeditor-area" placeholder="在这里写大段文案，写完后点下方「完成并同步」会自动填回上面的编辑框~"></textarea>
+      <div class="fp-bigeditor-actions">
+        <button type="button" onclick="closeFpBigEditor()" style="flex:1;border:none;background:#f3e3ea;color:#7d4a5a;border-radius:10px;padding:10px;font-weight:700;cursor:pointer;">取消</button>
+        <button type="button" onclick="saveFpBigEditor()" style="flex:1;border:none;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);color:#fff;border-radius:10px;padding:10px;font-weight:800;cursor:pointer;">完成并同步</button>
       </div>
     </div>
   </div>
@@ -11116,13 +11141,13 @@ function renderIncome() {
   }
 
   const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
-  let miHtml = '<div class="monthly-income-list">';
-  months.forEach(m => {
+  // v64：月度收入明细默认收起只显示 3 个月，点「展开全部」看其余 6 个月
+  const miRows = months.map(m => {
     const mc = store.customOrders.filter(o => o.date.startsWith(m) && o.status === 'done').reduce((s,o)=>s+o.amount, 0);
     const mm = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0) * MOD_PRICE;
     const total = mc + mm;
     const monthLabel = m.replace('-', '年') + '月';
-    miHtml += `
+    return `
       <div class="monthly-income-row">
         <div class="mi-head">
           <span class="mi-month">${monthLabel}</span>
@@ -11134,7 +11159,17 @@ function renderIncome() {
         </div>
       </div>`;
   });
+  const miCollapsed = __collapseState['monthlyIncome'] !== true;
+  const miShow = miCollapsed ? miRows.slice(0, FOLD_PAGE) : miRows;
+  let miHtml = '<div class="monthly-income-list">';
+  miHtml += miShow.join('');
   miHtml += '</div>';
+  if (miRows.length > FOLD_PAGE) {
+    miHtml += '<div class="flow-toggle-wrap" style="justify-content:center;margin-top:4px;">'
+      + '<button class="flow-toggle-btn" type="button" onclick="toggleFoldCollapse(\'monthlyIncome\')">'
+      + (miCollapsed ? '展开全部 ▾（共' + miRows.length + '个月）' : '收起 ▴')
+      + '</button></div>';
+  }
   document.getElementById('monthly-income-list').innerHTML = miHtml;
 
   // 美化档明细表
@@ -11753,7 +11788,8 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = `<div class="empty-state"><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后点上方「记一条」添加：哪个号、是否同步抖音</p></div>`;
   } else {
     const monthRecordsDesc = monthRecords.slice().reverse(); // 近→远
-    const html = foldRecords('media', monthRecordsDesc, function (r) {
+    // v64：自媒体更新记录明细默认收起只显示 3 条，点「展开全部」看其余（原 foldRecords 分页改为一次性展开）
+    const html = foldCollapsible('mediaDetail', monthRecordsDesc, function (r) {
       const idx = store.mediaRecords.indexOf(r);
       const accName = r.account === 'big' ? '美化档大号' : r.account === 'small' ? '定制人物小号' : '抖音';
       const dyMark = r.douyin ? '<span class="sync-badge yes">已同步</span>' : '<span class="sync-badge no">未同步</span>';
@@ -11884,6 +11920,28 @@ function openFuturePostBatch() {
   if (modal) modal.style.display = 'flex';
 }
 function closeFuturePostModal() { const m = document.getElementById('future-post-modal'); if (m) m.style.display = 'none'; editingFpIdx = -1; }
+// v64：未来图文「大屏编辑文案」——专门用来写超长文案，写完同步回主编辑框
+function openFpBigEditor() {
+  const src = document.getElementById('fp-content');
+  const box = document.getElementById('fp-bigeditor');
+  const area = document.getElementById('fp-bigeditor-area');
+  if (!src || !box || !area) return;
+  area.value = src.value || '';
+  box.style.display = 'flex';
+  setTimeout(function () { try { area.focus(); } catch (e) {} }, 30);
+}
+function closeFpBigEditor() {
+  const box = document.getElementById('fp-bigeditor');
+  if (box) box.style.display = 'none';
+}
+function saveFpBigEditor() {
+  const src = document.getElementById('fp-content');
+  const area = document.getElementById('fp-bigeditor-area');
+  const box = document.getElementById('fp-bigeditor');
+  if (src && area) src.value = area.value;
+  if (box) box.style.display = 'none';
+  try { hamiToast('✅ 文案已同步回编辑框'); } catch (e) {}
+}
 
 function parseFuturePostTags(raw) {
   if (!raw) return '';
@@ -13937,6 +13995,30 @@ function foldRecordsTable(key, monthItems, renderRow, colspan) {
     html += '<tr><td colspan="' + (colspan || 1) + '" style="padding:0;border:none;">' + pager + '</td></tr>';
   }
   return html;
+}
+
+// v64：折叠型列表——默认收起只显示 FOLD_PAGE(3) 条，点「展开全部」看其余（再次点「收起」收起）。
+// 与 foldRecords 的分页不同：这里不翻页，而是一次性展开/收起，更符合主人「折叠下只显示三条」的需求。
+const __collapseState = {};
+function foldCollapsible(key, items, renderItem) {
+  const total = items.length;
+  if (total === 0) return '';
+  const collapsed = __collapseState[key] !== true;   // 默认收起
+  const shown = collapsed ? items.slice(0, FOLD_PAGE) : items;
+  let html = shown.map(function (it) { return renderItem(it); }).join('');
+  if (total > FOLD_PAGE) {
+    html += '<div class="flow-toggle-wrap" style="justify-content:center;margin-top:4px;">'
+      + '<button class="flow-toggle-btn" type="button" onclick="toggleFoldCollapse(\'' + key + '\')">'
+      + (collapsed ? '展开全部 ▾（共' + total + '条）' : '收起 ▴')
+      + '</button></div>';
+  }
+  return html;
+}
+function toggleFoldCollapse(key) {
+  __collapseState[key] = !(__collapseState[key] === true);
+  const map = { mediaDetail: renderMedia, monthlyIncome: renderIncome };
+  const fn = map[key];
+  if (typeof fn === 'function') fn();
 }
 
 // 基于本地日期偏移天数（base 为 YYYY-MM-DD）
