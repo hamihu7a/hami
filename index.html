@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-65">
+<meta name="hami-build" content="2026-09-09-66">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3940,7 +3940,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-65';
+  var BUILD_VER = '2026-09-09-66';
 // v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
 try {
   document.addEventListener('DOMContentLoaded', function () {
@@ -17508,11 +17508,13 @@ function renderCountdown() {
   const alerts = [];
 
   // 1. 生日：倒数前5天(5~3) + 倒数第2天(2) + 当天(0)；跳过倒数第1天(1)
+  //    ★ 农历生日须按农历历法推算目标公历日，不能用 getNextAnniversary（仅新历，会把农历当新历算错倒计时）
   (store.importantDates || []).forEach(d => {
     if (d.type !== 'birthday') return;
-    const targetDate = getNextAnniversary(d.date);
-    if (!targetDate) return;
-    const days = Math.round((targetDate - todayDate) / 86400000);
+    const info = calcDateInfo(d, todayDate);
+    if (!info) return;
+    const days = info.daysLeft;
+    const targetDate = new Date(todayDate.getTime() + days * 86400000);
     if (days >= 0 && days <= 5 && days !== 1) {
       alerts.push({
         icon: '🎂',
