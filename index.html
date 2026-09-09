@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-66">
+<meta name="hami-build" content="2026-09-09-67">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3940,17 +3940,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-66';
-// v58：在主面板左上角显示当前版本号（临时调试用），让主人能直接看到加载的是不是最新版
-try {
-  document.addEventListener('DOMContentLoaded', function () {
-    const el = document.createElement('div');
-    el.id = 'hami-build-debug';
-    el.textContent = 'v58';
-    el.style.cssText = 'position:fixed;top:6px;left:6px;z-index:999999;font-size:10px;color:#b3325c;background:rgba(255,255,255,.8);padding:2px 6px;border-radius:6px;pointer-events:none;';
-    document.body.appendChild(el);
-  });
-} catch (e) {}
+  var BUILD_VER = '2026-09-09-67';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
