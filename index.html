@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-10-69">
+<meta name="hami-build" content="2026-09-10-70">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -127,7 +127,7 @@
     --gap: 8px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
        之间的垂直距离都用 var(--space-block)，避免"有的黏在一起、有的隔太远"——design token */
-    --space-block: 2px;
+    --space-block: 4px;
     --pad: 20px;
     --t: .25s ease;
   }
@@ -3206,7 +3206,8 @@
   body.hami-force-desktop .modal-card {
     max-width: 520px !important; border-radius: 18px !important;
   }
-  body.hami-force-desktop #lucky-cat { width: 90px; height: 90px; }
+  /* v70：恢复招财猫原始大尺寸 175×124（同 #lucky-cat 主定义），不再被压成 90×90 */
+  body.hami-force-desktop #lucky-cat { width: 175px; height: 124px; }
   body.hami-force-desktop .desktop-time { font-size: 32px; }
   body.hami-force-desktop .desktop-hero { padding: 18px 20px; }
 
@@ -3237,6 +3238,10 @@
     /* 主人要求"上面两个、下面两个"4 个 stat 卡 2×2 排列，永远保持 2 列不折行 */
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
+  /* v70：首页垂直间距的真正开关是 grid 的 row-gap（上面 .panel.active 的 gap:18px）。
+     之前只调 margin-bottom 会被 18px 行间距完全盖住，主人看着"毫无变化"。
+     这里仅收紧首页(#panel-desktop)的行间距，其它面板一律保持原样。 */
+  body.hami-force-desktop .panel.active#panel-desktop { row-gap: 6px !important; }
 
   /* ==================== hami-force-narrow 同上效果（iPad 700~999） ====================
    * 主人 iPad viewport ~568~999 区间也会触发 force-narrow，同样需要 panel grid 排开
@@ -3940,7 +3945,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-10-69';
+  var BUILD_VER = '2026-09-10-70';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
