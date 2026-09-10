@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-10-70">
+<meta name="hami-build" content="2026-09-10-71">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -976,32 +976,55 @@
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px;
   }
   .weight-cal-weekdays > div { text-align: center; font-size: 12px; font-weight: 600; color: #7d4a5a; }
+  /* v71 重设：体重日历"胶囊"格子——固定高度 + 三段式 + 占位一致 */
   .weight-cal-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
-    width: 100%; box-sizing: border-box;
-    position: relative; z-index: 1; /* 确保格子和文字始终压在背景图之上 */
+    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px; width: 100%; box-sizing: border-box;
+    position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    min-height: 52px; min-width: 0; border: 1px solid #f5e8ee; border-radius: 6px; padding: 1px 0 2px;
-    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    box-sizing: border-box; overflow: hidden;
+    height: 60px; min-width: 0; padding: 3px 2px 2px;
+    border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
+    display: flex; flex-direction: column; align-items: stretch;
+    box-sizing: border-box; overflow: hidden; cursor: pointer;
   }
-  .weight-cal-empty { border: 1px dashed #f5e8ee; background: rgba(255,255,255,0.35); }
-  .weight-cal-day { font-size: 12px; font-weight: 700; line-height: 1.1; }
-  /* 主人要的版式：体重在上、变化值（↑0.8/↓0.8/—）在下，两行各自完整一行，不再挤成单字符串 */
-  .weight-cal-stack {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 1px; line-height: 1; min-height: 22px; flex: 1; width: 100%;
+  .weight-cal-empty { border: 1px dashed #e0d0d8; background: #fafafa; }
+  .weight-cal-today {
+    background: #fff0d6 !important; border: 1.5px solid #f0c040 !important;
+    box-shadow: inset 0 0 0 1px rgba(240,192,64,.25);
   }
-  .weight-cal-weight { font-size: 11px; font-weight: 700; color: #4a3340; background: #f0e8ee; border-radius: 3px; padding: 0 3px; line-height: 1.2; }
-  .weight-cal-change { font-size: 10px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
-  /* 没数据的格子用空 div 占位，保证变化行不被挤上挤下 */
-  .weight-cal-weight-empty, .weight-cal-change-empty { visibility: hidden; line-height: 1.2; }
-  .weight-cal-weight.weight-cal-weight-empty { background: transparent; }
-  /* 当天没打卡、自动沿用前一天体重的格子：淡一档，和真实打卡一眼能区分 */
-  .weight-cal-weight.weight-cal-weight-fill { color:#b6a0ac !important; background:#faf6f8 !important; font-weight:600; }
-  .weight-cal-ex { display: flex; gap: 1px; line-height: 1; }
-  .weight-cal-ex-dot { font-size: 12px; }
+  .weight-cal-future .weight-cal-day { color: #c8b8c0; }
+  .weight-cal-future .weight-cal-main { color: #ece2e6; }
+  .weight-cal-day {
+    font-size: 11px; font-weight: 700; color: #7d4a5a;
+    text-align: center; line-height: 1;
+  }
+  .weight-cal-today .weight-cal-day { color: #c08020; font-size: 12px; }
+  /* 中部：体重数字（v71 突出，居中固定行高，固定高度下不会溢出） */
+  .weight-cal-main {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: #4a3340;
+    letter-spacing: -.3px; font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .weight-cal-main.weight-cal-main-empty { color: #d8c4ce; font-weight: 500; font-size: 12px; }
+  .weight-cal-main.weight-cal-main-fill { color: #b6a0ac; font-weight: 600; font-size: 12px; }
+  /* 底部一行：变化值 + 运动圆点（v71 紧凑一行） */
+  .weight-cal-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 11px; padding: 0 1px;
+  }
+  .weight-cal-change {
+    font-size: 9px; font-weight: 700; line-height: 1;
+    white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+  .weight-cal-change.weight-cal-change-empty { visibility: hidden; }
+  .weight-cal-ex { display: flex; gap: 1px; line-height: 1; align-items: center; }
+  .weight-cal-ex-dot { font-size: 8px; }
+  /* 旧 class 兼容：外部响应式块可能还引用 .weight-cal-stack / .weight-cal-weight */
+  .weight-cal-stack { display: none !important; }
+  .weight-cal-weight { font-size: 13px; font-weight: 800; color: #4a3340; background: transparent; }
+  .weight-cal-weight.weight-cal-weight-empty { background: transparent; visibility: hidden; }
+  .weight-cal-weight.weight-cal-weight-fill { color: #b6a0ac; font-weight: 600; font-size: 12px; background: transparent; }
   .weight-cal-legend {
     display: flex; justify-content: space-around; font-size: 12px; color: #7d4a5a;
     margin-top: 6px; padding-top: 4px; border-top: 1px dashed #ffe4ec;
@@ -2904,13 +2927,13 @@
       .weight-cal-badge-num, .weight-cal-badge-label { font-size: 11px; }
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
-      .weight-cal-grid { gap: 1px; }
-      .weight-cal-cell { min-height: 42px; border-radius: 5px; padding: 1px 0; }
-      .weight-cal-day { font-size: 10px; line-height: 1; }
-      /* 超小屏：日期/变化/体重整体微缩，保证窄格也能看清 */
-      .weight-cal-stack { gap: 0; min-height: 22px; transform: none; transform-origin: center center; }
+      .weight-cal-grid { gap: 2px; }
+      .weight-cal-cell { height: 50px !important; border-radius: 6px; padding: 2px 1px 1px !important; }
+      .weight-cal-day { font-size: 10px !important; }
+      .weight-cal-main { font-size: 11px !important; }
+      .weight-cal-main.weight-cal-main-empty, .weight-cal-main.weight-cal-main-fill { font-size: 10px !important; }
       .weight-cal-change, .weight-cal-weight { font-size: 8px !important; padding: 0 !important; line-height: 1.15; }
-      .weight-cal-ex { gap: 0; transform: scale(0.85); transform-origin: center center; }
+      .weight-cal-ex { gap: 0; transform: scale(0.9); transform-origin: center center; }
       .weight-cal-legend { font-size: 10px; margin-top: 3px; padding-top: 3px; }
 
       /* 内容卡片 & 顶栏：超小屏收窄留白，别浪费横向空间 */
@@ -3045,17 +3068,14 @@
       width: auto !important;
       max-width: none !important;
     }
-    /* 体重日历恢复 7 列 grid，不再被 mobile 样式切成竖排条 */
+    /* v71：体重日历 iPad 7 列等分，胶囊格子 */
     .weight-cal-grid {
       grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-      gap: 6px !important;
+      gap: 4px !important;
     }
-    .weight-cal-cell {
-      min-height: 70px !important;
-      padding: 4px 2px !important;
-    }
-    .weight-cal-day { font-size: 13px !important; }
-    .weight-cal-stack { font-size: 12px !important; }
+    .weight-cal-cell { height: 60px !important; padding: 3px 2px !important; }
+    .weight-cal-day { font-size: 12px !important; }
+    .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
     table { font-size: 13px; }
     th, td { padding: 10px 8px; }
@@ -3111,8 +3131,9 @@
       grid-column: 1 / -1;
     }
     .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px !important; }
-    .weight-cal-cell { min-height: 46px !important; }
+    .weight-cal-cell { height: 56px !important; }
     .weight-cal-day { font-size: 11px !important; }
+    .weight-cal-main { font-size: 12px !important; }
     th, td { padding: 10px 8px; }
   }
 
@@ -3169,17 +3190,16 @@
      日期 11px、重量 10px、格子高度适中，7 列仍能放下"89.2 + ↑0.8"。 */
   body.hami-force-desktop .weight-cal-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 3px !important;
-    overflow-x: auto !important;
+    gap: 3px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    min-height: 46px !important; padding: 3px 2px !important;
-    min-width: 0;
+    height: 56px !important; padding: 3px 2px !important; min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 11px !important; }
-  body.hami-force-desktop .weight-cal-stack { font-size: 10px !important; gap: 1px; }
-  body.hami-force-desktop .weight-cal-weight { font-size: 10px !important; padding: 0 2px; }
+  body.hami-force-desktop .weight-cal-main { font-size: 13px !important; }
+  body.hami-force-desktop .weight-cal-weight { font-size: 11px !important; padding: 0 2px; }
   body.hami-force-desktop .weight-cal-change { font-size: 9px !important; }
+  body.hami-force-desktop .weight-cal-ex-dot { font-size: 8px !important; }
   body.hami-force-desktop table { font-size: 13px; }
   body.hami-force-desktop th,
   body.hami-force-desktop td { padding: 10px 8px; }
@@ -3287,8 +3307,9 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { min-height: 56px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 56px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
+  body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
   /* v2026-09-07-30 首页(panel-desktop)统一紧凑：主人说"间隔太宽" */
   #panel-desktop > .todo-card,
@@ -3304,6 +3325,7 @@
   #panel-desktop #home-weight-cal { margin-bottom: 6px; }
 
   body.hami-force-narrow .weight-cal-change { font-size: 9px !important; }
+  body.hami-force-narrow .weight-cal-ex-dot { font-size: 8px !important; }
   body.hami-force-narrow table { font-size: 12px; }
   body.hami-force-narrow th, body.hami-force-narrow td { padding: 6px 4px; }
   body.hami-force-narrow .card,
@@ -3342,13 +3364,15 @@
   body.hami-force-mini .weight-cal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   body.hami-force-mini .weight-cal-grid {
     grid-template-columns: repeat(7, minmax(50px, 1fr)) !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
-  body.hami-force-mini .weight-cal-cell { min-height: 60px !important; padding: 2px 2px !important; }
+  body.hami-force-mini .weight-cal-cell { height: 60px !important; padding: 2px 2px !important; }
   body.hami-force-mini .weight-cal-day { font-size: 12px !important; }
+  body.hami-force-mini .weight-cal-main { font-size: 13px !important; }
   body.hami-force-mini .weight-cal-weight { font-size: 11px !important; padding: 0 3px; }
   body.hami-force-mini .weight-cal-change { font-size: 10px !important; }
-  body.hami-force-mini .weight-cal-weekdays { gap: 4px; }
+  body.hami-force-mini .weight-cal-ex-dot { font-size: 9px !important; }
+  body.hami-force-mini .weight-cal-weekdays { gap: 3px; }
   body.hami-force-mini .weight-cal-weekdays > div { font-size: 10px; }
   /* 表格容器允许横向滚动，避免挤字 */
   body.hami-force-mini .panel,
@@ -3945,7 +3969,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-10-70';
+  var BUILD_VER = '2026-09-10-71';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -17010,16 +17034,18 @@ function renderDesktopWeight() {
       exIcons = '<span class="weight-cal-ex-dot" style="color:#ddd;">○</span><span class="weight-cal-ex-dot" style="color:#ddd;">○</span><span class="weight-cal-ex-dot" style="color:#ddd;">○</span>';
     }
 
-    const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1.5px #f0c040;' : '';
-    // v2026-09-07-30: 重做 cell 布局 —— 严格两行：上行"变化"、下行"体重"，全部 nowrap + 字体小
+    const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1px rgba(240,192,64,.25);' : '';
+    // v71 重做 cell：三段固定布局 = 日期(上) + 体重(中) + 变化+运动圆点(下一行)，固定高度不再依赖内容
     const cellTitle = `${dateStr}${weightText ? ' · 体重 ' + weightText : ''}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''} · 点击修改`;
-    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}" style="background:${bg};border-color:${border};${todayShadow}cursor:pointer;min-height:54px;min-width:0;max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:1px 0;border:1px solid #f5e8ee;border-radius:6px;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
-      <div class="weight-cal-day" style="font-size:11.5px;font-weight:700;line-height:1.1;color:${isToday ? '#c08020' : '#5a3a48'};white-space:nowrap;">${d}</div>
-      <div class="weight-cal-stack" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.05;min-height:26px;flex:1;width:100%;">
-        <div class="weight-cal-change${changeText ? '' : ' weight-cal-change-empty'}" style="font-size:9.5px;font-weight:700;line-height:1.05;color:${changeColor};width:100%;text-align:center;">${changeText || ' '}</div>
-        <div class="weight-cal-weight${isFilled ? ' weight-cal-weight-fill' : ''}${weightText ? '' : ' weight-cal-weight-empty'}" style="font-size:10.5px;font-weight:700;color:#4a3340;background:#f0e8ee;border-radius:3px;padding:0 1px;line-height:1.15;width:100%;text-align:center;">${weightText || '—'}</div>
+    const mainCls = 'weight-cal-main' + (weightText ? '' : ' weight-cal-main-empty') + (isFilled ? ' weight-cal-main-fill' : '');
+    const changeCls = 'weight-cal-change' + (changeText ? '' : ' weight-cal-change-empty');
+    html += `<div class="weight-cal-cell${isToday ? ' weight-cal-today' : ''}${isFuture ? ' weight-cal-future' : ''}" style="background:${bg};border-color:${border};${todayShadow}min-width:0;box-sizing:border-box;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
+      <div class="weight-cal-day" style="color:${isToday ? '#c08020' : '#5a3a48'};">${d}</div>
+      <div class="${mainCls}">${weightText || '—'}</div>
+      <div class="weight-cal-foot">
+        <span class="${changeCls}" style="color:${changeColor};">${changeText || '—'}</span>
+        <span class="weight-cal-ex">${exIcons}</span>
       </div>
-      <div class="weight-cal-ex" style="display:flex;gap:1px;line-height:1;">${exIcons}</div>
     </div>`;
   }
 
