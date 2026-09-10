@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-10-71">
+<meta name="hami-build" content="2026-09-10-72">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -990,8 +990,11 @@
   }
   .weight-cal-empty { border: 1px dashed #e0d0d8; background: #fafafa; }
   .weight-cal-today {
-    background: #fff0d6 !important; border: 1.5px solid #f0c040 !important;
-    box-shadow: inset 0 0 0 1px rgba(240,192,64,.25);
+    /* v72：今日格子保持和其他 cell 完全同尺寸（border 1px、height 不变），
+       视觉差异只靠 background 浅金 + 金色 border + 内阴影加粗金边，
+       这样 7 列等分时今天格子不会比邻居"窄扁"。 */
+    background: #fff0d6 !important; border: 1px solid #f0c040 !important;
+    box-shadow: inset 0 0 0 1px rgba(240,192,64,.4);
   }
   .weight-cal-future .weight-cal-day { color: #c8b8c0; }
   .weight-cal-future .weight-cal-main { color: #ece2e6; }
@@ -999,7 +1002,7 @@
     font-size: 11px; font-weight: 700; color: #7d4a5a;
     text-align: center; line-height: 1;
   }
-  .weight-cal-today .weight-cal-day { color: #c08020; font-size: 12px; }
+  .weight-cal-today .weight-cal-day { color: #c08020; font-weight: 800; }
   /* 中部：体重数字（v71 突出，居中固定行高，固定高度下不会溢出） */
   .weight-cal-main {
     flex: 1; display: flex; align-items: center; justify-content: center;
@@ -1028,6 +1031,12 @@
   .weight-cal-legend {
     display: flex; justify-content: space-around; font-size: 12px; color: #7d4a5a;
     margin-top: 6px; padding-top: 4px; border-top: 1px dashed #ffe4ec;
+  }
+  /* v72：图例说明那段长句不许转行——单行显示、溢出省略号，避免末尾"（本月N天）"被甩到第二行 */
+  .weight-cal-legend-fine {
+    display: block; font-size: 11px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    opacity: .72;
   }
 
   .todo-item {
@@ -3969,7 +3978,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-10-71';
+  var BUILD_VER = '2026-09-10-72';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -17061,7 +17070,8 @@ function renderDesktopWeight() {
   // 提示：本月有几天是"自动沿用前一天"补上的（浅色数字）
   const filledDays = Object.keys(filledMap).filter(d => d.startsWith(month) && !weightMap[d]).length;
   if (filledDays > 0) {
-    html += `<div class="weight-cal-legend" style="opacity:.72;margin-top:2px;"><span>浅色数字 = 当天没打卡，自动沿用最近一次体重（本月 ${filledDays} 天）</span></div>`;
+    // v72：主人要求文字改为"自动沿用最近体重"（去掉"一次"）+ 单行不转行（nowrap+ellipsis）
+    html += `<div class="weight-cal-legend-fine">浅色数字 = 当天没打卡，自动沿用最近体重（本月 ${filledDays} 天）</div>`;
   }
 
   document.getElementById('desktop-weight').innerHTML = html;
