@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-09-68">
+<meta name="hami-build" content="2026-09-10-69">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -127,7 +127,7 @@
     --gap: 8px;
     /* 统一"块间距"：所有 .desktop-hero / .checkin-grid / .todo-card / 提醒横幅 / 自媒体 / 倒计时 / 天气运势
        之间的垂直距离都用 var(--space-block)，避免"有的黏在一起、有的隔太远"——design token */
-    --space-block: 4px;
+    --space-block: 2px;
     --pad: 20px;
     --t: .25s ease;
   }
@@ -3940,7 +3940,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-09-68';
+  var BUILD_VER = '2026-09-10-69';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
