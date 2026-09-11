@@ -3973,6 +3973,68 @@
   * { transition-duration: .01ms !important; }
 }
 </style>
+
+<style>
+/* ===== 发布排期日历 ===== */
+.sch-cal-head { display:flex; align-items:center; justify-content:space-between; margin:4px 0 10px; }
+.sch-cal-month { font-size:14px; font-weight:600; color:#5a3a48; }
+.sch-nav { width:28px; height:28px; border-radius:8px; border:1px solid #f0c8d6; background:#fff; color:#c45c7c; font-size:16px; cursor:pointer; line-height:1; }
+.sch-nav:hover { background:#fdeef3; }
+.mini-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.mini-cal-wk { text-align:center; font-size:11px; color:#b08a98; padding:2px 0; }
+.mini-cal-cell { min-height:38px; border-radius:8px; background:#fbf3f6; padding:3px 2px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; }
+.mini-cal-cell.empty { background:transparent; }
+.mini-cal-cell.today { outline:2px solid #ff9eb5; }
+.mini-cal-d { font-size:12px; color:#7d4a5a; line-height:1.2; }
+.mini-cal-dots { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin-top:2px; }
+.mini-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.mini-dot.acc-big { background:#ff7f9e; }
+.mini-dot.acc-small { background:#7fb3d5; }
+.mini-dot.acc-douyin { background:#4a4a4a; }
+.mini-dot.done { opacity:.35; }
+.schedule-list { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.sch-item { display:flex; align-items:center; justify-content:space-between; gap:8px; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:8px 10px; }
+.sch-item.done { opacity:.6; }
+.sch-item-main { display:flex; align-items:center; gap:7px; flex-wrap:wrap; min-width:0; }
+.sch-item-date { font-size:12px; color:#9a6b7b; font-variant-numeric:tabular-nums; }
+.sch-item-acc { font-size:11px; padding:1px 7px; border-radius:20px; color:#fff; }
+.sch-item-acc.acc-big { background:#ff7f9e; }
+.sch-item-acc.acc-small { background:#7fb3d5; }
+.sch-item-acc.acc-douyin { background:#4a4a4a; }
+.sch-item-type { font-size:11px; color:#8a6270; background:#f6e9ef; border-radius:20px; padding:1px 7px; }
+.sch-item-title { font-size:13px; color:#4a3540; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px; }
+.sch-item-actions { display:flex; gap:5px; flex-shrink:0; }
+.sch-btn { font-size:12px; border:1px solid #ecc7d4; background:#fff; color:#c45c7c; border-radius:7px; padding:3px 8px; cursor:pointer; }
+.sch-btn.ok { background:#e9f7ef; border-color:#bfe6cd; color:#2f8a52; }
+.sch-btn.undo { background:#f3eefb; border-color:#d6c7ee; color:#6a4caa; }
+.sch-btn.edit { color:#7d9bd6; border-color:#cdddf2; }
+.sch-btn.del { color:#d46a6a; border-color:#f0cccc; }
+.sch-btn:hover { filter:brightness(.97); }
+
+/* ===== 定制单进度看板 ===== */
+.kanban-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px; }
+.kanban-col { background:#fbf3f6; border-radius:12px; padding:8px; min-width:0; }
+.kanban-col-head { font-size:13px; font-weight:600; color:#5a3a48; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.kanban-count { font-size:11px; background:#ffd9e4; color:#c45c7c; border-radius:20px; padding:0 7px; }
+.kanban-col-body { display:flex; flex-direction:column; gap:8px; min-height:40px; }
+.kanban-empty { font-size:12px; color:#bba6b0; text-align:center; padding:10px 0; }
+.kb-card { background:#fff; border:1px solid #f0d8e2; border-radius:10px; padding:8px; }
+.kb-card.overdue { border-color:#f0b3b3; background:#fff6f6; }
+.kb-card-desc { font-size:13px; color:#4a3540; line-height:1.35; word-break:break-word; }
+.kb-card-meta { display:flex; justify-content:space-between; gap:6px; margin-top:5px; font-size:11px; color:#9a6b7b; }
+.kb-amt { color:#2f8a52; font-weight:600; }
+.kb-card-actions { display:flex; gap:4px; margin-top:7px; flex-wrap:wrap; }
+.kb-move { width:26px; height:24px; border-radius:6px; border:1px solid #e3d3dc; background:#faf4f7; color:#9a6b7b; cursor:pointer; font-size:13px; }
+.kb-edit, .kb-del { font-size:12px; border:1px solid #e3d3dc; background:#fff; border-radius:6px; padding:2px 8px; cursor:pointer; }
+.kb-edit { color:#7d9bd6; }
+.kb-del { color:#d46a6a; }
+.kb-move:hover, .kb-edit:hover, .kb-del:hover { filter:brightness(.96); }
+
+@media (max-width: 480px) {
+  .kanban-cols { grid-template-columns:1fr; }
+  .sch-item-title { max-width:120px; }
+}
+</style>
 </head>
 <body>
 
@@ -4319,6 +4381,17 @@
       </div>
       <div id="todo-list-work"></div>
     </div>
+
+    <div class="card todo-section" id="custom-board-card">
+      <div class="todo-panel-head">
+        <div class="todo-panel-head-left">
+          <div class="todo-panel-title">定制单进度看板</div>
+          <div class="todo-panel-sub">接单 · 制作 · 交付</div>
+        </div>
+        <button class="todo-add-btn" type="button" onclick="openCustomOrderModal()">➕ 加定制单</button>
+      </div>
+      <div class="kanban" id="custom-kanban"></div>
+    </div>
   </div>
 
   <!-- ==================== 收入台账 ==================== -->
@@ -4391,8 +4464,9 @@
         <div class="co-field">
           <label>状态</label>
           <div class="co-status">
-            <span class="co-status-opt active" data-st="pending" onclick="setCoStatus('pending')">待完成</span>
-            <span class="co-status-opt" data-st="done" onclick="setCoStatus('done')">已完成</span>
+            <span class="co-status-opt active" data-st="pending" onclick="setCoStatus('pending')">待沟通</span>
+            <span class="co-status-opt" data-st="making" onclick="setCoStatus('making')">制作中</span>
+            <span class="co-status-opt" data-st="done" onclick="setCoStatus('done')">已交付</span>
           </div>
         </div>
       </div>
@@ -4731,6 +4805,20 @@
       <div id="media-table" class="media-record-list"></div>
     </div>
 
+    <div class="card" id="media-schedule-card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span>🗓 发布排期日历</span>
+        <button class="media-add-btn" type="button" onclick="openScheduleModal()">➕ 加排期</button>
+      </div>
+      <div class="sch-cal-head">
+        <button class="sch-nav" type="button" onclick="schStepMonth(-1)">‹</button>
+        <span id="sch-cal-month" class="sch-cal-month"></span>
+        <button class="sch-nav" type="button" onclick="schStepMonth(1)">›</button>
+      </div>
+      <div id="media-schedule-cal" class="mini-cal"></div>
+      <div id="media-schedule-list" class="schedule-list"></div>
+    </div>
+
     <div class="card">
       <div class="card-title">历史统计</div>
       <div id="media-history-wrap">
@@ -4803,6 +4891,78 @@
       <div class="co-actions">
         <button class="co-cancel" onclick="closeMediaRecordModal()">取消</button>
         <button class="co-save" onclick="submitMediaRecord()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 发布排期 弹窗 ==================== -->
+  <div id="schedule-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeScheduleModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeScheduleModal()" aria-label="关闭">✕</button>
+        <div id="sch-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">加排期</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>选择账号</label>
+          <div style="display:flex;gap:8px;">
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="sch-account" value="big" checked style="display:none;">
+              <span class="co-status-opt active" data-sch-acc="big" onclick="schPickAccount('big')">美化档大号</span>
+            </label>
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="sch-account" value="small" style="display:none;">
+              <span class="co-status-opt" data-sch-acc="small" onclick="schPickAccount('small')">定制人物小号</span>
+            </label>
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;min-width:80px;">
+              <input type="radio" name="sch-account" value="douyin" style="display:none;">
+              <span class="co-status-opt" data-sch-acc="douyin" onclick="schPickAccount('douyin')">抖音</span>
+            </label>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>发布日期</label>
+          <input type="date" id="sch-date">
+        </div>
+        <div class="co-field">
+          <label>内容形式</label>
+          <div style="display:flex;gap:8px;">
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="sch-type" value="image" checked style="display:none;">
+              <span class="co-status-opt active" data-sch-type="image" onclick="schPickType('image')">图文</span>
+            </label>
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="sch-type" value="video" style="display:none;">
+              <span class="co-status-opt" data-sch-type="video" onclick="schPickType('video')">视频</span>
+            </label>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>标题 / 主题</label>
+          <input type="text" id="sch-title" placeholder="如：复刻某明星同款脸·参数公开">
+        </div>
+        <div class="co-field">
+          <label>状态</label>
+          <div style="display:flex;gap:8px;">
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="sch-status" value="plan" checked style="display:none;">
+              <span class="co-status-opt active" data-sch-status="plan" onclick="schPickStatus('plan')">计划中</span>
+            </label>
+            <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;">
+              <input type="radio" name="sch-status" value="done" style="display:none;">
+              <span class="co-status-opt" data-sch-status="done" onclick="schPickStatus('done')">已发布</span>
+            </label>
+          </div>
+        </div>
+        <div class="co-field">
+          <label>备注（可选）</label>
+          <input type="text" id="sch-note" placeholder="如：配合新人物二套服装">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeScheduleModal()">取消</button>
+        <button class="co-save" onclick="submitSchedule()">保存</button>
       </div>
     </div>
   </div>
@@ -10396,6 +10556,60 @@ function renderTodoPanel() {
   renderTodoListForCat('daily');
   renderTodoListForCat('work');
 }
+
+// ==================== 定制单进度看板 ====================
+const CUSTOM_PHASES = [
+  { key: 'pending', label: '待沟通' },
+  { key: 'making', label: '制作中' },
+  { key: 'done', label: '已交付' }
+];
+function moveCustomOrder(idx, dir) {
+  if (!store.customOrders || !store.customOrders[idx]) return;
+  const o = store.customOrders[idx];
+  let pi = CUSTOM_PHASES.findIndex(function (p) { return p.key === (o.status || 'pending'); });
+  if (pi < 0) pi = 0;
+  let ni = pi + dir;
+  if (ni < 0) ni = 0;
+  if (ni > CUSTOM_PHASES.length - 1) ni = CUSTOM_PHASES.length - 1;
+  o.status = CUSTOM_PHASES[ni].key;
+  saveData();
+  try { renderCustomBoard(); } catch (e) {}
+  try { renderIncome(); } catch (e) {}
+}
+function renderCustomBoard() {
+  if (!store.customOrders) store.customOrders = [];
+  const el = document.getElementById('custom-kanban');
+  if (!el) return;
+  const today = todayStr();
+  let html = '<div class="kanban-cols">';
+  CUSTOM_PHASES.forEach(function (ph) {
+    const list = store.customOrders
+      .map(function (o, idx) { return { o: o, idx: idx }; })
+      .filter(function (x) { return (x.o.status || 'pending') === ph.key; })
+      .sort(function (a, b) { return (a.o.deadline || '9999-99-99').localeCompare(b.o.deadline || '9999-99-99'); });
+    html += '<div class="kanban-col"><div class="kanban-col-head">' + ph.label + ' <span class="kanban-count">' + list.length + '</span></div><div class="kanban-col-body">';
+    if (list.length === 0) {
+      html += '<div class="kanban-empty">暂无</div>';
+    } else {
+      list.forEach(function (x) {
+        const o = x.o; const idx = x.idx;
+        const overdue = (o.status !== 'done' && o.deadline && o.deadline < today);
+        const left = ph.key !== 'done' ? '<button class="kb-move" title="后移" onclick="moveCustomOrder(' + idx + ',1)">→</button>' : '';
+        const right = ph.key !== 'pending' ? '<button class="kb-move" title="前移" onclick="moveCustomOrder(' + idx + ',-1)">←</button>' : '';
+        html += '<div class="kb-card' + (overdue ? ' overdue' : '') + '">'
+          + '<div class="kb-card-desc">' + (o.desc || '定制单') + '</div>'
+          + '<div class="kb-card-meta"><span class="kb-amt">¥' + (typeof fmtMoney === 'function' ? fmtMoney(o.amount) : (o.amount || 0)) + '</span><span class="kb-dead">截止 ' + (o.deadline || '—') + '</span></div>'
+          + '<div class="kb-card-actions">' + right + left
+          + '<button class="kb-edit" onclick="openCustomOrderModal(' + idx + ')">改</button>'
+          + '<button class="kb-del" onclick="deleteCustomOrder(' + idx + ')">删</button></div>'
+          + '</div>';
+      });
+    }
+    html += '</div></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
 function addUserTodo(cat) {
   cat = cat || 'daily';
   const inp = document.getElementById('todo-input-' + cat);
@@ -10940,6 +11154,7 @@ function switchPanel(name, navEl) {
       const cur = todayStr().substring(0, 7);
       if (sel) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
       renderMedia();
+      renderPublishCalendar();
     } catch (e) {}
   }
   if (name === 'create') {
@@ -10958,6 +11173,7 @@ function switchPanel(name, navEl) {
   }
   if (name === 'todo' || name === 'todo-daily' || name === 'todo-work') {
     try { renderTodoPanel(); } catch (e) {}
+    try { renderCustomBoard(); } catch (e) {}
   }
   // 切到「经期记录 / 洗头记录」面板，强制重渲（renderPeriod 会同时刷新经期与洗头两块，按 id 落地到各自面板）
   if (name === 'period' || name === 'wash') {
@@ -11125,8 +11341,8 @@ function renderIncome() {
   if (_incomeMonthChanged) { __orderPage = 0; __beautyPage = 0; __incomeRenderedMonth = month; }
   const monthOrders = store.customOrders.filter(o => o.date.startsWith(month));
   const customIncome = monthOrders.filter(o => o.status === 'done').reduce((s,o) => s+o.amount, 0);
-  const pendingCount = monthOrders.filter(o => o.status === 'pending').length;
-  const overdueCount = monthOrders.filter(o => o.status === 'pending' && new Date(o.deadline) < new Date(today)).length;
+  const pendingCount = monthOrders.filter(o => o.status !== 'done').length;
+  const overdueCount = monthOrders.filter(o => o.status !== 'done' && new Date(o.deadline) < new Date(today)).length;
   const monthBeauty = (store.beautyRecords || []).filter(b => b.date.startsWith(month));
   const modCount = monthBeauty.reduce((s,b)=> s + (parseInt(b.count)||0), 0);
   const modIncome = modCount * MOD_PRICE;
@@ -11162,7 +11378,7 @@ function renderIncome() {
     pageList.forEach(x => {
       const o = x.o, idx = x.idx;
       const overdue = o.status === 'pending' && new Date(o.deadline) < new Date(today);
-      const badge = o.status === 'done' ? '<span class="badge done">已完成</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待完成</span>');
+      const badge = o.status === 'done' ? '<span class="badge done">已交付</span>' : (o.status === 'making' ? '<span class="badge making">制作中</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待沟通</span>'));
       const dateStr = (o.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       const deadlineStr = (o.deadline || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       html += `
@@ -11885,6 +12101,162 @@ function renderMedia() {
       else { tip.style.display = 'none'; }
     }
   } catch (e) {}
+}
+
+// ==================== 发布排期日历 ====================
+let schViewMonth = todayStr().substring(0, 7);
+let editingSchIdx = -1;
+let schAccount = 'big';
+let schType = 'image';
+let schStatus = 'plan';
+
+function schPickAccount(a) {
+  schAccount = a;
+  document.querySelectorAll('[data-sch-acc]').forEach(function (el) { el.classList.toggle('active', el.getAttribute('data-sch-acc') === a); });
+}
+function schPickType(t) {
+  schType = t;
+  document.querySelectorAll('[data-sch-type]').forEach(function (el) { el.classList.toggle('active', el.getAttribute('data-sch-type') === t); });
+}
+function schPickStatus(s) {
+  schStatus = s;
+  document.querySelectorAll('[data-sch-status]').forEach(function (el) { el.classList.toggle('active', el.getAttribute('data-sch-status') === s); });
+}
+function schStepMonth(delta) {
+  const p = schViewMonth.split('-').map(Number);
+  let ny = p[0], nm = p[1] + delta;
+  if (nm < 1) { nm = 12; ny--; }
+  if (nm > 12) { nm = 1; ny++; }
+  schViewMonth = ny + '-' + String(nm).padStart(2, '0');
+  renderPublishCalendar();
+}
+function schAccName(a) { return a === 'big' ? '美化档大号' : a === 'small' ? '定制人物小号' : '抖音'; }
+function schAccClass(a) { return 'acc-' + a; }
+function schTypeName(t) { return t === 'video' ? '视频' : '图文'; }
+
+function openScheduleModal(idx) {
+  if (!store.publishSchedule) store.publishSchedule = [];
+  editingSchIdx = (typeof idx === 'number' && idx >= 0 && store.publishSchedule[idx]) ? idx : -1;
+  const titleEl = document.getElementById('sch-modal-title');
+  if (editingSchIdx >= 0) {
+    const s = store.publishSchedule[editingSchIdx];
+    schAccount = s.account || 'big';
+    schType = s.type || 'image';
+    schStatus = s.status || 'plan';
+    if (document.getElementById('sch-date')) document.getElementById('sch-date').value = s.date || todayStr();
+    if (document.getElementById('sch-title')) document.getElementById('sch-title').value = s.title || '';
+    if (document.getElementById('sch-note')) document.getElementById('sch-note').value = s.note || '';
+    if (titleEl) titleEl.textContent = '✏️ 修改排期';
+  } else {
+    schAccount = 'big'; schType = 'image'; schStatus = 'plan';
+    if (document.getElementById('sch-date')) document.getElementById('sch-date').value = schViewMonth + '-01';
+    if (document.getElementById('sch-title')) document.getElementById('sch-title').value = '';
+    if (document.getElementById('sch-note')) document.getElementById('sch-note').value = '';
+    if (titleEl) titleEl.textContent = '➕ 加排期';
+  }
+  schPickAccount(schAccount); schPickType(schType); schPickStatus(schStatus);
+  const m = document.getElementById('schedule-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeScheduleModal() {
+  const m = document.getElementById('schedule-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  editingSchIdx = -1;
+}
+function submitSchedule() {
+  const dateEl = document.getElementById('sch-date');
+  const titleEl = document.getElementById('sch-title');
+  const noteEl = document.getElementById('sch-note');
+  const date = (dateEl && dateEl.value) ? dateEl.value : todayStr();
+  const title = (titleEl && titleEl.value) ? titleEl.value.trim() : '';
+  const note = (noteEl && noteEl.value) ? noteEl.value.trim() : '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { finToast('请选择发布日期'); return; }
+  if (!store.publishSchedule) store.publishSchedule = [];
+  if (editingSchIdx >= 0 && store.publishSchedule[editingSchIdx]) {
+    const s = store.publishSchedule[editingSchIdx];
+    s.date = date; s.account = schAccount; s.type = schType; s.status = schStatus; s.title = title; s.note = note;
+  } else {
+    store.publishSchedule.push({ id: 'sch_' + Date.now(), date: date, account: schAccount, type: schType, status: schStatus, title: title, note: note });
+  }
+  saveData();
+  closeScheduleModal();
+  try { renderPublishCalendar(); } catch (e) {}
+  finToast('✅ 已保存排期');
+}
+function deleteSchedule(idx) {
+  if (!store.publishSchedule || !store.publishSchedule[idx]) { finToast('找不到这条排期'); return; }
+  if (!confirm('删除这条排期吗？')) return;
+  store.publishSchedule.splice(idx, 1);
+  saveData();
+  try { renderPublishCalendar(); } catch (e) {}
+}
+function toggleScheduleStatus(idx) {
+  if (!store.publishSchedule || !store.publishSchedule[idx]) return;
+  const s = store.publishSchedule[idx];
+  s.status = (s.status === 'done') ? 'plan' : 'done';
+  saveData();
+  try { renderPublishCalendar(); } catch (e) {}
+}
+function renderPublishCalendar() {
+  if (!store.publishSchedule) store.publishSchedule = [];
+  const month = schViewMonth;
+  const p = month.split('-').map(Number);
+  const yy = p[0], mm = p[1];
+  const monthSchedules = store.publishSchedule.filter(function (s) { return (s.date || '').substring(0, 7) === month; }).slice().sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
+
+  const monthLabel = document.getElementById('sch-cal-month');
+  if (monthLabel) monthLabel.textContent = yy + '年' + mm + '月';
+
+  const calEl = document.getElementById('media-schedule-cal');
+  if (calEl) {
+    const firstDay = new Date(yy, mm - 1, 1).getDay();
+    const daysInMonth = new Date(yy, mm, 0).getDate();
+    const byDay = {};
+    monthSchedules.forEach(function (s) { const d = (s.date || '').substring(8, 10); if (d) (byDay[d] = byDay[d] || []).push(s); });
+    let html = '<div class="mini-cal-grid">';
+    const wk = ['日', '一', '二', '三', '四', '五', '六'];
+    wk.forEach(function (w) { html += '<div class="mini-cal-wk">' + w + '</div>'; });
+    let cell = 0;
+    for (let i = 0; i < firstDay; i++) { html += '<div class="mini-cal-cell empty"></div>'; cell++; }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = String(d).padStart(2, '0');
+      const items = byDay[ds] || [];
+      const dots = items.map(function (s) { return '<span class="mini-dot ' + schAccClass(s.account) + (s.status === 'done' ? ' done' : '') + '"></span>'; }).join('');
+      const isToday = (todayStr() === (month + '-' + ds));
+      html += '<div class="mini-cal-cell' + (isToday ? ' today' : '') + '"><div class="mini-cal-d">' + d + '</div><div class="mini-cal-dots">' + dots + '</div></div>';
+      cell++;
+    }
+    while (cell % 7 !== 0) { html += '<div class="mini-cal-cell empty"></div>'; cell++; }
+    html += '</div>';
+    calEl.innerHTML = html;
+  }
+
+  const listEl = document.getElementById('media-schedule-list');
+  if (listEl) {
+    if (monthSchedules.length === 0) {
+      listEl.innerHTML = '<div class="empty-state" style="padding:16px 0;"><p style="font-size:13px;">本月暂无排期</p><p style="font-size:12px;margin-top:4px;">点上方「➕ 加排期」安排发布计划~</p></div>';
+    } else {
+      let html = '';
+      monthSchedules.forEach(function (s) {
+        const idx = store.publishSchedule.indexOf(s);
+        const done = s.status === 'done';
+        html += '<div class="sch-item' + (done ? ' done' : '') + '">'
+          + '<div class="sch-item-main">'
+          + '<div class="sch-item-date">' + (s.date || '').substring(5) + '</div>'
+          + '<div class="sch-item-acc ' + schAccClass(s.account) + '">' + schAccName(s.account) + '</div>'
+          + '<div class="sch-item-type">' + schTypeName(s.type) + '</div>'
+          + '<div class="sch-item-title">' + (s.title || '（未命名）') + '</div>'
+          + '</div>'
+          + '<div class="sch-item-actions">'
+          + '<button class="sch-btn ' + (done ? 'undo' : 'ok') + '" onclick="toggleScheduleStatus(' + idx + ')">' + (done ? '↩ 未发' : '✓ 已发') + '</button>'
+          + '<button class="sch-btn edit" onclick="openScheduleModal(' + idx + ')">改</button>'
+          + '<button class="sch-btn del" onclick="deleteSchedule(' + idx + ')">删</button>'
+          + '</div></div>';
+      });
+      listEl.innerHTML = html;
+    }
+  }
 }
 
 // ==================== 未来更新图文记录 ====================
@@ -18107,6 +18479,8 @@ try { renderIncome(); } catch(e) { console.log('renderIncome error:', e.message)
 try { bindWeightGoalInput(); } catch(e) { console.log('bindWeightGoalInput error:', e.message); }
 try { renderFitness(); } catch(e) { console.log('renderFitness error:', e.message); }
 try { renderMedia(); } catch(e) { console.log('renderMedia error:', e.message); }
+try { renderPublishCalendar(); } catch(e) { console.log('renderPublishCalendar error:', e.message); }
+try { renderCustomBoard(); } catch(e) { console.log('renderCustomBoard error:', e.message); }
 try { renderInspire(); } catch(e) { console.log('renderInspire error:', e.message); }
 try { renderCreate(); } catch(e) { console.log('renderCreate error:', e.message); }
 try { renderFuturePosts(); } catch(e) { console.log('renderFuturePosts error:', e.message); }
