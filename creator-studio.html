@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="jwCgN9Eon2VEu7L25I9j4a">
+<head data-page-node-id="dEGHFhB7gXFG9DiUEjwzyH">
+<meta charset="UTF-8" data-page-node-id="DOdJVJczurnaGaEhEB0Jlr">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" data-page-node-id="7wCgVmlzM1QmIdFY7CGLUa">
+<meta name="hami-build" content="creator-studio-2026-09-11" data-page-node-id="iBLVBwjUKGPsnFOtuAmX6K">
+<title>Hami 创作助手 · 离线版</title>
+<style>
+  :root{
+    --c-pink:#ff7f9e;
+    --c-pink-deep:#d14b73;
+    --c-pink-soft:#ffe3ec;
+    --c-pink-soft2:#fff0f5;
+    --c-line:#ffd0dc;
+    --c-text:#5a3a45;
+    --c-text-2:#8a6270;
+    --c-muted:#b08a98;
+    --c-green:#e88a4f;
+    --radius:18px;
+    --radius-sm:12px;
+    --shadow-sm:0 4px 16px rgba(209,75,115,0.10);
+    --shadow-hover:0 10px 28px rgba(209,75,115,0.18);
+    --t:.2s ease;
+    --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Heiti SC",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);
+    color:var(--c-text);
+    background:linear-gradient(160deg,#ffeef4 0%,#fde7f1 45%,#f3e6f6 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    padding:14px;
+    font-size:14px;
+    line-height:1.6;
+  }
+  .app{max-width:880px;margin:0 auto;}
+
+  /* 顶部 */
+  .topbar{
+    background:linear-gradient(135deg,#ff9eb5,#ff7f9e);
+    color:#fff;border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:12px;
+    box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+  }
+  .topbar h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.5px;}
+  .topbar p{margin:4px 0 0;font-size:12px;opacity:.92;}
+  .topbar .badge{
+    position:absolute;right:14px;top:14px;background:rgba(255,255,255,.25);
+    border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;
+  }
+
+  /* 导航 */
+  .nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .nav button{
+    flex:1 1 auto;min-width:84px;border:none;cursor:pointer;font-family:inherit;
+    background:#fff;color:var(--c-pink-deep);font-weight:700;font-size:12.5px;
+    padding:9px 6px;border-radius:var(--radius-sm);box-shadow:var(--shadow-sm);
+    transition:transform var(--t),background var(--t);
+  }
+  .nav button:active{transform:scale(.96);}
+  .nav button.active{background:linear-gradient(135deg,#ff7e9c,#ff6b9e);color:#fff;}
+
+  /* 面板 */
+  .panel{display:none;background:rgba(255,255,255,.86);backdrop-filter:blur(8px);
+    border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+  .panel.active{display:block;}
+  .panel h2{margin:0 0 4px;font-size:16px;color:var(--c-pink-deep);font-weight:800;}
+  .panel .sub{margin:0 0 14px;font-size:12px;color:var(--c-muted);}
+
+  /* 通用控件 */
+  input,select,textarea{
+    font-family:inherit;font-size:14px;color:var(--c-text);
+    border:1.5px solid var(--c-line);border-radius:10px;padding:8px 10px;background:#fff;width:100%;
+    outline:none;transition:border-color var(--t);
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--c-pink);}
+  textarea{resize:vertical;min-height:70px;line-height:1.5;}
+  label{font-size:12.5px;color:var(--c-pink-deep);font-weight:600;display:block;margin:10px 0 4px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row>*{flex:1;min-width:120px;}
+  .btn{
+    border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-weight:700;
+    padding:9px 16px;font-size:13px;background:linear-gradient(135deg,#ff7e9c,#ff6b9e);color:#fff;
+    box-shadow:0 4px 12px rgba(255,107,158,.3);transition:transform var(--t),box-shadow var(--t);
+  }
+  .btn:active{transform:scale(.96);}
+  .btn.ghost{background:#fff5f8;color:var(--c-pink-deep);border:1.5px solid var(--c-line);box-shadow:none;}
+  .btn.sm{padding:5px 10px;font-size:12px;}
+  .btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+  .card{background:#fff8fa;border:1px solid var(--c-line);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;margin-right:4px;}
+  .tag.big{background:#ffe0ea;color:#d14b73;}
+  .tag.small{background:#e7dcff;color:#7a5bd0;}
+  .tag.all{background:#dcf3e6;color:#2f9e64;}
+  .tag.s-idea{background:#fff0d6;color:#c98a2b;}
+  .tag.s-doing{background:#ddeaff;color:#3a78d6;}
+  .tag.s-done{background:#dcf3e6;color:#2f9e64;}
+  .tag.s-hit{background:#ffd9e2;color:#e0456e;}
+  .tag.s-miss{background:#ece1e6;color:#9a7b86;}
+
+  /* 标题体检分数 */
+  .score-big{font-size:40px;font-weight:800;line-height:1;}
+  .score-ring{display:flex;align-items:center;gap:14px;}
+  .score-tip{font-size:13px;color:var(--c-text-2);}
+  .check-list li{margin-bottom:6px;font-size:13px;}
+  .ok{color:#2f9e64;font-weight:700;}
+  .no{color:#e0456e;font-weight:700;}
+  .variant{padding:8px 10px;background:var(--c-pink-soft2);border-radius:10px;margin-bottom:6px;font-size:13px;
+    display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--c-line);}
+  .variant:active{background:var(--c-pink-soft);}
+  .variant .copy{margin-left:auto;font-size:11px;color:var(--c-pink-deep);font-weight:700;}
+
+  /* 封面预览 */
+  .ratio-wrap{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+  .ratio-box{background:#fff;border:2px dashed var(--c-line);border-radius:12px;overflow:hidden;
+    position:relative;display:flex;align-items:center;justify-content:center;}
+  .ratio-box .lab{position:absolute;top:4px;left:6px;font-size:10px;font-weight:700;color:var(--c-pink-deep);background:rgba(255,255,255,.8);padding:1px 6px;border-radius:8px;}
+  .ratio-box img{width:100%;height:100%;object-fit:contain;}
+  .ratio-box .guide{position:absolute;pointer-events:none;border:1.5px dashed rgba(255,127,158,.55);}
+  .drop{border:2px dashed var(--c-pink);border-radius:14px;padding:22px;text-align:center;color:var(--c-muted);
+    font-size:13px;margin-top:12px;cursor:pointer;background:var(--c-pink-soft2);}
+  .drop:active{background:var(--c-pink-soft);}
+
+  /* 七维体检 */
+  .dim{border:1px solid var(--c-line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff8fa;}
+  .dim .dh{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--c-pink-deep);font-size:14px;}
+  .dim .dh .pct{margin-left:auto;font-size:13px;color:var(--c-text-2);}
+  .dim ul{margin:8px 0 0;padding-left:18px;}
+  .dim li{font-size:12.5px;color:var(--c-text-2);margin-bottom:3px;}
+  .seg{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .seg button{flex:1;min-width:54px;border:1.5px solid var(--c-line);background:#fff;border-radius:9px;
+    padding:5px 0;font-family:inherit;font-size:12px;font-weight:700;color:var(--c-text-2);cursor:pointer;}
+  .seg button.on{background:var(--c-pink);color:#fff;border-color:var(--c-pink);}
+
+  /* 数据复盘 */
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px;}
+  th,td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--c-pink-soft);}
+  th{background:var(--c-pink-soft);color:#a14a64;font-weight:700;position:sticky;top:0;}
+  td.l,th.l{text-align:left;}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:150px;padding:10px 4px;border-bottom:1px solid var(--c-line);overflow-x:auto;}
+  .bar{flex:0 0 auto;width:34px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .bar .b{width:100%;background:linear-gradient(180deg,#ff9eb5,#ff6b9e);border-radius:6px 6px 0 0;min-height:4px;transition:height .3s;}
+  .bar .v{font-size:10px;color:var(--c-text-2);margin-bottom:3px;}
+  .bar .x{font-size:10px;color:var(--c-muted);margin-top:4px;white-space:nowrap;}
+
+  /* 素材银行 */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;}
+  .cell{background:#fff;border:1px solid var(--c-line);border-radius:12px;overflow:hidden;position:relative;}
+  .cell img{width:100%;height:96px;object-fit:cover;display:block;}
+  .cell .meta{padding:5px 7px;font-size:10.5px;color:var(--c-text-2);}
+  .cell .del{position:absolute;top:3px;right:3px;background:rgba(255,255,255,.9);border:none;border-radius:50%;
+    width:22px;height:22px;font-size:13px;color:#e0456e;cursor:pointer;line-height:1;}
+
+  /* 模板库 */
+  .tpl{border:1px solid var(--c-line);border-radius:12px;background:#fff8fa;padding:12px;margin-bottom:10px;}
+  .tpl h3{margin:0 0 6px;font-size:14px;color:var(--c-pink-deep);}
+  .tpl pre{white-space:pre-wrap;font-family:inherit;font-size:13px;color:var(--c-text-2);margin:0 0 8px;line-height:1.55;background:#fff;padding:10px;border-radius:8px;border:1px solid var(--c-pink-soft);}
+
+  .empty{text-align:center;color:var(--c-muted);font-size:13px;padding:24px 10px;}
+  .hint{font-size:11.5px;color:var(--c-muted);margin-top:6px;}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);
+    background:rgba(90,58,69,.92);color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;
+    opacity:0;pointer-events:none;transition:.25s;z-index:99;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .del-link{background:none;border:none;color:#e0456e;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:2px;margin-top:8px;padding:0;}
+</style>
+</head>
+<body data-page-node-id="0LiCvDds68xfzUKvDgqq1Y">
+<div class="app" data-page-node-id="puS0gww5rxdOiENL3qOOxK">
+
+  <div class="topbar" data-page-node-id="qYSuj14LHu8B4pwyUeGYng">
+    <div class="badge" data-page-node-id="uDVDhgeVvIS68GyiblNYpo">离线可用</div>
+    <h1 data-page-node-id="EJznfIkRmF01uBjxKXV18q">Hami 创作助手</h1>
+    <p data-page-node-id="YoVRqdeCJ7nxqOPIYiRuVU">模拟人生自媒体 · 日常记录与经营小工具（全部存你本地浏览器，不上网）</p>
+  </div>
+
+  <div class="nav" id="nav" data-page-node-id="GBy48frPTuJt8visVOnGng">
+    <button data-tab="idea" class="active" data-page-node-id="QSZGiBHsMED2AteqvccjIC">选题库·日历</button>
+    <button data-tab="title" data-page-node-id="asgQDdYx0VOtdjEBx3nT50">标题体检</button>
+    <button data-tab="cover" data-page-node-id="zAY4Jz9uZj20Pi8FI1BlEC">封面预览</button>
+    <button data-tab="check" data-page-node-id="W74Q8Y4Hs3OchSOgHGNEZa">七维体检</button>
+    <button data-tab="data" data-page-node-id="1tVcFsjXEz4jqlC3OCn1VB">数据复盘</button>
+    <button data-tab="bank" data-page-node-id="E4rvdMu69aTN73N1lCsKKX">素材银行</button>
+    <button data-tab="tpl" data-page-node-id="cSjNxubI9jrjEnSvSYbVYd">正文模板</button>
+  </div>
+
+  <!-- 1. 选题库 + 发布日历 -->
+  <section class="panel active" id="idea" data-page-node-id="VYtCv9jOzT0l6D7Q4O5wPx">
+    <h2 data-page-node-id="ewtAW2vhDDeUAAgY4ADcaW">选题库 · 发布日历</h2>
+    <p class="sub" data-page-node-id="qTXDvIimdXDZwON9upDH6o">把灵感存进来，标好状态和大号/小号，再排到日历上，一眼看出哪天断更。</p>
+    <div class="row" data-page-node-id="xuP6x8pR2wmyXdjiQUl7Fd">
+      <input id="idea-title" placeholder="灵感标题，如：捏脸教程第3期" data-page-node-id="F0VmDQrovfupt3gcnz2XUD">
+      <select id="idea-type" data-page-node-id="AqmnEZoKHFhf516dCJciT7">
+        <option value="big" data-page-node-id="OjuLXHIM42bL4MlSXvPRPy">大号（美化档）</option>
+        <option value="small" data-page-node-id="fxKBCqRqiCRAjz4jZajRO4">小号（定制人物）</option>
+        <option value="all" data-page-node-id="VNBL3zyg2HCIHWe40znK8x">通用</option>
+      </select>
+    </div>
+    <div class="row" data-page-node-id="puGQDHssSHxgTnIPmbg6iX">
+      <select id="idea-status" data-page-node-id="xMCwodEGLKvnwa7FK4QXHE">
+        <option value="idea" data-page-node-id="hRJaut9phgG3GLlOdzieBk">想做</option>
+        <option value="doing" data-page-node-id="IaoYFrGDpGZblgqivvZDVV">在做</option>
+        <option value="done" data-page-node-id="xb6iPcPEmheqBsxChz3sEn">已发</option>
+        <option value="hit" data-page-node-id="8e2DbZp7JuOz9CxCA55nvs">爆了</option>
+        <option value="miss" data-page-node-id="FPhohGCuktf33gE2nAy6Hr">扑了</option>
+      </select>
+      <input id="idea-date" type="date" data-page-node-id="hRYvFLuHPQYbFG2prg3DtK">
+    </div>
+    <label data-page-node-id="rT7uiu4OWMiHWWez4nGybm">备注（选题角度 / 看点）</label>
+    <textarea id="idea-note" placeholder="这期想讲什么、有什么亮点"></textarea>
+    <div class="btn-row" data-page-node-id="nVzZJo43TwgA2IPA8XDTaf">
+      <button class="btn" id="idea-add" data-page-node-id="g3t61KVmZDPYOa49B2BMOz">存进选题库</button>
+      <button class="btn ghost" id="idea-clear" data-page-node-id="sjEeFzWhjsazeeWy4ianbI">清空输入框</button>
+    </div>
+    <div class="row" style="margin-top:14px;align-items:center;" data-page-node-id="AqtiuHp1EmmdELIy7aeg4q">
+      <select id="idea-filter" style="flex:1;" data-page-node-id="mD0BydX8h0BgGnbO7FH7no">
+        <option value="all" data-page-node-id="io4plcrZZtz8Lh4Cjzi5kT">全部状态</option>
+        <option value="idea" data-page-node-id="JmEZJJ3bjidIN9XAb69yQv">想做</option>
+        <option value="doing" data-page-node-id="Wmt978zg28LgSeuXMZ8t0g">在做</option>
+        <option value="done" data-page-node-id="bwdbGUg6VpQudXzGCqzuZV">已发</option>
+        <option value="hit" data-page-node-id="w3aot3YIixF0vC3QBYTAgW">爆了</option>
+        <option value="miss" data-page-node-id="mA11traCujk4XV3koACXu6">扑了</option>
+      </select>
+    </div>
+    <div id="idea-list" data-page-node-id="NDJdHPlfFYFPF2TrbtSi9G"></div>
+
+    <h2 style="margin-top:18px;" data-page-node-id="GZqijvLNLfna7ce1Ebh78Z">本月日历</h2>
+    <p class="sub" data-page-node-id="L5eq9thRFNJVDH4XEsfWTQ">有排期的日子会标色，颜色对应状态。</p>
+    <div id="cal" data-page-node-id="WsGTDXe6bHLKCgLGz9UFWY"></div>
+  </section>
+
+  <!-- 2. 标题体检器 -->
+  <section class="panel" id="title" data-page-node-id="csmriJqJiD2Lptyrlttsgw">
+    <h2 data-page-node-id="Je7cfttGkVsQZ08YO3cPGx">标题体检器</h2>
+    <p class="sub" data-page-node-id="8xJd8rTkIa3Pmz3BOX9qpV">输入标题，本地规则打分（含数字/情绪词/悬念/长度/关键词），并给 5 个优化版本。</p>
+    <label data-page-node-id="rnWCgr1RdH6duGDzEHgsBZ">你的标题</label>
+    <textarea id="title-input" placeholder="例如：超好看的模拟人生捏脸教程"></textarea>
+    <div class="btn-row" data-page-node-id="Yh9nOyC3FYNSFp3E0FXEFz">
+      <button class="btn" id="title-check" data-page-node-id="mIwXk9DqxCiNoDByp0rBeB">开始体检</button>
+      <button class="btn ghost" id="title-clear" data-page-node-id="VUhQtgA5x5iWH0eMdtijVe">清空</button>
+    </div>
+    <div id="title-result" data-page-node-id="Jf46jEI1vQF2CLCZa72uPI"></div>
+  </section>
+
+  <!-- 3. 封面比例预览 -->
+  <section class="panel" id="cover" data-page-node-id="qGMPS5u3yGhN3mXrGO8CvI">
+    <h2 data-page-node-id="z1dyVNXmHHGfLPLClH8Iar">封面比例预览</h2>
+    <p class="sub" data-page-node-id="9EvsEChH8ATWKaKId0DZpc">把图片拖进来，看它在小红书 3:4、抖音 9:16、方形 1:1 下的构图。可叠加参考线。</p>
+    <div class="drop" id="cover-drop" data-page-node-id="cbBzDsQZ8Q1Cn9Fp3grcos">点这里选图片，或把图片拖到这（图片只存在你本地，不会上传）</div>
+    <input type="file" id="cover-file" accept="image/*" style="display:none;" data-page-node-id="koaGPKYYSuBglmPLpzPpki">
+    <div class="ratio-wrap" data-page-node-id="DWeKpOdRxoa3jQNwE6DRPo">
+      <div class="ratio-box" style="width:150px;height:200px;" data-page-node-id="VIIC8g7DFNMKEBMdwLICF4"><span class="lab" data-page-node-id="IKHVwJ71vFLslalZVjI3Vv">3:4 小红书</span><span class="ph" style="color:var(--c-muted);font-size:12px;" data-page-node-id="Ow9jDmUU8PQ4sozMQ36RD7">待选图</span></div>
+      <div class="ratio-box" style="width:120px;height:213px;" data-page-node-id="2CknpMkJEPylEXGIdG1TJS"><span class="lab" data-page-node-id="5HAMRvVj8YrBX8sCi3iBEy">9:16 抖音</span><span class="ph" style="color:var(--c-muted);font-size:12px;" data-page-node-id="yTGq9OdWek4OEXYjbjb2Uh">待选图</span></div>
+      <div class="ratio-box" style="width:170px;height:170px;" data-page-node-id="EMxi3cG0n4CbAkAOHzcjfo"><span class="lab" data-page-node-id="w91EDLISJknYc7e2q1Zja3">1:1 方形</span><span class="ph" style="color:var(--c-muted);font-size:12px;" data-page-node-id="gOBpVTFV9UlgBeDiaVaIGR">待选图</span></div>
+    </div>
+    <label style="margin-top:14px;" data-page-node-id="sNVXU6j0pASURXvMmda7cr"><input type="checkbox" id="cover-guide" style="width:auto;margin-right:6px;" data-page-node-id="9almCJaXH9qw0NEDJgBCHA">显示构图参考线（标题区/人物区）</label>
+  </section>
+
+  <!-- 4. 七维体检 -->
+  <section class="panel" id="check" data-page-node-id="RfBgzgMkfgJ36Yb6nUJFUU">
+    <h2 data-page-node-id="T99Ea1piwtzDTx27rS6bA6">发布前七维体检</h2>
+    <p class="sub" data-page-node-id="H3VU5mQ7anMRVkZ4pXZbDt">发之前逐项自评，算出「发布就绪度」。全本地，不联网。</p>
+    <div id="check-list" data-page-node-id="PNk9qy6NAiyFjqq9GbSEkD"></div>
+    <div class="card" style="margin-top:12px;text-align:center;" data-page-node-id="nLL5RHZTQH7pnNuniesBD8">
+      <div class="score-ring" style="justify-content:center;" data-page-node-id="v2e1k27PLq9My70VSpPksp">
+        <div class="score-big" id="check-score" data-page-node-id="gqNA91arwneMHVFq2ijL5R">0%</div>
+      </div>
+      <div class="score-tip" id="check-tip" data-page-node-id="cxvU978NyLgcBOVFqo0hvV">还没评分，照着上面勾一勾吧～</div>
+    </div>
+    <div class="btn-row" style="justify-content:center;" data-page-node-id="DUIW62so7ly4gRa39DJ7aV">
+      <button class="btn ghost sm" id="check-reset" data-page-node-id="XAYge48yjqULZxGlGEFYIl">重置评分</button>
+    </div>
+  </section>
+
+  <!-- 5. 笔记数据复盘 -->
+  <section class="panel" id="data" data-page-node-id="59w1L0hI8YnYh36vP53rkA">
+    <h2 data-page-node-id="6bfqCeyJ37FUTYwnurT1PU">笔记数据复盘</h2>
+    <p class="sub" data-page-node-id="AT5hNURFm3RpQvKvXEjz5S">每篇笔记手动填一下后台数（不联网抓，照着抄就行），本地画趋势、标记哪篇爆了。</p>
+    <div class="row" data-page-node-id="iQKRcxvri4TIwdmDlAb6nC">
+      <input id="d-date" type="date" data-page-node-id="EwrSVvZBEf8ukXeJxexH2Y">
+      <select id="d-platform" data-page-node-id="pmlrrN1882iIAoTzo7DV34"><option value="big" data-page-node-id="SQoQkrkwlkEdNFjmzbrbyM">大号</option><option value="small" data-page-node-id="UtGAzobtTWqJiFLIllJGhY">小号</option></select>
+    </div>
+    <div class="row" data-page-node-id="8Ioe8gNHD9NGIUVNpRtoo7">
+      <input id="d-title" placeholder="笔记标题" data-page-node-id="YABhCKEsVMWBv6evIiwt8H">
+      <input id="d-views" type="number" min="0" placeholder="阅读" data-page-node-id="DuC0JZOyPFMdUIBFOMNB8y">
+    </div>
+    <div class="row" data-page-node-id="XKcm709KZhW74VEJesUE0l">
+      <input id="d-likes" type="number" min="0" placeholder="赞" data-page-node-id="9EAqHozaD6S0DlHmWRLRPo">
+      <input id="d-collects" type="number" min="0" placeholder="收藏" data-page-node-id="bMa40O8QXdwFuOnOWGvcof">
+    </div>
+    <div class="row" data-page-node-id="NQSaIhEkC9KEZGy4YELSd0">
+      <input id="d-comments" type="number" min="0" placeholder="评论" data-page-node-id="BJOohOcpnuT24d9BtZz4Ts">
+      <input id="d-follows" type="number" min="0" placeholder="涨粉" data-page-node-id="l17MBPEvReWCO0IjYiEcPy">
+    </div>
+    <label data-page-node-id="CIUw0tEFaCyhGSWUkRrCRf">爆的原因标签（可选，如：封面吸睛/标题有痛点）</label>
+    <input id="d-tag" placeholder="这期为什么表现好" data-page-node-id="ykxWSF2mQ37bGuCPN7DFqF">
+    <div class="btn-row" data-page-node-id="6lfgaXtf54nT8Eohneiw7q">
+      <button class="btn" id="d-add" data-page-node-id="YOVgo3DMLw0ACOrMK3hrvc">记录这篇</button>
+    </div>
+    <h2 style="margin-top:18px;" data-page-node-id="8PpeSkBpIuCBGUNDJV1BVy">阅读量趋势</h2>
+    <div class="bars" id="d-bars" data-page-node-id="rLHHdiyv6SKP0jjLqochjq"></div>
+    <div class="table-scroll" style="margin-top:12px;" data-page-node-id="sX3wTKvxFcPGIGAoPeuPNy">
+      <table id="d-table" data-page-node-id="VCP8L2Xv5ggq8FU28SrNlq"><thead data-page-node-id="Faph35GK3vIv5nAKX8cbvI"><tr data-page-node-id="lIc5foxTHCzSzY1s79Z8hX">
+        <th class="l" data-page-node-id="JNofj1g3A8NFoIsw2UWMSD">日期</th><th data-page-node-id="5mcIf0UjwW3iQv1kbTaq0N">账号</th><th class="l" data-page-node-id="cNECSAbHfqD8Igoo5LvX7V">标题</th><th data-page-node-id="xDU4cRtdiMnAzHUa6BneEc">阅读</th><th data-page-node-id="emtwtCURA5dygOItrROA5D">赞</th><th data-page-node-id="Nw4xv15M8jFd8gbTFQKi38">藏</th><th data-page-node-id="w26dAESCk4li0rQ1fvvpAl">评</th><th data-page-node-id="b2oh408Q3f7bAOViuCc7hL">粉</th><th data-page-node-id="MvrcGZ5RvdBWwwLBpiwK7D">标签</th><th data-page-node-id="MOvskBYDEofsVOMcPvuWSy"></th>
+      </tr></thead><tbody data-page-node-id="jBAM9IZuUl0BYzFnfxxoCT"></tbody></table>
+    </div>
+  </section>
+
+  <!-- 6. 素材银行 -->
+  <section class="panel" id="bank" data-page-node-id="jDXGnIHQffFGBIocj0q2eY">
+    <h2 data-page-node-id="xnQjpGF8v3ROiIdPwml6LL">素材银行</h2>
+    <p class="sub" data-page-node-id="EKd15juhnrECIjquaGglvh">看到的好封面/配色/排版截图，存进来打标签，做你的参考库。（图片以本地方式保存，别存太多以免占空间）</p>
+    <div class="drop" id="bank-drop" data-page-node-id="FywoNgjmYLAGCx5Nukuc21">点这里选图片，或拖图进来</div>
+    <input type="file" id="bank-file" accept="image/*" multiple style="display:none;" data-page-node-id="AxVqoVVRGMm3pB4BURu2ay">
+    <label style="margin-top:12px;" data-page-node-id="mpAC21GBxk0flT2uUzd8rs">标签（用逗号分隔，如：封面,马卡龙,排版）</label>
+    <input id="bank-tags" placeholder="标签" data-page-node-id="AsPTph4dHQyqZLvqkzWkFG">
+    <div class="grid" id="bank-grid" data-page-node-id="psKQNz6o4IIfVnM4veAYtn"></div>
+  </section>
+
+  <!-- 7. 正文模板库 -->
+  <section class="panel" id="tpl" data-page-node-id="DWDRN0uq7VBBFj6B1boXGF">
+    <h2 data-page-node-id="AbfH40DR4SnkmFGy0ixHmd">正文模板库</h2>
+    <p class="sub" data-page-node-id="1BcCiLhP5JIYDyaycsS4ga">常用结构，点一下复制，发笔记提速。</p>
+    <div id="tpl-list" data-page-node-id="QSUfuQy0UooQ1c7fQ91EQA"></div>
+  </section>
+
+</div>
+<div class="toast" id="toast" data-page-node-id="cjg73xtTWrCH1n77yCpkfF"></div>
+
+<script>
+"use strict";
+/* ============ 通用 ============ */
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1600);}
+const store = {
+  get(k,def){try{const v=localStorage.getItem("hami_cs_"+k);return v==null?def:JSON.parse(v);}catch(e){return def;}},
+  set(k,v){localStorage.setItem("hami_cs_"+k,JSON.stringify(v));}
+};
+const STATUS_LABEL={idea:"想做",doing:"在做",done:"已发",hit:"爆了",miss:"扑了"};
+const STATUS_CLASS={idea:"s-idea",doing:"s-doing",done:"s-done",hit:"s-hit",miss:"s-miss"};
+const TYPE_LABEL={big:"大号",small:"小号",all:"通用"};
+const TYPE_CLASS={big:"big",small:"small",all:"all"};
+
+/* ============ 导航 ============ */
+$$("#nav button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    $$("#nav button").forEach(x=>x.classList.remove("active"));
+    $$(".panel").forEach(p=>p.classList.remove("active"));
+    b.classList.add("active");
+    $("#"+b.dataset.tab).classList.add("active");
+    if(b.dataset.tab==="idea") renderIdea();
+    if(b.dataset.tab==="data") renderData();
+    if(b.dataset.tab==="bank") renderBank();
+  });
+});
+
+/* ============ 1. 选题库 + 日历 ============ */
+let ideas = store.get("ideas",[]);
+function saveIdeas(){store.set("ideas",ideas);}
+function renderIdea(){
+  const f=$("#idea-filter").value;
+  const list=$("#idea-list");
+  const arr=ideas.filter(i=>f==="all"||i.status===f).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  if(!arr.length){list.innerHTML='<div class="empty">还没有选题，上面存一条吧～</div>';}
+  else{
+    list.innerHTML=arr.map((i,idx)=>{
+      const real=ideas.indexOf(i);
+      return `<div class="card">
+        <div><span class="tag ${TYPE_CLASS[i.type]}">${TYPE_LABEL[i.type]}</span>
+        <span class="tag ${STATUS_CLASS[i.status]}">${STATUS_LABEL[i.status]}</span>
+        ${i.date?'<span class="hint">'+i.date+'</span>':''}</div>
+        <div style="font-weight:700;margin:6px 0;color:var(--c-text);">${esc(i.title)}</div>
+        ${i.note?'<div class="hint">'+esc(i.note)+'</div>':''}
+        <button class="del-link" data-i="${real}">删除</button>
+      </div>`;
+    }).join("");
+    $$("#idea-list .del-link").forEach(b=>b.addEventListener("click",()=>{ideas.splice(+b.dataset.i,1);saveIdeas();renderIdea();renderCal();toast("已删除");}));
+  }
+  renderCal();
+}
+function renderCal(){
+  const cal=$("#cal");
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth();
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
+  let html=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11px;color:var(--c-muted);margin-bottom:4px;">
+    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
+  for(let i=0;i<first;i++)html+=`<div></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const hit=ideas.filter(i=>i.date===ds);
+    if(hit.length){
+      const st=hit[0].status;
+      html+=`<div title="${hit.map(i=>esc(i.title)).join("、")}" style="aspect-ratio:1;border-radius:8px;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700;background:${calColor(st)};color:#fff;">${d}</div>`;
+    }else{
+      html+=`<div style="aspect-ratio:1;border-radius:8px;font-size:11px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--c-pink-soft);color:var(--c-text-2);">${d}</div>`;
+    }
+  }
+  html+=`</div>`;
+  cal.innerHTML=html;
+}
+function calColor(st){return {idea:"#f0b54a",doing:"#5b9bf0",done:"#3fbf7a",hit:"#ff6b9e",miss:"#b89aa6"}[st]||"#ff6b9e";}
+$("#idea-add").addEventListener("click",()=>{
+  const title=$("#idea-title").value.trim();
+  if(!title){toast("先写个标题呀");return;}
+  ideas.push({title,type:$("#idea-type").value,status:$("#idea-status").value,date:$("#idea-date").value,note:$("#idea-note").value.trim()});
+  saveIdeas();
+  $("#idea-title").value="";$("#idea-note").value="";$("#idea-date").value="";
+  renderIdea();toast("存好啦");
+});
+$("#idea-clear").addEventListener("click",()=>{$("#idea-title").value="";$("#idea-note").value="";$("#idea-date").value="";});
+$("#idea-filter").addEventListener("change",renderIdea);
+
+/* ============ 2. 标题体检器 ============ */
+const EMOTION=["绝了","必看","干货","秘籍","教程","神器","宝藏","封神","逆天","救命","爱了","心动","显脸小","高级感","氛围感","血泪","亲测","墙裂","码住","收藏"];
+const SUSPICION=["？","!","！","如何","怎么","为什么","为什么","攻略","测评","对比","揭秘","隐藏"];
+const KEYWORD=["捏脸","捏人","模拟人生","sims","小红书","定制","妆容","穿搭","装修","存档","cc","mod"];
+function checkTitle(raw){
+  const t=raw.trim();
+  if(!t)return null;
+  const len=t.length;
+  const hasNum=/\d/.test(t);
+  const emo=EMOTION.filter(w=>t.includes(w));
+  const sus=SUSPICION.filter(w=>t.includes(w));
+  const key=KEYWORD.filter(w=>t.toLowerCase().includes(w.toLowerCase()));
+  let score=40;const tips=[];
+  if(hasNum){score+=12;tips.push(["ok","含数字，更具体可信"]);}else tips.push(["no","建议加个数字（如「3步」「5个」）"]);
+  if(emo.length){score+=Math.min(emo.length*6,18);tips.push(["ok","有情绪词："+emo.join("、")]);}else tips.push(["no","缺情绪词，可加「绝了/宝藏/干货」等"]);
+  if(sus.length){score+=10;tips.push(["ok","有悬念/提问感，勾起好奇"]);}else tips.push(["no","可加提问或「攻略/测评」增加点击欲"]);
+  if(key.length){score+=10;tips.push(["ok","含领域关键词："+key.join("、")]);}else tips.push(["no","建议带上「捏脸/模拟人生」等关键词，利搜索"]);
+  if(len>=12&&len<=22){score+=10;tips.push(["ok","长度合适（12-22字）"]);}
+  else if(len<12){score-=6;tips.push(["no","偏短，信息量不足（建议12-22字）"]);}
+  else{score-=8;tips.push(["no","偏长，手机端易被截断（建议12-22字）"]);}
+  score=Math.max(0,Math.min(100,score));
+  return {score,tips,emo,sus,key,len};
+}
+function genVariants(t){
+  if(!t)return [];
+  const base=t.replace(/[？!！?]/g,"").trim();
+  return [
+    `绝了！${base}（附教程）`,
+    `码住｜${base}的5个小心机`,
+    `亲测有效：${base}到底怎么弄`,
+    `新手必看｜${base}保姆级攻略`,
+    `谁懂啊！${base}氛围感拉满`
+  ].filter(v=>v!==t);
+}
+$("#title-check").addEventListener("click",()=>{
+  const raw=$("#title-input").value;
+  const r=checkTitle(raw);
+  const box=$("#title-result");
+  if(!r){box.innerHTML='<div class="empty">先输入一个标题吧～</div>';return;}
+  const col=r.score>=80?"#2f9e64":r.score>=60?"#c98a2b":"#e0456e";
+  box.innerHTML=`<div class="card"><div class="score-ring">
+      <div class="score-big" style="color:${col}">${r.score}</div>
+      <div><div style="font-weight:700;color:var(--c-pink-deep);">体检报告</div>
+      <div class="score-tip">${r.len} 字 · ${r.score>=80?"很棒，可以直接用":r.score>=60?"还能再优化一下":"建议大改"}</div></div>
+    </div>
+    <ul class="check-list" style="margin-top:10px;">${r.tips.map(t=>`<li><span class="${t[0]}">${t[0]==="ok"?"✓":"✗"}</span> ${esc(t[1])}</li>`).join("")}</ul>
+  </div>
+  <h2 style="margin-top:14px;font-size:15px;">5 个优化版本（点一下复制）</h2>
+  <div id="variants">${genVariants(raw.trim()).map(v=>`<div class="variant" data-v="${esc(v)}">${esc(v)}<span class="copy">复制</span></div>`).join("")}</div>`;
+  $$("#variants .variant").forEach(el=>el.addEventListener("click",()=>{copyText(el.dataset.v);toast("已复制");}));
+});
+$("#title-clear").addEventListener("click",()=>{$("#title-input").value="";$("#title-result").innerHTML="";});
+
+/* ============ 3. 封面预览 ============ */
+const coverBoxes=$$("#cover .ratio-box");
+function loadCover(file){
+  if(!file)return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const url=rd.result;
+    coverBoxes.forEach(b=>{
+      const old=b.querySelector("img");if(old)old.remove();
+      const ph=b.querySelector(".ph");if(ph)ph.remove();
+      const img=new Image();img.src=url;b.appendChild(img);
+      applyGuide(b);
+    });
+    toast("已载入，看三个比例吧");
+  };
+  rd.readAsDataURL(file);
+}
+function applyGuide(box){
+  box.querySelectorAll(".guide").forEach(g=>g.remove());
+  if(!$("#cover-guide").checked)return;
+  const w=box.clientWidth,h=box.clientHeight;
+  // 标题区：顶部 28%
+  const t=document.createElement("div");t.className="guide";t.style.top="6px";t.style.left="6px";t.style.right="6px";t.style.height=(h*0.26)+"px";box.appendChild(t);
+  // 人物区：中部 50%
+  const m=document.createElement("div");m.className="guide";m.style.top=(h*0.30)+"px";m.style.left="6px";m.style.right="6px";m.style.height=(h*0.46)+"px";box.appendChild(m);
+}
+$("#cover-file").addEventListener("change",e=>loadCover(e.target.files[0]));
+$("#cover-drop").addEventListener("click",()=>$("#cover-file").click());
+$("#cover-guide").addEventListener("change",()=>coverBoxes.forEach(applyGuide));
+const cd=$("#cover-drop");
+["dragover","dragenter"].forEach(ev=>cd.addEventListener(ev,e=>{e.preventDefault();cd.style.background="var(--c-pink-soft)";}));
+["dragleave","drop"].forEach(ev=>cd.addEventListener(ev,e=>{e.preventDefault();cd.style.background="var(--c-pink-soft2)";}));
+cd.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f&&f.type.startsWith("image/"))loadCover(f);});
+
+/* ============ 4. 七维体检 ============ */
+const DIMS=[
+  {name:"标题",items:["含数字或具体信息","有情绪词/悬念","带领域关键词","长度 12-22 字"]},
+  {name:"封面",items:["清晰不糊","主体突出","有文字标题区","配色统一"],max:4},
+  {name:"正文痛点",items:["开头点中用户痛点","有实用干货","结构清晰"]},
+  {name:"标签",items:["覆盖 2-3 个核心词","含 1 个长尾词"]},
+  {name:"互动钩子",items:["结尾抛问题/投票","引导收藏或关注"]},
+  {name:"发布时间",items:["选在粉丝活跃时段","避开大号撞车"]},
+  {name:"双号差异化",items:["大号/小号内容不重复","人设调性一致"]}
+];
+let checks=store.get("checks",{});
+function renderCheck(){
+  const wrap=$("#check-list");
+  wrap.innerHTML=DIMS.map((d,di)=>{
+    const cur=checks[di]||0;const max=d.items.length;
+    return `<div class="dim">
+      <div class="dh">${d.name}<span class="pct" data-p="${di}">${Math.round(cur/max*100)}%</span></div>
+      <ul>${d.items.map(it=>`<li>${esc(it)}</li>`).join("")}</ul>
+      <div class="seg" data-d="${di}">
+        ${[0,1,2,3,4].map(n=>`<button data-n="${n}" class="${n===cur?'on':''}">${["没做","弱","中","强","满"].slice(0,Math.min(5,max+1))[n]||n}</button>`).slice(0,max+1).join("")}
+      </div></div>`;
+  }).join("");
+  $$("#check-list .seg").forEach(seg=>{
+    seg.addEventListener("click",e=>{
+      const b=e.target.closest("button");if(!b)return;
+      const di=+seg.dataset.d,n=+b.dataset.n;
+      checks[di]=n;store.set("checks",checks);
+      $$("#check-list .seg").forEach(s=>{if(+s.dataset.d===di)$$(s.querySelectorAll("button")).forEach(x=>x.classList.toggle("on",+x.dataset.n===n));});
+      updateCheckScore();
+    });
+  });
+  updateCheckScore();
+}
+function updateCheckScore(){
+  let tot=0,mx=0;
+  DIMS.forEach((d,di)=>{const max=d.items.length;tot+=checks[di]||0;mx+=max;});
+  const pct=mx?Math.round(tot/mx*100):0;
+  $("#check-score").textContent=pct+"%";
+  $("#check-score").style.color=pct>=80?"#2f9e64":pct>=50?"#c98a2b":"#e0456e";
+  $("#check-tip").textContent=pct>=80?"就绪度很高，可以发啦！":pct>=50?"还行，再补补弱项更稳":(tot?"刚起步，照着上面补一补":"还没评分，照着上面勾一勾吧～");
+}
+$("#check-reset").addEventListener("click",()=>{checks={};store.set("checks",checks);renderCheck();toast("已重置");});
+
+/* ============ 5. 数据复盘 ============ */
+let notes=store.get("notes",[]);
+function saveNotes(){store.set("notes",notes);}
+const PLAT_LABEL={big:"大号",small:"小号"};
+function renderData(){
+  const rows=[...notes].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  // 趋势（按阅读量）
+  const maxV=Math.max(1,...notes.map(n=>+n.views||0));
+  $("#d-bars").innerHTML=notes.length?notes.slice(-12).map(n=>{
+    const v=+n.views||0;const h=Math.max(4,Math.round(v/maxV*120));
+    return `<div class="bar"><div class="v">${v>=1000?(v/1000).toFixed(1)+"k":v}</div><div class="b" style="height:${h}px"></div><div class="x">${(n.date||"").slice(5)}</div></div>`;
+  }).join(""):'<div class="empty">还没有数据，先记一篇</div>';
+  const tb=$("#d-table tbody");
+  tb.innerHTML=rows.length?rows.map((n,idx)=>{
+    const real=notes.indexOf(n);
+    return `<tr><td class="l">${n.date||""}</td><td>${PLAT_LABEL[n.platform]||""}</td><td class="l">${esc(n.title||"")}</td>
+      <td>${n.views||0}</td><td>${n.likes||0}</td><td>${n.collects||0}</td><td>${n.comments||0}</td><td>${n.follows||0}</td>
+      <td class="l">${esc(n.tag||"")}</td><td><button class="del-link" data-i="${real}">删</button></td></tr>`;
+  }).join(""):'<tr><td colspan="10" class="empty">还没有数据</td></tr>';
+  $$("#d-table .del-link").forEach(b=>b.addEventListener("click",()=>{notes.splice(+b.dataset.i,1);saveNotes();renderData();toast("已删除");}));
+}
+$("#d-add").addEventListener("click",()=>{
+  const date=$("#d-date").value;
+  if(!date){toast("先选个日期");return;}
+  notes.push({
+    date,platform:$("#d-platform").value,title:$("#d-title").value.trim(),
+    views:+$("#d-views").value||0,likes:+$("#d-likes").value||0,
+    collects:+$("#d-collects").value||0,comments:+$("#d-comments").value||0,
+    follows:+$("#d-follows").value||0,tag:$("#d-tag").value.trim()
+  });
+  saveNotes();
+  ["d-title","d-views","d-likes","d-collects","d-comments","d-follows","d-tag"].forEach(id=>$("#"+id).value="");
+  renderData();toast("记录好啦");
+});
+
+/* ============ 6. 素材银行 ============ */
+let mats=store.get("mats",[]);
+function saveMats(){store.set("mats",mats);}
+function renderBank(){
+  const grid=$("#bank-grid");
+  grid.innerHTML=mats.length?mats.map((m,idx)=>`<div class="cell">
+    <button class="del" data-i="${idx}">×</button>
+    <img src="${m.data}" alt="">
+    <div class="meta">${esc((m.tags||[]).join("、")||"无标签")}</div></div>`).join(""):
+    '<div class="empty">还没有素材，存一张试试</div>';
+  $$("#bank-grid .del").forEach(b=>b.addEventListener("click",()=>{mats.splice(+b.dataset.i,1);saveMats();renderBank();toast("已删除");}));
+}
+function addMats(files){
+  let pending=files.length;
+  if(!pending)return;
+  [...files].forEach(f=>{
+    if(!f.type.startsWith("image/")){if(--pending===0)after();return;}
+    const rd=new FileReader();
+    rd.onload=()=>{
+      mats.push({data:rd.result,tags:($("#bank-tags").value.split(/[,，]/).map(s=>s.trim()).filter(Boolean))});
+      if(--pending===0){saveMats();$("#bank-tags").value="";renderBank();toast("已存入素材银行");}
+    };
+    rd.readAsDataURL(f);
+  });
+}
+$("#bank-file").addEventListener("change",e=>addMats(e.target.files));
+$("#bank-drop").addEventListener("click",()=>$("#bank-file").click());
+const bd=$("#bank-drop");
+["dragover","dragenter"].forEach(ev=>bd.addEventListener(ev,e=>{e.preventDefault();bd.style.background="var(--c-pink-soft)";}));
+["dragleave","drop"].forEach(ev=>bd.addEventListener(ev,e=>{e.preventDefault();bd.style.background="var(--c-pink-soft2)";}));
+bd.addEventListener("drop",e=>{const f=e.dataTransfer.files;if(f.length)addMats(f);});
+
+/* ============ 7. 模板库 ============ */
+const TPLS=[
+  {name:"开头痛点钩子",body:"谁懂啊😭 我之前【痛点场景，如：捏的脸总是显胖】，试了 N 种终于搞明白——其实就差这一步！今天手把手教你避开雷区。"},
+  {name:"中间步骤拆解",body:"✅ 第一步：xxx\n✅ 第二步：xxx\n✅ 第三步：xxx\n（每一步配一张图，重点用红圈标出来，别让姐妹猜）"},
+  {name:"结尾互动引导",body:"这期你最想看我捏哪个角色？评论区告诉我👇\n觉得有用记得【收藏+关注】，下期更干货不迷路～"},
+  {name:"对比测评型",body:"A 方法 vs B 方法，实测一周后：\n👉 A：xxx（优点/缺点）\n👉 B：xxx（优点/缺点）\n结论：日常用 B，重要场合用 A。"},
+  {name:"保姆级教程型",body:"【主题】零基础也能学会\n准备：xxx\n操作：①xxx ②xxx ③xxx\n常见翻车点：xxx\n照着做，10 分钟搞定✨"}
+];
+function renderTpl(){
+  $("#tpl-list").innerHTML=TPLS.map((t,i)=>`<div class="tpl">
+    <h3>${esc(t.name)}</h3>
+    <pre>${esc(t.body)}</pre>
+    <button class="btn sm" data-i="${i}">复制这套模板</button></div>`).join("");
+  $$("#tpl-list .btn").forEach(b=>b.addEventListener("click",()=>{copyText(TPLS[+b.dataset.i].body);toast("已复制模板");}));
+}
+
+/* ============ 工具 ============ */
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(()=>fallbackCopy(t));}
+  else fallbackCopy(t);
+}
+function fallbackCopy(t){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}
+
+/* ============ 初始化 ============ */
+renderIdea();
+renderCheck();
+renderData();
+renderBank();
+renderTpl();
+
+/* ============ 嵌入主工作台时自动撑高（postMessage 通知父页面） ============ */
+function csSendHeight(){
+  try{
+    var h=document.documentElement.scrollHeight||document.body.scrollHeight||0;
+    if(window.parent&&window.parent!==window) window.parent.postMessage({__csResize:h},'*');
+  }catch(e){}
+}
+window.addEventListener('load',csSendHeight);
+window.addEventListener('resize',csSendHeight);
+if(window.ResizeObserver){ try{ new ResizeObserver(csSendHeight).observe(document.body); }catch(e){} }
+setInterval(csSendHeight,800);
+</script>
+</body>
+</html>

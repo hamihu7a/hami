@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-10-73">
+<meta name="hami-build" content="2026-09-11-74">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -403,10 +403,10 @@
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 9px; }
   }
   /* 健康·目标体重行 + 进度环 */
-  .goal-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px; }
-  .goal-row label { font-size: 13px; color: var(--c-pink-deep); font-weight: 600; }
-  .goal-row input { width: 90px; padding: 6px 10px; border: 1px solid var(--c-line); border-radius: 10px; font-size: 16px; text-align: center; background: #fff; color: var(--c-text); }
-  .goal-row .goal-info { font-size: 13px; color: var(--c-muted); }
+  .goal-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 10px; }
+  .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; }
+  .goal-row input { width: 70px; padding: 4px 6px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 14px; text-align: center; background: #fff; color: var(--c-text); }
+  .goal-row .goal-info { font-size: 12px; color: var(--c-muted); line-height: 1.35; }
 
   /* 数据备份温和提醒（满 60 条时显示） */
   .backup-tip {
@@ -424,19 +424,19 @@
   }
   .goal-row .goal-info b { color: var(--c-pink-deep); }
   .goal-save-btn {
-    border: 1px solid #ffd0dc; border-radius: 10px; cursor: pointer;
-    padding: 5px 10px;
+    border: 1px solid #ffd0dc; border-radius: 8px; cursor: pointer;
+    padding: 3px 7px;
     background: #fff5f8;
-    color: #d14b73; font-size: 12px; font-weight: 600;
+    color: #d14b73; font-size: 11px; font-weight: 600;
     transition: background .15s ease, transform .12s ease;
   }
   .goal-save-btn:hover { background: #ffe8f0; }
   .goal-save-btn:active { transform: scale(0.97); }
   .goal-clear-btn {
-    border: none; border-radius: 10px; cursor: pointer;
-    padding: 5px 8px;
+    border: none; border-radius: 8px; cursor: pointer;
+    padding: 3px 5px;
     background: transparent;
-    color: #b87088; font-size: 12px; font-weight: 500;
+    color: #b87088; font-size: 11px; font-weight: 500;
     text-decoration: underline; text-underline-offset: 2px;
     transition: color .15s ease;
   }
@@ -445,8 +445,8 @@
 
   .desktop-hero {
     background: linear-gradient(135deg, #e8c4d8 0%, #c896b8 50%, #dcb0cc 100%);
-    border-radius: 24px;
-    padding: 15px 22px;
+    border-radius: 22px;
+    padding: 12px 16px;
     margin-bottom: var(--space-block);              /* hero ↔ alert banner 间留 --space-block(10px) 的呼吸，不黏也不宽 */
     color: var(--c-text-2);
     box-shadow: 0 6px 24px rgba(180, 130, 160, 0.25);
@@ -456,10 +456,10 @@
   .desktop-hero::after {
     content: '';
     position: absolute;
-    top: -30px;
-    right: -30px;
-    width: 120px;
-    height: 120px;
+    top: -24px;
+    right: -24px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     background: rgba(255,255,255,0.15);
   }
@@ -467,29 +467,29 @@
   .hero-line {
     display: flex;
     align-items: baseline;
-    gap: 10px;
-    margin-bottom: 2px;
+    gap: 8px;
+    margin-bottom: 1px;
   }
   .desktop-time {
-    font-size: 30px;
+    font-size: 28px;
     font-weight: 700;
     letter-spacing: 1px;
   }
   .desktop-date {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--c-text-2);
     opacity: 0.85;
   }
   /* 三条激励语：完全融入 hero 渐变，无背景容器/无边框/无模糊，仅保留内边距保证行距 */
   .desktop-quote {
     background: transparent;
-    padding: 2px 2px 0;
+    padding: 1px 1px 0;
   }
   .desktop-quote .quote-line {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--c-text-2);
-    margin-bottom: 3px;
-    line-height: 1.4;
+    margin-bottom: 2px;
+    line-height: 1.35;
   }
   .desktop-quote .quote-line:last-child { margin-bottom: 0; }
 
@@ -1339,12 +1339,12 @@
   /* 自媒体「记一条」按钮（与记一笔同款配色，紧凑） */
   .media-add-btn {
     margin-left: auto;
-    border: none; border-radius: 12px;
+    border: none; border-radius: 10px;
     background: linear-gradient(90deg, #ff9eb5, #ff7f9e);
-    color: #fff; font-size: 13px; font-weight: 700;
-    padding: 8px 14px; cursor: pointer; font-family: inherit;
+    color: #fff; font-size: 12px; font-weight: 700;
+    padding: 5px 10px; cursor: pointer; font-family: inherit;
     white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(209,75,115,0.22);
+    box-shadow: 0 3px 10px rgba(209,75,115,0.22);
     transition: transform 0.12s ease;
   }
   .media-add-btn:active { transform: scale(0.97); }
@@ -1393,7 +1393,7 @@
   .media-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
   #media-history-wrap { overflow-x: auto; }
   #media-history-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
-  #media-history-wrap th, #media-history-wrap td { white-space: nowrap; text-align: center; font-size: 12px; padding: 8px 4px; }
+  #media-history-wrap th, #media-history-wrap td { white-space: nowrap; text-align: center; font-size: 11px; padding: 5px 3px; }
   #media-history-wrap th:first-child, #media-history-wrap td:first-child { text-align: left; }
   /* 每日体重表：内容不多，撑满整宽，不再左右滑动 */
   #weight-table-wrap { overflow-x: auto; }
@@ -1587,21 +1587,21 @@
   /* 日期/出游面板：「➕ 新增日期 / 记一次」按钮（与 media-add-btn 同款） */
   .date-add-btn {
     margin-left: auto;
-    border: none; border-radius: 12px;
+    border: none; border-radius: 10px;
     background: linear-gradient(90deg, #ff9eb5, #ff7f9e);
-    color: #fff; font-size: 13px; font-weight: 700;
-    padding: 6px 14px; cursor: pointer; font-family: inherit;
+    color: #fff; font-size: 12px; font-weight: 700;
+    padding: 5px 10px; cursor: pointer; font-family: inherit;
     white-space: nowrap;
-    box-shadow: 0 3px 12px rgba(209,75,115,0.22);
+    box-shadow: 0 3px 10px rgba(209,75,115,0.22);
     transition: transform 0.12s ease, box-shadow 0.2s ease;
   }
-  .date-add-btn:hover { box-shadow: 0 4px 16px rgba(209,75,115,0.34); }
+  .date-add-btn:hover { box-shadow: 0 4px 14px rgba(209,75,115,0.34); }
   .date-add-btn:active { transform: scale(0.97); }
   /* 列表行内的小操作按钮（编辑 / 删除） */
   .row-edit-btn, .row-del-btn {
-    border: none; border-radius: 8px; cursor: pointer;
-    font-family: inherit; font-size:12px; font-weight: 600;
-    padding: 3px 8px; margin-top: 4px; margin-right: 4px;
+    border: none; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    padding: 2px 6px; margin: 0;
     transition: transform 0.1s ease;
   }
   .row-edit-btn { background: #fff0f5; color: var(--c-pink-deep); border: 1px solid #ffd0dc; }
@@ -1857,36 +1857,36 @@
     background: #fff8fa;
     border: 1px solid #ffe4ec;
     border-radius: 12px;
-    padding: 12px 14px;
-    padding-right: 90px;   /* 给右侧两个按钮留足安全空间 */
-    margin-bottom: 9px;
+    padding: 8px 10px;
+    padding-right: 66px;   /* 给右侧两个按钮留足安全空间 */
+    margin-bottom: 6px;
   }
   .fin-flow-row .card-actions {
     /* 记账卡片按钮垂直居中，避免和长金额/长分类名上下重叠 */
-    top: 50%; right: 10px;
+    top: 50%; right: 6px;
     transform: translateY(-50%);
-    gap: 5px;
+    gap: 3px;
   }
   .fin-flow-row .card-actions .row-edit-btn,
   .fin-flow-row .card-actions .row-del-btn {
-    margin: 0; padding: 4px 8px; font-size: 12px;
+    margin: 0; padding: 2px 6px; font-size: 11px;
   }
   .fin-flow-line1 {
-    display: flex; align-items: flex-start; gap: 10px;
+    display: flex; align-items: flex-start; gap: 6px;
   }
   .fin-flow-cat {
-    display: flex; align-items: flex-start; gap: 8px;
+    display: flex; align-items: flex-start; gap: 5px;
     flex: 1; min-width: 0;
-    padding-right: 8px; /* 与金额之间留呼吸空间 */
+    padding-right: 4px; /* 与金额之间留呼吸空间 */
   }
   .fin-flow-cat .rank-icon {
-    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
     margin-top: 1px;
   }
-  .fin-flow-cat .rank-icon svg { width: 15px; height: 15px; }
+  .fin-flow-cat .rank-icon svg { width: 13px; height: 13px; }
   .fin-flow-cat-name {
-    font-size: 15px; font-weight: 700; color: var(--c-text-2);
-    line-height: 1.35;
+    font-size: 14px; font-weight: 700; color: var(--c-text-2);
+    line-height: 1.25;
     word-break: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -1894,20 +1894,20 @@
     overflow: hidden;
   }
   .fin-flow-amt {
-    font-size: 16px; font-weight: 700;
+    font-size: 14px; font-weight: 700;
     font-family: 'Baloo 2', monospace;
     flex-shrink: 0; white-space: nowrap;
-    margin-top: 2px;
-    min-width: 58px; text-align: right;
+    margin-top: 1px;
+    min-width: 46px; text-align: right;
   }
   .fin-flow-amt.expense { color: var(--c-pink-deep); }
   .fin-flow-amt.income { color: #34c759; }
   .fin-flow-amt.transfer { color: #8a72e0; }
   .fin-flow-line2 {
-    margin-top: 7px;
-    display: flex; align-items: center; gap: 12px;
-    font-size: 13px; color: #8a6270;
-    padding-left: 36px; /* 与上方分类图标左对齐 */
+    margin-top: 3px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #8a6270;
+    padding-left: 28px; /* 与上方分类图标左对齐 */
   }
   .fin-flow-date { flex-shrink: 0; color: #7d4a5a; }
   .fin-flow-time { flex-shrink: 0; color: #9a7280; }
@@ -1926,14 +1926,15 @@
 
   /* 超小屏：iPhone 17（≤420px）下微调字号与间距 */
   @media (max-width: 420px) {
-    .fin-flow-row { padding: 11px 12px; padding-right: 80px; margin-bottom: 8px; }
-    .fin-flow-row .card-actions { right: 8px; gap: 4px; }
+    .fin-flow-row { padding: 7px 8px; padding-right: 60px; margin-bottom: 5px; }
+    .fin-flow-row .card-actions { right: 5px; gap: 2px; }
     .fin-flow-row .card-actions .row-edit-btn,
-    .fin-flow-row .card-actions .row-del-btn { padding: 3px 7px; font-size: 11px; }
-    .fin-flow-cat .rank-icon { width: 26px; height: 26px; }
-    .fin-flow-cat-name { font-size: 14px; }
-    .fin-flow-amt { font-size: 15px; min-width: 54px; }
-    .fin-flow-line2 { font-size: 12px; padding-left: 34px; gap: 10px; }
+    .fin-flow-row .card-actions .row-del-btn { padding: 2px 5px; font-size: 10px; }
+    .fin-flow-cat .rank-icon { width: 20px; height: 20px; }
+    .fin-flow-cat .rank-icon svg { width: 12px; height: 12px; }
+    .fin-flow-cat-name { font-size: 13px; }
+    .fin-flow-amt { font-size: 13px; min-width: 42px; }
+    .fin-flow-line2 { font-size: 11px; padding-left: 26px; gap: 6px; }
   }
 
   /* toast */
@@ -1981,25 +1982,25 @@
   .panel-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 16px 20px;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
     background: rgba(255,255,255,0.6);
-    border-radius: 18px;
+    border-radius: 16px;
     backdrop-filter: blur(10px);
   }
   .panel-header h2 {
-    font-size: 20px;
+    font-size: 18px;
     color: var(--c-pink-deep);
     font-weight: 700;
   }
-  .panel-header .icon { font-size: 26px; }
+  .panel-header .icon { font-size: 22px; }
 
   .card {
     background: rgba(255,255,255,0.78);
     backdrop-filter: blur(10px);
     border-radius: var(--radius);
-    padding: var(--pad);
+    padding: 14px;
     margin-bottom: var(--gap);
     box-shadow: var(--shadow-sm);
     transition: box-shadow var(--t), transform var(--t);
@@ -2009,46 +2010,46 @@
     font-size: 15px;
     font-weight: 700;
     color: var(--c-pink-deep);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 6px;
+    margin-bottom: 4px;
   }
   /* v2026-09-06-29 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
   #income-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  #income-stats .stat-card { padding: 14px 10px; }
-  #income-stats .stat-card .value { font-size: 20px; }
-  #income-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
+  #income-stats .stat-card { padding: 10px 8px; }
+  #income-stats .stat-card .value { font-size: 18px; }
+  #income-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
   /* v2026-09-06-29 自媒体更新记录「上2下2」专属：4 张卡永远 2×2 */
   #media-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  #media-stats .stat-card { padding: 14px 10px; }
-  #media-stats .stat-card .value { font-size: 20px; }
-  #media-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
+  #media-stats .stat-card { padding: 10px 8px; }
+  #media-stats .stat-card .value { font-size: 18px; }
+  #media-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
   /* v2026-09-07-30 健康记录 4 张卡「上2下2 紧密」：主人要求紧密排版 */
-  #fitness-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
-  #fitness-stats .stat-card { padding: 12px 8px; }
-  #fitness-stats .stat-card .value { font-size: 19px; }
-  #fitness-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
-  #fitness-stats .stat-card .unit { font-size: 11px; }
+  #fitness-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+  #fitness-stats .stat-card { padding: 10px 6px; }
+  #fitness-stats .stat-card .value { font-size: 17px; }
+  #fitness-stats .stat-card .label { font-size: 10px; margin-bottom: 2px; }
+  #fitness-stats .stat-card .unit { font-size: 10px; }
   /* v2026-09-08 经期记录 4 张卡「上2下2 紧密」 */
-  #period-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
-  #period-stats .stat-card { padding: 12px 8px; }
-  #period-stats .stat-card .value { font-size: 19px; }
-  #period-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
-  #period-stats .stat-card .unit { font-size: 11px; }
+  #period-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+  #period-stats .stat-card { padding: 10px 6px; }
+  #period-stats .stat-card .value { font-size: 17px; }
+  #period-stats .stat-card .label { font-size: 10px; margin-bottom: 2px; }
+  #period-stats .stat-card .unit { font-size: 10px; }
   /* v2026-09-08 如厕/敷面膜 3 张卡横向并排 */
-  #toilet-stats, #mask-stats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
-  #toilet-stats .stat-card, #mask-stats .stat-card { padding: 10px 4px; }
-  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 16px; white-space: nowrap; }
-  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 10px; margin-bottom: 2px; }
-  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 10px; }
+  #toilet-stats, #mask-stats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+  #toilet-stats .stat-card, #mask-stats .stat-card { padding: 8px 3px; }
+  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 15px; white-space: nowrap; }
+  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 9px; margin-bottom: 1px; }
+  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 9px; }
   /* v2026-09-06-28 历史推荐表：标题列允许换行且不溢出；表头紧凑 */
   #inspire-history td:first-child,
   #inspire-history td:nth-child(2),
@@ -2057,24 +2058,24 @@
   #inspire-history td:nth-child(6) { white-space: nowrap; }
   #inspire-history td:nth-child(5) { white-space: normal; word-break: break-word; }
   /* 表格整体紧凑 + 在窄屏仍能横滚看标题 */
-  .card table { table-layout: auto; min-width: 540px; }
+  .card table { table-layout: auto; min-width: 500px; }
   /* 让"标题"列在历史推荐表里真正宽：列宽用 min-width 而非死宽，剩下宽度按内容自然分配 */
   #income-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
   .stat-card {
     background: rgba(255,255,255,0.85);
     border-radius: var(--radius-sm);
-    padding: 16px;
+    padding: 10px 8px;
     text-align: center;
     box-shadow: var(--shadow-xs);
     border: 1px solid var(--c-line);
     transition: box-shadow var(--t), transform var(--t);
   }
   .stat-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-  .stat-card .label { font-size:12px; color: var(--c-muted); margin-bottom: 6px; }
-  .stat-card .value { font-size: 22px; font-weight: 700; color: var(--c-pink-deep); }
+  .stat-card .label { font-size:11px; color: var(--c-muted); margin-bottom: 3px; }
+  .stat-card .value { font-size: 19px; font-weight: 700; color: var(--c-pink-deep); }
   .stat-card .value.green { color: #e88a4f; }
   .stat-card .value.red { color: #e85f7a; }
-  .stat-card .unit { font-size: 12px; color: #8a6270; }
+  .stat-card .unit { font-size: 11px; color: #8a6270; }
   /* 体重/收支 stat-card 顶部留白减少，让首行 label 往上挪一点点腾出空间给「最后更新」行 */
   #fitness-stats .stat-card,
   #account-stats .stat-card {
@@ -2095,15 +2096,15 @@
   }
   th {
     background: var(--c-pink-soft);
-    padding: 10px 8px;
+    padding: 6px 5px;
     text-align: left;
     font-weight: 600;
     color: #8a4a60;
-    border-bottom: 2px solid #ffb3c6;
+    border-bottom: 1px solid #ffb3c6;
     white-space: nowrap;
   }
   td {
-    padding: 10px 8px;
+    padding: 5px 4px;
     border-bottom: 1px solid #fff0f4;
     color: var(--c-text-2);
   }
@@ -2232,10 +2233,10 @@
   .period-close-btn:active { transform: translateY(1px); }
 
   /* 通用折叠按钮（当月记录 >5 时展开/收起，所有记录列表共用） */
-  .flow-toggle-wrap { text-align: center; margin-top: 10px; }
+  .flow-toggle-wrap { text-align: center; margin-top: 6px; }
   .flow-toggle-btn {
     border: 1px dashed var(--c-pink-deep, #d14b73); background: #fff5f8; color: var(--c-pink-deep, #d14b73);
-    font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 12px; cursor: pointer;
+    font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 10px; cursor: pointer;
   }
   .flow-toggle-btn:active { transform: translateY(1px); }
 
@@ -2574,18 +2575,18 @@
 
   .empty-state {
     text-align: center;
-    padding: 30px 20px;
+    padding: 16px 12px;
     color: #8a6270;
   }
   .empty-state .big-icon {
     font-size: 0;                 /* 隐藏各平台不一致的 emoji 文字，统一换成招财猫符号 */
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     display: flex;
     justify-content: center;
   }
   .empty-state .big-icon::before {
     content: "";
-    width: 46px; height: 46px;
+    width: 38px; height: 38px;
     background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cg%20fill='%23ff9eb5'%3E%3Cpath%20d='M14%2022%20L9%207%20L27%2017%20Z'/%3E%3Cpath%20d='M50%2022%20L55%207%20L37%2017%20Z'/%3E%3C/g%3E%3Ccircle%20cx='32'%20cy='34'%20r='23'%20fill='%23ffc2d4'/%3E%3Ccircle%20cx='23'%20cy='31'%20r='3.2'%20fill='%235a3a45'/%3E%3Ccircle%20cx='41'%20cy='31'%20r='3.2'%20fill='%235a3a45'/%3E%3Cpath%20d='M29%2041%20Q32%2045%2035%2041'%20stroke='%235a3a45'%20stroke-width='2.4'%20fill='none'%20stroke-linecap='round'/%3E%3Cpath%20d='M32%2039%20l-2.4%203%20h4.8%20z'%20fill='%23ff7aa0'/%3E%3Cg%20stroke='%23e58aa3'%20stroke-width='1.6'%20stroke-linecap='round'%3E%3Cline%20x1='14'%20y1='34'%20x2='4'%20y2='31'/%3E%3Cline%20x1='14'%20y1='38'%20x2='4'%20y2='40'/%3E%3Cline%20x1='50'%20y1='34'%20x2='60'%20y2='31'/%3E%3Cline%20x1='50'%20y1='38'%20x2='60'%20y2='40'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
   }
 
@@ -2595,11 +2596,11 @@
   .tip-box {
     background: linear-gradient(135deg, #fff5f8, #ffeef2);
     border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 16px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
     font-size: 12px;
     color: var(--c-pink-deep);
-    line-height: 1.7;
+    line-height: 1.5;
     border: 1px dashed #ffb3c6;
   }
 
@@ -2891,8 +2892,8 @@
       .stat-card .unit { font-size:12px; }
 
       /* 表格 */
-      th, td { padding: 7px 4px; font-size:12px; }
-      th { font-size:12px; }
+      th, td { padding: 4px 3px; font-size:11px; }
+      th { font-size:11px; }
 
       /* 体重日历 */
       .calendar-day { font-size:12px; }
@@ -3086,9 +3087,9 @@
     .weight-cal-day { font-size: 12px !important; }
     .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
-    table { font-size: 13px; }
-    th, td { padding: 10px 8px; }
-    .card, .todo-card { padding: 20px 22px; }
+    table { font-size: 12px; }
+    th, td { padding: 6px 5px; }
+    .card, .todo-card { padding: 14px 16px; }
     .top-bar h1 { font-size: 22px; }
     .stat-card .value { font-size: 22px; }
     .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
@@ -3140,10 +3141,10 @@
       grid-column: 1 / -1;
     }
     .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px !important; }
-    .weight-cal-cell { height: 56px !important; }
+    .weight-cal-cell { height: 52px !important; }
     .weight-cal-day { font-size: 11px !important; }
     .weight-cal-main { font-size: 12px !important; }
-    th, td { padding: 10px 8px; }
+    th, td { padding: 5px 4px; }
   }
 
   /* @media 1000+ panel grid */
@@ -4061,6 +4062,10 @@
       <span class="nav-icon">📅</span>
       <span class="nav-text">未来更新<br>图文记录</span>
     </button>
+    <button class="nav-item" type="button" onclick="switchPanel('creator', this)">
+      <span class="nav-icon">🎨</span>
+      <span class="nav-text">创作助手<br>7合1工具</span>
+    </button>
   </div>
 
   <!-- 三·健康记录 -->
@@ -4614,17 +4619,17 @@
     <div class="goal-row" id="weight-goal-row">
       <div class="fitness-ring" id="goal-ring"></div>
       <div style="flex:1;min-width:180px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
           <label for="weight-goal-input">🎯 目标体重</label>
           <input type="number" id="weight-goal-input" step="0.1" min="30" max="200" placeholder="如 65" inputmode="decimal">
-          <span style="font-size:13px;color:var(--c-muted);">kg</span>
+          <span style="font-size:12px;color:var(--c-muted);">kg</span>
           <button id="weight-goal-save" class="goal-save-btn" type="button">✓ 确定</button>
           <button id="weight-goal-clear" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
           <label for="start-weight-input">⚖️ 起始体重</label>
           <input type="number" id="start-weight-input" step="0.1" min="30" max="300" placeholder="如 90" inputmode="decimal">
-          <span style="font-size:13px;color:var(--c-muted);">kg</span>
+          <span style="font-size:12px;color:var(--c-muted);">kg</span>
           <button id="start-weight-save" class="goal-save-btn" type="button">✓ 确定</button>
         </div>
         <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
@@ -5625,6 +5630,20 @@
         <button type="button" onclick="saveFpBigEditor()" style="flex:1;border:none;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);color:#fff;border-radius:10px;padding:10px;font-weight:800;cursor:pointer;">完成并同步</button>
       </div>
     </div>
+  </div>
+
+  <div id="panel-creator" class="panel">
+    <div class="panel-header">
+      <span class="icon">🎨</span>
+      <h2>创作助手 · 7合1工具</h2>
+    </div>
+    <p style="font-size:12px;color:var(--c-muted);margin:0 0 10px;">模拟人生自媒体日常记录与经营小工具，全部存你本地浏览器，不上网。下方随时切换 7 个工具。</p>
+    <iframe id="cs-frame" class="creator-frame" src="creator-studio.html" title="创作助手" loading="lazy" style="width:100%;border:none;min-height:760px;display:block;border-radius:14px;background:#fff;"></iframe>
+    <script>
+      window.addEventListener('message', function(e){
+        try{ if(e.data && e.data.__csResize){ var f=document.getElementById('cs-frame'); if(f) f.style.height=e.data.__csResize+'px'; } }catch(_){}
+      });
+    </script>
   </div>
 
   <div id="panel-settings" class="panel">
@@ -11426,15 +11445,15 @@ function renderWeightGoal(startWeight, latestAfter) {
   if (goal != null && document.activeElement !== input) input.value = goal;
 
   // 进度环几何
-  const R = 30, C = 2 * Math.PI * R;
+  const R = 24, C = 2 * Math.PI * R;
 
   if (goal == null || latestAfter == null) {
     info.innerHTML = goal == null
       ? '还没设目标呢，填一个小目标吧～'
       : `目标 <b>${goal.toFixed(1)}</b> kg，本月还没记体重哦～`;
-    ring.innerHTML = `<svg width="76" height="76" viewBox="0 0 76 76">
-      <circle cx="38" cy="38" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="8"/>
-      <text x="38" y="43" text-anchor="middle" font-size="14" fill="var(--c-muted)">—</text>
+    ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="7"/>
+      <text x="30" y="34" text-anchor="middle" font-size="12" fill="var(--c-muted)">—</text>
     </svg>`;
     return;
   }
@@ -11452,12 +11471,12 @@ function renderWeightGoal(startWeight, latestAfter) {
     info.innerHTML = `目标 <b>${goal.toFixed(1)}</b> kg · 当前 <b>${latestAfter.toFixed(1)}</b> kg · 距目标还差 <b>${remain.toFixed(1)}</b> kg（已完成 <b>${pct.toFixed(0)}%</b>）`;
   }
 
-  ring.innerHTML = `<svg width="76" height="76" viewBox="0 0 76 76">
-    <circle cx="38" cy="38" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="8"/>
-    <circle cx="38" cy="38" r="${R}" fill="none" stroke="var(--c-pink)" stroke-width="8"
+  ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60">
+    <circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="7"/>
+    <circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink)" stroke-width="7"
       stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${(C - dash).toFixed(1)}"
-      transform="rotate(-90 38 38)" style="transition:stroke-dasharray .5s ease;"/>
-    <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="700" fill="var(--c-pink-deep)">${pct.toFixed(0)}%</text>
+      transform="rotate(-90 30 30)" style="transition:stroke-dasharray .5s ease;"/>
+    <text x="30" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="var(--c-pink-deep)">${pct.toFixed(0)}%</text>
   </svg>`;
 }
 
@@ -12920,7 +12939,7 @@ function renderInspire() {
         + `<td style="white-space:nowrap;font-size:12px;">${tp}</td>`
         + `<td style="white-space:nowrap;font-size:12px;">${r.platform||'—'}</td>`
         + `<td style="white-space:nowrap;font-size:12px;">${r.topic||'—'}</td>`
-        + `<td style="min-width:240px;max-width:340px;word-break:break-word;line-height:1.5;font-size:12.5px;font-weight:600;color:#5a3a48;padding:10px 8px;">${r.title||'—'}</td>`
+        + `<td style="min-width:200px;max-width:280px;word-break:break-word;line-height:1.35;font-size:12px;font-weight:600;color:#5a3a48;padding:5px 4px;">${r.title||'—'}</td>`
         + `<td style="white-space:nowrap;font-size:12px;font-weight:700;color:#d14b73;">${r.traffic||'—'}</td>`
         + `</tr>`;
     }, 6);
