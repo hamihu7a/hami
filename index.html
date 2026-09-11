@@ -4012,11 +4012,11 @@
 .sch-btn:hover { filter:brightness(.97); }
 
 /* ===== 定制单进度看板 ===== */
-.kanban-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px; }
-.kanban-col { background:#fbf3f6; border-radius:12px; padding:8px; min-width:0; }
-.kanban-col-head { font-size:13px; font-weight:600; color:#5a3a48; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.kanban-stack { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.kanban-section { background:#fbf3f6; border-radius:12px; padding:8px; }
+.kanban-sec-head { font-size:13px; font-weight:600; color:#5a3a48; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
 .kanban-count { font-size:11px; background:#ffd9e4; color:#c45c7c; border-radius:20px; padding:0 7px; }
-.kanban-col-body { display:flex; flex-direction:column; gap:8px; min-height:40px; }
+.kanban-sec-body { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; min-height:40px; }
 .kanban-empty { font-size:12px; color:#bba6b0; text-align:center; padding:10px 0; }
 .kb-card { background:#fff; border:1px solid #f0d8e2; border-radius:10px; padding:8px; }
 .kb-card.overdue { border-color:#f0b3b3; background:#fff6f6; }
@@ -4024,15 +4024,38 @@
 .kb-card-meta { display:flex; justify-content:space-between; gap:6px; margin-top:5px; font-size:11px; color:#9a6b7b; }
 .kb-amt { color:#2f8a52; font-weight:600; }
 .kb-card-actions { display:flex; gap:4px; margin-top:7px; flex-wrap:wrap; }
-.kb-move { width:26px; height:24px; border-radius:6px; border:1px solid #e3d3dc; background:#faf4f7; color:#9a6b7b; cursor:pointer; font-size:13px; }
+.kb-move { height:24px; border-radius:6px; border:1px solid #e3d3dc; background:#faf4f7; color:#9a6b7b; cursor:pointer; font-size:12px; padding:0 8px; }
 .kb-edit, .kb-del { font-size:12px; border:1px solid #e3d3dc; background:#fff; border-radius:6px; padding:2px 8px; cursor:pointer; }
 .kb-edit { color:#7d9bd6; }
 .kb-del { color:#d46a6a; }
 .kb-move:hover, .kb-edit:hover, .kb-del:hover { filter:brightness(.96); }
 
 @media (max-width: 480px) {
-  .kanban-cols { grid-template-columns:1fr; }
+  .kanban-sec-body { grid-template-columns:1fr; }
   .sch-item-title { max-width:120px; }
+}
+
+/* ===== 身体数据（三围） ===== */
+.body-latest { background:#fff; border:1px solid #f0d8e2; border-radius:12px; padding:10px; }
+.body-latest-title { font-size:12px; color:#9a6b7b; margin-bottom:8px; }
+.body-stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.body-stat-item { text-align:center; }
+.body-stat-label { font-size:12px; color:#5a3a48; margin-bottom:4px; }
+.body-stat-label span { margin-right:3px; }
+.body-stat-value { font-size:16px; font-weight:700; color:#4a3540; }
+.body-stat-unit { font-size:10px; color:#9a6b7b; margin-left:2px; font-weight:400; }
+.body-diff { font-size:11px; margin-left:4px; }
+.body-diff.red { color:#e85f7a; }
+.body-diff.green { color:#2f8a52; }
+.body-history { margin-top:10px; overflow-x:auto; }
+.body-history table { width:100%; min-width:420px; border-collapse:collapse; font-size:12px; }
+.body-history th, .body-history td { padding:6px 4px; text-align:center; border-bottom:1px solid #f0d8e2; }
+.body-history th { color:#8a6270; font-weight:600; background:#fbf3f6; }
+.body-history td { color:#5a3a48; }
+@media (max-width: 420px) {
+  .body-stat-grid { grid-template-columns:1fr; gap:6px; }
+  .body-stat-item { display:flex; justify-content:space-between; align-items:center; padding:0 8px; }
+  .body-stat-value { font-size:14px; }
 }
 </style>
 </head>
@@ -4386,7 +4409,7 @@
       <div class="todo-panel-head">
         <div class="todo-panel-head-left">
           <div class="todo-panel-title">定制单进度看板</div>
-          <div class="todo-panel-sub">接单 · 制作 · 交付</div>
+          <div class="todo-panel-sub">制作 · 交付</div>
         </div>
         <button class="todo-add-btn" type="button" onclick="openCustomOrderModal()">➕ 加定制单</button>
       </div>
@@ -4464,8 +4487,7 @@
         <div class="co-field">
           <label>状态</label>
           <div class="co-status">
-            <span class="co-status-opt active" data-st="pending" onclick="setCoStatus('pending')">待沟通</span>
-            <span class="co-status-opt" data-st="making" onclick="setCoStatus('making')">制作中</span>
+            <span class="co-status-opt active" data-st="making" onclick="setCoStatus('making')">制作中</span>
             <span class="co-status-opt" data-st="done" onclick="setCoStatus('done')">已交付</span>
           </div>
         </div>
@@ -4580,6 +4602,43 @@
       <div class="co-actions">
         <button class="co-cancel" onclick="closeWeightEditModal()">取消</button>
         <button class="co-save" onclick="submitWeightEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 身体数据（三围）弹窗 -->
+  <div id="body-record-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeBodyRecordModal()">
+    <div class="modal-card" style="max-width:380px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeBodyRecordModal()" aria-label="关闭">✕</button>
+        <div id="body-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">📏 身体数据</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📅 日期</label>
+          <input type="date" id="body-date">
+        </div>
+        <div class="co-field">
+          <label>🐻 胸围 (cm)</label>
+          <input type="number" id="body-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 82.5">
+        </div>
+        <div class="co-field">
+          <label>👗 腰围 (cm)</label>
+          <input type="number" id="body-waist" step="0.1" min="0" inputmode="decimal" placeholder="如 62.0">
+        </div>
+        <div class="co-field">
+          <label>🍑 臀围 (cm)</label>
+          <input type="number" id="body-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 90.0">
+        </div>
+        <div class="co-field">
+          <label>📝 备注</label>
+          <input type="text" id="body-note" placeholder="如 饭后 / 健身后">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeBodyRecordModal()">取消</button>
+        <button class="co-save" onclick="submitBodyRecord()">保存</button>
       </div>
     </div>
   </div>
@@ -4715,6 +4774,14 @@
     <div class="card">
       <div class="card-title"><span>⚖️</span> 体重趋势图</div>
       <div class="chart-container" id="weight-chart"></div>
+    </div>
+
+    <!-- 身体数据（三围） -->
+    <div class="card">
+      <div class="card-title">📏 身体数据（三围）
+        <button class="media-add-btn" style="margin-left:auto;" onclick="openBodyRecordModal()">记一项</button>
+      </div>
+      <div id="body-stats"></div>
     </div>
 
     <div class="card">
@@ -6027,6 +6094,7 @@ let store = {
   modSales: {},
   beautyRecords: [],   // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
   weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
+  bodyRecords: [],     // 身体数据（三围）：{ date, chest, waist, hip, note }
   weightSeedV1Applied: false,  // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
   screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
   tripSeedV1Applied: false,   // 广州三天行程一次性补入标记（true 后不再重复覆盖）
@@ -6585,7 +6653,7 @@ function loadAccountsFromIDB() {
 function countStoreRecords(s) {
   if (!s || typeof s !== 'object') return 0;
   let n = 0;
-  const arrKeys = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords',
+  const arrKeys = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords', 'bodyRecords',
     'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'periodRecords', 'washRecords',
     'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords', 'benchmarkNotes'];
   arrKeys.forEach(function (k) { if (Array.isArray(s[k])) n += s[k].length; });
@@ -9148,7 +9216,7 @@ function sendHamiCmd() {
 
   // 防御：清掉各数组里可能残留的 null/undefined 脏数据（多由异常合并产生），
   // 否则下面的 find/findIndex(r => r.date===...) 会因 r 为 null 抛错，导致整条指令作废、记录"记了又消失"。
-  ['weightRecords','periodRecords','washRecords','maskRecords','exerciseRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
+  ['weightRecords','bodyRecords','periodRecords','washRecords','maskRecords','exerciseRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
     if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
   });
 
@@ -9478,7 +9546,7 @@ function loadData() {
     } catch (e) {}
     // 脏数据防护：清掉各数组里可能残留的 null/undefined（多由异常合并产生），
     // 避免后续 r.date 访问抛错导致面板崩溃、或记录"记了又消失"。一处净化、全局受益。
-    ['weightRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
+    ['weightRecords','bodyRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips'].forEach(function (k) {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
     // v57：启动加载阶段就按墓碑剔一遍被删记录（即使云端旧备份把幽灵塞回来也立刻清掉）
@@ -10559,19 +10627,18 @@ function renderTodoPanel() {
 
 // ==================== 定制单进度看板 ====================
 const CUSTOM_PHASES = [
-  { key: 'pending', label: '待沟通' },
   { key: 'making', label: '制作中' },
   { key: 'done', label: '已交付' }
 ];
 function moveCustomOrder(idx, dir) {
   if (!store.customOrders || !store.customOrders[idx]) return;
   const o = store.customOrders[idx];
-  let pi = CUSTOM_PHASES.findIndex(function (p) { return p.key === (o.status || 'pending'); });
-  if (pi < 0) pi = 0;
-  let ni = pi + dir;
-  if (ni < 0) ni = 0;
-  if (ni > CUSTOM_PHASES.length - 1) ni = CUSTOM_PHASES.length - 1;
-  o.status = CUSTOM_PHASES[ni].key;
+  // 只有制作中 / 已交付两态：→ 交付，← 回制作中
+  if (o.status === 'done') {
+    if (dir < 0) o.status = 'making';
+  } else {
+    if (dir > 0) o.status = 'done';
+  }
   saveData();
   try { renderCustomBoard(); } catch (e) {}
   try { renderIncome(); } catch (e) {}
@@ -10581,25 +10648,34 @@ function renderCustomBoard() {
   const el = document.getElementById('custom-kanban');
   if (!el) return;
   const today = todayStr();
-  let html = '<div class="kanban-cols">';
+
+  // 去掉待沟通：原 pending 的订单在制作中区显示，避免数据丢失
+  const isPhase = function (o, key) {
+    const st = o.status || 'making';
+    if (key === 'making') return st !== 'done';
+    return st === 'done';
+  };
+
+  let html = '<div class="kanban-stack">';
   CUSTOM_PHASES.forEach(function (ph) {
     const list = store.customOrders
       .map(function (o, idx) { return { o: o, idx: idx }; })
-      .filter(function (x) { return (x.o.status || 'pending') === ph.key; })
+      .filter(function (x) { return isPhase(x.o, ph.key); })
       .sort(function (a, b) { return (a.o.deadline || '9999-99-99').localeCompare(b.o.deadline || '9999-99-99'); });
-    html += '<div class="kanban-col"><div class="kanban-col-head">' + ph.label + ' <span class="kanban-count">' + list.length + '</span></div><div class="kanban-col-body">';
+    html += '<div class="kanban-section"><div class="kanban-sec-head">' + ph.label + ' <span class="kanban-count">' + list.length + '</span></div><div class="kanban-sec-body">';
     if (list.length === 0) {
       html += '<div class="kanban-empty">暂无</div>';
     } else {
       list.forEach(function (x) {
         const o = x.o; const idx = x.idx;
-        const overdue = (o.status !== 'done' && o.deadline && o.deadline < today);
-        const left = ph.key !== 'done' ? '<button class="kb-move" title="后移" onclick="moveCustomOrder(' + idx + ',1)">→</button>' : '';
-        const right = ph.key !== 'pending' ? '<button class="kb-move" title="前移" onclick="moveCustomOrder(' + idx + ',-1)">←</button>' : '';
+        const overdue = (ph.key !== 'done' && o.deadline && o.deadline < today);
+        const moveBtn = ph.key === 'making'
+          ? '<button class="kb-move" title="交付" onclick="moveCustomOrder(' + idx + ',1)">→ 交付</button>'
+          : '<button class="kb-move" title="回退制作中" onclick="moveCustomOrder(' + idx + ',-1)">← 重做</button>';
         html += '<div class="kb-card' + (overdue ? ' overdue' : '') + '">'
           + '<div class="kb-card-desc">' + (o.desc || '定制单') + '</div>'
           + '<div class="kb-card-meta"><span class="kb-amt">¥' + (typeof fmtMoney === 'function' ? fmtMoney(o.amount) : (o.amount || 0)) + '</span><span class="kb-dead">截止 ' + (o.deadline || '—') + '</span></div>'
-          + '<div class="kb-card-actions">' + right + left
+          + '<div class="kb-card-actions">' + moveBtn
           + '<button class="kb-edit" onclick="openCustomOrderModal(' + idx + ')">改</button>'
           + '<button class="kb-del" onclick="deleteCustomOrder(' + idx + ')">删</button></div>'
           + '</div>';
@@ -11377,8 +11453,8 @@ function renderIncome() {
     let html = '';
     pageList.forEach(x => {
       const o = x.o, idx = x.idx;
-      const overdue = o.status === 'pending' && new Date(o.deadline) < new Date(today);
-      const badge = o.status === 'done' ? '<span class="badge done">已交付</span>' : (o.status === 'making' ? '<span class="badge making">制作中</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge pending">待沟通</span>'));
+      const overdue = o.status !== 'done' && new Date(o.deadline) < new Date(today);
+      const badge = o.status === 'done' ? '<span class="badge done">已交付</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge making">制作中</span>');
       const dateStr = (o.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       const deadlineStr = (o.deadline || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       html += `
@@ -11919,6 +11995,7 @@ function renderFitness() {
       ${catCard('weights','器械',weightsCount)}
     </div>
   `;
+  try { renderBodyStats(); } catch (e) {}
 }
 
 // 运动明细归类：主人三类 —— 有氧操 / 爬坡·椭圆机 / 器械
@@ -13075,6 +13152,121 @@ async function deleteWeightRecord(idx) {
   hamiDeleteSync();                  // 存档 + 立即推云端 + 拉云端双向确认
   refreshWeightViews();   // 统一刷新：首页日历 / 三·健康记录 / 首页打卡卡 / 提醒
   finToast('🗑 已删除体重记录');
+}
+
+// ==================== 身体数据（三围） ====================
+let bodyEditIdx = -1;
+function openBodyRecordModal(idx) {
+  bodyEditIdx = (typeof idx === 'number' && idx >= 0 && store.bodyRecords && store.bodyRecords[idx]) ? idx : -1;
+  const m = document.getElementById('body-record-modal');
+  const title = document.getElementById('body-modal-title');
+  if (title) title.textContent = bodyEditIdx >= 0 ? '📏 修改身体数据' : '📏 身体数据';
+  const dEl = document.getElementById('body-date');
+  const cEl = document.getElementById('body-chest');
+  const wEl = document.getElementById('body-waist');
+  const hEl = document.getElementById('body-hip');
+  const nEl = document.getElementById('body-note');
+  if (bodyEditIdx >= 0) {
+    const r = store.bodyRecords[bodyEditIdx];
+    if (dEl) dEl.value = r.date || todayStr();
+    if (cEl) cEl.value = (r.chest != null) ? r.chest : '';
+    if (wEl) wEl.value = (r.waist != null) ? r.waist : '';
+    if (hEl) hEl.value = (r.hip != null) ? r.hip : '';
+    if (nEl) nEl.value = r.note || '';
+  } else {
+    if (dEl) dEl.value = todayStr();
+    if (cEl) cEl.value = '';
+    if (wEl) wEl.value = '';
+    if (hEl) hEl.value = '';
+    if (nEl) nEl.value = '';
+  }
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeBodyRecordModal() {
+  const m = document.getElementById('body-record-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+  bodyEditIdx = -1;
+}
+function submitBodyRecord() {
+  const dEl = document.getElementById('body-date');
+  const cEl = document.getElementById('body-chest');
+  const wEl = document.getElementById('body-waist');
+  const hEl = document.getElementById('body-hip');
+  const nEl = document.getElementById('body-note');
+  const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+  const chest = parseFloat(cEl ? cEl.value : '');
+  const waist = parseFloat(wEl ? wEl.value : '');
+  const hip = parseFloat(hEl ? hEl.value : '');
+  const note = (nEl && nEl.value ? nEl.value : '').trim();
+  if (isNaN(chest) || isNaN(waist) || isNaN(hip) || chest <= 0 || waist <= 0 || hip <= 0) {
+    finToast('请填写有效的三围数字'); return;
+  }
+  if (!store.bodyRecords) store.bodyRecords = [];
+  if (bodyEditIdx >= 0) {
+    const r = store.bodyRecords[bodyEditIdx];
+    r.date = date;
+    r.chest = parseFloat(chest.toFixed(1));
+    r.waist = parseFloat(waist.toFixed(1));
+    r.hip = parseFloat(hip.toFixed(1));
+    r.note = note;
+    finToast('✅ 已更新身体数据');
+  } else {
+    store.bodyRecords.push({ date: date, chest: parseFloat(chest.toFixed(1)), waist: parseFloat(waist.toFixed(1)), hip: parseFloat(hip.toFixed(1)), note: note });
+    finToast('✅ 已记身体数据');
+  }
+  saveData();
+  closeBodyRecordModal();
+  try { renderBodyStats(); } catch (e) {}
+}
+async function deleteBodyRecord(idx) {
+  const r = store.bodyRecords && store.bodyRecords[idx];
+  if (!r) { finToast('记录不存在'); return; }
+  if (!await hamiConfirm('确定删除 ' + r.date + ' 的身体数据吗？')) return;
+  store.bodyRecords.splice(idx, 1);
+  saveData();
+  try { renderBodyStats(); } catch (e) {}
+  finToast('🗑 已删除身体数据');
+}
+function renderBodyStats() {
+  const el = document.getElementById('body-stats');
+  if (!el) return;
+  if (!store.bodyRecords) store.bodyRecords = [];
+  const list = [...store.bodyRecords].filter(r => r && r.date).sort((a, b) => b.date.localeCompare(a.date));
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty-state"><p>还没有三围记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div>`;
+    return;
+  }
+  const cur = list[0];
+  const prev = list[1];
+  const diff = (key) => {
+    if (!prev || cur[key] == null || prev[key] == null) return null;
+    const d = parseFloat((cur[key] - prev[key]).toFixed(1));
+    const cls = d > 0 ? 'red' : (d < 0 ? 'green' : '');
+    const arrow = d > 0 ? '↑' : (d < 0 ? '↓' : '→');
+    return `<span class="body-diff ${cls}">${arrow} ${Math.abs(d).toFixed(1)}</span>`;
+  };
+  const item = (label, key, emoji) => {
+    const val = cur[key] != null ? cur[key].toFixed(1) : '—';
+    return `<div class="body-stat-item"><div class="body-stat-label"><span>${emoji}</span>${label}</div><div class="body-stat-value">${val}<span class="body-stat-unit">cm</span>${diff(key) || ''}</div></div>`;
+  };
+  let html = `
+    <div class="body-latest">
+      <div class="body-latest-title">最新一次 · ${cur.date}${cur.note ? ' · ' + escTodo(cur.note) : ''}</div>
+      <div class="body-stat-grid">
+        ${item('胸围', 'chest', '🐻')}
+        ${item('腰围', 'waist', '👗')}
+        ${item('臀围', 'hip', '🍑')}
+      </div>
+    </div>`;
+  if (list.length > 1) {
+    html += `<div class="body-history"><table><thead><tr><th>日期</th><th>胸围</th><th>腰围</th><th>臀围</th><th>备注</th><th>操作</th></tr></thead><tbody>`;
+    list.forEach((r, i) => {
+      html += `<tr><td>${r.date}</td><td>${r.chest != null ? r.chest.toFixed(1) : '—'}</td><td>${r.waist != null ? r.waist.toFixed(1) : '—'}</td><td>${r.hip != null ? r.hip.toFixed(1) : '—'}</td><td>${escTodo(r.note || '—')}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openBodyRecordModal(${store.bodyRecords.indexOf(r)})">✏️</button> <button class="row-del-btn" onclick="deleteBodyRecord(${store.bodyRecords.indexOf(r)})">🗑</button></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+  el.innerHTML = html;
 }
 
 // ==================== 运动打卡 修改/删除 ====================
