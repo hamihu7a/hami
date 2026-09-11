@@ -5177,6 +5177,7 @@
         <span>🎂</span> 重要日期
         <button class="date-add-btn" onclick="openDateModal()" type="button">➕ 新增日期</button>
       </div>
+      <div id="imp-next" style="margin-bottom:12px;"></div>
       <div id="important-dates"></div>
     </div>
 
@@ -7742,6 +7743,7 @@ function renderAllFromCloud() {
   try {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
       'renderCreate', 'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
+      'renderHabit', 'renderWashPredict', 'renderImpNext',
       'renderTripPlans', 'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
@@ -10959,6 +10961,11 @@ function switchPanel(name, navEl) {
   // 切到「经期记录 / 洗头记录」面板，强制重渲（renderPeriod 会同时刷新经期与洗头两块，按 id 落地到各自面板）
   if (name === 'period' || name === 'wash') {
     try { renderPeriod(); } catch (e) {}
+    try { renderWashPredict(); } catch (e) {}
+  }
+  // 切到「习惯打卡」面板，强制重渲热力图
+  if (name === 'habit') {
+    try { renderHabit(); } catch (e) {}
   }
   // 切到「如厕记录 / 敷面膜」面板，强制重渲（两块各自独立，id 互不冲突）
   if (name === 'toilet' || name === 'mask') {
@@ -14763,6 +14770,140 @@ function renderReminder() {
 
   // 显示提醒横幅
   showReminderBanners();
+}
+
+// ==================== 习惯打卡热力图 ====================
+function habitDayCountMap() {
+  // 返回 { 'YYYY-MM-DD': 当天打卡的项目数 }
+  const map = {};
+  const add = (date) => { if (date) map[date] = (map[date] || 0) + 1; };
+  (store.periodRecords || []).forEach(p => { if (p.start) add(p.start); if (p.end) add(p.end); });
+  (store.washRecords || []).forEach(r => add(r.date));
+  (store.toiletRecords || []).forEach(r => add(r.date));
+  (store.maskRecords || []).forEach(r => add(r.date));
+  (store.exerciseRecords || []).forEach(r => {
+    if (r && r.date) {
+      const rest = ['休息日', '感冒休息', '取消'];
+      if (r.aerobics || r.cardio || r.weights || (r.duration && rest.indexOf(r.duration) < 0)) add(r.date);
+    }
+  });
+  (store.weightRecords || []).forEach(r => { if (r && r.date) add(r.date); });
+  return map;
+}
+
+function renderHabit() {
+  const el = document.getElementById('habit-heatmap');
+  const wkEl = document.getElementById('habit-week');
+  if (!el) return;
+  const map = habitDayCountMap();
+  const today = new Date();
+  const months = [];
+  for (let i = 2; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    months.push({ y: d.getFullYear(), m: d.getMonth() });
+  }
+  const wn = ['日', '一', '二', '三', '四', '五', '六'];
+  let html = '';
+  months.forEach(mo => {
+    const first = new Date(mo.y, mo.m, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(mo.y, mo.m + 1, 0).getDate();
+    html += '<div style="display:inline-block;vertical-align:top;margin-right:14px;margin-bottom:6px;">';
+    html += '<div style="font-size:12px;font-weight:700;color:#d14b73;margin-bottom:4px;text-align:center;">' + (mo.y) + '年' + (mo.m + 1) + '月</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
+    for (let i = 0; i < 7; i++) html += '<div style="width:15px;height:15px;font-size:9px;color:#b890a0;text-align:center;">' + wn[i] + '</div>';
+    for (let i = 0; i < startDow; i++) html += '<div style="width:15px;height:15px;"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = mo.y + '-' + String(mo.m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      const cnt = map[ds] || 0;
+      let bg = '#f3e6eb';
+      if (cnt >= 3) bg = '#e85f7a';
+      else if (cnt === 2) bg = '#ff8fb0';
+      else if (cnt === 1) bg = '#ffc2d4';
+      html += '<div title="' + ds + ' · 打卡' + cnt + '项" style="width:15px;height:15px;border-radius:3px;background:' + bg + ';"></div>';
+    }
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+
+  // 本周完成概览
+  const now = new Date();
+  const dow = now.getDay();
+  const weekdayNum = dow === 0 ? 7 : dow;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (weekdayNum - 1));
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 7);
+  const inWeek = (ds) => { const d = new Date(ds + 'T00:00:00'); return d >= monday && d < sunday; };
+  const cnt = (arr, f) => (arr || []).filter(f).length;
+  const restDays = ['休息日', '感冒休息', '取消'];
+  const wPeriod = cnt(store.periodRecords, p => (p.start && inWeek(p.start)) || (p.end && inWeek(p.end)));
+  const wWash = cnt(store.washRecords, r => inWeek(r.date));
+  const wToilet = cnt(store.toiletRecords, r => inWeek(r.date));
+  const wMask = cnt(store.maskRecords, r => inWeek(r.date));
+  const wEx = cnt(store.exerciseRecords, r => r && r.date && inWeek(r.date) && (r.aerobics || r.cardio || r.weights || (r.duration && restDays.indexOf(r.duration) < 0)));
+  const wWt = cnt(store.weightRecords, r => r && r.date && inWeek(r.date));
+  const cards = [['经期', wPeriod], ['洗头', wWash], ['如厕', wToilet], ['面膜', wMask], ['运动', wEx], ['体重', wWt]];
+  wkEl.innerHTML = cards.map(c => '<div style="background:#fff8fa;border:1px solid #ffe4ec;border-radius:10px;padding:8px 10px;"><div style="font-size:12px;color:#8a6270;">' + c[0] + '</div><div style="font-size:18px;font-weight:700;color:#d14b73;">' + c[1] + '<span style="font-size:12px;color:#b87088;"> 次</span></div></div>').join('');
+}
+
+// ==================== 洗头周期预测 ====================
+function renderWashPredict() {
+  const el = document.getElementById('wash-predict');
+  if (!el) return;
+  const info = getNextWashInfo();
+  if (!info) { el.innerHTML = '<div style="font-size:13px;color:#8a6270;padding:6px 0;">记录一次洗头后，小助理会帮你预测下次该洗的日子~</div>'; return; }
+  const wn = ['日', '一', '二', '三', '四', '五', '六'];
+  const fmt = (dt) => (dt.getMonth() + 1) + '月' + dt.getDate() + '日（周' + wn[dt.getDay()] + '）';
+  let html;
+  if (info.needWash) {
+    html = '<div style="padding:12px 14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:700;color:#856404;">🧼 该洗头啦！</div><div style="font-size:13px;color:#8a6270;margin-top:4px;">距上次洗头已经 ' + info.days + ' 天，建议今天安排~</div></div>';
+  } else {
+    html = '<div style="padding:12px 14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:700;color:#d14b73;">🧴 洗头节奏刚好</div><div style="font-size:13px;color:#8a6270;margin-top:4px;">距上次洗头 ' + info.days + ' 天。建议每 3 天洗一次，下次建议 <b>' + fmt(info.date) + '</b>。</div></div>';
+  }
+  el.innerHTML = html;
+}
+
+// ==================== 重要日期：最近一个倒计时大卡 ====================
+function renderImpNext() {
+  const el = document.getElementById('imp-next');
+  if (!el) return;
+  const dates = store.importantDates || [];
+  if (dates.length === 0) { el.innerHTML = ''; return; }
+  const today = new Date(todayStr());
+  const list = dates.map((d) => { const i = calcDateInfo(d, today); const o = {}; for (const k in d) o[k] = d[k]; for (const k in i) o[k] = i[k]; return o; });
+  list.sort((a, b) => a.sortKey - b.sortKey);
+  const next = list.find(d => !d.isToday) || list[0];
+  if (!next) { el.innerHTML = ''; return; }
+  const icon = next.type === 'birthday' ? '🎂' : (next.type === 'anniversary' ? '💕' : '🔔');
+  const label = next.type === 'birthday' ? '天后生日' : (next.type === 'anniversary' ? '天后纪念日' : '天后提醒');
+  const sub = next.type === 'anniversary' ? ('💕 在一起第 ' + (next.totalDays || 0) + ' 天') : (next.hasYear && next.totalDays ? ('🌟 已来这个世界 ' + next.totalDays + ' 天') : ('📅 ' + next.date));
+  el.innerHTML = '<div style="padding:14px;background:linear-gradient(135deg,#ffd9e6,#ffeef2);border-radius:14px;border:1px solid #ffb3c6;display:flex;align-items:center;gap:12px;">'
+    + '<div style="font-size:30px;">' + icon + '</div>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:13px;color:#a14a64;">📌 最近的重要日子</div>'
+    + '<div style="font-size:16px;font-weight:800;color:#d14b73;">' + escapeHtml(next.name) + '</div>'
+    + '<div style="font-size:12px;color:#8a6270;">' + sub + '</div>'
+    + '</div>'
+    + '<div style="text-align:center;"><div style="font-size:26px;font-weight:800;color:#e85f7a;line-height:1;">' + next.daysLeft + '</div><div style="font-size:11px;color:#a14a64;">' + label + '</div></div>'
+    + '</div>';
+}
+
+// ==================== 出游清单模板库 ====================
+const TRAVEL_TEMPLATES = {
+  short: { name: '短途', items: ['身份证', '手机充电器', '耳机', '换洗衣物', '护肤品', '纸巾', '口罩', '零钱/移动支付'] },
+  long: { name: '长途', items: ['身份证/护照', '手机充电器', '充电宝', '耳机', '换洗衣物', '洗漱用品', '护肤品', '常备药', '雨伞', '拖鞋', '相机', '零食', '纸巾', '口罩'] },
+  shoot: { name: '拍摄出行', items: ['身份证', '手机充电器', '充电宝', '耳机', '补光灯/打光板', '自拍杆/三脚架', '备用手机/相机', '广角镜头', '反光板', '化妆包', '假发/配饰', '数据线', '移动WiFi/流量卡', '零食饮水'] }
+};
+function applyTravelTemplate(idx, type) {
+  if (!store.travelPlans || !store.travelPlans[idx]) { try { hamiToast('没找到这个出游记录~'); } catch (e) {} return; }
+  const tpl = TRAVEL_TEMPLATES[type];
+  if (!tpl) return;
+  const target = store.travelPlans[idx];
+  const ok = window.confirm('确定把「' + tpl.name + '」清单套用到「' + (target.destination || '这次出游') + '」吗？\n将覆盖现有清单（' + ((target.checklist || []).length) + ' 项）。');
+  if (!ok) return;
+  target.checklist = tpl.items.map(n => ({ name: n, done: false }));
+  saveData();
+  try { renderTripPlans(); } catch (e) {}
+  try { hamiToast('📋 已套用「' + tpl.name + '」清单，共 ' + tpl.items.length + ' 项~'); } catch (e) {}
 }
 
 // ==================== 游玩计划：行程 + 每日安排 ====================
