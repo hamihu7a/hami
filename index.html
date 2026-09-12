@@ -1306,7 +1306,7 @@
 
   /* ====== 记定制单弹窗（模拟人生总收入面板专用） ====== */
   #custom-order-modal .modal-card { max-height: calc(100vh - 56px - 24px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .co-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .co-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .co-field { display: flex; flex-direction: column; gap: 6px; }
   .co-field > label { font-size: 13px; font-weight: 700; color: var(--c-muted); }
   .co-field-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
@@ -4089,7 +4089,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-12-77';
+  var BUILD_VER = '2026-09-12-78';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -11736,16 +11736,23 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = html;
   }
 
-  // 历史统计
-  const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  // 历史统计：固定展示范围（2026-07 ~ 2026-12）+ 数据中出现的其它月份，保证有记录就一定看得到
+  const baseMonths = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  const monthSet = {};
+  baseMonths.forEach(m => monthSet[m] = true);
+  (store.mediaRecords || []).forEach(function (r) { const m = (r.date || '').substring(0, 7); if (/^\d{4}-\d{2}$/.test(m)) monthSet[m] = true; });
+  const months = Object.keys(monthSet).sort();
   let histHtml = '';
+  let totalAll = 0;
   months.forEach(m => {
     const recs = store.mediaRecords.filter(r => r.date.startsWith(m));
     const bc = recs.filter(r => r.account === 'big').reduce((s,r)=>s+(r.count||1),0);
     const sc = recs.filter(r => r.account === 'small').reduce((s,r)=>s+(r.count||1),0);
     const dc = recs.filter(r => r.account === 'douyin' || r.douyin).reduce((s,r)=>s+(r.count||1),0);
-    histHtml += `<tr><td>${m}</td><td>${bc} 条</td><td>${sc} 条</td><td>${dc} 条</td><td><b>${bc+sc+dc} 条</b></td></tr>`;
+    const tot = bc+sc+dc; totalAll += tot;
+    histHtml += `<tr><td>${m}</td><td>${bc} 条</td><td>${sc} 条</td><td>${dc} 条</td><td><b>${tot} 条</b></td></tr>`;
   });
+  histHtml += `<tr style="background:rgba(255,158,181,0.12);"><td>合计</td><td colspan="3"></td><td><b>${totalAll} 条</b></td></tr>`;
   document.getElementById('media-history').innerHTML = histHtml;
 
   // 发布 7~30 天还没回填数据的提醒
@@ -11857,10 +11864,13 @@ function toggleScheduleStatus(idx) {
 }
 function renderPublishCalendar() {
   if (!store.publishSchedule) store.publishSchedule = [];
+  if (!store.mediaRecords) store.mediaRecords = [];
   const month = schViewMonth;
   const p = month.split('-').map(Number);
   const yy = p[0], mm = p[1];
   const monthSchedules = store.publishSchedule.filter(function (s) { return (s.date || '').substring(0, 7) === month; }).slice().sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
+  // v78：自媒体更新记录（已发布）也并入日历，标记完成/记一条后日历立刻能看到
+  const monthMedia = store.mediaRecords.filter(function (r) { return (r.date || '').substring(0, 7) === month; }).slice().sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
 
   const monthLabel = document.getElementById('sch-cal-month');
   if (monthLabel) monthLabel.textContent = yy + '年' + mm + '月';
@@ -11871,6 +11881,7 @@ function renderPublishCalendar() {
     const daysInMonth = new Date(yy, mm, 0).getDate();
     const byDay = {};
     monthSchedules.forEach(function (s) { const d = (s.date || '').substring(8, 10); if (d) (byDay[d] = byDay[d] || []).push(s); });
+    monthMedia.forEach(function (r) { const d = (r.date || '').substring(8, 10); if (d) (byDay[d] = byDay[d] || []).push({ account: r.account, status: 'done', _mr: true }); });
     let html = '<div class="mini-cal-grid">';
     const wk = ['日', '一', '二', '三', '四', '五', '六'];
     wk.forEach(function (w) { html += '<div class="mini-cal-wk">' + w + '</div>'; });
@@ -11891,8 +11902,8 @@ function renderPublishCalendar() {
 
   const listEl = document.getElementById('media-schedule-list');
   if (listEl) {
-    if (monthSchedules.length === 0) {
-      listEl.innerHTML = '<div class="empty-state" style="padding:16px 0;"><p style="font-size:13px;">本月暂无排期</p><p style="font-size:12px;margin-top:4px;">点上方「➕ 加排期」安排发布计划~</p></div>';
+    if (monthSchedules.length === 0 && monthMedia.length === 0) {
+      listEl.innerHTML = '<div class="empty-state" style="padding:16px 0;"><p style="font-size:13px;">本月暂无排期/记录</p><p style="font-size:12px;margin-top:4px;">点上方「➕ 加排期」安排计划，或「记一条/标记完成」记入已发布~</p></div>';
     } else {
       let html = '';
       monthSchedules.forEach(function (s) {
@@ -11909,6 +11920,21 @@ function renderPublishCalendar() {
           + '<button class="sch-btn ' + (done ? 'undo' : 'ok') + '" onclick="toggleScheduleStatus(' + idx + ')">' + (done ? '↩ 未发' : '✓ 已发') + '</button>'
           + '<button class="sch-btn edit" onclick="openScheduleModal(' + idx + ')">改</button>'
           + '<button class="sch-btn del" onclick="deleteSchedule(' + idx + ')">删</button>'
+          + '</div></div>';
+      });
+      monthMedia.forEach(function (r) {
+        const mIdx = store.mediaRecords.indexOf(r);
+        const acc = r.account || 'big';
+        const title = (r.title || ('更新' + (r.count || 1) + '条'));
+        html += '<div class="sch-item done">'
+          + '<div class="sch-item-main">'
+          + '<div class="sch-item-date">' + (r.date || '').substring(5) + '</div>'
+          + '<div class="sch-item-acc ' + schAccClass(acc) + '">' + schAccName(acc) + (r.douyin ? '·抖音' : '') + '</div>'
+          + '<div class="sch-item-type">已发布</div>'
+          + '<div class="sch-item-title">' + crEscapeHtml(title) + '</div>'
+          + '</div>'
+          + '<div class="sch-item-actions">'
+          + '<button class="sch-btn edit" onclick="openMediaRecordModal(' + mIdx + ')">改</button>'
           + '</div></div>';
       });
       listEl.innerHTML = html;
@@ -12636,6 +12662,7 @@ function submitMediaRecord() {
   saveData();
   closeMediaRecordModal();
   renderMedia();
+  try { renderPublishCalendar(); } catch (e) {}
   hamiToast('✅ 已更新：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
 }
 async function deleteMediaRecord(idx) {
@@ -12646,6 +12673,7 @@ async function deleteMediaRecord(idx) {
   store.mediaRecords.splice(idx, 1);
   hamiDeleteSync();
   try { renderMedia(); } catch (e) {}
+  try { renderPublishCalendar(); } catch (e) {}
   finToast('🗑️ 已删除更新记录');
 }
 
