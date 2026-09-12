@@ -4089,7 +4089,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-12-76';
+  var BUILD_VER = '2026-09-12-77';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -12121,10 +12121,12 @@ function syncFuturePostMediaRecord(fpId) {
     return;
   }
   const isDy = p.douyin || p.account === 'douyin';
+  const doneDate = todayStr();
   recs.forEach(function (r) {
     r.account = p.account || 'big';
     r.douyin = isDy;
-    // r.date 保持为"实际完成日"（今天），不再回填计划的未来日期，避免从当月视图消失
+    // 联动记录日期统一按"今天"记，确保打开「自媒体更新记录」当月就能看见
+    r.date = doneDate;
     r.title = p.title || r.title;
   });
 }
@@ -12182,9 +12184,19 @@ function addLinkedMediaRecord(p, silent, overrideDate) {
       store.__deleted.mediaRecords = store.__deleted.mediaRecords.filter(function (k) { return k !== ck; });
     }
   } catch (e) {}
-  // 避免重复写入
-  const exists = store.mediaRecords.some(function (r) { return r.futurePostId === p.id; });
-  if (exists) return;
+  // 如果已经有联动记录（比如旧版本写错日期），不直接跳过，而是把日期/账号/标题同步成最新状态，
+  // 保证「已完成图文项目」里的记录一定落在当前月、标题最新。
+  const existing = store.mediaRecords.filter(function (r) { return r.futurePostId === p.id; });
+  if (existing.length) {
+    existing.forEach(function (r) {
+      r.date = recDate;
+      r.account = acc;
+      r.douyin = isDy;
+      r.title = p.title || r.title;
+    });
+    if (!silent) hamiToast('✅ 已更新联动记录\n「自媒体更新记录」已按 ' + recDate + ' 刷新为：' + accName + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
+    return;
+  }
   store.mediaRecords.push({
     id: 'mr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     futurePostId: p.id,
@@ -12344,26 +12356,61 @@ function backfillFutureDoneToMedia() {
   if (changed) { try { saveData(); } catch (e) {} try { renderMedia(); } catch (e) {} }
 }
 
+// 标题话题库：根据标题里的关键词给出一条更贴近内容的改写示例
+const TITLE_TOPIC_HINTS = [
+  { keywords: ['脸型','捏脸'], examples: ['10款小众脸型｜附捏脸参数','3步捏出高级脸'] },
+  { keywords: ['美化档','档'], examples: ['9个月打磨美化档｜安装教程+免费分享','50+绝美美化档合集'] },
+  { keywords: ['房屋','房子','建房','装修'], examples: ['3套少女心房屋｜免费分享','50平loft建房教程'] },
+  { keywords: ['穿搭','服装','衣服','ootd','OOTD'], examples: ['5套秋冬穿搭合集','模拟人生穿搭模板｜附链接'] },
+  { keywords: ['模组','mod','MOD'], examples: ['20+实用模组合集｜手把手安装','免费模组分享'] },
+  { keywords: ['剧情','故事'], examples: ['3个抓马剧情设定','模拟人生连续剧#1'] }
+];
+function getTitleSuggestions(t, score, len, hasDigit, hitBenefit, hasSymbol, bad) {
+  const tips = [];
+  // 1. 风险词最优先
+  if (bad.length) tips.push('风险词「' + bad.join('、') + '」建议替换，避免限流');
+  // 2. 长度问题
+  if (len < 12) tips.push('标题只有' + len + '字，建议补到14–24字，把亮点讲清楚');
+  else if (len > 26) tips.push('标题有' + len + '字，手机端可能被截断，建议精简');
+  // 最多只显示2条，按优先级截取
+  if (tips.length >= 2) return tips.slice(0, 2);
+  // 3. 缺数字
+  if (!hasDigit) tips.push('标题缺具体数字，可加入「3步」「5套」等参数');
+  if (tips.length >= 2) return tips.slice(0, 2);
+  // 4. 缺利益词：根据标题话题给具体示例
+  if (!hitBenefit) {
+    const topic = TITLE_TOPIC_HINTS.find(function(h){ return h.keywords.some(function(k){ return t.indexOf(k) >= 0; }); });
+    if (topic) tips.push('可参考改写：' + topic.examples.join(' / '));
+    else tips.push('标题缺利益词，加入「教程/合集/避坑」让人一眼知道能得到什么');
+  }
+  if (tips.length >= 2) return tips.slice(0, 2);
+  // 5. 缺符号/emoji
+  if (!hasSymbol) tips.push('纯文字标题可加1个emoji或符号，提升首页视觉吸引力');
+  if (!tips.length) tips.push('标题完整，暂无改进建议');
+  return tips.slice(0, 2);
+}
 // 分析标题：返回 {score, level, bad, marked, tips}
 function analyzeTitleInner(t) {
   let score = 60; const tips = [];
   const len = t.length;
   if (len >= 14 && len <= 24) { score += 12; }
-  else if (len < 14) { score -= 8; tips.push('标题稍短（' + len + '字），建议 14–24 字更易被完整看到'); }
-  else { score -= 6; tips.push('标题偏长（' + len + '字），手机端可能被截断'); }
-  if (/\d/.test(t)) { score += 6; } else { tips.push('加个数字/参数（如「3步」「5套」）更有点击欲'); }
+  else if (len < 14) { score -= 8; }
+  else { score -= 6; }
+  const hasDigit = /\d/.test(t);
+  if (hasDigit) { score += 6; }
   const bene = ['教程','干货','保姆级','参数','免费','合集','必看','揭秘','收藏','攻略','模板','清单','进阶','新手','避坑'];
   const hit = bene.filter(function(w){ return t.indexOf(w) >= 0; });
   if (hit.length) score += Math.min(10, hit.length * 5);
-  else tips.push('加个利益词（教程/干货/保姆级/合集）让人一眼知道能得到什么');
-  if (/[^\u4e00-\u9fa5A-Za-z0-9\s]/g.test(t)) score += 4; else tips.push('可加 1 个 emoji 或符号提升视觉');
+  const hasSymbol = /[^\u4e00-\u9fa5A-Za-z0-9\s]/g.test(t);
+  if (hasSymbol) score += 4;
   const bad = CR_PROHIBITED.filter(function(w){ return t.indexOf(w) >= 0; });
-  if (bad.length) { score -= bad.length * 8; tips.push('标题含违禁/风险词，建议替换，避免限流'); }
+  if (bad.length) { score -= bad.length * 8; }
   score = Math.max(0, Math.min(100, score));
   const level = score >= 85 ? '优秀' : score >= 70 ? '良好' : score >= 55 ? '及格' : '待优化';
   let marked = t;
   bad.forEach(function(w){ marked = marked.split(w).join('【' + w + '】'); });
-  return { score: score, level: level, bad: bad, marked: marked, tips: tips };
+  const sug = getTitleSuggestions(t, score, len, hasDigit, hit.length > 0, hasSymbol, bad);
+  return { score: score, level: level, bad: bad, marked: marked, tips: sug };
 }
 
 // 检测文案中的违禁/风险词
