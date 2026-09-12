@@ -1563,6 +1563,26 @@
   }
   .future-post-actions .fp-check-btn:hover { background: #fff0cc; }
   .future-post-actions button:active { transform: scale(0.95); }
+  /* ===== 已完成图文项目（折叠区）===== */
+  .future-done-section { margin-top: 18px; }
+  .future-done-head {
+    font-size: 14px; font-weight: 800; color: var(--c-pink-deep, #d14b73);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    padding: 8px 12px; border-radius: 12px;
+    background: linear-gradient(90deg, rgba(255,209,222,0.5), rgba(255,244,205,0.35));
+    border: 1px solid rgba(209,75,115,0.18);
+  }
+  .future-done-count {
+    font-size: 12px; font-weight: 700; color: #fff; background: #6fcf97;
+    border-radius: 999px; padding: 1px 9px;
+  }
+  .future-done-toggle {
+    display: block; width: 100%; margin-top: 8px; padding: 8px 0;
+    border: 1px dashed rgba(209,75,115,0.4); border-radius: 10px;
+    background: rgba(255,255,255,0.6); color: var(--c-pink-deep, #d14b73);
+    font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .future-done-toggle:hover { background: rgba(255,224,233,0.7); }
   .fp-check-result {
     margin-top: 8px;
     padding: 10px 12px;
@@ -5672,6 +5692,7 @@
       </div>
     </div>
     <div id="future-post-list"></div>
+    <div id="future-done-section" class="future-done-section"></div>
   </div>
 
   <!-- 未来图文记录弹窗 -->
@@ -10803,6 +10824,7 @@ function switchPanel(name, navEl) {
     try { setTimeout(function () { hamiSyncSelfCheck(); }, 300); } catch (e) {}
   }
   if (name === 'benchmark') {
+    try { backfillFutureDoneToMedia(); } catch (e) {}
     try { renderFuturePosts(); } catch (e) {}
   }
   if (name === 'todo' || name === 'todo-daily' || name === 'todo-work') {
@@ -12125,12 +12147,9 @@ function toggleFuturePostDone(idOrIdx) {
   p.done = nowDone;
   if (nowDone) {
     // 标记完成 → 自动联动一条到「自媒体更新记录」
-    // addLinkedMediaRecord 内部按 futurePostId 去重，重复点击完成不会重复创建
-    if (!p.date) {
-      hamiToast('⚠️ 这条图文还没设日期，先点「编辑」补上日期，才能完成联动');
-    } else {
-      addLinkedMediaRecord(p);
-    }
+    // addLinkedMediaRecord 内部按 futurePostId 去重，重复点击完成不会重复创建；
+    // 若缺日期会默认用今天，保证一定写入（修复"标记完成却没出现在自媒体记录"）
+    addLinkedMediaRecord(p);
   } else {
     // 撤销完成 → 同步移除「自媒体更新记录」里的联动记录
     // removeLinkedMediaRecord 已写墓碑+存档+重渲染，刷新/换设备都不会再复活
@@ -12144,17 +12163,26 @@ function toggleFuturePostDone(idOrIdx) {
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
 }
-function addLinkedMediaRecord(p) {
-  if (!p || !p.id || !p.date) return;
+function addLinkedMediaRecord(p, silent) {
+  if (!p || !p.id) return;
   if (!store.mediaRecords) store.mediaRecords = [];
-  // 避免重复写入
-  const exists = store.mediaRecords.some(function (r) { return r.futurePostId === p.id; });
-  if (exists) return;
+  // 缺日期时默认用今天，保证一定写入自媒体更新记录（根治"标记完成却没出现在自媒体记录里"）
+  if (!p.date) p.date = todayStr();
   const acc = p.account || 'big';
   const isDy = p.douyin || acc === 'douyin';
   const accName = acc === 'big' ? '🎨 美化档大号' : acc === 'small' ? '👤 定制人物小号' : '🎵 抖音';
+  // 清除可能残留的墓碑，避免"撤销后再标记"被云端合并按内容键过滤掉
+  try {
+    const ck = 'mrC_' + (p.date || '') + '|' + String(p.title || '');
+    if (store.__deleted && Array.isArray(store.__deleted.mediaRecords)) {
+      store.__deleted.mediaRecords = store.__deleted.mediaRecords.filter(function (k) { return k !== ck; });
+    }
+  } catch (e) {}
+  // 避免重复写入
+  const exists = store.mediaRecords.some(function (r) { return r.futurePostId === p.id; });
+  if (exists) return;
   store.mediaRecords.push({
-    id: 'mr_' + Date.now(),
+    id: 'mr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     futurePostId: p.id,
     date: p.date,
     account: acc,
@@ -12167,7 +12195,7 @@ function addLinkedMediaRecord(p) {
     count: 1,
     createdAt: Date.now()
   });
-  hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + p.date + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
+  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + p.date + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
 }
 function removeLinkedMediaRecord(fpId) {
   if (!store.mediaRecords || !fpId) return;
@@ -12209,65 +12237,107 @@ function futureGo(delta) {
   __futurePage = Math.max(0, Math.min((__futurePage || 0) + delta, mp));
   renderFuturePosts();
 }
+let __doneExpanded = false;
 function renderFuturePosts() {
   // 先去重，再渲染——保证删除/编辑按钮的 idx 与 store 严格一一对应，不错位
   try { dedupFuturePosts(); } catch (e) {}
   const box = document.getElementById('future-post-list');
   if (!box) return;
-  const list = (store.futurePosts || []).slice().sort(function (a, b) {
+  const today = todayStr();
+  const all = (store.futurePosts || []).slice().sort(function (a, b) {
     return (a.date || '').localeCompare(b.date || '') || (b.createdAt || 0) - (a.createdAt || 0);
   });
-  if (!list.length) {
+  const mainList = all.filter(function (p) { return !p.done; });   // 待发布
+  const doneList = all.filter(function (p) { return !!p.done; });  // 已完成
+
+  // ---- 主列表：待发布的（分页 3/页） ----
+  if (!mainList.length) {
     box.innerHTML = '<div class="empty-state"><div class="big-icon">📅</div><p>还没有未来的图文计划</p><p style="font-size:12px;margin-top:6px;">点右上角「添加一条」或「批量连更」，把接下来要发的内容暂存起来~</p></div>';
-    return;
+  } else {
+    const maxPg = Math.max(0, Math.ceil(mainList.length / ACC_PAGE) - 1);
+    if ((__futurePage || 0) > maxPg) __futurePage = maxPg;
+    const start = (__futurePage || 0) * ACC_PAGE;
+    const pageList = mainList.slice(start, start + ACC_PAGE);
+    let html = '';
+    pageList.forEach(function (p) { html += fpCardHtml(p, today); });
+    if (mainList.length > ACC_PAGE) {
+      html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
+        <button class="flow-toggle-btn" type="button" onclick="futureGo(-1)" ${(__futurePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <span style="font-size:12px;color:#8a6270;">第 ${(__futurePage || 0) + 1}/${maxPg + 1} 页 · 共 ${mainList.length} 条待发布</span>
+        <button class="flow-toggle-btn" type="button" onclick="futureGo(1)" ${(__futurePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      </div>`;
+    }
+    box.innerHTML = html;
   }
-  const today = todayStr();
-  // 分页
-  const maxPg = Math.max(0, Math.ceil(list.length / ACC_PAGE) - 1);
-  if ((__futurePage || 0) > maxPg) __futurePage = maxPg;
-  const start = (__futurePage || 0) * ACC_PAGE;
-  const pageList = list.slice(start, start + ACC_PAGE);
-  let html = '';
-  pageList.forEach(function (p) {
-    const originalIdx = (store.futurePosts || []).indexOf(p);
-    // 优先按 id 找 idx（按 id 精确，不会因为去重/排序错位）
-    const fpRef = p.id ? "'" + p.id.replace(/'/g, "\\'") + "'" : String(originalIdx);
-    const isOverdue = p.date && p.date < today && !p.done;
-    const tagsHtml = (p.tags || '').split(/\s+/).filter(Boolean).map(function (t) {
-      return '<span class="future-post-tag">' + crEscapeHtml(t) + '</span>';
-    }).join('');
-    const contentPreview = (p.content || '').length > 55 ? crEscapeHtml(p.content.substring(0, 55)) + '…' : crEscapeHtml(p.content || '');
-    const doneLabel = p.done ? '撤销完成' : '标记完成';
-    const doneIcon = p.done ? '↩️' : '✓';
-    const accMap = { big: '🎨 美化档大号', small: '👤 定制人物小号', douyin: '🎵 抖音' };
-    const accName = accMap[p.account] || accMap['big'];
-    html += '<div class="future-post-card' + (p.done ? ' done' : '') + (isOverdue ? ' overdue' : '') + '">'
-      + '<div class="future-post-title">' + crEscapeHtml(p.title || '（无标题）') + '</div>'
-      + '<div class="future-post-meta">'
-      +   '<span class="future-post-date' + (isOverdue ? ' late' : '') + '">📅 ' + (p.date || '未设日期') + '</span>'
-      +   '<span class="future-post-tag">' + accName + '</span>'
-      +   (p.douyin ? '<span class="future-post-tag" style="background:rgba(25,25,25,0.08);color:#5a3a48;">🎵 同步抖音</span>' : '')
-      +   (p.done ? '<span class="future-post-done-badge">已完成</span>' : '')
-      +   (tagsHtml ? tagsHtml : '')
-      + '</div>'
-      + (contentPreview ? '<div class="future-post-content">' + contentPreview + '</div>' : '')
-      + '<div class="future-post-actions">'
-      +   '<button class="fp-edit-btn" onclick="openFuturePostModal(' + fpRef + ')">✏️ 编辑</button>'
-      +   '<button class="fp-check-btn" onclick="checkFuturePostTitle(' + fpRef + ')" title="标题评分+违禁词自检">🏆 检查</button>'
-      +   '<button class="fp-done-btn" onclick="toggleFuturePostDone(' + fpRef + ')" title="标记已完成/未完成">' + doneIcon + ' ' + doneLabel + '</button>'
-      +   '<button class="fp-del-btn" onclick="deleteFuturePost(' + fpRef + ')">🗑 删除</button>'
-      + '</div>'
-      + '<div id="fp-check-result-' + (p.id || originalIdx) + '" class="fp-check-result" style="display:none;"></div>'
-      + '</div>';
+
+  // ---- 已完成图文项目（多则折叠） ----
+  renderFutureDone(doneList, today);
+}
+
+// 单条卡片 HTML（主列表与已完成区共用）
+function fpCardHtml(p, today) {
+  const originalIdx = (store.futurePosts || []).indexOf(p);
+  const fpRef = p.id ? "'" + p.id.replace(/'/g, "\\'") + "'" : String(originalIdx);
+  const isOverdue = p.date && p.date < today && !p.done;
+  const tagsHtml = (p.tags || '').split(/\s+/).filter(Boolean).map(function (t) {
+    return '<span class="future-post-tag">' + crEscapeHtml(t) + '</span>';
+  }).join('');
+  const contentPreview = (p.content || '').length > 55 ? crEscapeHtml(p.content.substring(0, 55)) + '…' : crEscapeHtml(p.content || '');
+  const doneLabel = p.done ? '撤销完成' : '标记完成';
+  const doneIcon = p.done ? '↩️' : '✓';
+  const accMap = { big: '🎨 美化档大号', small: '👤 定制人物小号', douyin: '🎵 抖音' };
+  const accName = accMap[p.account] || accMap['big'];
+  return '<div class="future-post-card' + (p.done ? ' done' : '') + (isOverdue ? ' overdue' : '') + '">'
+    + '<div class="future-post-title">' + crEscapeHtml(p.title || '（无标题）') + '</div>'
+    + '<div class="future-post-meta">'
+    +   '<span class="future-post-date' + (isOverdue ? ' late' : '') + '">📅 ' + (p.date || '未设日期') + '</span>'
+    +   '<span class="future-post-tag">' + accName + '</span>'
+    +   (p.douyin ? '<span class="future-post-tag" style="background:rgba(25,25,25,0.08);color:#5a3a48;">🎵 同步抖音</span>' : '')
+    +   (p.done ? '<span class="future-post-done-badge">已完成</span>' : '')
+    +   (tagsHtml ? tagsHtml : '')
+    + '</div>'
+    + (contentPreview ? '<div class="future-post-content">' + contentPreview + '</div>' : '')
+    + '<div class="future-post-actions">'
+    +   '<button class="fp-edit-btn" onclick="openFuturePostModal(' + fpRef + ')">✏️ 编辑</button>'
+    +   '<button class="fp-check-btn" onclick="checkFuturePostTitle(' + fpRef + ')" title="标题评分+违禁词自检">🏆 检查</button>'
+    +   '<button class="fp-done-btn" onclick="toggleFuturePostDone(' + fpRef + ')" title="标记已完成/未完成">' + doneIcon + ' ' + doneLabel + '</button>'
+    +   '<button class="fp-del-btn" onclick="deleteFuturePost(' + fpRef + ')">🗑 删除</button>'
+    + '</div>'
+    + '<div id="fp-check-result-' + (p.id || originalIdx) + '" class="fp-check-result" style="display:none;"></div>'
+    + '</div>';
+}
+
+// 已完成区：超过 3 条默认折叠，点「展开全部」看其余
+function renderFutureDone(doneList, today) {
+  const sec = document.getElementById('future-done-section');
+  if (!sec) return;
+  if (!doneList || !doneList.length) { sec.innerHTML = ''; return; }
+  const COLLAPSE_AT = 3;
+  const showAll = __doneExpanded || doneList.length <= COLLAPSE_AT;
+  const viewList = showAll ? doneList : doneList.slice(0, COLLAPSE_AT);
+  let html = '<div class="future-done-head">📦 已完成图文项目 <span class="future-done-count">' + doneList.length + '</span></div>';
+  viewList.forEach(function (p) { html += fpCardHtml(p, today); });
+  if (doneList.length > COLLAPSE_AT) {
+    if (showAll) {
+      html += '<button class="future-done-toggle" onclick="__doneExpanded=false;renderFuturePosts();">收起 ▲</button>';
+    } else {
+      html += '<button class="future-done-toggle" onclick="__doneExpanded=true;renderFuturePosts();">展开全部 ' + doneList.length + ' 条 ▼</button>';
+    }
+  }
+  sec.innerHTML = html;
+}
+
+// 回填：启动时把"已标记完成但漏写自媒体记录"的历史数据补上（修复换版本前已完成的两条没进自媒体记录）
+function backfillFutureDoneToMedia() {
+  if (!store.futurePosts || !store.mediaRecords) return;
+  let changed = false;
+  (store.futurePosts || []).forEach(function (p) {
+    if (p && p.done && p.id) {
+      const has = store.mediaRecords.some(function (r) { return r.futurePostId === p.id; });
+      if (!has) { addLinkedMediaRecord(p, true); changed = true; }
+    }
   });
-  if (list.length > ACC_PAGE) {
-    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-      <button class="flow-toggle-btn" type="button" onclick="futureGo(-1)" ${(__futurePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-      <span style="font-size:12px;color:#8a6270;">第 ${(__futurePage || 0) + 1}/${maxPg + 1} 页 · 共 ${list.length} 条</span>
-      <button class="flow-toggle-btn" type="button" onclick="futureGo(1)" ${(__futurePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
-    </div>`;
-  }
-  box.innerHTML = html;
+  if (changed) { try { saveData(); } catch (e) {} try { renderMedia(); } catch (e) {} }
 }
 
 // 分析标题：返回 {score, level, bad, marked, tips}
@@ -18232,6 +18302,7 @@ try { renderMedia(); } catch(e) { console.log('renderMedia error:', e.message); 
 try { renderPublishCalendar(); } catch(e) { console.log('renderPublishCalendar error:', e.message); }
 try { renderCustomBoard(); } catch(e) { console.log('renderCustomBoard error:', e.message); }
 try { renderInspire(); } catch(e) { console.log('renderInspire error:', e.message); }
+try { backfillFutureDoneToMedia(); } catch(e) { console.log('backfillFutureDoneToMedia error:', e.message); }
 try { renderFuturePosts(); } catch(e) { console.log('renderFuturePosts error:', e.message); }
 try { renderPeriod(); } catch(e) { console.log('renderPeriod error:', e.message); }
 try { renderToilet(); } catch(e) { console.log('renderToilet error:', e.message); }
