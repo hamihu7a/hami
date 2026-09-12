@@ -4029,6 +4029,11 @@
 .kb-edit { color:#7d9bd6; }
 .kb-del { color:#d46a6a; }
 .kb-move:hover, .kb-edit:hover, .kb-del:hover { filter:brightness(.96); }
+.kb-pager { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.kb-page-btn { border:1px solid #e3d3dc; background:#faf4f7; color:#9a6b7b; border-radius:18px; padding:4px 14px; font-size:12px; cursor:pointer; font-family:inherit; }
+.kb-page-btn:hover:not([disabled]) { background:#ffe3ec; }
+.kb-page-info { font-size:12px; color:#8a6270; }
+.kb-page-btn[disabled] { cursor:not-allowed; }
 
 @media (max-width: 480px) {
   .kanban-sec-body { grid-template-columns:1fr; }
@@ -4138,10 +4143,6 @@
     <button class="nav-item" type="button" onclick="switchPanel('inspire', this)">
       <span class="nav-icon">📚</span>
       <span class="nav-text">模拟人生<br>更新推荐</span>
-    </button>
-    <button class="nav-item" type="button" onclick="switchPanel('create', this)">
-      <span class="nav-icon">🛠️</span>
-      <span class="nav-text">标题/选题<br>封面/体检</span>
     </button>
     <button class="nav-item" type="button" onclick="switchPanel('benchmark', this)">
       <span class="nav-icon">📅</span>
@@ -5656,79 +5657,6 @@
 
   <!-- ==================== 设置工具 ==================== -->
   <!-- ==================== 创作专业工具（本地版·零注册）==================== -->
-  <div id="panel-create" class="panel">
-
-    <div class="tip-box">
-      💕 <b>使用说明</b>：这是帮你把账号做「专业」的工具箱，全部本地运行、不用注册任何账号。包含：标题评分＋违禁词自检、选题库（系列化栏目）、封面模板库、七维账号体检、数据复盘（读「自媒体更新记录」自动算）。
-    </div>
-
-    <!-- 标题评分 + 违禁词 -->
-    <div class="card">
-      <div class="card-title"><span>🏆</span> 标题评分 ＋ 违禁词自检</div>
-      <textarea id="cr-title-input" class="cr-input" rows="2" placeholder="把想发的标题粘这里，例如：保姆级！sims4 高级捏脸参数公开"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="cr-btn" onclick="crAnalyzeTitle()">分析标题</button>
-        <button class="cr-btn ghost" onclick="document.getElementById('cr-title-input').value='';document.getElementById('cr-title-result').innerHTML='';">清空</button>
-      </div>
-      <div id="cr-title-result" style="margin-top:10px;"></div>
-    </div>
-
-    <!-- 选题库 -->
-    <div class="card">
-      <div class="card-title"><span>📋</span> 选题库 · 系列化栏目</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <input id="cr-topic-input" class="cr-input" style="flex:1;min-width:140px;" placeholder="输入一个选题，如：每周一捏·第3期">
-        <select id="cr-topic-cat" class="cr-input" style="width:120px;">
-          <option>未分类</option><option>捏脸教程</option><option>CC推荐</option><option>定制接单</option><option>剧情捏人</option><option>日常vlog</option>
-        </select>
-        <button class="cr-btn" onclick="crAddTopic()">加入选题库</button>
-      </div>
-      <div id="cr-topic-list"></div>
-    </div>
-
-    <!-- 爆款对标 -->
-    <div class="card">
-      <div class="card-title"><span>🎯</span> 爆款对标库 · 拆别人的爆款，变自己的套路</div>
-      <div style="font-size:12px;color:#8a6270;line-height:1.6;margin-bottom:8px;">
-        刷到别人的爆款，把标题和互动数据记下来，自动算出<b>爆款等级</b>和<b>可借鉴点</b>。攒够 10 条，规律自己就浮出来了。
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <input id="cr-bm-title" class="cr-input" style="flex:1 1 100%;min-width:0;" placeholder="爆款标题，如：sims4捏脸｜这个参数我调了三天">
-        <input id="cr-bm-likes" class="cr-input" style="width:84px;min-width:0;" type="number" min="0" inputmode="numeric" placeholder="点赞">
-        <input id="cr-bm-collects" class="cr-input" style="width:84px;min-width:0;" type="number" min="0" inputmode="numeric" placeholder="收藏">
-        <input id="cr-bm-comments" class="cr-input" style="width:84px;min-width:0;" type="number" min="0" inputmode="numeric" placeholder="评论">
-        <select id="cr-bm-platform" class="cr-input" style="width:96px;min-width:0;">
-          <option>小红书</option><option>抖音</option>
-        </select>
-        <button class="cr-btn" onclick="crAddBenchmark()">加入对标库</button>
-      </div>
-      <div id="cr-bm-list" style="margin-top:10px;"></div>
-    </div>
-
-    <!-- 封面模板 -->
-    <div class="card">
-      <div class="card-title"><span>🎨</span> 封面模板库（点「复制结构」照着排）</div>
-      <div id="cr-cover-list" style="display:flex;gap:12px;flex-wrap:wrap;"></div>
-    </div>
-
-    <!-- 七维体检 -->
-    <div class="card">
-      <div class="card-title"><span>🩺</span> 七维账号体检（自评）</div>
-      <div id="cr-health-dims"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
-        <button class="cr-btn" onclick="crSaveHealth()">保存体检</button>
-        <span id="cr-health-result" style="font-weight:700;color:#d14b73;"></span>
-      </div>
-    </div>
-
-    <!-- 数据复盘 -->
-    <div class="card">
-      <div class="card-title"><span>📈</span> 数据复盘（来自「自媒体更新记录」）</div>
-      <div id="cr-review-output"></div>
-    </div>
-
-  </div>
-
   <!-- ==================== 未来更新图文记录 ==================== -->
   <div id="panel-benchmark" class="panel">
     <div class="tip-box">
@@ -7971,7 +7899,7 @@ function renderAllFromCloud() {
   _cloudRendering = true;
   try {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
-      'renderCreate', 'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
+      'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext',
       'renderTripPlans', 'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
     fns.forEach(function (n) {
@@ -9361,7 +9289,6 @@ function sendHamiCmd() {
       case 'topic':
         if (!store.topicLibrary) store.topicLibrary = [];
         store.topicLibrary.unshift({ id: 'tp_' + Date.now(), name: it.text, cat: '未分类', status: 'idea', note: '', created: date });
-        try { renderCreate(); } catch (e) {}
         hints.push('选题库');
         acted = true;
         break;
@@ -10643,6 +10570,12 @@ function moveCustomOrder(idx, dir) {
   try { renderCustomBoard(); } catch (e) {}
   try { renderIncome(); } catch (e) {}
 }
+let customBoardPages = { making: 0, done: 0 };
+const CUSTOM_PAGE = 4;
+function customBoardGo(phase, delta) {
+  customBoardPages[phase] = Math.max(0, (customBoardPages[phase] || 0) + delta);
+  renderCustomBoard();
+}
 function renderCustomBoard() {
   if (!store.customOrders) store.customOrders = [];
   const el = document.getElementById('custom-kanban');
@@ -10658,12 +10591,16 @@ function renderCustomBoard() {
 
   let html = '<div class="kanban-stack">';
   CUSTOM_PHASES.forEach(function (ph) {
-    const list = store.customOrders
+    const all = store.customOrders
       .map(function (o, idx) { return { o: o, idx: idx }; })
       .filter(function (x) { return isPhase(x.o, ph.key); })
       .sort(function (a, b) { return (a.o.deadline || '9999-99-99').localeCompare(b.o.deadline || '9999-99-99'); });
-    html += '<div class="kanban-section"><div class="kanban-sec-head">' + ph.label + ' <span class="kanban-count">' + list.length + '</span></div><div class="kanban-sec-body">';
-    if (list.length === 0) {
+    const total = all.length;
+    const maxPg = Math.max(0, Math.ceil(total / CUSTOM_PAGE) - 1);
+    const page = Math.min(customBoardPages[ph.key] || 0, maxPg);
+    const list = all.slice(page * CUSTOM_PAGE, page * CUSTOM_PAGE + CUSTOM_PAGE);
+    html += '<div class="kanban-section"><div class="kanban-sec-head">' + ph.label + ' <span class="kanban-count">' + total + '</span></div><div class="kanban-sec-body">';
+    if (total === 0) {
       html += '<div class="kanban-empty">暂无</div>';
     } else {
       list.forEach(function (x) {
@@ -10680,6 +10617,13 @@ function renderCustomBoard() {
           + '<button class="kb-del" onclick="deleteCustomOrder(' + idx + ')">删</button></div>'
           + '</div>';
       });
+      if (total > CUSTOM_PAGE) {
+        html += '<div class="kb-pager">'
+          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',-1)"' + (page <= 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+          + '<span class="kb-page-info">第 ' + (page + 1) + '/' + (maxPg + 1) + ' 页 · 共 ' + total + ' 单</span>'
+          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',1)"' + (page >= maxPg ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+          + '</div>';
+      }
     }
     html += '</div></div>';
   });
@@ -10781,390 +10725,6 @@ const CR_PROHIBITED = ['最','第一','国家级','唯一','顶级','极','万�
 
 function crEscapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-function crAnalyzeTitle() {
-  const el = document.getElementById('cr-title-input');
-  const out = document.getElementById('cr-title-result');
-  if (!el || !out) return;
-  const t = (el.value || '').trim();
-  if (!t) { out.innerHTML = '<div class="cr-hint">先粘一个标题进来吧~</div>'; return; }
-  let score = 60; const tips = [];
-  const len = t.length;
-  if (len >= 14 && len <= 24) { score += 12; }
-  else if (len < 14) { score -= 8; tips.push('标题稍短（' + len + '字），建议 14–24 字更易被完整看到'); }
-  else { score -= 6; tips.push('标题偏长（' + len + '字），手机端可能被截断'); }
-  if (/\d/.test(t)) { score += 6; } else { tips.push('加个数字/参数（如「3步」「5套」）更有点击欲'); }
-  const bene = ['教程','干货','保姆级','参数','免费','合集','必看','揭秘','收藏','攻略','模板','清单','进阶','新手','避坑'];
-  const hit = bene.filter(function(w){ return t.indexOf(w) >= 0; });
-  if (hit.length) score += Math.min(10, hit.length * 5);
-  else tips.push('加个利益词（教程/干货/保姆级/合集）让人一眼知道能得到什么');
-  if (/[^\u4e00-\u9fa5A-Za-z0-9\s]/g.test(t)) score += 4; else tips.push('可加 1 个 emoji 或符号提升视觉');
-  const bad = CR_PROHIBITED.filter(function(w){ return t.indexOf(w) >= 0; });
-  if (bad.length) { score -= bad.length * 8; tips.push('含违禁/风险词：' + bad.join('、') + '（建议替换，避免限流）'); }
-  score = Math.max(0, Math.min(100, score));
-  const level = score >= 85 ? '优秀' : score >= 70 ? '良好' : score >= 55 ? '及格' : '待优化';
-  let marked = t;
-  bad.forEach(function(w){ marked = marked.split(w).join('【' + w + '】'); });
-  let html = '<div class="cr-score">评分 <b>' + score + '</b> / 100 · ' + level + '</div>';
-  if (bad.length) html += '<div class="cr-bad">⚠️ 风险词高亮：' + crEscapeHtml(marked) + '</div>';
-  html += '<ul class="cr-tips">';
-  tips.forEach(function(tp){ html += '<li>' + tp + '</li>'; });
-  html += '</ul>';
-  if (!tips.length) html += '<div class="cr-hint">很棒，基本挑不出毛病，可以直接发！</div>';
-  out.innerHTML = html;
-}
-
-function crAddTopic() {
-  const inp = document.getElementById('cr-topic-input');
-  const cat = document.getElementById('cr-topic-cat');
-  if (!inp) return;
-  const name = inp.value.trim();
-  if (!name) { hamiToast('先输入选题内容~'); return; }
-  if (!store.topicLibrary) store.topicLibrary = [];
-  store.topicLibrary.unshift({ id: 'tp_' + Date.now(), name: name, cat: cat ? cat.value : '未分类', status: 'idea', note: '', created: todayStr() });
-  inp.value = '';
-  try { saveData(); } catch(e){}
-  renderCreate();
-  hamiToast('已加入选题库：' + name);
-}
-function crCycleTopic(id) {
-  const tp = (store.topicLibrary || []).find(function(t){ return t.id === id; });
-  if (!tp) return;
-  const next = { idea: 'doing', doing: 'done', done: 'idea' };
-  tp.status = next[tp.status] || 'idea';
-  try { saveData(); } catch(e){}
-  renderCreate();
-}
-function crDelTopic(id) {
-  store.topicLibrary = (store.topicLibrary || []).filter(function(t){ return t.id !== id; });
-  try { saveData(); } catch(e){}
-  renderCreate();
-}
-function crRenderTopicList() {
-  const box = document.getElementById('cr-topic-list');
-  if (!box) return;
-  const list = store.topicLibrary || [];
-  if (!list.length) { box.innerHTML = '<div class="cr-hint">选题库还是空的，上面输入一个试试；也可以对小助理说「选题：xxx」。</div>'; return; }
-  const label = { idea: '想法💡', doing: '进行中🔧', done: '已完成✅' };
-  box.innerHTML = list.map(function(t){
-    return '<div class="cr-topic"><span class="cr-topic-cat">' + crEscapeHtml(t.cat || '未分类') + '</span><span class="cr-topic-name">' + crEscapeHtml(t.name) + '</span><button class="cr-btn small" onclick="crCycleTopic(\'' + t.id + '\')">' + (label[t.status] || '想法💡') + '</button><button class="cr-btn small ghost" onclick="crDelTopic(\'' + t.id + '\')">删</button></div>';
-  }).join('');
-}
-
-const CR_DIMS = [
-  { key: 'position', name: '1 定位清晰度', desc: '主线是否清晰（教程/CC/接单选1-2条）' },
-  { key: 'series', name: '2 内容系列化', desc: '是否有固定栏目让人有期待' },
-  { key: 'stable', name: '3 更新稳定性', desc: '更新节奏是否不断更' },
-  { key: 'visual', name: '4 视觉统一', desc: '封面/字体/配色是否一眼认出是你' },
-  { key: 'hit', name: '5 爆款能力', desc: '是否对标爆款、有复盘' },
-  { key: 'interact', name: '6 互动运营', desc: '评论区人设、引导话术' },
-  { key: 'money', name: '7 变现路径', desc: '接单/店铺/教程是否清晰' }
-];
-function crRenderHealth() {
-  const box = document.getElementById('cr-health-dims');
-  if (!box) return;
-  const saved = (store.accountHealth && store.accountHealth.scores) || {};
-  let html = '';
-  CR_DIMS.forEach(function(d){
-    let cur = saved[d.key] || 0;
-    let dots = '';
-    for (let i = 1; i <= 5; i++) dots += '<span class="cr-dot ' + (i <= cur ? 'on' : '') + '" onclick="crSetDim(\'' + d.key + '\',' + i + ')">' + i + '</span>';
-    html += '<div class="cr-dim"><div class="cr-dim-top"><b>' + d.name + '</b><span class="cr-dim-desc">' + d.desc + '</span></div><div class="cr-dots">' + dots + '</div></div>';
-  });
-  box.innerHTML = html;
-}
-function crSetDim(key, val) {
-  if (!store.accountHealth) store.accountHealth = { scores: {}, notes: {} };
-  if (!store.accountHealth.scores) store.accountHealth.scores = {};
-  store.accountHealth.scores[key] = val;
-  try { saveData(); } catch(e){}
-  crRenderHealth();
-  crHealthScore();
-}
-function crHealthScore() {
-  const s = (store.accountHealth && store.accountHealth.scores) || {};
-  let sum = 0, n = 0;
-  CR_DIMS.forEach(function(d){ if (s[d.key]) { sum += s[d.key]; n++; } });
-  const el = document.getElementById('cr-health-result');
-  if (!el) return;
-  if (!n) { el.textContent = ''; return; }
-  const pct = Math.round(sum / (CR_DIMS.length * 5) * 100);
-  const level = pct >= 80 ? '专业级 🏆' : pct >= 60 ? '进阶中 💪' : pct >= 40 ? '起步期 🌱' : '待搭建 🔧';
-  el.textContent = '总分 ' + sum + '/35 · ' + pct + '% · ' + level;
-}
-function crSaveHealth() {
-  try { saveData(); } catch(e){}
-  crHealthScore();
-  hamiToast('体检已保存~');
-}
-
-const CR_COVERS = [
-  { id: 'a', name: '参数公开型', layout: '大字标题 + 左下角小标签', copy: '【主标题】sims4 高级捏脸参数公开\n【副标题】把EA风发挥到极致\n【角标】保姆级教程 · 收藏不亏' },
-  { id: 'b', name: '对比型', layout: '左「改前」右「改后」+ 中间箭头', copy: '【左】路人脸 → 【右】辨识度拉满\n【标题】同一张脸，差的就是这3步' },
-  { id: 'c', name: '合集型', layout: '上方大字 + 下方 3–4 个缩略方块', copy: '【标题】收藏！8 套 sims4 婚礼捏脸\n【方块】复古 / 甜美 / 暗黑 / 童话' },
-  { id: 'd', name: '人设型', layout: '居中人物 + 底部一句话 slogan', copy: '【slogan】每月分享免费人物 · 接定制ing\n【标题】你的专属 sims 角色长这样' }
-];
-// ============ 爆款对标库：算爆款等级 + 拆可借鉴点 ============
-function crAnalyzeBenchmark(title, likes, collects, comments) {
-  var L = Number(likes) || 0, C = Number(collects) || 0, M = Number(comments) || 0;
-  var heat = L + C * 2 + M * 3;          // 收藏/评论权重更高（更能代表内容价值）
-  var level = '起步', color = '#8a6270';
-  if (heat >= 30000) { level = '现象级'; color = '#e84a5f'; }
-  else if (heat >= 10000) { level = '大爆款'; color = '#ff7f9e'; }
-  else if (heat >= 3000) { level = '爆款'; color = '#d14b73'; }
-  else if (heat >= 1000) { level = '优质'; color = '#c75b86'; }
-  else if (heat >= 300) { level = '潜力'; color = '#856404'; }
-  var t = String(title || '');
-  var tips = [];
-  if (/\d/.test(t)) tips.push('标题带数字，清单感强');
-  if (/保姆级|教程|干货|攻略|技巧|新手|入门|步骤/.test(t)) tips.push('教程型词，收藏率高');
-  if (/[?？]|吗|怎么|如何|为什么|凭什么/.test(t)) tips.push('疑问句开头，勾好奇心');
-  if (/绝了|太美|哭了|惊艳|封神|狠狠|真的会|谁懂/.test(t)) tips.push('情绪词拉满，易被推荐');
-  if (/公开|免费|分享|附|送|参数|合集/.test(t)) tips.push('给实际好处，涨粉快');
-  if (/sims|模拟人生|捏脸|捏人|cc|mod/i.test(t)) tips.push('精准命中领域关键词');
-  if (t.length >= 15 && t.length <= 28) tips.push('标题长度刚好（15-28 字）');
-  else if (t.length > 0 && t.length < 12) tips.push('标题偏短，可补痛点或结果');
-  else if (t.length > 32) tips.push('标题偏长，重点会被折叠');
-  if (C > 0 && C > L * 0.5) tips.push('收藏高：有保存价值，适合做成系列');
-  if (M > 0 && M > L * 0.1) tips.push('评论高：结尾留了讨论点');
-  if (!tips.length) tips.push('标题较平，建议加数字＋痛点');
-  return { heat: heat, level: level, color: color, tips: tips };
-}
-function crAddBenchmark() {
-  var tEl = document.getElementById('cr-bm-title');
-  var title = (tEl && tEl.value ? tEl.value : '').trim();
-  if (!title) { try { hamiToast('先填爆款标题呀～'); } catch (e) {} return; }
-  var likes = parseInt((document.getElementById('cr-bm-likes') || {}).value, 10) || 0;
-  var collects = parseInt((document.getElementById('cr-bm-collects') || {}).value, 10) || 0;
-  var comments = parseInt((document.getElementById('cr-bm-comments') || {}).value, 10) || 0;
-  var pEl = document.getElementById('cr-bm-platform');
-  var platform = pEl ? pEl.value : '小红书';
-  var a = crAnalyzeBenchmark(title, likes, collects, comments);
-  if (!store.benchmarkNotes) store.benchmarkNotes = [];
-  store.benchmarkNotes.push({
-    id: 'bm' + Date.now(), title: title, platform: platform,
-    likes: likes, collects: collects, comments: comments,
-    heat: a.heat, level: a.level, color: a.color, tips: a.tips,
-    createdAt: Date.now()
-  });
-  try { saveData(); } catch (e) {}
-  if (tEl) tEl.value = '';
-  ['cr-bm-likes', 'cr-bm-collects', 'cr-bm-comments'].forEach(function (id) {
-    var el = document.getElementById(id); if (el) el.value = '';
-  });
-  crRenderBenchmarks();
-  try { hamiToast('已加入对标库 · ' + a.level); } catch (e) {}
-}
-function crDelBenchmark(idx) {
-  if (!store.benchmarkNotes || !store.benchmarkNotes[idx]) return;
-  var t = store.benchmarkNotes[idx].title || '这条';
-  store.benchmarkNotes.splice(idx, 1);
-  try { saveData(); } catch (e) {}
-  crRenderBenchmarks();
-  try { hamiToast('已删除对标：' + t.substring(0, 12)); } catch (e) {}
-}
-let __benchPage = 0;   // v26 对标库分页
-function benchGo(delta) {
-  const n = (store.benchmarkNotes || []).length;
-  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
-  __benchPage = Math.max(0, Math.min((__benchPage || 0) + delta, mp));
-  crRenderBenchmarks();
-}
-function crRenderBenchmarks() {
-  var box = document.getElementById('cr-bm-list');
-  if (!box) return;
-  var list = store.benchmarkNotes || [];
-  if (!list.length) {
-    __benchPage = 0;
-    box.innerHTML = '<div style="text-align:center;color:#8a6270;padding:22px;font-size:13px;line-height:1.7;">还没有对标记录～<br>刷到爆款就回来记一条，攒够 10 条规律就出来了</div>';
-    return;
-  }
-  var sorted = list.slice().sort(function (a, b) { return (b.heat || 0) - (a.heat || 0); });
-  // v26 分页
-  var maxPg = Math.max(0, Math.ceil(sorted.length / ACC_PAGE) - 1);
-  if ((__benchPage || 0) > maxPg) __benchPage = maxPg;
-  var start = (__benchPage || 0) * ACC_PAGE;
-  var pageList = sorted.slice(start, start + ACC_PAGE);
-  var html = '';
-  pageList.forEach(function (b) {
-    var realIdx = list.indexOf(b);
-    var tipsHtml = (b.tips || []).map(function (t) {
-      return '<span style="display:inline-block;font-size:11.5px;background:rgba(255,158,181,.16);color:#c75b86;padding:3px 9px;border-radius:9px;line-height:1.6;">' + escapeHtml(t) + '</span>';
-    }).join('');
-    html += '<div class="co-box" style="margin-bottom:9px;padding:11px 13px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      + '<span style="font-weight:800;color:' + b.color + ';font-size:13px;white-space:nowrap;">' + escapeHtml(b.level) + '</span>'
-      + '<span style="font-size:13px;color:#5a3a48;font-weight:700;flex:1;min-width:0;line-height:1.6;word-break:break-word;">' + escapeHtml(b.title) + '</span>'
-      + '<button class="row-del-btn" onclick="crDelBenchmark(' + realIdx + ')" aria-label="删除">🗑</button>'
-      + '</div>'
-      + '<div style="font-size:12px;color:#8a6270;margin-top:5px;line-height:1.6;">' + escapeHtml(b.platform || '')
-      + ' · 赞 ' + (b.likes || 0) + ' · 藏 ' + (b.collects || 0) + ' · 评 ' + (b.comments || 0) + ' · 热度 ' + (b.heat || 0) + '</div>'
-      + '<div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">' + tipsHtml + '</div>'
-      + '</div>';
-  });
-  if (sorted.length > ACC_PAGE) {
-    html += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;">
-      <button class="flow-toggle-btn" type="button" onclick="benchGo(-1)" ${(__benchPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-      <span style="font-size:12px;color:#8a6270;">第 ${(__benchPage || 0) + 1}/${maxPg + 1} 页 · 共 ${sorted.length} 条</span>
-      <button class="flow-toggle-btn" type="button" onclick="benchGo(1)" ${(__benchPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
-    </div>`;
-  }
-  box.innerHTML = html;
-}
-function crRenderCovers() {
-  const box = document.getElementById('cr-cover-list');
-  if (!box) return;
-  box.innerHTML = CR_COVERS.map(function(c){
-    return '<div class="cr-cover"><div class="cr-cover-thumb cr-cover-' + c.id + '">' + c.name + '</div><div class="cr-cover-name">' + c.name + '</div><div class="cr-cover-layout">' + c.layout + '</div><button class="cr-btn small" onclick="crCopyCover(\'' + c.id + '\')">复制结构</button></div>';
-  }).join('');
-}
-function crCopyCover(id) {
-  const c = CR_COVERS.find(function(x){ return x.id === id; });
-  if (!c) return;
-  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(c.copy); } catch(e){}
-  hamiToast('已复制「' + c.name + '」封面结构，去照着排吧~');
-}
-
-// 纯 SVG 迷你趋势图（双用途：更新量/互动量），零依赖、自适应宽度
-function crSparkline(months, series, opts) {
-  opts = opts || {};
-  const W = 300, H = 104, padL = 4, padR = 4, padT = 8, padB = 16;
-  const n = months.length, color = opts.color || '#d14b73';
-  if (n === 0) return '';
-  const maxV = Math.max(1, Math.max.apply(null, series));
-  const innerW = W - padL - padR, innerH = H - padT - padB;
-  const x = i => (n === 1 ? padL + innerW / 2 : padL + innerW * i / (n - 1));
-  const y = v => padT + innerH * (1 - v / maxV);
-  let path = '', dots = '';
-  series.forEach((v, i) => {
-    const cx = x(i), cy = y(v);
-    path += (i === 0 ? 'M' : 'L') + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ';
-    dots += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="2.4" fill="' + color + '"/>';
-  });
-  const area = path + 'L' + x(n-1).toFixed(1) + ' ' + (padT+innerH) + ' L' + x(0).toFixed(1) + ' ' + (padT+innerH) + ' Z';
-  const step = Math.max(1, Math.ceil(n / 6));
-  let labels = '';
-  months.forEach((m, i) => { if (i % step === 0) labels += '<text x="' + x(i).toFixed(1) + '" y="' + (H-4) + '" font-size="8" fill="#a06a80" text-anchor="middle">' + m.slice(2) + '</text>'; });
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="none" style="display:block;margin:2px 0 4px;">'
-    + '<path d="' + area + '" fill="' + color + '" opacity="0.10"/>'
-    + '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
-    + dots + labels + '</svg>';
-}
-
-function crRenderReview() {
-  const box = document.getElementById('cr-review-output');
-  if (!box) return;
-  const recs = store.mediaRecords || [];
-  if (!recs.length) { box.innerHTML = '<div class="cr-hint">还没有更新记录，去「自媒体更新记录」记几条，这里就会出复盘~</div>'; return; }
-  const num = v => parseInt(v, 10) || 0;
-  const byMonth = {}, cat = {};
-  const monthsOrder = [];
-  let totalLikes = 0, totalCollects = 0, totalComments = 0;
-  recs.forEach(function(r){
-    const m = (r.date || '').substring(0, 7);
-    if (m && !(m in byMonth)) { byMonth[m] = { count:0, engage:0 }; monthsOrder.push(m); }
-    const L = num(r.likes), C = num(r.collects), M = num(r.comments), eng = L + C + M;
-    if (m) { byMonth[m].count += 1; byMonth[m].engage += eng; }
-    totalLikes += L; totalCollects += C; totalComments += M;
-    const content = (r.content || '') + ' ' + (r.note || '');
-    let c = '其他';
-    if (/捏脸|捏人|参数|脸/.test(content)) c = '捏脸/捏人';
-    else if (/cc|mod|模组|物品/.test(content)) c = 'CC/模组';
-    else if (/定制|接单|约稿/.test(content)) c = '定制接单';
-    else if (/教程|教学|干货/.test(content)) c = '教程干货';
-    else if (/日常|vlog|生活/.test(content)) c = '日常vlog';
-    if (!cat[c]) cat[c] = { count:0, engage:0 };
-    cat[c].count += 1; cat[c].engage += eng;
-  });
-  monthsOrder.sort();
-  const dates = Array.from(new Set(recs.map(function(r){ return r.date; }).filter(Boolean))).sort();
-  let streak = 0, maxStreak = 0;
-  for (let i = 0; i < dates.length; i++) {
-    if (i === 0) streak = 1;
-    else {
-      const d1 = new Date(dates[i-1] + 'T00:00:00'), d2 = new Date(dates[i] + 'T00:00:00');
-      streak = (Math.round((d2 - d1) / 86400000) === 1) ? streak + 1 : 1;
-    }
-    if (streak > maxStreak) maxStreak = streak;
-  }
-  const totalEng = totalLikes + totalCollects + totalComments;
-  const avgEng = recs.length ? Math.round(totalEng / recs.length) : 0;
-
-  // 增长对比（最近两月）
-  const lastM = monthsOrder[monthsOrder.length - 1], prevM = monthsOrder[monthsOrder.length - 2];
-  const growth = (cur, prev) => (prev == null ? null : (prev === 0 ? (cur > 0 ? 100 : 0) : Math.round((cur - prev) / prev * 100)));
-  const gCount = growth(lastM ? byMonth[lastM].count : 0, prevM ? byMonth[prevM].count : 0);
-  const gEng = growth(lastM ? byMonth[lastM].engage : 0, prevM ? byMonth[prevM].engage : 0);
-  const arrow = g => g == null ? '' : (g > 0 ? ' <span style="color:#1a9e4f;font-weight:700;">▲' + g + '%</span>' : (g < 0 ? ' <span style="color:#e84a5f;font-weight:700;">▼' + Math.abs(g) + '%</span>' : ' <span style="color:#999;">—0%</span>'));
-
-  // 内容类型 × 平均互动（指导选题）
-  const catArr = Object.keys(cat).map(c => ({ name:c, count:cat[c].count, avg: cat[c].count ? Math.round(cat[c].engage/cat[c].count) : 0 })).sort((a,b)=> b.avg - a.avg);
-  // 双号对比
-  const accMap = {};
-  recs.forEach(r => { if (!r.account) return; if (!accMap[r.account]) accMap[r.account] = { count:0, eng:0 }; accMap[r.account].count++; accMap[r.account].eng += num(r.likes)+num(r.collects)+num(r.comments); });
-  const accArr = Object.keys(accMap).map(a => ({ name:a, count:accMap[a].count, eng:accMap[a].eng, avg: accMap[a].count ? Math.round(accMap[a].eng/accMap[a].count) : 0 })).sort((a,b)=> b.eng - a.eng);
-  const maxAccEng = Math.max(1, ...accArr.map(x=>x.eng));
-
-  const countSeries = monthsOrder.map(m => byMonth[m].count);
-  const engSeries = monthsOrder.map(m => byMonth[m].engage);
-
-  let html = '';
-  html += '<div class="cr-stat-row">'
-    + '<span class="cr-stat"><b>' + recs.length + '</b> 条总更新</span>'
-    + '<span class="cr-stat"><b>' + maxStreak + '</b> 天连更</span>'
-    + '<span class="cr-stat"><b>' + monthsOrder.length + '</b> 活跃月</span></div>';
-  html += '<div class="cr-stat-row">'
-    + '<span class="cr-stat"><b>' + totalLikes + '</b> 赞</span>'
-    + '<span class="cr-stat"><b>' + totalCollects + '</b> 藏</span>'
-    + '<span class="cr-stat"><b>' + totalComments + '</b> 评</span>'
-    + '<span class="cr-stat"><b>' + avgEng + '</b> 互动/篇</span></div>';
-
-  if (prevM) {
-    html += '<div class="cr-sub">📊 本月对比（' + lastM + ' vs ' + prevM + '）</div>';
-    html += '<div class="cr-stat-row">'
-      + '<span class="cr-stat">更新 ' + (lastM?byMonth[lastM].count:0) + ' ' + arrow(gCount) + '</span>'
-      + '<span class="cr-stat">互动 ' + (lastM?byMonth[lastM].engage:0) + ' ' + arrow(gEng) + '</span></div>';
-  }
-
-  html += '<div class="cr-sub">📈 更新量趋势</div>';
-  html += crSparkline(monthsOrder, countSeries, { color:'#d14b73' });
-  html += '<div class="cr-sub">💞 互动量趋势</div>';
-  html += crSparkline(monthsOrder, engSeries, { color:'#7F77DD' });
-
-  html += '<div class="cr-sub">🎯 内容类型 · 平均互动（指导选题）</div>';
-  const maxAvg = Math.max(1, ...catArr.map(c=>c.avg));
-  html += catArr.map(c => {
-    const w = Math.max(8, Math.round(c.avg / maxAvg * 100));
-    return '<div class="cr-bar-row"><span class="cr-bar-label">' + c.name + '</span><span class="cr-bar"><span class="cr-bar-fill alt" style="width:' + w + '%"></span></span><span class="cr-bar-num">' + c.avg + '</span></div>';
-  }).join('');
-
-  if (accArr.length > 1) {
-    html += '<div class="cr-sub">🔍 双号对比（互动量）</div>';
-    html += accArr.map(a => {
-      const label = a.name.length > 6 ? a.name.slice(0,6) : a.name;
-      const w = Math.max(8, Math.round(a.eng / maxAccEng * 100));
-      return '<div class="cr-bar-row"><span class="cr-bar-label">' + label + '</span><span class="cr-bar"><span class="cr-bar-fill" style="width:' + w + '%"></span></span><span class="cr-bar-num">' + a.avg + '</span></div>';
-    }).join('');
-  }
-
-  html += '<div class="cr-sub">📅 按月更新量</div>';
-  const maxMonth = Math.max.apply(null, countSeries);
-  html += monthsOrder.map(function(m){
-    const v = byMonth[m].count; const w = Math.max(8, Math.round(v / maxMonth * 100));
-    return '<div class="cr-bar-row"><span class="cr-bar-label">' + m + '</span><span class="cr-bar"><span class="cr-bar-fill" style="width:' + w + '%"></span></span><span class="cr-bar-num">' + v + '</span></div>';
-  }).join('');
-
-  box.innerHTML = html;
-}
-
-function renderCreate() {
-  try { crRenderHealth(); } catch(e){}
-  try { crHealthScore(); } catch(e){}
-  try { crRenderCovers(); } catch(e){}
-  try { crRenderReview(); } catch(e){}
-  try { crRenderTopicList(); } catch(e){}
-  try { crRenderBenchmarks(); } catch(e){}
-}
-
 // 月份下拉动态生成：生成当前月前后若干月的选项，避免写死导致 2027 年后显示错月、且看不到历史月份
 function fillMonthSelect(sel, includeAll) {
   if (!sel) return;
@@ -11233,9 +10793,7 @@ function switchPanel(name, navEl) {
       renderPublishCalendar();
     } catch (e) {}
   }
-  if (name === 'create') {
-    try { renderCreate(); } catch (e) {}
-  }
+
   // 体重面板 / 有氧运动器械打卡面板：共用 renderFitness，每次点开强制重渲
   if (name === 'fitness' || name === 'exercise') {
     try { renderFitness(); } catch (e) {}
@@ -18674,7 +18232,6 @@ try { renderMedia(); } catch(e) { console.log('renderMedia error:', e.message); 
 try { renderPublishCalendar(); } catch(e) { console.log('renderPublishCalendar error:', e.message); }
 try { renderCustomBoard(); } catch(e) { console.log('renderCustomBoard error:', e.message); }
 try { renderInspire(); } catch(e) { console.log('renderInspire error:', e.message); }
-try { renderCreate(); } catch(e) { console.log('renderCreate error:', e.message); }
 try { renderFuturePosts(); } catch(e) { console.log('renderFuturePosts error:', e.message); }
 try { renderPeriod(); } catch(e) { console.log('renderPeriod error:', e.message); }
 try { renderToilet(); } catch(e) { console.log('renderToilet error:', e.message); }

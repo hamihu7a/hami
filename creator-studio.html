@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-page-node-id="jwCgN9Eon2VEu7L25I9j4a">
-<head data-page-node-id="dEGHFhB7gXFG9DiUEjwzyH">
-<meta charset="UTF-8" data-page-node-id="DOdJVJczurnaGaEhEB0Jlr">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" data-page-node-id="7wCgVmlzM1QmIdFY7CGLUa">
-<meta name="hami-build" content="creator-studio-2026-09-11" data-page-node-id="iBLVBwjUKGPsnFOtuAmX6K">
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="hami-build" content="creator-studio-2026-09-11">
 <title>Hami 创作助手 · 离线版</title>
 <style>
   :root{
@@ -169,167 +169,193 @@
   .del-link{background:none;border:none;color:#e0456e;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:2px;margin-top:8px;padding:0;}
 </style>
 </head>
-<body data-page-node-id="0LiCvDds68xfzUKvDgqq1Y">
-<div class="app" data-page-node-id="puS0gww5rxdOiENL3qOOxK">
+<body>
+<div class="app">
 
-  <div class="topbar" data-page-node-id="qYSuj14LHu8B4pwyUeGYng">
-    <div class="badge" data-page-node-id="uDVDhgeVvIS68GyiblNYpo">离线可用</div>
-    <h1 data-page-node-id="EJznfIkRmF01uBjxKXV18q">Hami 创作助手</h1>
-    <p data-page-node-id="YoVRqdeCJ7nxqOPIYiRuVU">模拟人生自媒体 · 日常记录与经营小工具（全部存你本地浏览器，不上网）</p>
+  <div class="topbar">
+    <div class="badge">离线可用</div>
+    <h1>Hami 创作助手</h1>
+    <p>模拟人生自媒体 · 日常记录与经营小工具（全部存你本地浏览器，不上网）</p>
   </div>
 
-  <div class="nav" id="nav" data-page-node-id="GBy48frPTuJt8visVOnGng">
-    <button data-tab="idea" class="active" data-page-node-id="QSZGiBHsMED2AteqvccjIC">选题库·日历</button>
-    <button data-tab="title" data-page-node-id="asgQDdYx0VOtdjEBx3nT50">标题体检</button>
-    <button data-tab="cover" data-page-node-id="zAY4Jz9uZj20Pi8FI1BlEC">封面预览</button>
-    <button data-tab="check" data-page-node-id="W74Q8Y4Hs3OchSOgHGNEZa">七维体检</button>
-    <button data-tab="data" data-page-node-id="1tVcFsjXEz4jqlC3OCn1VB">数据复盘</button>
-    <button data-tab="bank" data-page-node-id="E4rvdMu69aTN73N1lCsKKX">素材银行</button>
-    <button data-tab="tpl" data-page-node-id="cSjNxubI9jrjEnSvSYbVYd">正文模板</button>
+  <div class="nav" id="nav">
+    <button data-tab="idea" class="active">选题库·日历</button>
+    <button data-tab="title">标题体检</button>
+    <button data-tab="cover">封面预览</button>
+    <button data-tab="check">七维体检</button>
+    <button data-tab="data">数据复盘</button>
+    <button data-tab="bank">素材银行</button>
+    <button data-tab="tpl">正文模板</button>
+    <button data-tab="benchmark">爆款对标</button>
+    <button data-tab="covertpl">封面模板</button>
   </div>
 
   <!-- 1. 选题库 + 发布日历 -->
-  <section class="panel active" id="idea" data-page-node-id="VYtCv9jOzT0l6D7Q4O5wPx">
-    <h2 data-page-node-id="ewtAW2vhDDeUAAgY4ADcaW">选题库 · 发布日历</h2>
-    <p class="sub" data-page-node-id="qTXDvIimdXDZwON9upDH6o">把灵感存进来，标好状态和大号/小号，再排到日历上，一眼看出哪天断更。</p>
-    <div class="row" data-page-node-id="xuP6x8pR2wmyXdjiQUl7Fd">
-      <input id="idea-title" placeholder="灵感标题，如：捏脸教程第3期" data-page-node-id="F0VmDQrovfupt3gcnz2XUD">
-      <select id="idea-type" data-page-node-id="AqmnEZoKHFhf516dCJciT7">
-        <option value="big" data-page-node-id="OjuLXHIM42bL4MlSXvPRPy">大号（美化档）</option>
-        <option value="small" data-page-node-id="fxKBCqRqiCRAjz4jZajRO4">小号（定制人物）</option>
-        <option value="all" data-page-node-id="VNBL3zyg2HCIHWe40znK8x">通用</option>
+  <section class="panel active" id="idea">
+    <h2>选题库 · 发布日历</h2>
+    <p class="sub">把灵感存进来，标好状态和大号/小号，再排到日历上，一眼看出哪天断更。</p>
+    <div class="row">
+      <input id="idea-title" placeholder="灵感标题，如：捏脸教程第3期">
+      <select id="idea-type">
+        <option value="big">大号（美化档）</option>
+        <option value="small">小号（定制人物）</option>
+        <option value="all">通用</option>
       </select>
     </div>
-    <div class="row" data-page-node-id="puGQDHssSHxgTnIPmbg6iX">
-      <select id="idea-status" data-page-node-id="xMCwodEGLKvnwa7FK4QXHE">
-        <option value="idea" data-page-node-id="hRJaut9phgG3GLlOdzieBk">想做</option>
-        <option value="doing" data-page-node-id="IaoYFrGDpGZblgqivvZDVV">在做</option>
-        <option value="done" data-page-node-id="xb6iPcPEmheqBsxChz3sEn">已发</option>
-        <option value="hit" data-page-node-id="8e2DbZp7JuOz9CxCA55nvs">爆了</option>
-        <option value="miss" data-page-node-id="FPhohGCuktf33gE2nAy6Hr">扑了</option>
+    <div class="row">
+      <select id="idea-status">
+        <option value="idea">想做</option>
+        <option value="doing">在做</option>
+        <option value="done">已发</option>
+        <option value="hit">爆了</option>
+        <option value="miss">扑了</option>
       </select>
-      <input id="idea-date" type="date" data-page-node-id="hRYvFLuHPQYbFG2prg3DtK">
+      <input id="idea-date" type="date">
     </div>
-    <label data-page-node-id="rT7uiu4OWMiHWWez4nGybm">备注（选题角度 / 看点）</label>
+    <label>备注（选题角度 / 看点）</label>
     <textarea id="idea-note" placeholder="这期想讲什么、有什么亮点"></textarea>
-    <div class="btn-row" data-page-node-id="nVzZJo43TwgA2IPA8XDTaf">
-      <button class="btn" id="idea-add" data-page-node-id="g3t61KVmZDPYOa49B2BMOz">存进选题库</button>
-      <button class="btn ghost" id="idea-clear" data-page-node-id="sjEeFzWhjsazeeWy4ianbI">清空输入框</button>
+    <div class="btn-row">
+      <button class="btn" id="idea-add">存进选题库</button>
+      <button class="btn ghost" id="idea-clear">清空输入框</button>
     </div>
-    <div class="row" style="margin-top:14px;align-items:center;" data-page-node-id="AqtiuHp1EmmdELIy7aeg4q">
-      <select id="idea-filter" style="flex:1;" data-page-node-id="mD0BydX8h0BgGnbO7FH7no">
-        <option value="all" data-page-node-id="io4plcrZZtz8Lh4Cjzi5kT">全部状态</option>
-        <option value="idea" data-page-node-id="JmEZJJ3bjidIN9XAb69yQv">想做</option>
-        <option value="doing" data-page-node-id="Wmt978zg28LgSeuXMZ8t0g">在做</option>
-        <option value="done" data-page-node-id="bwdbGUg6VpQudXzGCqzuZV">已发</option>
-        <option value="hit" data-page-node-id="w3aot3YIixF0vC3QBYTAgW">爆了</option>
-        <option value="miss" data-page-node-id="mA11traCujk4XV3koACXu6">扑了</option>
+    <div class="row" style="margin-top:14px;align-items:center;">
+      <select id="idea-filter" style="flex:1;">
+        <option value="all">全部状态</option>
+        <option value="idea">想做</option>
+        <option value="doing">在做</option>
+        <option value="done">已发</option>
+        <option value="hit">爆了</option>
+        <option value="miss">扑了</option>
       </select>
     </div>
-    <div id="idea-list" data-page-node-id="NDJdHPlfFYFPF2TrbtSi9G"></div>
+    <div id="idea-list"></div>
 
-    <h2 style="margin-top:18px;" data-page-node-id="GZqijvLNLfna7ce1Ebh78Z">本月日历</h2>
-    <p class="sub" data-page-node-id="L5eq9thRFNJVDH4XEsfWTQ">有排期的日子会标色，颜色对应状态。</p>
-    <div id="cal" data-page-node-id="WsGTDXe6bHLKCgLGz9UFWY"></div>
+    <h2 style="margin-top:18px;">本月日历</h2>
+    <p class="sub">有排期的日子会标色，颜色对应状态。</p>
+    <div id="cal"></div>
   </section>
 
   <!-- 2. 标题体检器 -->
-  <section class="panel" id="title" data-page-node-id="csmriJqJiD2Lptyrlttsgw">
-    <h2 data-page-node-id="Je7cfttGkVsQZ08YO3cPGx">标题体检器</h2>
-    <p class="sub" data-page-node-id="8xJd8rTkIa3Pmz3BOX9qpV">输入标题，本地规则打分（含数字/情绪词/悬念/长度/关键词），并给 5 个优化版本。</p>
-    <label data-page-node-id="rnWCgr1RdH6duGDzEHgsBZ">你的标题</label>
+  <section class="panel" id="title">
+    <h2>标题体检器</h2>
+    <p class="sub">输入标题，本地规则打分（含数字/情绪词/悬念/长度/关键词），并给 5 个优化版本。</p>
+    <label>你的标题</label>
     <textarea id="title-input" placeholder="例如：超好看的模拟人生捏脸教程"></textarea>
-    <div class="btn-row" data-page-node-id="Yh9nOyC3FYNSFp3E0FXEFz">
-      <button class="btn" id="title-check" data-page-node-id="mIwXk9DqxCiNoDByp0rBeB">开始体检</button>
-      <button class="btn ghost" id="title-clear" data-page-node-id="VUhQtgA5x5iWH0eMdtijVe">清空</button>
+    <div class="btn-row">
+      <button class="btn" id="title-check">开始体检</button>
+      <button class="btn ghost" id="title-clear">清空</button>
     </div>
-    <div id="title-result" data-page-node-id="Jf46jEI1vQF2CLCZa72uPI"></div>
+    <div id="title-result"></div>
   </section>
 
   <!-- 3. 封面比例预览 -->
-  <section class="panel" id="cover" data-page-node-id="qGMPS5u3yGhN3mXrGO8CvI">
-    <h2 data-page-node-id="z1dyVNXmHHGfLPLClH8Iar">封面比例预览</h2>
-    <p class="sub" data-page-node-id="9EvsEChH8ATWKaKId0DZpc">把图片拖进来，看它在小红书 3:4、抖音 9:16、方形 1:1 下的构图。可叠加参考线。</p>
-    <div class="drop" id="cover-drop" data-page-node-id="cbBzDsQZ8Q1Cn9Fp3grcos">点这里选图片，或把图片拖到这（图片只存在你本地，不会上传）</div>
-    <input type="file" id="cover-file" accept="image/*" style="display:none;" data-page-node-id="koaGPKYYSuBglmPLpzPpki">
-    <div class="ratio-wrap" data-page-node-id="DWeKpOdRxoa3jQNwE6DRPo">
-      <div class="ratio-box" style="width:150px;height:200px;" data-page-node-id="VIIC8g7DFNMKEBMdwLICF4"><span class="lab" data-page-node-id="IKHVwJ71vFLslalZVjI3Vv">3:4 小红书</span><span class="ph" style="color:var(--c-muted);font-size:12px;" data-page-node-id="Ow9jDmUU8PQ4sozMQ36RD7">待选图</span></div>
-      <div class="ratio-box" style="width:120px;height:213px;" data-page-node-id="2CknpMkJEPylEXGIdG1TJS"><span class="lab" data-page-node-id="5HAMRvVj8YrBX8sCi3iBEy">9:16 抖音</span><span class="ph" style="color:var(--c-muted);font-size:12px;" data-page-node-id="yTGq9OdWek4OEXYjbjb2Uh">待选图</span></div>
-      <div class="ratio-box" style="width:170px;height:170px;" data-page-node-id="EMxi3cG0n4CbAkAOHzcjfo"><span class="lab" data-page-node-id="w91EDLISJknYc7e2q1Zja3">1:1 方形</span><span class="ph" style="color:var(--c-muted);font-size:12px;" data-page-node-id="gOBpVTFV9UlgBeDiaVaIGR">待选图</span></div>
+  <section class="panel" id="cover">
+    <h2>封面比例预览</h2>
+    <p class="sub">把图片拖进来，看它在小红书 3:4、抖音 9:16、方形 1:1 下的构图。可叠加参考线。</p>
+    <div class="drop" id="cover-drop">点这里选图片，或把图片拖到这（图片只存在你本地，不会上传）</div>
+    <input type="file" id="cover-file" accept="image/*" style="display:none;">
+    <div class="ratio-wrap">
+      <div class="ratio-box" style="width:150px;height:200px;"><span class="lab">3:4 小红书</span><span class="ph" style="color:var(--c-muted);font-size:12px;">待选图</span></div>
+      <div class="ratio-box" style="width:120px;height:213px;"><span class="lab">9:16 抖音</span><span class="ph" style="color:var(--c-muted);font-size:12px;">待选图</span></div>
+      <div class="ratio-box" style="width:170px;height:170px;"><span class="lab">1:1 方形</span><span class="ph" style="color:var(--c-muted);font-size:12px;">待选图</span></div>
     </div>
-    <label style="margin-top:14px;" data-page-node-id="sNVXU6j0pASURXvMmda7cr"><input type="checkbox" id="cover-guide" style="width:auto;margin-right:6px;" data-page-node-id="9almCJaXH9qw0NEDJgBCHA">显示构图参考线（标题区/人物区）</label>
+    <label style="margin-top:14px;"><input type="checkbox" id="cover-guide" style="width:auto;margin-right:6px;">显示构图参考线（标题区/人物区）</label>
   </section>
 
   <!-- 4. 七维体检 -->
-  <section class="panel" id="check" data-page-node-id="RfBgzgMkfgJ36Yb6nUJFUU">
-    <h2 data-page-node-id="T99Ea1piwtzDTx27rS6bA6">发布前七维体检</h2>
-    <p class="sub" data-page-node-id="H3VU5mQ7anMRVkZ4pXZbDt">发之前逐项自评，算出「发布就绪度」。全本地，不联网。</p>
-    <div id="check-list" data-page-node-id="PNk9qy6NAiyFjqq9GbSEkD"></div>
-    <div class="card" style="margin-top:12px;text-align:center;" data-page-node-id="nLL5RHZTQH7pnNuniesBD8">
-      <div class="score-ring" style="justify-content:center;" data-page-node-id="v2e1k27PLq9My70VSpPksp">
-        <div class="score-big" id="check-score" data-page-node-id="gqNA91arwneMHVFq2ijL5R">0%</div>
+  <section class="panel" id="check">
+    <h2>发布前七维体检</h2>
+    <p class="sub">发之前逐项自评，算出「发布就绪度」。全本地，不联网。</p>
+    <div id="check-list"></div>
+    <div class="card" style="margin-top:12px;text-align:center;">
+      <div class="score-ring" style="justify-content:center;">
+        <div class="score-big" id="check-score">0%</div>
       </div>
-      <div class="score-tip" id="check-tip" data-page-node-id="cxvU978NyLgcBOVFqo0hvV">还没评分，照着上面勾一勾吧～</div>
+      <div class="score-tip" id="check-tip">还没评分，照着上面勾一勾吧～</div>
     </div>
-    <div class="btn-row" style="justify-content:center;" data-page-node-id="DUIW62so7ly4gRa39DJ7aV">
-      <button class="btn ghost sm" id="check-reset" data-page-node-id="XAYge48yjqULZxGlGEFYIl">重置评分</button>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="btn ghost sm" id="check-reset">重置评分</button>
     </div>
   </section>
 
   <!-- 5. 笔记数据复盘 -->
-  <section class="panel" id="data" data-page-node-id="59w1L0hI8YnYh36vP53rkA">
-    <h2 data-page-node-id="6bfqCeyJ37FUTYwnurT1PU">笔记数据复盘</h2>
-    <p class="sub" data-page-node-id="AT5hNURFm3RpQvKvXEjz5S">每篇笔记手动填一下后台数（不联网抓，照着抄就行），本地画趋势、标记哪篇爆了。</p>
-    <div class="row" data-page-node-id="iQKRcxvri4TIwdmDlAb6nC">
-      <input id="d-date" type="date" data-page-node-id="EwrSVvZBEf8ukXeJxexH2Y">
-      <select id="d-platform" data-page-node-id="pmlrrN1882iIAoTzo7DV34"><option value="big" data-page-node-id="SQoQkrkwlkEdNFjmzbrbyM">大号</option><option value="small" data-page-node-id="UtGAzobtTWqJiFLIllJGhY">小号</option></select>
+  <section class="panel" id="data">
+    <h2>笔记数据复盘</h2>
+    <p class="sub">每篇笔记手动填一下后台数（不联网抓，照着抄就行），本地画趋势、标记哪篇爆了。</p>
+    <div class="row">
+      <input id="d-date" type="date">
+      <select id="d-platform"><option value="big">大号</option><option value="small">小号</option></select>
     </div>
-    <div class="row" data-page-node-id="8Ioe8gNHD9NGIUVNpRtoo7">
-      <input id="d-title" placeholder="笔记标题" data-page-node-id="YABhCKEsVMWBv6evIiwt8H">
-      <input id="d-views" type="number" min="0" placeholder="阅读" data-page-node-id="DuC0JZOyPFMdUIBFOMNB8y">
+    <div class="row">
+      <input id="d-title" placeholder="笔记标题">
+      <input id="d-views" type="number" min="0" placeholder="阅读">
     </div>
-    <div class="row" data-page-node-id="XKcm709KZhW74VEJesUE0l">
-      <input id="d-likes" type="number" min="0" placeholder="赞" data-page-node-id="9EAqHozaD6S0DlHmWRLRPo">
-      <input id="d-collects" type="number" min="0" placeholder="收藏" data-page-node-id="bMa40O8QXdwFuOnOWGvcof">
+    <div class="row">
+      <input id="d-likes" type="number" min="0" placeholder="赞">
+      <input id="d-collects" type="number" min="0" placeholder="收藏">
     </div>
-    <div class="row" data-page-node-id="NQSaIhEkC9KEZGy4YELSd0">
-      <input id="d-comments" type="number" min="0" placeholder="评论" data-page-node-id="BJOohOcpnuT24d9BtZz4Ts">
-      <input id="d-follows" type="number" min="0" placeholder="涨粉" data-page-node-id="l17MBPEvReWCO0IjYiEcPy">
+    <div class="row">
+      <input id="d-comments" type="number" min="0" placeholder="评论">
+      <input id="d-follows" type="number" min="0" placeholder="涨粉">
     </div>
-    <label data-page-node-id="CIUw0tEFaCyhGSWUkRrCRf">爆的原因标签（可选，如：封面吸睛/标题有痛点）</label>
-    <input id="d-tag" placeholder="这期为什么表现好" data-page-node-id="ykxWSF2mQ37bGuCPN7DFqF">
-    <div class="btn-row" data-page-node-id="6lfgaXtf54nT8Eohneiw7q">
-      <button class="btn" id="d-add" data-page-node-id="YOVgo3DMLw0ACOrMK3hrvc">记录这篇</button>
+    <label>爆的原因标签（可选，如：封面吸睛/标题有痛点）</label>
+    <input id="d-tag" placeholder="这期为什么表现好">
+    <div class="btn-row">
+      <button class="btn" id="d-add">记录这篇</button>
     </div>
-    <h2 style="margin-top:18px;" data-page-node-id="8PpeSkBpIuCBGUNDJV1BVy">阅读量趋势</h2>
-    <div class="bars" id="d-bars" data-page-node-id="rLHHdiyv6SKP0jjLqochjq"></div>
-    <div class="table-scroll" style="margin-top:12px;" data-page-node-id="sX3wTKvxFcPGIGAoPeuPNy">
-      <table id="d-table" data-page-node-id="VCP8L2Xv5ggq8FU28SrNlq"><thead data-page-node-id="Faph35GK3vIv5nAKX8cbvI"><tr data-page-node-id="lIc5foxTHCzSzY1s79Z8hX">
-        <th class="l" data-page-node-id="JNofj1g3A8NFoIsw2UWMSD">日期</th><th data-page-node-id="5mcIf0UjwW3iQv1kbTaq0N">账号</th><th class="l" data-page-node-id="cNECSAbHfqD8Igoo5LvX7V">标题</th><th data-page-node-id="xDU4cRtdiMnAzHUa6BneEc">阅读</th><th data-page-node-id="emtwtCURA5dygOItrROA5D">赞</th><th data-page-node-id="Nw4xv15M8jFd8gbTFQKi38">藏</th><th data-page-node-id="w26dAESCk4li0rQ1fvvpAl">评</th><th data-page-node-id="b2oh408Q3f7bAOViuCc7hL">粉</th><th data-page-node-id="MvrcGZ5RvdBWwwLBpiwK7D">标签</th><th data-page-node-id="MOvskBYDEofsVOMcPvuWSy"></th>
-      </tr></thead><tbody data-page-node-id="jBAM9IZuUl0BYzFnfxxoCT"></tbody></table>
+    <h2 style="margin-top:18px;">阅读量趋势</h2>
+    <div class="bars" id="d-bars"></div>
+    <div class="table-scroll" style="margin-top:12px;">
+      <table id="d-table"><thead><tr>
+        <th class="l">日期</th><th>账号</th><th class="l">标题</th><th>阅读</th><th>赞</th><th>藏</th><th>评</th><th>粉</th><th>标签</th><th></th>
+      </tr></thead><tbody></tbody></table>
     </div>
   </section>
 
   <!-- 6. 素材银行 -->
-  <section class="panel" id="bank" data-page-node-id="jDXGnIHQffFGBIocj0q2eY">
-    <h2 data-page-node-id="xnQjpGF8v3ROiIdPwml6LL">素材银行</h2>
-    <p class="sub" data-page-node-id="EKd15juhnrECIjquaGglvh">看到的好封面/配色/排版截图，存进来打标签，做你的参考库。（图片以本地方式保存，别存太多以免占空间）</p>
-    <div class="drop" id="bank-drop" data-page-node-id="FywoNgjmYLAGCx5Nukuc21">点这里选图片，或拖图进来</div>
-    <input type="file" id="bank-file" accept="image/*" multiple style="display:none;" data-page-node-id="AxVqoVVRGMm3pB4BURu2ay">
-    <label style="margin-top:12px;" data-page-node-id="mpAC21GBxk0flT2uUzd8rs">标签（用逗号分隔，如：封面,马卡龙,排版）</label>
-    <input id="bank-tags" placeholder="标签" data-page-node-id="AsPTph4dHQyqZLvqkzWkFG">
-    <div class="grid" id="bank-grid" data-page-node-id="psKQNz6o4IIfVnM4veAYtn"></div>
+  <section class="panel" id="bank">
+    <h2>素材银行</h2>
+    <p class="sub">看到的好封面/配色/排版截图，存进来打标签，做你的参考库。（图片以本地方式保存，别存太多以免占空间）</p>
+    <div class="drop" id="bank-drop">点这里选图片，或拖图进来</div>
+    <input type="file" id="bank-file" accept="image/*" multiple style="display:none;">
+    <label style="margin-top:12px;">标签（用逗号分隔，如：封面,马卡龙,排版）</label>
+    <input id="bank-tags" placeholder="标签">
+    <div class="grid" id="bank-grid"></div>
   </section>
 
   <!-- 7. 正文模板库 -->
-  <section class="panel" id="tpl" data-page-node-id="DWDRN0uq7VBBFj6B1boXGF">
-    <h2 data-page-node-id="AbfH40DR4SnkmFGy0ixHmd">正文模板库</h2>
-    <p class="sub" data-page-node-id="1BcCiLhP5JIYDyaycsS4ga">常用结构，点一下复制，发笔记提速。</p>
-    <div id="tpl-list" data-page-node-id="QSUfuQy0UooQ1c7fQ91EQA"></div>
+  <section class="panel" id="tpl">
+    <h2>正文模板库</h2>
+    <p class="sub">常用结构，点一下复制，发笔记提速。</p>
+    <div id="tpl-list"></div>
+  </section>
+
+  <!-- 8. 爆款对标库 -->
+  <section class="panel" id="benchmark">
+    <h2>🎯 爆款对标库</h2>
+    <p class="sub">刷到别人的爆款，把标题和互动数据记下来，自动算出「爆款等级」和「可借鉴点」。攒够 10 条，规律自己就浮出来了。</p>
+    <input id="bm-title" placeholder="爆款标题，如：sims4捏脸｜这个参数我调了三天">
+    <div class="row" style="margin-top:8px;">
+      <input id="bm-likes" type="number" min="0" placeholder="点赞">
+      <input id="bm-collects" type="number" min="0" placeholder="收藏">
+      <input id="bm-comments" type="number" min="0" placeholder="评论">
+      <select id="bm-platform"><option>小红书</option><option>抖音</option></select>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="bm-add">加入对标库</button>
+    </div>
+    <div id="bm-list" style="margin-top:10px;"></div>
+  </section>
+
+  <!-- 9. 封面模板库 -->
+  <section class="panel" id="covertpl">
+    <h2>🎨 封面模板库</h2>
+    <p class="sub">照着这些结构排封面，点「复制结构」就能拿去用。（和上面的「封面预览」不同：这里是固定套路模板，那个是拖图看比例）</p>
+    <div id="cov-list" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;"></div>
   </section>
 
 </div>
-<div class="toast" id="toast" data-page-node-id="cjg73xtTWrCH1n77yCpkfF"></div>
+<div class="toast" id="toast"></div>
 
 <script>
 "use strict";
@@ -463,6 +489,7 @@ $("#title-check").addEventListener("click",()=>{
       <div class="score-tip">${r.len} 字 · ${r.score>=80?"很棒，可以直接用":r.score>=60?"还能再优化一下":"建议大改"}</div></div>
     </div>
     <ul class="check-list" style="margin-top:10px;">${r.tips.map(t=>`<li><span class="${t[0]}">${t[0]==="ok"?"✓":"✗"}</span> ${esc(t[1])}</li>`).join("")}</ul>
+    ${(()=>{const bad=titleProhibited(raw.trim());return bad.length?`<div style="margin-top:10px;padding:8px 10px;border-radius:10px;background:#fff0f3;border:1px solid #ffb3c6;font-size:12.5px;color:#e0456e;line-height:1.6;">⚠️ 疑似违禁/谨慎词：${bad.map(esc).join("、")}（小红书可能限流，建议替换）</div>`:"";})()}
   </div>
   <h2 style="margin-top:14px;font-size:15px;">5 个优化版本（点一下复制）</h2>
   <div id="variants">${genVariants(raw.trim()).map(v=>`<div class="variant" data-v="${esc(v)}">${esc(v)}<span class="copy">复制</span></div>`).join("")}</div>`;
@@ -656,6 +683,104 @@ window.addEventListener('load',csSendHeight);
 window.addEventListener('resize',csSendHeight);
 if(window.ResizeObserver){ try{ new ResizeObserver(csSendHeight).observe(document.body); }catch(e){} }
 setInterval(csSendHeight,800);
+
+/* ============ 8. 爆款对标库 ============ */
+let benchmarks = store.get("benchmark",[]);
+// 一次性迁移：从主工作台 hami_assistant_data.benchmarkNotes 搬过来（不丢历史数据）
+(function(){
+  try{
+    if(benchmarks.length) return;
+    const raw = (window.parent && window.parent.localStorage) ? window.parent.localStorage.getItem("hami_assistant_data") : null;
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    const old = (d && d.benchmarkNotes) || [];
+    if(old.length){ benchmarks = old.map(b=>({...b})); store.set("benchmark",benchmarks); }
+  }catch(e){}
+})();
+function saveBench(){ store.set("benchmark",benchmarks); }
+function bmAnalyze(title,likes,collects,comments){
+  const L=+likes||0,C=+collects||0,M=+comments||0;
+  const heat=L+C*2+M*3;
+  let level="起步",color="#8a6270";
+  if(heat>=30000){level="现象级";color="#e84a5f";}
+  else if(heat>=10000){level="大爆款";color="#ff7f9e";}
+  else if(heat>=3000){level="爆款";color="#d14b73";}
+  else if(heat>=1000){level="优质";color="#c75b86";}
+  else if(heat>=300){level="潜力";color="#856404";}
+  const t=String(title||"");
+  const tips=[];
+  if(/\d/.test(t))tips.push("标题带数字，清单感强");
+  if(/保姆级|教程|干货|攻略|技巧|新手|入门|步骤/.test(t))tips.push("教程型词，收藏率高");
+  if(/[?？]|吗|怎么|如何|为什么|凭什么/.test(t))tips.push("疑问句开头，勾好奇心");
+  if(/绝了|太美|哭了|惊艳|封神|狠狠|真的会|谁懂/.test(t))tips.push("情绪词拉满，易被推荐");
+  if(/公开|免费|分享|附|送|参数|合集/.test(t))tips.push("给实际好处，涨粉快");
+  if(/sims|模拟人生|捏脸|捏人|cc|mod/i.test(t))tips.push("精准命中领域关键词");
+  if(t.length>=15&&t.length<=28)tips.push("标题长度刚好（15-28 字）");
+  else if(t.length>0&&t.length<12)tips.push("标题偏短，可补痛点或结果");
+  else if(t.length>32)tips.push("标题偏长，重点会被折叠");
+  if(C>0&&C>L*0.5)tips.push("收藏高：有保存价值，适合做成系列");
+  if(M>0&&M>L*0.1)tips.push("评论高：结尾留了讨论点");
+  if(!tips.length)tips.push("标题较平，建议加数字＋痛点");
+  return {heat,level,color,tips};
+}
+function renderBench(){
+  const box=$("#bm-list");
+  if(!box) return;
+  const arr=benchmarks.slice().sort((a,b)=>(b.heat||0)-(a.heat||0));
+  if(!arr.length){box.innerHTML='<div class="empty">还没有对标记录～刷到爆款就回来记一条，攒够 10 条规律就出来了</div>';return;}
+  box.innerHTML=arr.map((b)=>{
+    const tips=(b.tips||[]).map(t=>`<span style="display:inline-block;font-size:11.5px;background:rgba(255,158,181,.16);color:#c75b86;padding:3px 9px;border-radius:9px;line-height:1.6;margin:2px;">${esc(t)}</span>`).join("");
+    return `<div class="card" style="margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-weight:800;color:${b.color};font-size:13px;">${esc(b.level)}</span>
+        <span style="font-size:14px;color:#5a3a48;font-weight:700;flex:1;min-width:0;">${esc(b.title)}</span>
+        <button class="del-link" data-bm="${benchmarks.indexOf(b)}">删除</button>
+      </div>
+      <div style="font-size:12px;color:#8a6270;margin-top:5px;">${esc(b.platform||"小红书")} · 赞 ${b.likes||0} · 藏 ${b.collects||0} · 评 ${b.comments||0} · 热度 ${b.heat||0}</div>
+      <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">${tips}</div>
+    </div>`;
+  }).join("");
+  $$("#bm-list .del-link").forEach(btn=>btn.addEventListener("click",()=>{benchmarks.splice(+btn.dataset.bm,1);saveBench();renderBench();toast("已删除");}));
+}
+$("#bm-add").addEventListener("click",()=>{
+  const title=$("#bm-title").value.trim();
+  if(!title){toast("先填爆款标题呀");return;}
+  const likes=$("#bm-likes").value||0,collects=$("#bm-collects").value||0,comments=$("#bm-comments").value||0;
+  const a=bmAnalyze(title,likes,collects,comments);
+  benchmarks.push({id:"bm"+Date.now(),title,platform:$("#bm-platform").value,likes:+likes,collects:+collects,comments:+comments,heat:a.heat,level:a.level,color:a.color,tips:a.tips,createdAt:Date.now()});
+  saveBench();
+  $("#bm-title").value="";$("#bm-likes").value="";$("#bm-collects").value="";$("#bm-comments").value="";
+  renderBench();toast("已加入对标库 · "+a.level);
+});
+$("#nav button[data-tab='benchmark']").addEventListener("click",renderBench);
+
+/* ============ 9. 封面模板库 ============ */
+const COVERS=[
+  {id:'a',name:'参数公开型',layout:'大字标题 + 左下角小标签',copy:'【主标题】sims4 高级捏脸参数公开\n【副标题】把EA风发挥到极致\n【角标】保姆级教程 · 收藏不亏'},
+  {id:'b',name:'对比型',layout:'左「改前」右「改后」+ 中间箭头',copy:'【左】路人脸 → 【右】辨识度拉满\n【标题】同一张脸，差的就是这3步'},
+  {id:'c',name:'合集型',layout:'上方大字 + 下方 3–4 个缩略方块',copy:'【标题】收藏！8 套 sims4 婚礼捏脸\n【方块】复古 / 甜美 / 暗黑 / 童话'},
+  {id:'d',name:'人设型',layout:'居中人物 + 底部一句话 slogan',copy:'【slogan】每月分享免费人物 · 接定制ing\n【标题】你的专属 sims 角色长这样'}
+];
+function renderCovers(){
+  const box=$("#cov-list");
+  if(!box) return;
+  box.innerHTML=COVERS.map(c=>`<div class="card" style="width:150px;margin:0;">
+    <div style="font-weight:800;color:var(--c-pink-deep);font-size:14px;">${esc(c.name)}</div>
+    <div style="font-size:12px;color:#8a6270;margin:4px 0 8px;line-height:1.5;">${esc(c.layout)}</div>
+    <button class="btn sm" data-cov="${c.id}">复制结构</button>
+  </div>`).join("");
+  $$("#cov-list .btn[data-cov]").forEach(btn=>btn.addEventListener("click",()=>{
+    const c=COVERS.find(x=>x.id===btn.dataset.cov);
+    try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(c.copy);}catch(e){}
+    toast("已复制「"+c.name+"」封面结构");
+  }));
+}
+$("#nav button[data-tab='covertpl']").addEventListener("click",renderCovers);
+renderCovers();   // 模板是静态的，先渲染好
+
+/* ============ 标题违禁词自检（整合自原工作台） ============ */
+const PROHIBITED=["最","第一","国家级","唯一","顶级","极","万能","100%","绝对","包治","免费送","私信我","加微信","引流","点赞关注","秒杀","全网最低","史上","冠军","王牌","根治","最高效"];
+function titleProhibited(t){ return PROHIBITED.filter(w=>String(t||"").indexOf(w)>=0); }
 </script>
 </body>
 </html>
