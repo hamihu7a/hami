@@ -4089,7 +4089,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-12-74';
+  var BUILD_VER = '2026-09-12-76';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -12150,6 +12150,8 @@ function toggleFuturePostDone(idOrIdx) {
     // addLinkedMediaRecord 内部按 futurePostId 去重，重复点击完成不会重复创建；
     // 用"今天"作为实际完成日写入，保证立刻落进当前月的「自媒体更新记录」看得见
     addLinkedMediaRecord(p, false, todayStr());
+    // v66：自动跳到「自媒体更新记录」面板，让主人第一时间看到联动结果
+    try { setTimeout(function () { switchPanel('media'); }, 280); } catch (e) {}
   } else {
     // 撤销完成 → 同步移除「自媒体更新记录」里的联动记录
     // removeLinkedMediaRecord 已写墓碑+存档+重渲染，刷新/换设备都不会再复活
@@ -12197,7 +12199,7 @@ function addLinkedMediaRecord(p, silent, overrideDate) {
     count: 1,
     createdAt: Date.now()
   });
-  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + recDate + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
+  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + recDate + ' · 更新1条' + (isDy ? '（同步抖音）' : '') + '\n请切到「自媒体更新记录」查看（已按今天日期记入当月）');
 }
 function removeLinkedMediaRecord(fpId) {
   if (!store.mediaRecords || !fpId) return;
@@ -12395,7 +12397,8 @@ function checkFuturePostTitle(idOrIdx) {
   if (ar.titleResult) {
     const r = ar.titleResult;
     html += '<div class="fp-score-line"><span class="fp-score-badge">' + r.score + '分</span><span class="fp-score-level">' + r.level + '</span></div>';
-    if (r.bad.length) html += '<div class="fp-risk">⚠️ 标题风险词：' + crEscapeHtml(r.marked) + '</div>';
+    // v66：只列风险词，不再重复整段标题
+    if (r.bad.length) html += '<div class="fp-risk">⚠️ 标题风险词：' + crEscapeHtml(r.bad.join('、')) + '</div>';
     if (r.tips.length) {
       html += '<ul class="fp-tips">';
       r.tips.forEach(function(tp){ html += '<li>' + crEscapeHtml(tp) + '</li>'; });
@@ -12408,7 +12411,8 @@ function checkFuturePostTitle(idOrIdx) {
   }
   const cb = ar.contentResult.bad;
   if (cb.length) {
-    html += '<div class="fp-risk">⚠️ 文案风险词：' + crEscapeHtml(ar.contentResult.marked) + '</div>';
+    // v66：只列风险词，不再整段重复文案
+    html += '<div class="fp-risk">⚠️ 文案风险词：' + crEscapeHtml(cb.join('、')) + '</div>';
   } else if ((p.content || '').trim()) {
     html += '<div class="fp-ok">✅ 文案无违禁/风险词</div>';
   }
@@ -12441,8 +12445,8 @@ function checkAllFuturePostTitles() {
     }
     bodyHtml += '<span style="font-size:11px;color:#8a6270;">' + (p.date || '未设日期') + ' · ' + accName + '</span>';
     bodyHtml += '</div>';
-    if (ar.titleResult && ar.titleResult.bad.length) bodyHtml += '<div class="fp-risk">⚠️ 标题风险词：' + crEscapeHtml(ar.titleResult.marked) + '</div>';
-    if (ar.contentResult.bad.length) bodyHtml += '<div class="fp-risk">⚠️ 文案风险词：' + crEscapeHtml(ar.contentResult.marked) + '</div>';
+    if (ar.titleResult && ar.titleResult.bad.length) bodyHtml += '<div class="fp-risk">⚠️ 标题风险词：' + crEscapeHtml(ar.titleResult.bad.join('、')) + '</div>';
+    if (ar.contentResult.bad.length) bodyHtml += '<div class="fp-risk">⚠️ 文案风险词：' + crEscapeHtml(ar.contentResult.bad.join('、')) + '</div>';
     if (ar.titleResult && ar.titleResult.tips.length) {
       bodyHtml += '<ul class="fp-tips">';
       ar.titleResult.tips.forEach(function(tp){ bodyHtml += '<li>' + crEscapeHtml(tp) + '</li>'; });
