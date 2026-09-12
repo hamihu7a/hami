@@ -12116,15 +12116,15 @@ function syncFuturePostMediaRecord(fpId) {
   if (!p || !p.done) return;
   const recs = store.mediaRecords.filter(function (r) { return r.futurePostId === fpId; });
   if (!recs.length) {
-    // 之前未联动，现在标记为完成则补一条
-    addLinkedMediaRecord(p);
+    // 之前未联动，现在标记为完成则补一条（按今天记，保证落在当前月视图）
+    addLinkedMediaRecord(p, false, todayStr());
     return;
   }
   const isDy = p.douyin || p.account === 'douyin';
   recs.forEach(function (r) {
     r.account = p.account || 'big';
     r.douyin = isDy;
-    r.date = p.date || r.date;
+    // r.date 保持为"实际完成日"（今天），不再回填计划的未来日期，避免从当月视图消失
     r.title = p.title || r.title;
   });
 }
@@ -12148,8 +12148,8 @@ function toggleFuturePostDone(idOrIdx) {
   if (nowDone) {
     // 标记完成 → 自动联动一条到「自媒体更新记录」
     // addLinkedMediaRecord 内部按 futurePostId 去重，重复点击完成不会重复创建；
-    // 若缺日期会默认用今天，保证一定写入（修复"标记完成却没出现在自媒体记录"）
-    addLinkedMediaRecord(p);
+    // 用"今天"作为实际完成日写入，保证立刻落进当前月的「自媒体更新记录」看得见
+    addLinkedMediaRecord(p, false, todayStr());
   } else {
     // 撤销完成 → 同步移除「自媒体更新记录」里的联动记录
     // removeLinkedMediaRecord 已写墓碑+存档+重渲染，刷新/换设备都不会再复活
@@ -12163,17 +12163,19 @@ function toggleFuturePostDone(idOrIdx) {
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
 }
-function addLinkedMediaRecord(p, silent) {
+function addLinkedMediaRecord(p, silent, overrideDate) {
   if (!p || !p.id) return;
   if (!store.mediaRecords) store.mediaRecords = [];
-  // 缺日期时默认用今天，保证一定写入自媒体更新记录（根治"标记完成却没出现在自媒体记录里"）
-  if (!p.date) p.date = todayStr();
+  // v65：【根治"标记完成却没出现在自媒体记录里"】
+  // 联动记录的日期 = 实际完成日（overrideDate，通常为今天），不再沿用未来计划的日期。
+  // 这样无论原计划排到几月，标记完成都会落到"当前月"的「自媒体更新记录」，主人点完立刻能看到。
+  const recDate = overrideDate || p.date || todayStr();
   const acc = p.account || 'big';
   const isDy = p.douyin || acc === 'douyin';
   const accName = acc === 'big' ? '🎨 美化档大号' : acc === 'small' ? '👤 定制人物小号' : '🎵 抖音';
   // 清除可能残留的墓碑，避免"撤销后再标记"被云端合并按内容键过滤掉
   try {
-    const ck = 'mrC_' + (p.date || '') + '|' + String(p.title || '');
+    const ck = 'mrC_' + recDate + '|' + String(p.title || '');
     if (store.__deleted && Array.isArray(store.__deleted.mediaRecords)) {
       store.__deleted.mediaRecords = store.__deleted.mediaRecords.filter(function (k) { return k !== ck; });
     }
@@ -12184,7 +12186,7 @@ function addLinkedMediaRecord(p, silent) {
   store.mediaRecords.push({
     id: 'mr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     futurePostId: p.id,
-    date: p.date,
+    date: recDate,
     account: acc,
     title: p.title || '',
     content: '更新1条',
@@ -12195,7 +12197,7 @@ function addLinkedMediaRecord(p, silent) {
     count: 1,
     createdAt: Date.now()
   });
-  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + p.date + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
+  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + recDate + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
 }
 function removeLinkedMediaRecord(fpId) {
   if (!store.mediaRecords || !fpId) return;
@@ -12334,7 +12336,7 @@ function backfillFutureDoneToMedia() {
   (store.futurePosts || []).forEach(function (p) {
     if (p && p.done && p.id) {
       const has = store.mediaRecords.some(function (r) { return r.futurePostId === p.id; });
-      if (!has) { addLinkedMediaRecord(p, true); changed = true; }
+      if (!has) { addLinkedMediaRecord(p, true, todayStr()); changed = true; }
     }
   });
   if (changed) { try { saveData(); } catch (e) {} try { renderMedia(); } catch (e) {} }
