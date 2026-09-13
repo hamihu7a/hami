@@ -1940,6 +1940,7 @@
   }
   .fin-flow-date { flex-shrink: 0; color: #7d4a5a; }
   .fin-flow-time { flex-shrink: 0; color: #9a7280; }
+  .fin-flow-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #5a3a48; font-weight: 500; }
   .income-breakdown {
     margin-top: 8px; padding: 10px 12px;
     background: #fff8fa; border-radius: 10px;
@@ -2187,32 +2188,34 @@
     gap: 8px; font-size: 12px; color: #8a6270;
   }
 
-  /* 运动打卡卡片 */
+  /* 运动打卡卡片：日期 / 状态 / 内容 排成一行 */
+  .ex-card {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 7px 10px;
+  }
+  .ex-card-main {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 5px 8px; min-width: 0; flex: 1;
+  }
   .ex-card-date {
-    font-size: 15px; font-weight: 700; color: var(--c-text-2);
-    margin-bottom: 6px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 14px; font-weight: 700; color: var(--c-text-2);
+    white-space: nowrap; margin-bottom: 0;
   }
-  .ex-card-status { margin-bottom: 8px; }
+  .ex-card-status { margin-bottom: 0; flex-shrink: 0; }
   .ex-card-tags {
-    display: flex; flex-wrap: wrap; gap: 6px;
+    display: flex; flex-wrap: wrap; gap: 5px; min-width: 0;
   }
+  .ex-card .card-actions { position: static; flex-shrink: 0; }
   .ex-tag {
-    font-size: 12px; color: #5a3a48; background: #fff0f5;
-    padding: 3px 10px; border-radius: 10px; border: 1px solid #ffd0dc;
+    font-size: 11px; color: #5a3a48; background: #fff0f5;
+    padding: 2px 8px; border-radius: 10px; border: 1px solid #ffd0dc;
   }
   .ex-tag.empty { color: #b08a98; background: transparent; border: 1px dashed #e0c8d0; }
 
   /* 每日运动打卡卡片更紧凑 */
   .ex-card-list { gap: 6px; }
-  .ex-card { padding: 7px 10px; padding-right: 58px; }
-  .ex-card .card-actions { top: 6px; right: 8px; }
   .ex-card .row-edit-btn, .ex-card .row-del-btn { padding: 2px 5px; font-size: 11px; }
-  .ex-card-date { font-size: 13px; margin-bottom: 2px; }
-  .ex-card-status { margin-bottom: 3px; }
   .ex-card .badge { font-size: 10px; padding: 2px 6px; }
-  .ex-card-tags { gap: 4px; }
-  .ex-tag { font-size: 10px; padding: 2px 6px; border-radius: 8px; }
 
   /* 经期记录卡片 */
   .period-card-date {
@@ -2591,9 +2594,9 @@
     .co-card-amount { font-size: 14px; }
     .co-card-meta, .period-card-meta, .travel-card-meta { gap: 6px; }
     .travel-check-item { font-size: 11px; }
-    /* 运动打卡卡片在手机上保持紧凑 */
-    .ex-card { padding: 6px 9px; padding-right: 52px; }
-    .ex-card .card-actions { top: 5px; right: 6px; }
+    /* 运动打卡卡片在手机上保持一行 */
+    .ex-card { padding: 6px 8px; gap: 6px; }
+    .ex-card-main { gap: 4px 6px; }
     .ex-card .row-edit-btn, .ex-card .row-del-btn { padding: 2px 4px; font-size: 10px; }
     .ex-card-date { font-size: 12px; }
     .ex-tag { font-size: 9px; padding: 1px 4px; }
@@ -4039,7 +4042,7 @@
   .mini-count.acc-douyin { background:#4a4a4a; color:#fff; }
 .schedule-list { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
 .sch-item { display:flex; align-items:center; justify-content:space-between; gap:8px; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:8px 10px; }
-.sch-item.done { opacity:.6; }
+.sch-item.done { background:#f6fff9; border-left:3px solid #6fcf97; opacity:1; }
 .sch-item-main { display:flex; align-items:center; gap:7px; flex-wrap:wrap; min-width:0; }
 .sch-item-date { font-size:12px; color:#9a6b7b; font-variant-numeric:tabular-nums; }
 .sch-item-acc { font-size:11px; padding:1px 7px; border-radius:20px; color:#fff; }
@@ -4114,7 +4117,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-13-81';
+  var BUILD_VER = '2026-09-13-82';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -9293,10 +9296,10 @@ function sendHamiCmd() {
         const amt = it.amount;
         if (amt > 0 && amt <= 1000000) {
           const exist = store.accountRecords.find(function (r) {
-            return r.date === date && r.type === 'income' && r.category === 'custom' && (r.note || '').indexOf('模拟人生') >= 0;
+            return r.date === date && r.type === 'income' && r.category === 'sims_income' && (r.note || '').indexOf('模拟人生') >= 0;
           });
           if (exist) { exist.amount = fmtMoney(exist.amount + amt); exist.ts = Date.now(); }
-          else store.accountRecords.push({ date: date, type: 'income', amount: amt, category: 'custom', note: '模拟人生定制单收入', ts: Date.now() });
+          else store.accountRecords.push({ date: date, type: 'income', amount: amt, category: 'sims_income', note: '模拟人生定制单收入', ts: Date.now() });
           hints.push('模拟人生收入' + amt.toFixed(2) + '元');
           acted = true;
         }
@@ -11516,13 +11519,15 @@ function renderFitness() {
       const tagsHtml = tags.length ? tags.map(t => `<span class="ex-tag">${t}</span>`).join('') : '<span class="ex-tag empty">今日无运动内容</span>';
       return `
         <div class="ex-card">
+          <div class="ex-card-main">
+            <div class="ex-card-date">${e.date}</div>
+            <div class="ex-card-status">${statusBadge}</div>
+            <div class="ex-card-tags">${tagsHtml}</div>
+          </div>
           <div class="card-actions">
             <button class="row-edit-btn" onclick="openExerciseEditModal(${idx})" aria-label="编辑">改</button>
             <button class="row-del-btn" onclick="deleteExerciseRecord(${idx})" aria-label="删除">删</button>
           </div>
-          <div class="ex-card-date">${e.date}</div>
-          <div class="ex-card-status">${statusBadge}</div>
-          <div class="ex-card-tags">${tagsHtml}</div>
         </div>`;
     });
     document.getElementById('exercise-table').innerHTML = '<div class="ex-card-list">' + exHtml + '</div>';
@@ -14209,7 +14214,9 @@ function renderIncomeLedger() {
   pageList.forEach(r => {
     const realIdx = store.accountRecords.indexOf(r);
     const c = getCategoryInfo(r.category, r.type);
-    const isSimsIncome = (r.type === 'income' && (r.category === 'sims_income' || r.category === 'mod' || r.category === 'custom'));
+    const noteText = (r.note || '') + ' ' + (r.title || '');
+    const noteHasSims = /模拟人生|sims/i.test(noteText);
+    const isSimsIncome = (r.type === 'income' && (r.category === 'sims_income' || r.category === 'mod' || noteHasSims));
     const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
     const timeStr = (r.time || '').substring(0, 5);
     const opTip = r.ts ? (function () {
@@ -14239,6 +14246,7 @@ function renderIncomeLedger() {
           <div class="fin-flow-line2">
             <span class="fin-flow-date">${dateStr}</span>
             <span class="fin-flow-time">${timeStr}</span>
+            ${r.note ? '<span class="fin-flow-note">' + crEscapeHtml(String(r.note)) + '</span>' : ''}
             ${opTip}
           </div>
         </div>
