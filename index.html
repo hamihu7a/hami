@@ -1525,7 +1525,8 @@
     box-shadow: 0 4px 18px rgba(209,75,115,0.10);
     transition: transform .12s ease, box-shadow .12s ease;
   }
-  .future-post-card.done { opacity: 0.62; }
+  .future-post-card.done { background: #ffffff; border-left: 4px solid #6fcf97; }
+  .future-post-card.done .future-post-title { color: #4a7c5e; }
   .future-post-card.overdue { border-color: rgba(255,107,107,0.45); box-shadow: 0 4px 18px rgba(255,107,107,0.14); }
   .future-post-title { font-weight: 800; color: var(--c-pink-deep, #d14b73); font-size: 14px; line-height: 1.4; margin-bottom: 6px; }
   .future-post-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
@@ -1925,6 +1926,12 @@
   .fin-flow-amt.expense { color: var(--c-pink-deep); }
   .fin-flow-amt.income { color: #34c759; }
   .fin-flow-amt.transfer { color: #8a72e0; }
+  /* 模拟人生收入在账本中做视觉区分 */
+  .fin-flow-row.sims-income-row { border-left: 4px solid #c9b6e4; background: #faf5ff; }
+  .sims-income-tag {
+    font-size: 10px; font-weight: 700; color: #fff; background: #c9b6e4;
+    padding: 1px 6px; border-radius: 999px; margin-left: 6px; flex-shrink: 0;
+  }
   .fin-flow-line2 {
     margin-top: 3px;
     display: flex; align-items: center; gap: 6px;
@@ -4107,7 +4114,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-13-80';
+  var BUILD_VER = '2026-09-13-81';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -11938,42 +11945,65 @@ function renderPublishCalendar() {
     if (monthSchedules.length === 0 && monthMedia.length === 0) {
       listEl.innerHTML = '<div class="empty-state" style="padding:16px 0;"><p style="font-size:13px;">本月暂无排期/记录</p><p style="font-size:12px;margin-top:4px;">点上方「➕ 加排期」安排计划，或「记一条/标记完成」记入已发布~</p></div>';
     } else {
-      let html = '';
+      // 合并排期 + 已发布记录，按日期排序，默认只显示 3 条，其余折叠
+      const combined = [];
       monthSchedules.forEach(function (s) {
-        const idx = store.publishSchedule.indexOf(s);
-        const done = s.status === 'done';
-        html += '<div class="sch-item' + (done ? ' done' : '') + '">'
-          + '<div class="sch-item-main">'
-          + '<div class="sch-item-date">' + (s.date || '').substring(5) + '</div>'
-          + '<div class="sch-item-acc ' + schAccClass(s.account) + '">' + schAccName(s.account) + '</div>'
-          + '<div class="sch-item-type">' + schTypeName(s.type) + '</div>'
-          + '<div class="sch-item-title">' + (s.title || '（未命名）') + '</div>'
-          + '</div>'
-          + '<div class="sch-item-actions">'
-          + '<button class="sch-btn ' + (done ? 'undo' : 'ok') + '" onclick="toggleScheduleStatus(' + idx + ')">' + (done ? '↩ 未发' : '✓ 已发') + '</button>'
-          + '<button class="sch-btn edit" onclick="openScheduleModal(' + idx + ')">改</button>'
-          + '<button class="sch-btn del" onclick="deleteSchedule(' + idx + ')">删</button>'
-          + '</div></div>';
+        combined.push({ kind: 'schedule', item: s, date: s.date || '', sort: (s.date || '') + (s.time || '00:00') });
       });
       monthMedia.forEach(function (r) {
-        const mIdx = store.mediaRecords.indexOf(r);
-        const acc = r.account || 'big';
-        const title = (r.title || ('更新' + (r.count || 1) + '条'));
-        html += '<div class="sch-item done">'
-          + '<div class="sch-item-main">'
-          + '<div class="sch-item-date">' + (r.date || '').substring(5) + '</div>'
-          + '<div class="sch-item-acc ' + schAccClass(acc) + '">' + schAccName(acc) + (r.douyin ? '·抖音' : '') + '</div>'
-          + '<div class="sch-item-type">已发布</div>'
-          + '<div class="sch-item-title">' + crEscapeHtml(title) + '</div>'
-          + '</div>'
-          + '<div class="sch-item-actions">'
-          + '<button class="sch-btn edit" onclick="openMediaRecordModal(' + mIdx + ')">改</button>'
-          + '</div></div>';
+        combined.push({ kind: 'media', item: r, date: r.date || '', sort: (r.date || '') + (r.time || '00:00') });
       });
+      combined.sort(function (a, b) { return a.sort.localeCompare(b.sort); });
+      const COLLAPSE_AT = 3;
+      const showAll = __schExpanded || combined.length <= COLLAPSE_AT;
+      const viewList = showAll ? combined : combined.slice(0, COLLAPSE_AT);
+      let html = '';
+      viewList.forEach(function (it) {
+        if (it.kind === 'schedule') {
+          const s = it.item;
+          const idx = store.publishSchedule.indexOf(s);
+          const done = s.status === 'done';
+          html += '<div class="sch-item' + (done ? ' done' : '') + '">'
+            + '<div class="sch-item-main">'
+            + '<div class="sch-item-date">' + (s.date || '').substring(5) + '</div>'
+            + '<div class="sch-item-acc ' + schAccClass(s.account) + '">' + schAccName(s.account) + '</div>'
+            + '<div class="sch-item-type">' + schTypeName(s.type) + '</div>'
+            + '<div class="sch-item-title">' + (s.title || '（未命名）') + '</div>'
+            + '</div>'
+            + '<div class="sch-item-actions">'
+            + '<button class="sch-btn ' + (done ? 'undo' : 'ok') + '" onclick="toggleScheduleStatus(' + idx + ')">' + (done ? '↩ 未发' : '✓ 已发') + '</button>'
+            + '<button class="sch-btn edit" onclick="openScheduleModal(' + idx + ')">改</button>'
+            + '<button class="sch-btn del" onclick="deleteSchedule(' + idx + ')">删</button>'
+            + '</div></div>';
+        } else {
+          const r = it.item;
+          const mIdx = store.mediaRecords.indexOf(r);
+          const acc = r.account || 'big';
+          const title = (r.title || ('更新' + (r.count || 1) + '条'));
+          html += '<div class="sch-item done">'
+            + '<div class="sch-item-main">'
+            + '<div class="sch-item-date">' + (r.date || '').substring(5) + '</div>'
+            + '<div class="sch-item-acc ' + schAccClass(acc) + '">' + schAccName(acc) + (r.douyin ? '·抖音' : '') + '</div>'
+            + '<div class="sch-item-type">已发布</div>'
+            + '<div class="sch-item-title">' + crEscapeHtml(title) + '</div>'
+            + '</div>'
+            + '<div class="sch-item-actions">'
+            + '<button class="sch-btn edit" onclick="openMediaRecordModal(' + mIdx + ')">改</button>'
+            + '</div></div>';
+        }
+      });
+      if (combined.length > COLLAPSE_AT) {
+        if (showAll) {
+          html += '<button class="future-done-toggle" onclick="__schExpanded=false;renderPublishCalendar();">收起 ▲</button>';
+        } else {
+          html += '<button class="future-done-toggle" onclick="__schExpanded=true;renderPublishCalendar();">展开全部 ' + combined.length + ' 条 ▼</button>';
+        }
+      }
       listEl.innerHTML = html;
     }
   }
 }
+let __schExpanded = false;
 
 // ==================== 未来更新图文记录 ====================
 let editingFpIdx = -1;
@@ -13325,12 +13355,11 @@ const ICON_SVGS = {
   transfer: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M10 13 L26 13 L26 9 L31 14 L26 19 L26 15 L10 15 Z M26 23 L10 23 L10 27 L5 22 L10 17 L10 21 L26 21 Z" fill="#fff" stroke="currentColor" stroke-width="0.5"/></svg>'
 };
 
-// 支出分类 (25个)
+// 支出分类
 const EXPENSE_CATEGORIES = [
   { key: 'buy_vege',  icon: 'bowl',     name: '买菜',     color: '#FF8FA3' },
   { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61' },
-  { key: 'cc_material', icon: 'box',    name: '内容素材', color: '#e8a0bf' },
-  { key: 'promotion', icon: 'rocket',   name: '推广投流', color: '#ff8c69' },
+  { key: 'work',      icon: 'rocket',   name: '工作',     color: '#ff8c69' },
   { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7' },
   { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8' },
   { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
@@ -13357,6 +13386,7 @@ const EXPENSE_CATEGORIES = [
 const INCOME_CATEGORIES = [
   { key: 'salary',    icon: 'wallet',  name: '工资',       color: '#34c759' },
   { key: 'brand_collab', icon: 'handshake', name: '商单合作', color: '#a78bfa' },
+  { key: 'sims_income', icon: 'gamepad', name: '模拟人生收入', color: '#c9b6e4' },
   { key: 'mod',       icon: 'mod',     name: '美化档收入', color: '#ff9eb5' },
   { key: 'custom',    icon: 'palette', name: '定制单收入', color: '#30b0e0' },
   { key: 'side',      icon: 'gamepad', name: '其他副业',   color: '#FF9EBC' },
@@ -13390,7 +13420,8 @@ function getCategoryInfo(key, type) {
   const oldMap = {
     food: 'food3meal', takeout: 'food3meal', snack: 'snack', drink: 'drink',
     transport: 'transport', home: 'home', digital: 'digital',
-    fun: 'fun', other: 'social', clothing: 'clothing', medical: 'medical', study: 'study'
+    fun: 'fun', other: 'social', clothing: 'clothing', medical: 'medical', study: 'study',
+    cc_material: 'work', promotion: 'work'
   };
   const mapped = oldMap[key];
   if (mapped) for (const c of cats) if (c.key === mapped) return c;
@@ -14178,6 +14209,7 @@ function renderIncomeLedger() {
   pageList.forEach(r => {
     const realIdx = store.accountRecords.indexOf(r);
     const c = getCategoryInfo(r.category, r.type);
+    const isSimsIncome = (r.type === 'income' && (r.category === 'sims_income' || r.category === 'mod' || r.category === 'custom'));
     const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
     const timeStr = (r.time || '').substring(0, 5);
     const opTip = r.ts ? (function () {
@@ -14192,7 +14224,7 @@ function renderIncomeLedger() {
       } catch (e) { return ''; }
     })() : '';
     html += `
-        <div class="fin-flow-row">
+        <div class="fin-flow-row ${isSimsIncome ? 'sims-income-row' : ''}">
           <div class="card-actions">
             <button class="row-edit-btn" onclick="openAddModal(null,null,${realIdx})" aria-label="编辑">✏️</button>
             <button class="row-del-btn" onclick="deleteAccountRecord(${realIdx})" aria-label="删除">🗑</button>
@@ -14200,7 +14232,7 @@ function renderIncomeLedger() {
           <div class="fin-flow-line1">
             <div class="fin-flow-cat">
               <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
-              <span class="fin-flow-cat-name">${c.name}</span>
+              <span class="fin-flow-cat-name">${c.name}${isSimsIncome ? '<span class="sims-income-tag">🎮 模拟人生</span>' : ''}</span>
             </div>
             <span class="fin-flow-amt income">+¥${fmtMoney(r.amount)}</span>
           </div>
