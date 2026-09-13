@@ -1335,6 +1335,8 @@
   .co-cancel:active { transform: scale(0.97); }
   .co-save { background: linear-gradient(90deg, #ff9eb5, #ff7f9e); color: #fff; box-shadow: 0 4px 14px rgba(209,75,115,0.28); }
   .co-save:active { transform: scale(0.97); }
+  .co-del { flex:1; border:none; border-radius:14px; padding:12px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition: transform 0.12s ease, box-shadow 0.15s ease; background:#f8e1e1; color:#c45c5c; }
+  .co-del:active { transform: scale(0.97); }
 
   /* 自媒体「记一条」按钮（与记一笔同款配色，紧凑） */
   .media-add-btn {
@@ -4006,12 +4008,11 @@
 .mini-cal-cell.empty { background:transparent; }
 .mini-cal-cell.today { outline:2px solid #ff9eb5; }
 .mini-cal-d { font-size:12px; color:#7d4a5a; line-height:1.2; }
-.mini-cal-dots { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin-top:2px; }
-.mini-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-.mini-dot.acc-big { background:#ff7f9e; }
-.mini-dot.acc-small { background:#7fb3d5; }
-.mini-dot.acc-douyin { background:#4a4a4a; }
-.mini-dot.done { opacity:.35; }
+.mini-cal-dots { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin-top:2px; min-height:14px; }
+  .mini-count { font-size:10px; line-height:1; padding:2px 5px; border-radius:8px; background:#ffd0dc; color:#7d4a5a; font-weight:700; }
+  .mini-count.acc-big { background:#ff7f9e; color:#fff; }
+  .mini-count.acc-small { background:#7fb3d5; color:#fff; }
+  .mini-count.acc-douyin { background:#4a4a4a; color:#fff; }
 .schedule-list { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
 .sch-item { display:flex; align-items:center; justify-content:space-between; gap:8px; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:8px 10px; }
 .sch-item.done { opacity:.6; }
@@ -4089,7 +4090,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-12-78';
+  var BUILD_VER = '2026-09-13-79';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4978,6 +4979,7 @@
       </div>
       <div class="co-actions">
         <button class="co-cancel" onclick="closeMediaRecordModal()">取消</button>
+        <button class="co-del" id="mr-del-btn" onclick="deleteCurrentMediaRecord()" style="display:none;">删除</button>
         <button class="co-save" onclick="submitMediaRecord()">保存</button>
       </div>
     </div>
@@ -5050,6 +5052,7 @@
       </div>
       <div class="co-actions">
         <button class="co-cancel" onclick="closeScheduleModal()">取消</button>
+        <button class="co-del" id="sch-del-btn" onclick="deleteCurrentSchedule()" style="display:none;">删除</button>
         <button class="co-save" onclick="submitSchedule()">保存</button>
       </div>
     </div>
@@ -11819,6 +11822,8 @@ function openScheduleModal(idx) {
     if (titleEl) titleEl.textContent = '➕ 加排期';
   }
   schPickAccount(schAccount); schPickType(schType); schPickStatus(schStatus);
+  const delBtn = document.getElementById('sch-del-btn');
+  if (delBtn) delBtn.style.display = editingSchIdx >= 0 ? 'inline-block' : 'none';
   const m = document.getElementById('schedule-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
@@ -11849,11 +11854,16 @@ function submitSchedule() {
   finToast('✅ 已保存排期');
 }
 function deleteSchedule(idx) {
-  if (!store.publishSchedule || !store.publishSchedule[idx]) { finToast('找不到这条排期'); return; }
-  if (!confirm('删除这条排期吗？')) return;
+  if (!store.publishSchedule || !store.publishSchedule[idx]) { finToast('找不到这条排期'); return false; }
+  if (!confirm('删除这条排期吗？')) return false;
   store.publishSchedule.splice(idx, 1);
   saveData();
   try { renderPublishCalendar(); } catch (e) {}
+  return true;
+}
+function deleteCurrentSchedule() {
+  if (editingSchIdx < 0) { finToast('没有可删除的排期'); return; }
+  if (deleteSchedule(editingSchIdx)) closeScheduleModal();
 }
 function toggleScheduleStatus(idx) {
   if (!store.publishSchedule || !store.publishSchedule[idx]) return;
@@ -11880,8 +11890,14 @@ function renderPublishCalendar() {
     const firstDay = new Date(yy, mm - 1, 1).getDay();
     const daysInMonth = new Date(yy, mm, 0).getDate();
     const byDay = {};
-    monthSchedules.forEach(function (s) { const d = (s.date || '').substring(8, 10); if (d) (byDay[d] = byDay[d] || []).push(s); });
-    monthMedia.forEach(function (r) { const d = (r.date || '').substring(8, 10); if (d) (byDay[d] = byDay[d] || []).push({ account: r.account, status: 'done', _mr: true }); });
+    function addDayCount(day, account, cnt) {
+      if (!day) return;
+      const entry = byDay[day] || (byDay[day] = { count: 0, account: account });
+      entry.count += (cnt || 1);
+      if (!entry.account) entry.account = account;
+    }
+    monthSchedules.forEach(function (s) { addDayCount((s.date || '').substring(8, 10), s.account, 1); });
+    monthMedia.forEach(function (r) { addDayCount((r.date || '').substring(8, 10), r.account, r.count || 1); });
     let html = '<div class="mini-cal-grid">';
     const wk = ['日', '一', '二', '三', '四', '五', '六'];
     wk.forEach(function (w) { html += '<div class="mini-cal-wk">' + w + '</div>'; });
@@ -11889,10 +11905,10 @@ function renderPublishCalendar() {
     for (let i = 0; i < firstDay; i++) { html += '<div class="mini-cal-cell empty"></div>'; cell++; }
     for (let d = 1; d <= daysInMonth; d++) {
       const ds = String(d).padStart(2, '0');
-      const items = byDay[ds] || [];
-      const dots = items.map(function (s) { return '<span class="mini-dot ' + schAccClass(s.account) + (s.status === 'done' ? ' done' : '') + '"></span>'; }).join('');
+      const entry = byDay[ds];
+      const countBadge = entry && entry.count ? '<span class="mini-count ' + schAccClass(entry.account) + '">' + entry.count + '条</span>' : '';
       const isToday = (todayStr() === (month + '-' + ds));
-      html += '<div class="mini-cal-cell' + (isToday ? ' today' : '') + '"><div class="mini-cal-d">' + d + '</div><div class="mini-cal-dots">' + dots + '</div></div>';
+      html += '<div class="mini-cal-cell' + (isToday ? ' today' : '') + '"><div class="mini-cal-d">' + d + '</div><div class="mini-cal-dots">' + countBadge + '</div></div>';
       cell++;
     }
     while (cell % 7 !== 0) { html += '<div class="mini-cal-cell empty"></div>'; cell++; }
@@ -12570,6 +12586,8 @@ function mrPickAccount(acc) {
 let editingMrIdx = -1;
 function openMediaRecordModal(idx) {
   editingMrIdx = (typeof idx === 'number' && idx >= 0 && store.mediaRecords && store.mediaRecords[idx]) ? idx : -1;
+  const mrDelBtn = document.getElementById('mr-del-btn');
+  if (mrDelBtn) mrDelBtn.style.display = editingMrIdx >= 0 ? 'inline-block' : 'none';
   mrAccount = 'big';
   document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === 'big');
@@ -12666,15 +12684,21 @@ function submitMediaRecord() {
   hamiToast('✅ 已更新：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
 }
 async function deleteMediaRecord(idx) {
-  if (!store.mediaRecords || !store.mediaRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return; }
+  if (!store.mediaRecords || !store.mediaRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return false; }
   const r = store.mediaRecords[idx];
-  if (!await hamiConfirm('确定删除 ' + (r.account==='big'?'美化档大号':'定制人物小号') + ' 的更新记录吗？')) return;
+  if (!await hamiConfirm('确定删除 ' + (r.account==='big'?'美化档大号':'定制人物小号') + ' 的更新记录吗？')) return false;
   hamiTombAdd('mediaRecords', r);    // v39 墓碑
   store.mediaRecords.splice(idx, 1);
   hamiDeleteSync();
   try { renderMedia(); } catch (e) {}
   try { renderPublishCalendar(); } catch (e) {}
   finToast('🗑️ 已删除更新记录');
+  return true;
+}
+async function deleteCurrentMediaRecord() {
+  if (editingMrIdx < 0) { finToast('没有可删除的记录'); return; }
+  const ok = await deleteMediaRecord(editingMrIdx);
+  if (ok) closeMediaRecordModal();
 }
 
 // ==================== 运动详细记录「记一项」 ====================
