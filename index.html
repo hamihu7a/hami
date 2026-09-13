@@ -2196,6 +2196,17 @@
   }
   .ex-tag.empty { color: #b08a98; background: transparent; border: 1px dashed #e0c8d0; }
 
+  /* 每日运动打卡卡片更紧凑 */
+  .ex-card-list { gap: 6px; }
+  .ex-card { padding: 7px 10px; padding-right: 58px; }
+  .ex-card .card-actions { top: 6px; right: 8px; }
+  .ex-card .row-edit-btn, .ex-card .row-del-btn { padding: 2px 5px; font-size: 11px; }
+  .ex-card-date { font-size: 13px; margin-bottom: 2px; }
+  .ex-card-status { margin-bottom: 3px; }
+  .ex-card .badge { font-size: 10px; padding: 2px 6px; }
+  .ex-card-tags { gap: 4px; }
+  .ex-tag { font-size: 10px; padding: 2px 6px; border-radius: 8px; }
+
   /* 经期记录卡片 */
   .period-card-date {
     font-size: 15px; font-weight: 700; color: var(--c-text-2);
@@ -2573,6 +2584,12 @@
     .co-card-amount { font-size: 14px; }
     .co-card-meta, .period-card-meta, .travel-card-meta { gap: 6px; }
     .travel-check-item { font-size: 11px; }
+    /* 运动打卡卡片在手机上保持紧凑 */
+    .ex-card { padding: 6px 9px; padding-right: 52px; }
+    .ex-card .card-actions { top: 5px; right: 6px; }
+    .ex-card .row-edit-btn, .ex-card .row-del-btn { padding: 2px 4px; font-size: 10px; }
+    .ex-card-date { font-size: 12px; }
+    .ex-tag { font-size: 9px; padding: 1px 4px; }
   }
 
   .month-selector {
@@ -4090,7 +4107,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-13-79';
+  var BUILD_VER = '2026-09-13-80';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -11739,7 +11756,7 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = html;
   }
 
-  // 历史统计：固定展示范围（2026-07 ~ 2026-12）+ 数据中出现的其它月份，保证有记录就一定看得到
+  // 历史统计：固定展示范围（2026-07 ~ 2026-12）+ 数据中出现的其它月份；抖音列只按 account === 'douyin' 计，避免大号/小号+同步抖音被重复统计
   const baseMonths = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
   const monthSet = {};
   baseMonths.forEach(m => monthSet[m] = true);
@@ -11751,7 +11768,7 @@ function renderMedia() {
     const recs = store.mediaRecords.filter(r => r.date.startsWith(m));
     const bc = recs.filter(r => r.account === 'big').reduce((s,r)=>s+(r.count||1),0);
     const sc = recs.filter(r => r.account === 'small').reduce((s,r)=>s+(r.count||1),0);
-    const dc = recs.filter(r => r.account === 'douyin' || r.douyin).reduce((s,r)=>s+(r.count||1),0);
+    const dc = recs.filter(r => r.account === 'douyin').reduce((s,r)=>s+(r.count||1),0);
     const tot = bc+sc+dc; totalAll += tot;
     histHtml += `<tr><td>${m}</td><td>${bc} 条</td><td>${sc} 条</td><td>${dc} 条</td><td><b>${tot} 条</b></td></tr>`;
   });
@@ -13302,13 +13319,18 @@ const ICON_SVGS = {
   undo: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M11 18 Q11 12 18 12 Q25 12 25 18 Q25 24 18 24 L13 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="11,18 14,15 13,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
   chart: '<svg viewBox="0 0 36 36" aria-hidden="true"><polyline points="9,24 14,18 19,21 26,11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="18" r="1.5" fill="#fff"/><circle cx="19" cy="21" r="1.5" fill="#fff"/><circle cx="26" cy="11" r="1.5" fill="#fff"/><line x1="8" y1="27" x2="28" y2="27" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
   star: '<svg viewBox="0 0 36 36" aria-hidden="true"><polygon points="18,8 21,15 28,15 22,20 25,27 18,23 11,27 14,20 8,15 15,15" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  box: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="8" y="14" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 14 L18 8 L28 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="8" y1="14" x2="28" y2="14" stroke="currentColor" stroke-width="2"/></svg>',
+  rocket: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 6 L23 17 L18 16 L13 17 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M18 16 L18 26" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 28 Q18 24 23 28" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  handshake: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M12 17 L16 13 L21 18 L17 22 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M21 14 L25 18 L21 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 22 L11 18 L15 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   transfer: '<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M10 13 L26 13 L26 9 L31 14 L26 19 L26 15 L10 15 Z M26 23 L10 23 L10 27 L5 22 L10 17 L10 21 L26 21 Z" fill="#fff" stroke="currentColor" stroke-width="0.5"/></svg>'
 };
 
-// 支出分类 (22个)
+// 支出分类 (25个)
 const EXPENSE_CATEGORIES = [
   { key: 'buy_vege',  icon: 'bowl',     name: '买菜',     color: '#FF8FA3' },
   { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61' },
+  { key: 'cc_material', icon: 'box',    name: '内容素材', color: '#e8a0bf' },
+  { key: 'promotion', icon: 'rocket',   name: '推广投流', color: '#ff8c69' },
   { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7' },
   { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8' },
   { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
@@ -13334,6 +13356,7 @@ const EXPENSE_CATEGORIES = [
 // 收入分类
 const INCOME_CATEGORIES = [
   { key: 'salary',    icon: 'wallet',  name: '工资',       color: '#34c759' },
+  { key: 'brand_collab', icon: 'handshake', name: '商单合作', color: '#a78bfa' },
   { key: 'mod',       icon: 'mod',     name: '美化档收入', color: '#ff9eb5' },
   { key: 'custom',    icon: 'palette', name: '定制单收入', color: '#30b0e0' },
   { key: 'side',      icon: 'gamepad', name: '其他副业',   color: '#FF9EBC' },
