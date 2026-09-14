@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-11-74">
+<meta name="hami-build" content="2026-09-14-87">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1054,11 +1054,15 @@
     padding: 20px;
     font-size: 13px;
   }
-  .todo-act { display: inline-flex; gap: 4px; flex-shrink: 0; }
+  .todo-act { display: inline-flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .todo-done-item .todo-act { flex-direction: row; align-items: center; }
+  .todo-row { display: flex; gap: 4px; }
+  .todo-row .todo-btn { flex: 1; justify-content: center; }
   .todo-btn {
     border: none; background: var(--c-pink-soft); color: var(--c-pink-deep);
     font-size:12px; padding: 3px 9px; border-radius: 8px; cursor: pointer;
     transition: background var(--t);
+    display: inline-flex; align-items: center; justify-content: center;
   }
   .todo-btn:hover { background: var(--c-pink); color: #fff; }
   .todo-btn.del { background: #ffe0e0; color: #c25f5f; }
@@ -1218,6 +1222,7 @@
     color: #2fb350; font-size: 12px; font-weight: 700; padding: 5px 16px; border-radius: 20px; cursor: pointer;
   }
   .todo-done-toggle:hover { background: #ecfdf1; }
+  .todo-done-empty { padding: 12px 0 6px; text-align: center; font-size: 13px; color: #a38a98; }
   .todo-btn.done-btn { background: linear-gradient(135deg, #34c759, #2fb350); color: #fff; border: none; }
   .todo-btn.done-btn:hover { filter: brightness(1.05); }
   @media (max-width: 420px) {
@@ -1232,6 +1237,8 @@
     .todo-date-input { width: 116px; font-size: 11px; padding: 6px 6px; }
     .todo-add-row { flex-wrap: wrap; }
     .todo-section-head { flex-wrap: wrap; }
+    #todo-list-work .todo-act .todo-btn,
+    #todo-list-daily .todo-act .todo-btn { font-size: 10px; padding: 3px 5px; }
   }
 
   /* ============ 财务记录（支出/收入/转账） ============ */
@@ -1610,6 +1617,12 @@
     font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
   }
   .future-done-toggle:hover { background: rgba(255,224,233,0.7); }
+  .future-post-card.future-post-card-compact { padding: 10px 12px 10px 14px; }
+  .future-post-card.future-post-card-compact .future-post-title { margin-bottom: 4px; }
+  .future-post-card.future-post-card-compact .future-post-content {
+    font-size: 12px; color: #6a5060; line-height: 1.5;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px;
+  }
   .fp-check-result {
     margin-top: 8px;
     padding: 10px 12px;
@@ -4141,7 +4154,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-14-85';
+  var BUILD_VER = '2026-09-14-87';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -10645,10 +10658,14 @@ function renderTodoListForCat(cat) {
         <div class="todo-deadline ${info.cls}">${info.label}</div>
       </div>
       <span class="todo-act">
-        <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">✓ 完成</button>
-        <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">改</button>
-        <button class="todo-btn mini" onclick="setTodoDeadline(${o.i})" title="设置或修改完成期限">期限</button>
-        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+        <span class="todo-row">
+          <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">✓ 完成</button>
+          <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">改</button>
+        </span>
+        <span class="todo-row">
+          <button class="todo-btn mini" onclick="setTodoDeadline(${o.i})" title="设置或修改完成期限">期限</button>
+          <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+        </span>
       </span>
     </div>`;
   });
@@ -10670,7 +10687,10 @@ function renderTodoDoneForCat(cat) {
     .map((ut, i) => ({ ut, i }))
     .filter(o => (o.ut.category || 'daily') === cat && o.ut.done)
     .sort((a, b) => (b.ut.completedAt || b.ut.createdAt || 0) - (a.ut.completedAt || a.ut.createdAt || 0));
-  if (!items.length) { el.innerHTML = ''; return; }
+  if (!items.length) {
+    el.innerHTML = '<div class="todo-done-head">✅ 已完成' + (cat === 'work' ? '工作' : '日常') + '待办 <span class="todo-done-count">0</span></div><div class="todo-done-empty">暂无已完成项目，完成一条待办后会出现在这里~</div>';
+    return;
+  }
   const COLLAPSE_AT = 3;
   const showAll = __todoDoneExpanded[cat] || items.length <= COLLAPSE_AT;
   const viewList = showAll ? items : items.slice(0, COLLAPSE_AT);
@@ -11882,7 +11902,7 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = html;
   }
 
-  // 历史统计：固定展示范围（2026-07 ~ 2026-12）+ 数据中出现的其它月份；抖音列只按 account === 'douyin' 计，避免大号/小号+同步抖音被重复统计
+  // 历史统计：固定展示范围（2026-07 ~ 2026-12）+ 数据中出现的其它月份；抖音列 = 账号为抖音 或 勾选了同步抖音，避免漏记
   const baseMonths = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
   const monthSet = {};
   baseMonths.forEach(m => monthSet[m] = true);
@@ -11894,7 +11914,7 @@ function renderMedia() {
     const recs = store.mediaRecords.filter(r => r.date.startsWith(m));
     const bc = recs.filter(r => r.account === 'big').reduce((s,r)=>s+(r.count||1),0);
     const sc = recs.filter(r => r.account === 'small').reduce((s,r)=>s+(r.count||1),0);
-    const dc = recs.filter(r => r.account === 'douyin').reduce((s,r)=>s+(r.count||1),0);
+    const dc = recs.filter(r => r.account === 'douyin' || r.douyin).reduce((s,r)=>s+(r.count||1),0);
     const tot = bc+sc+dc; totalAll += tot;
     histHtml += `<tr><td>${m}</td><td>${bc} 条</td><td>${sc} 条</td><td>${dc} 条</td><td><b>${tot} 条</b></td></tr>`;
   });
@@ -12531,6 +12551,23 @@ function fpCardHtml(p, today) {
     + '</div>';
 }
 
+// 已完成区专用：精简卡片（仅标题 + 一行内容 + 撤销/删除）
+function fpDoneCardHtml(p) {
+  const originalIdx = (store.futurePosts || []).indexOf(p);
+  const fpRef = p.id ? "'" + p.id.replace(/'/g, "\\'") + "'" : String(originalIdx);
+  const contentPreview = (p.content || '').length > 48 ? crEscapeHtml(p.content.substring(0, 48)) + '…' : crEscapeHtml(p.content || '');
+  return '<div class="future-post-card done future-post-card-compact">'
+    + '<div class="future-post-title">' + crEscapeHtml(p.title || '（无标题）') + '</div>'
+    + (contentPreview ? '<div class="future-post-content">' + contentPreview + '</div>' : '')
+    + '<div class="future-post-actions">'
+    +   '<button class="fp-edit-btn" onclick="openFuturePostModal(' + fpRef + ')">✏️ 编辑</button>'
+    +   '<button class="fp-done-btn" onclick="toggleFuturePostDone(' + fpRef + ')" title="撤销完成">↩️ 撤销</button>'
+    +   '<button class="fp-del-btn" onclick="deleteFuturePost(' + fpRef + ')">🗑 删除</button>'
+    + '</div>'
+    + '<div id="fp-check-result-' + (p.id || originalIdx) + '" class="fp-check-result" style="display:none;"></div>'
+    + '</div>';
+}
+
 // 已完成区：超过 3 条默认折叠，点「展开全部」看其余
 function renderFutureDone(doneList, today) {
   const sec = document.getElementById('future-done-section');
@@ -12540,7 +12577,7 @@ function renderFutureDone(doneList, today) {
   const showAll = __doneExpanded || doneList.length <= COLLAPSE_AT;
   const viewList = showAll ? doneList : doneList.slice(0, COLLAPSE_AT);
   let html = '<div class="future-done-head">📦 已完成图文项目 <span class="future-done-count">' + doneList.length + '</span></div>';
-  viewList.forEach(function (p) { html += fpCardHtml(p, today); });
+  viewList.forEach(function (p) { html += fpDoneCardHtml(p); });
   if (doneList.length > COLLAPSE_AT) {
     if (showAll) {
       html += '<button class="future-done-toggle" onclick="__doneExpanded=false;renderFuturePosts();">收起 ▲</button>';
@@ -15030,7 +15067,7 @@ function calcDateInfo(d, today) {
       }
       const daysLeft = Math.ceil((tgt - today) / 86400000);
       const isToday = daysLeft === 0;
-      return { daysLeft, isToday, totalDays: null, sortKey: daysLeft, isLunar, hasYear: false, lunarLabel: isLunar ? lunarCn(resolveLunar()) : '' };
+      return { daysLeft, isToday, totalDays: null, thisYearAge: null, sortKey: daysLeft, isLunar, hasYear: false, lunarLabel: isLunar ? lunarCn(resolveLunar()) : '' };
     }
     const date = new Date(d.date);
     if (isLunar) {
@@ -15040,14 +15077,16 @@ function calcDateInfo(d, today) {
       const daysLeft = Math.ceil((tgt - today) / 86400000);
       const totalDays = Math.floor((today - date) / 86400000);
       const isToday = daysLeft === 0;
-      return { daysLeft, isToday, totalDays, sortKey: daysLeft, isLunar, hasYear: true, lunarLabel: lunarCn(lm), nextDate: ymd(nextSolarForLunar(lm)) };
+      const thisYearAge = today.getFullYear() - date.getFullYear();
+      return { daysLeft, isToday, totalDays, thisYearAge, sortKey: daysLeft, isLunar, hasYear: true, lunarLabel: lunarCn(lm), nextDate: ymd(nextSolarForLunar(lm)) };
     }
     let thisYearBday = new Date(today.getFullYear(), date.getMonth(), date.getDate());
     if (thisYearBday < today) thisYearBday.setFullYear(today.getFullYear() + 1);
     const daysLeft = Math.ceil((thisYearBday - today) / 86400000);
     const totalDays = Math.floor((today - date) / 86400000);
+    const thisYearAge = today.getFullYear() - date.getFullYear();
     const isToday = daysLeft === 0;
-    return { daysLeft, isToday, totalDays, sortKey: daysLeft, isLunar, hasYear: true, lunarLabel: '', nextDate: ymd(thisYearBday) };
+    return { daysLeft, isToday, totalDays, thisYearAge, sortKey: daysLeft, isLunar, hasYear: true, lunarLabel: '', nextDate: ymd(thisYearBday) };
   } else {
     // 纪念日 / 其他提醒
     const date = new Date(d.date);
@@ -15062,8 +15101,9 @@ function calcDateInfo(d, today) {
       if (thisYearAnniv < today) thisYearAnniv.setFullYear(today.getFullYear() + 1);
     }
     const daysLeft = Math.ceil((thisYearAnniv - today) / 86400000);
+    const thisYearAge = hasYear ? (today.getFullYear() - date.getFullYear()) : null;
     const isToday = daysLeft === 0;
-    return { daysLeft, isToday, totalDays, sortKey: daysLeft, isLunar, hasYear: true, lunarLabel: isLunar ? lunarCn(resolveLunar()) : '', nextDate: ymd(thisYearAnniv) };
+    return { daysLeft, isToday, totalDays, thisYearAge, sortKey: daysLeft, isLunar, hasYear, lunarLabel: isLunar ? lunarCn(resolveLunar()) : '', nextDate: ymd(thisYearAnniv) };
   }
 }
 
@@ -15211,12 +15251,12 @@ function renderReminder() {
         countNum = d.daysLeft;
         countLabel = '天后生日';
         countColor = '#ff7f9e';
-        countText = d.hasYear && d.totalDays ? `🌟 已来这个世界 ${d.totalDays} 天` : '';
+        countText = d.hasYear && d.totalDays ? `🌟 已来这个世界 ${d.totalDays} 天` + (d.thisYearAge ? ` · 今年 ${d.thisYearAge} 岁` : '') : '';
       } else if (isAnniversary) {
         countNum = d.daysLeft;
         countLabel = '天后纪念日';
         countColor = '#e878a6';
-        countText = `💕 在一起第 ${d.totalDays} 天`;
+        countText = `💕 在一起第 ${d.totalDays} 天` + (d.thisYearAge ? ` · 今年第 ${d.thisYearAge} 周年` : '');
       } else {
         countNum = d.daysLeft;
         countLabel = '天后提醒';
@@ -15376,9 +15416,9 @@ function renderImpNext() {
   const icon = next.type === 'birthday' ? '🎂' : (next.type === 'anniversary' ? '💕' : '🔔');
   const label = next.type === 'birthday' ? '天后生日' : (next.type === 'anniversary' ? '天后纪念日' : '天后提醒');
   let sub;
-  if (next.type === 'anniversary') sub = '💕 在一起第 ' + (next.totalDays || 0) + ' 天';
-  else if (next.isLunar && next.lunarLabel) sub = '📅 农历' + next.lunarLabel + (next.nextDate ? '（' + next.nextDate + '）' : '');
-  else if (next.hasYear && next.totalDays) sub = '🌟 已来这个世界 ' + next.totalDays + ' 天';
+  if (next.type === 'anniversary') sub = '💕 在一起第 ' + (next.totalDays || 0) + ' 天' + (next.thisYearAge ? ' · 今年第 ' + next.thisYearAge + ' 周年' : '');
+  else if (next.isLunar && next.lunarLabel) sub = '📅 农历' + next.lunarLabel + (next.nextDate ? '（' + next.nextDate + '）' : '') + (next.thisYearAge ? ' · 今年 ' + next.thisYearAge + ' 岁' : '');
+  else if (next.hasYear && next.totalDays) sub = '🌟 已来这个世界 ' + next.totalDays + ' 天' + (next.thisYearAge ? ' · 今年 ' + next.thisYearAge + ' 岁' : '');
   else sub = '📅 ' + next.date;
   el.innerHTML = '<div style="padding:14px;background:linear-gradient(135deg,#ffd9e6,#ffeef2);border-radius:14px;border:1px solid #ffb3c6;display:flex;align-items:center;gap:12px;">'
     + '<div style="font-size:30px;">' + icon + '</div>'
