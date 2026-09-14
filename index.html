@@ -4117,7 +4117,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-13-83';
+  var BUILD_VER = '2026-09-14-84';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -8836,37 +8836,39 @@ async function importAllData(file) {
 
 // 收支分类关键词别名（财务记录）—— 按真实分类 key 匹配，并大幅扩充口语/同义词
 const CATEGORY_ALIAS = {
-  food3meal: ['饭','吃','餐','食堂','午饭','晚饭','早饭','早餐','午餐','晚餐','夜宵','三餐','饭菜','下馆子','聚餐','吃的','饿了','外卖','美团','饿了么','火锅','烧烤','麻辣烫','螺蛳粉','面条','米饭','水果','蛋糕','面包','小吃','宵夜'],
-  buy_vege: ['菜','买菜','蔬菜','生鲜','超市','杂费','日用品','快递','纸巾','洗衣','清洁','收纳'],
-  shopping: ['购物','买东西','商城','淘宝','京东','拼多多','剁手','囤货','网购'],
-  clothing: ['衣服','裙','鞋','包','美妆','护肤','化妆','饰','穿搭','口红','粉底','帽子','手套','围巾','裤子','外套','内衣','耳环','项链','墨镜','服饰'],
-  daily: ['日用','日用品','杂费','生活','琐碎','杂物','家居'],
-  digital: ['手机','电脑','配件','软件','订阅','充值','话费','键盘','耳机','平板','相机','游戏','steam','会员续费','云存储','硬盘','数码','应用','app','流量'],
-  beauty: ['美妆','化妆','口红','粉底','眼影','彩妆','美甲'],
-  skincare: ['护肤','面膜','水乳','精华','面霜','防晒','洗脸'],
-  apps: ['软件','app','应用','订阅','会员','充值','话费'],
-  housing: ['房租','水电','燃气','网费','物业','房贷','房租水电'],
-  transport: ['打车','地铁','公交','车','加油','停车','单车','共享','票','高铁','火车','机票','滴滴','出租','过路费','油费','顺风车','网约车','骑行','骑车','交通','出行','打车费'],
-  fun: ['游戏','电影','音乐','会员','旅游','ktv','娱乐','剧本杀','演出','展览','游乐园','密室','演唱会','动漫','手办','游乐'],
-  medical: ['药','门诊','体检','医院','保健','病','牙','挂号','疫苗','医美','理疗','艾灸','医疗'],
-  call: ['话费','通讯','电话','流量','充值话费'],
-  study: ['书','课程','考试','培训','网课','学','课','资料','考证','考研','公考','教材','学习'],
-  office: ['办公','打印','文具','耗材','打印机'],
-  home: ['家居','家具','家电','装修','清洁','日用'],
-  social: ['礼物','红包','请客','份子','随礼','礼金','聚餐请客','份子钱','人情','人情往来'],
-  sibling: ['弟妹','妹妹','弟弟','压岁钱','给妹妹','给弟弟'],
-  travel: ['旅游','旅行','出游','景点','机票','酒店','民宿','度假','行李'],
-  drink: ['饮料','奶茶','咖啡','饮品','喝水','茶','果汁','啤酒','酒','酸奶','拿铁','果茶','喝的'],
-  snack: ['零食','薯片','薯','坚果','饼干','辣条','糖果','巧克力','膨化','瓜子','小吃'],
-  // 收入分类 key
-  salary: ['工资','薪水','月薪','发工资','到账工资'],
+  // —— 支出 ——
+  food3meal: ['饭','吃','餐','食堂','午饭','晚饭','早饭','早餐','午餐','晚餐','夜宵','三餐','饭菜','下馆子','聚餐','吃的','饿了','外卖','美团','饿了么','火锅','烧烤','麻辣烫','螺蛳粉','面条','米饭','水果捞','小吃','宵夜','食堂饭','一日三餐'],
+  buy_vege: ['菜','买菜','蔬菜','生鲜','超市','果蔬','食材','荤菜','素菜','肉','鸡肉','猪肉','牛肉','鱼肉','虾','鸡蛋','牛奶','米','面','粮','油','盐','调料','葱姜蒜','西红柿','土豆','番茄','水果','苹果','香蕉','葡萄','橙子','西瓜','草莓'],
+  shopping: ['购物','买东西','商城','淘宝','京东','拼多多','剁手','囤货','网购','百货','超市购物'],
+  clothing: ['衣服','裙','鞋','包','穿搭','帽子','裤子','外套','内衣','袜子','睡衣','卫衣','t恤','衬衫','羽绒服','毛衣','连衣裙','短裤','牛仔裤','风衣','大衣','围巾','手套','墨镜','皮带','凉鞋','靴子','服饰'],
+  daily: ['日用','日用品','杂费','生活','琐碎','杂物','家居','清洁','收纳','纸巾','毛巾','洗脸巾','棉柔巾','湿巾','抽纸','卷纸','牙膏','牙刷','洗发水','沐浴露','香皂','肥皂','洗衣液','洗洁精','垃圾袋','保鲜膜','雨伞','电池','灯泡','衣架','杯子','碗','锅','清洁用品','日化','厨房用品','抹布','皮筋','头绳'],
+  digital: ['手机','电脑','平板','键盘','耳机','相机','硬盘','配件','u盘','鼠标','显示器','充电宝','数据线','路由器','内存卡','steam','显卡','主板','内存条','移动硬盘'],
+  beauty: ['美妆','化妆','口红','粉底','眼影','彩妆','美甲','香水','眉笔','睫毛膏','遮瑕','散粉','定妆','高光','修容'],
+  skincare: ['护肤','面膜','水乳','精华','面霜','防晒','洗脸','洗面奶','爽肤水','眼霜','护手霜','身体乳','卸妆','洁面','爽肤','护肤水','乳液'],
+  apps: ['软件','app','应用','订阅','会员','充值','视频会员','音乐会员','网盘会员','会员费','会员续费','订阅费','点券','游戏币','内购','付费会员','爱奇艺','优酷','腾讯视频','网易云','qq音乐','哔哩哔哩','b站','bilibili','百度网盘','迅雷'],
+  housing: ['房租','水电','燃气','网费','物业','房贷','电费','水费','煤气','燃气费','物业费','暖气','取暖'],
+  transport: ['打车','地铁','公交','车','加油','停车','单车','共享','票','高铁','火车','机票','滴滴','出租','过路费','油费','顺风车','网约车','骑行','骑车','交通','出行','打车费','的士','出租车','车票','船票','加油卡'],
+  fun: ['游戏','电影','音乐','ktv','娱乐','剧本杀','演出','展览','游乐园','密室','演唱会','动漫','手办','游乐','游戏充值','网吧','桌游','轰趴','密室逃脱','电玩'],
+  medical: ['药','门诊','体检','医院','保健','病','牙','挂号','疫苗','医美','理疗','艾灸','医疗','感冒药','退烧药','药膏','维生素','口罩','创可贴','体温计'],
+  call: ['话费','通讯','电话','流量','充值话费','流量包','宽带','交话费','充话费','手机费','月租'],
+  study: ['书','课程','考试','培训','网课','学','课','资料','考证','考研','公考','教材','学习','绘本','练习册'],
+  office: ['办公','打印','文具','耗材','打印机','纸张','墨盒','订书机','文件夹'],
+  home: ['家居','家具','家电','装修','清洁','日用','床上用品','窗帘','地毯','台灯','收纳家具','沙发','床垫','四件套'],
+  social: ['礼物','红包','请客','份子','随礼','礼金','人情','人情往来','给妈妈','给朋友','给同事','给领导','生日礼物','探病','乔迁','升学','满月','请吃饭','聚餐后买单'],
+  sibling: ['弟妹','妹妹','弟弟','压岁钱','给妹妹','给弟弟','给外甥','给侄子','给娃','给小孩','外甥','侄子'],
+  travel: ['旅游','旅行','出游','景点','机票','酒店','民宿','度假','行李','门票','跟团','攻略','行李箱'],
+  drink: ['饮料','奶茶','咖啡','饮品','喝水','茶','果汁','啤酒','酒','酸奶','拿铁','果茶','可乐','雪碧','矿泉水','白酒','红酒','气泡水','椰汁'],
+  snack: ['零食','薯片','薯','坚果','饼干','辣条','糖果','巧克力','瓜子','膨化','小吃','果冻','蜜饯','锅巴','海苔','奥利奥'],
+  other: [],
+  // —— 收入 ——
+  salary: ['工资','薪水','月薪','发工资','到账工资','底薪','月入'],
   mod: ['美化档','捏脸','接单','卖档'],
   custom: ['定制单','定制'],
-  side: ['副业','兼职','外快'],
+  side: ['副业','兼职','外快','私活'],
   redpacket: ['红包','压岁钱'],
   zz_redpacket: ['庄子红包','男朋友红包','男友红包','老公红包','男朋友转账','男友转账','对象红包','对象转账'],
   refund: ['退款','退钱'],
-  invest: ['理财','收益','利息','基金','股票'],
+  invest: ['理财','收益','利息','基金','股票','分红','股息'],
   other_in: []
 };
 
@@ -9051,6 +9053,23 @@ function normalizeCnNumbers(text) {
   });
 }
 
+// 清洗记账备注：去掉金额数字和日期词，只保留"买了啥/给谁"这类可读描述
+function cleanExpenseNote(raw, amt, dateToken) {
+  if (!raw) return '';
+  let s = raw;
+  if (dateToken) s = s.split(dateToken).join(' ');
+  if (amt != null && amt !== '') {
+    const a = String(amt).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    s = s.replace(new RegExp(a + '\\s*(?:元|块|块钱|刀|美金|美元|¥|￥|毛)?', 'g'), ' ');
+  }
+  s = s.replace(/(\d+(?:\.\d+)?)\s*(?:元|块|块钱|刀|美金|美元|¥|￥|毛)/g, ' ');
+  s = s.replace(/^(?:今天|今日|当天|今儿|现在|刚刚|昨天|昨日|前天|明天|明日|后天|大前天)\s*/, '');
+  s = s.replace(/^(?:花|付|用|交|充|买|给|报销|送|随|包|抢|赊|借|缴|还|订|续费)\s*/, '');
+  s = s.replace(/(?:了|啦|呀|啊|呢|嘛|哦|哈|滴|的|这|那)\s*$/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s || raw.trim();
+}
+
 // ============ 意图解析（纯函数，不直接写数据，便于测试与复用）============
 // 返回 { date, token, intents:[{type, ...}], raw }
 function parseHamiCommand(raw, today) {
@@ -9129,16 +9148,22 @@ function parseHamiCommand(raw, today) {
 
   // 12) 收入（通用）
   if (/收入|赚|进账|收款|收到|工资|回款|分红|到账|收了|发了?工资|发了?奖金|收入了|赚到/.test(text) && !/模拟人生/.test(text)) {
-    push({ type: 'income', amount: extractMoney(moneyText), category: inferCategory(text, 'income'), note: text });
+    push({ type: 'income', amount: extractMoney(moneyText), category: inferCategory(text, 'income'), note: cleanExpenseNote(text, extractMoney(moneyText), dateToken) });
   }
 
   // 13) 支出（通用）
   const spendRe = buildSpendRe();
-  const isExpenseKw = /花|花费|支出|消费|付|开销|价钱|价格|买|用了|付了|报销|充了|交了|价格|花了|用了|开销|购入|囤|拍下|下单/.test(text) || spendRe.test(text);
+  const hasMoney = !!extractMoney(moneyText);
+  // 动作词：扩充「充 / 给 / 缴 / 还 / 订 / 续费」等，让"充会员""给弟弟"也能识别
+  const actKw = /花|花费|支出|消费|付|开销|价格|买|报销|充|交|购入|囤|拍下|下单|缴|还|订|续费|充值|给|送|随|包|抢|赊|借/.test(text);
+  // 必须有金额才自动记账（避免"给我记一下""今天买东西"误记成 0 元脏数据）；
+  // 没有任何金额但文本里有明确商品/品类词时，仍识别类别、稍后开框补全金额
+  const isExpenseKw = hasMoney ? (actKw || spendRe.test(text)) : spendRe.test(text);
   if (isExpenseKw) {
     const amt = extractMoney(moneyText);
     const cat = inferCategory(text, 'expense');
-    push({ type: 'expense', amount: amt || 0, category: cat, note: text, hasAmount: !!amt });
+    const note = cleanExpenseNote(text, amt, dateToken);
+    push({ type: 'expense', amount: amt || 0, category: cat, note: note, hasAmount: !!amt });
   }
 
   // 14) 灵感 / 想法
@@ -9327,9 +9352,19 @@ function sendHamiCmd() {
       }
       case 'expense': {
         const amt = it.amount;
-        store.accountRecords.push({ date: date, type: 'expense', amount: amt, category: it.category, note: it.note, ts: Date.now() });
-        hints.push((amt > 0 ? '支出·' : '支出(未填金额)·') + getCategoryInfo(it.category, 'expense').name);
-        acted = true;
+        if (amt > 0 && amt <= 1000000) {
+          store.accountRecords.push({ date: date, type: 'expense', amount: amt, category: it.category, note: it.note, ts: Date.now() });
+          hints.push('支出·' + getCategoryInfo(it.category, 'expense').name + ' ¥' + fmtMoney(amt));
+          acted = true;
+        } else if (amt > 1000000) {
+          hints.push('支出·' + getCategoryInfo(it.category, 'expense').name + '（金额过大未自动记，请手动记）');
+          acted = true;
+        } else {
+          // 没听清金额：智能打开记账框并预填识别出的类别与备注，金额留空让主人补全
+          try { openAddModal('expense', date, null, { category: it.category, note: it.note }); } catch (e) {}
+          hints.push('支出·' + getCategoryInfo(it.category, 'expense').name + '（没听清金额，已开记账框补全）');
+          acted = true;
+        }
         break;
       }
       case 'inspire':
@@ -13386,7 +13421,8 @@ const EXPENSE_CATEGORIES = [
   { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3' },
   { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4' },
   { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
-  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' }
+  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' },
+  { key: 'other',     icon: 'star',     name: '其他',     color: '#c0c0c0' }
 ];
 
 // 收入分类
@@ -13537,7 +13573,7 @@ function accountPruneByDeleted() {
 
 // 打开记一笔弹窗
 let addModalEditingIdx = -1;
-function openAddModal(presetType, presetDate, editIdx) {
+function openAddModal(presetType, presetDate, editIdx, presetExtra) {
   if (typeof editIdx === 'number' && editIdx >= 0 && store.accountRecords && store.accountRecords[editIdx]) {
     const rec = store.accountRecords[editIdx];
     if (rec.account && ACCOUNT_LIST.indexOf(rec.account) >= 0) accountIdx = ACCOUNT_LIST.indexOf(rec.account);
