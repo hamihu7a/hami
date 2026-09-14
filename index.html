@@ -1196,6 +1196,30 @@
     padding: 26px 14px; text-align: center; color: #a89a9a; font-size: 13px; font-weight: 600;
     background: rgba(255,255,255,0.5); border: 1px dashed #ffd0dc; border-radius: 12px;
   }
+  /* ============ 已完成待办区块（v85：照已完成图文项目模式） ============ */
+  .todo-done-section { margin-top: 10px; }
+  .todo-done-head {
+    font-size: 13px; font-weight: 800; color: #2fb350; margin: 14px 0 7px;
+    display: flex; align-items: center; gap: 6px; letter-spacing: .3px;
+  }
+  .todo-done-count { background: #e8f7ec; color: #2fb350; font-size: 11px; font-weight: 700; padding: 1px 9px; border-radius: 12px; }
+  .todo-done-item {
+    display: flex; align-items: flex-start; gap: 9px;
+    background: #f6fff9; border: 1px solid #c8efd5; border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 7px; transition: box-shadow .14s ease;
+  }
+  .todo-done-item:hover { box-shadow: 0 3px 10px rgba(47,179,80,0.1); }
+  .todo-done-item .todo-body { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
+  .todo-done-item .todo-text { font-size: 14px; font-weight: 600; color: #4a3340; line-height: 1.45; word-break: break-word; }
+  .todo-done-item .todo-check.done { background: linear-gradient(135deg, #34c759, #2fb350); border-color: #2fb350; margin-top: 1px; }
+  .todo-done-date { font-size: 11px; color: #8aa890; font-weight: 600; }
+  .todo-done-toggle {
+    display: block; margin: 6px auto 0; border: 1px solid #c8efd5; background: #f6fff9;
+    color: #2fb350; font-size: 12px; font-weight: 700; padding: 5px 16px; border-radius: 20px; cursor: pointer;
+  }
+  .todo-done-toggle:hover { background: #ecfdf1; }
+  .todo-btn.done-btn { background: linear-gradient(135deg, #34c759, #2fb350); color: #fff; border: none; }
+  .todo-btn.done-btn:hover { filter: brightness(1.05); }
   @media (max-width: 420px) {
     .todo-panel-title { font-size: 15px; }
     .todo-panel-head { align-items: flex-start; }
@@ -4117,7 +4141,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-14-84';
+  var BUILD_VER = '2026-09-14-85';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4452,6 +4476,7 @@
         <button class="todo-add-btn" onclick="addUserTodo('work')">添加</button>
       </div>
       <div id="todo-list-work"></div>
+      <div id="todo-done-work" class="todo-done-section"></div>
     </div>
 
     <div class="card todo-section" id="custom-board-card">
@@ -10568,10 +10593,11 @@ function switchTodoCat(cat) {
 // v42 待办改每页 3 条翻页（主人要求所有记录列表每页 3 条、数据永不丢）
 const TODO_PAGE = 3;
 const __todoPage = {};
+const __todoDoneExpanded = { daily: false, work: false };
 function todoGo(cat, delta) {
   const items = (store.userTodos || [])
     .map((ut, i) => ({ ut, i }))
-    .filter(o => (o.ut.category || 'daily') === cat);
+    .filter(o => (o.ut.category || 'daily') === cat && !o.ut.done);
   const maxPage = Math.max(0, Math.ceil(items.length / TODO_PAGE) - 1);
   __todoPage[cat] = Math.max(0, Math.min((__todoPage[cat] || 0) + delta, maxPage));
   renderTodoListForCat(cat);
@@ -10579,15 +10605,17 @@ function todoGo(cat, delta) {
 function renderTodoListForCat(cat) {
   const el = document.getElementById('todo-list-' + cat);
   if (!el) return;
-  const items = (store.userTodos || [])
+  const allItems = (store.userTodos || [])
     .map((ut, i) => ({ ut, i }))
     .filter(o => (o.ut.category || 'daily') === cat);
+  // 主列表只显示「未完成」项（已完成项落到下方「已完成」区块）
+  const items = allItems.filter(o => !o.ut.done);
   // 顶部小计：未完成 / 已完成 / 逾期
   const sumEl = document.getElementById('todo-summary-' + cat);
   if (sumEl) {
-    const undone = items.filter(o => !o.ut.done).length;
-    const doneN = items.length - undone;
-    const late = items.filter(o => !o.ut.done && todoDeadlineInfo(o.ut).overdue).length;
+    const undone = items.length;
+    const doneN = allItems.length - undone;
+    const late = items.filter(o => todoDeadlineInfo(o.ut).overdue).length;
     sumEl.innerHTML = `
       <span class="todo-sum-chip doing">待办 ${undone}</span>
       <span class="todo-sum-chip done">完成 ${doneN}</span>
@@ -10596,7 +10624,7 @@ function renderTodoListForCat(cat) {
   }
   if (items.length === 0) {
     __todoPage[cat] = 0;
-    el.innerHTML = `<div class="todo-empty">还没有${cat === 'work' ? '工作' : '日常'}待办，在上面输入框添加一条吧</div>`;
+    el.innerHTML = `<div class="todo-empty">太棒了，${cat === 'work' ? '工作' : '日常'}待办都清空啦 🎉</div>`;
     return;
   }
   const sorted = sortTodos(items);
@@ -10610,13 +10638,14 @@ function renderTodoListForCat(cat) {
     const ut = o.ut;
     const info = todoDeadlineInfo(ut);
     const overdueCls = (info.overdue && !ut.done) ? ' todo-item-overdue' : '';
-    html += `<div class="todo-item${ut.done ? ' done' : ''}${overdueCls}">
-      <span class="todo-check${ut.done ? ' done' : ''}" onclick="toggleUserTodo(${o.i})" title="点击打卡完成">${ut.done ? '✓' : ''}</span>
+    html += `<div class="todo-item${overdueCls}">
+      <span class="todo-check" onclick="toggleUserTodo(${o.i})" title="点击打卡完成">${ut.done ? '✓' : ''}</span>
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
         <div class="todo-deadline ${info.cls}">${info.label}</div>
       </div>
       <span class="todo-act">
+        <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">✓ 完成</button>
         <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">改</button>
         <button class="todo-btn mini" onclick="setTodoDeadline(${o.i})" title="设置或修改完成期限">期限</button>
         <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
@@ -10633,9 +10662,54 @@ function renderTodoListForCat(cat) {
 
   el.innerHTML = html;
 }
+// v85：已完成区块（照「已完成图文项目」模式——>3 条折叠，可一键恢复 / 删除）
+function renderTodoDoneForCat(cat) {
+  const el = document.getElementById('todo-done-' + cat);
+  if (!el) return;
+  const items = (store.userTodos || [])
+    .map((ut, i) => ({ ut, i }))
+    .filter(o => (o.ut.category || 'daily') === cat && o.ut.done)
+    .sort((a, b) => (b.ut.completedAt || b.ut.createdAt || 0) - (a.ut.completedAt || a.ut.createdAt || 0));
+  if (!items.length) { el.innerHTML = ''; return; }
+  const COLLAPSE_AT = 3;
+  const showAll = __todoDoneExpanded[cat] || items.length <= COLLAPSE_AT;
+  const viewList = showAll ? items : items.slice(0, COLLAPSE_AT);
+  let html = '<div class="todo-done-head">✅ 已完成' + (cat === 'work' ? '工作' : '日常') + '待办 <span class="todo-done-count">' + items.length + '</span></div>';
+  viewList.forEach(o => {
+    const ut = o.ut;
+    const doneAt = ut.completedAt ? fmtDoneDate(ut.completedAt) : '';
+    html += `<div class="todo-done-item">
+      <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
+      <div class="todo-body">
+        <div class="todo-text">${escTodo(ut.text)}</div>
+        ${doneAt ? '<div class="todo-done-date">完成于 ' + doneAt + '</div>' : ''}
+      </div>
+      <span class="todo-act">
+        <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
+        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+      </span>
+    </div>`;
+  });
+  if (items.length > COLLAPSE_AT) {
+    if (showAll) {
+      html += '<button class="todo-done-toggle" onclick="__todoDoneExpanded[\'' + cat + '\']=false;renderTodoPanel();">收起 ▲</button>';
+    } else {
+      html += '<button class="todo-done-toggle" onclick="__todoDoneExpanded[\'' + cat + '\']=true;renderTodoPanel();">展开全部 ' + items.length + ' 条 ▼</button>';
+    }
+  }
+  el.innerHTML = html;
+}
+function fmtDoneDate(ts) {
+  try {
+    const d = new Date(ts); const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  } catch (e) { return ''; }
+}
 function renderTodoPanel() {
   renderTodoListForCat('daily');
   renderTodoListForCat('work');
+  renderTodoDoneForCat('daily');
+  renderTodoDoneForCat('work');
 }
 
 // ==================== 定制单进度看板 ====================
@@ -10784,7 +10858,10 @@ function editUserTodo(idx) {
 
 function toggleUserTodo(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
-  store.userTodos[idx].done = !store.userTodos[idx].done;
+  const ut = store.userTodos[idx];
+  ut.done = !ut.done;
+  if (ut.done) { ut.completedAt = Date.now(); }   // v85：记录完成时间，用于「已完成」区块显示
+  else { ut.completedAt = 0; }
   __todoPage.daily = 0; __todoPage.work = 0;   // 勾选会改变排序位置，回到第1页最直观
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
