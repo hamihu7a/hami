@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-14-88">
+<meta name="hami-build" content="2026-09-14-89">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1063,6 +1063,7 @@
     font-size:12px; padding: 3px 9px; border-radius: 8px; cursor: pointer;
     transition: background var(--t);
     display: inline-flex; align-items: center; justify-content: center;
+    white-space: nowrap;
   }
   .todo-btn:hover { background: var(--c-pink); color: #fff; }
   .todo-btn.del { background: #ffe0e0; color: #c25f5f; }
@@ -4154,7 +4155,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-14-88';
+  var BUILD_VER = '2026-09-14-89';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7161,10 +7162,10 @@ function applyBg(key, dataUrl) {
 function applyAllBgs() {
   Object.keys(BG_KEYS).forEach(function (key) {
     const d = BG_CACHE[key];
-    if (d) { applyBg(key, d); return; }
+    if (d) { applyBg(key, d); setMirrorPreview(key, d); return; }
     try {
       const cfg = loadEmbeddedBgConfig();
-      if (cfg.bgs && cfg.bgs[key]) { applyBg(key, cfg.bgs[key]); return; }
+      if (cfg.bgs && cfg.bgs[key]) { applyBg(key, cfg.bgs[key]); setMirrorPreview(key, cfg.bgs[key]); return; }
     } catch (e) {}
     // v34：不再主动 clearBg。BG_CACHE 未就绪/暂无图时，保留页面默认状态即可，
     // 否则会在 IndexedDB 还没加载完时误把已显示的背景图清掉（这就是"图反复消失"的来源）。
@@ -14808,7 +14809,7 @@ function renderPeriod() {
     const durs = periods.filter(p => p.start && p.end).map(p => Math.round((new Date(p.end + 'T00:00:00') - new Date(p.start + 'T00:00:00')) / 86400000) + 1);
     const avgDur = durs.length ? Math.round(durs.slice(-6).reduce((a,b)=>a+b,0) / Math.min(durs.length,6)) : 0;
     const remain = avgDur ? Math.max(0, avgDur - dayN + 1) : 0;
-    predictHtml = `<div style="padding:14px;background:#ffe4ec;border-radius:12px;border:1px solid #ffb3c6;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🩸 本次经期第 ${dayN} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">开始于 ${startStr}${avgDur ? '，预计还有 ' + remain + ' 天结束' : ''}。<br>结束后记得点「结束本次」~</div></div>`;
+    predictHtml = `<div style="padding:14px;background:#ffe4ec;border-radius:12px;border:1px solid #ffb3c6;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🩸 本次经期第 ${dayN} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">开始于 ${startStr}${avgDur ? '，预计还有 ' + remain + ' 天结束' : ''}。</div><div style="margin-top:10px;"><button class="period-close-btn" onclick="closeOpenPeriod()" type="button">✅ 结束本次</button></div></div>`;
   } else {
     const daysUntil = pinfo.daysUntilStart;
     const nextStr = fmtMD(pinfo.date);
