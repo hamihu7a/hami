@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-14-87">
+<meta name="hami-build" content="2026-09-14-88">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4154,7 +4154,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-14-87';
+  var BUILD_VER = '2026-09-14-88';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -15251,7 +15251,7 @@ function renderReminder() {
         countNum = d.daysLeft;
         countLabel = '天后生日';
         countColor = '#ff7f9e';
-        countText = d.hasYear && d.totalDays ? `🌟 已来这个世界 ${d.totalDays} 天` + (d.thisYearAge ? ` · 今年 ${d.thisYearAge} 岁` : '') : '';
+        countText = d.thisYearAge ? `今年 ${d.thisYearAge} 岁` : '';
       } else if (isAnniversary) {
         countNum = d.daysLeft;
         countLabel = '天后纪念日';
@@ -15418,7 +15418,7 @@ function renderImpNext() {
   let sub;
   if (next.type === 'anniversary') sub = '💕 在一起第 ' + (next.totalDays || 0) + ' 天' + (next.thisYearAge ? ' · 今年第 ' + next.thisYearAge + ' 周年' : '');
   else if (next.isLunar && next.lunarLabel) sub = '📅 农历' + next.lunarLabel + (next.nextDate ? '（' + next.nextDate + '）' : '') + (next.thisYearAge ? ' · 今年 ' + next.thisYearAge + ' 岁' : '');
-  else if (next.hasYear && next.totalDays) sub = '🌟 已来这个世界 ' + next.totalDays + ' 天' + (next.thisYearAge ? ' · 今年 ' + next.thisYearAge + ' 岁' : '');
+  else if (next.thisYearAge) sub = '🌟 今年 ' + next.thisYearAge + ' 岁';
   else sub = '📅 ' + next.date;
   el.innerHTML = '<div style="padding:14px;background:linear-gradient(135deg,#ffd9e6,#ffeef2);border-radius:14px;border:1px solid #ffb3c6;display:flex;align-items:center;gap:12px;">'
     + '<div style="font-size:30px;">' + icon + '</div>'
