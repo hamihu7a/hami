@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-14-89">
+<meta name="hami-build" content="2026-09-14-90">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4155,7 +4155,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-14-89';
+  var BUILD_VER = '2026-09-14-90';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4471,6 +4471,7 @@
         <button class="todo-add-btn" onclick="addUserTodo('daily')">添加</button>
       </div>
       <div id="todo-list-daily"></div>
+      <div id="todo-done-daily" class="todo-done-section"></div>
     </div>
   </div>
 
@@ -10660,7 +10661,7 @@ function renderTodoListForCat(cat) {
       </div>
       <span class="todo-act">
         <span class="todo-row">
-          <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">✓ 完成</button>
+          <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">完成</button>
           <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">改</button>
         </span>
         <span class="todo-row">
