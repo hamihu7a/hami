@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-15-94">
+<meta name="hami-build" content="2026-09-15-95">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1083,12 +1083,16 @@
     padding: 14px 10px; text-align: center; color: #a07080; font-size: 12px;
     background: rgba(255,255,255,0.45); border-radius: 10px; border: 1px dashed #ffd0dc;
   }
-  .todo-add-row { display: flex; gap: 6px; margin: 8px 0 4px; }
-  .todo-add-row input {
-    flex: 1; min-width: 0; border: 1px solid #ffd0dc; border-radius: 9px;
-    padding: 7px 10px; font-size: 13px; color: #4a3340; background: #fff; outline: none;
+  .todo-add-row { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px; }
+  .todo-text-input {
+    width: 100%; box-sizing: border-box; min-height: 48px; resize: none; font-family: inherit;
+    border: 1px solid #ffd0dc; border-radius: 10px; padding: 10px 11px; font-size: 15px; line-height: 1.4;
+    color: #4a3340; background: #fff; outline: none;
   }
-  .todo-add-row input:focus { border-color: #d14b73; }
+  .todo-text-input:focus { border-color: #d14b73; }
+  .todo-add-bottom { display: flex; gap: 6px; align-items: stretch; }
+  .todo-add-bottom .todo-date-input { flex: 1; min-width: 0; }
+  .todo-add-bottom .todo-add-btn { flex-shrink: 0; }
   .todo-add-btn {
     border: none; background: linear-gradient(135deg, #ff7e9c, #ff6b9e); color: #fff;
     font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 9px; cursor: pointer;
@@ -1145,8 +1149,8 @@
   .todo-item.todo-item-overdue .todo-check { border-color: #e0413e; }
   /* 添加行的日期选择器 */
   .todo-date-input {
-    flex-shrink: 0; width: 132px; border: 1px solid #ffd0dc; border-radius: 9px;
-    padding: 7px 8px; font-size: 12px; color: #4a3340; background: #fff; outline: none;
+    flex: 1; min-width: 0; width: auto; border: 1px solid #ffd0dc; border-radius: 9px;
+    padding: 7px 8px; font-size: 13px; color: #4a3340; background: #fff; outline: none;
   }
   .todo-date-input:focus { border-color: #d14b73; }
   .todo-btn.mini { padding: 3px 7px; font-size: 12px; }
@@ -1233,10 +1237,10 @@
   }
 
   @media (max-width: 420px) {
-    .todo-add-row input { font-size: 12px; padding: 6px 8px; }
+    .todo-text-input { font-size: 15px; padding: 9px 10px; }
     .todo-two-col { flex-direction: column; gap: 8px; }
-    .todo-date-input { width: 116px; font-size: 11px; padding: 6px 6px; }
-    .todo-add-row { flex-wrap: wrap; }
+    .todo-date-input { font-size: 13px; padding: 7px 8px; }
+    .todo-add-row { flex-wrap: nowrap; }
     .todo-section-head { flex-wrap: wrap; }
     #todo-list-work .todo-act .todo-btn,
     #todo-list-daily .todo-act .todo-btn { font-size: 10px; padding: 3px 5px; }
@@ -1351,6 +1355,12 @@
     width: 100%; box-sizing: border-box;
   }
   .co-field input:focus { border-color: var(--c-pink-deep); box-shadow: 0 0 0 2px rgba(209,75,115,0.18); }
+  .co-field textarea {
+    border: 1.5px solid #ffd0dc; border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+    outline: none; background: rgba(255,255,255,0.85); color: var(--c-text-2);
+    width: 100%; box-sizing: border-box; resize: vertical; min-height: 64px; line-height: 1.4;
+  }
+  .co-field textarea:focus { border-color: var(--c-pink-deep); box-shadow: 0 0 0 2px rgba(209,75,115,0.18); }
   .co-status { display: inline-flex; background: rgba(0,0,0,0.05); border-radius: 14px; padding: 3px; gap: 0; width: fit-content; }
   .co-status-opt {
     padding: 7px 20px; font-size: 13px; font-weight: 700; color: #8a6270;
@@ -4155,7 +4165,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-15-94';
+  var BUILD_VER = '2026-09-15-95';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4466,9 +4476,11 @@
         <span class="todo-section-tip">生活琐事 · 轻松记</span>
       </div>
       <div class="todo-add-row">
-        <input id="todo-input-daily" type="text" placeholder="写点日常要做的事…" onkeydown="if(event.key==='Enter')addUserTodo('daily')">
-        <input type="date" id="todo-date-daily" class="todo-date-input" title="完成期限（可选，留空=无期限）">
-        <button class="todo-add-btn" onclick="addUserTodo('daily')">添加</button>
+        <textarea id="todo-input-daily" class="todo-text-input" rows="2" placeholder="写点日常要做的事…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('daily')}"></textarea>
+        <div class="todo-add-bottom">
+          <input type="date" id="todo-date-daily" class="todo-date-input" title="完成期限（可选，留空=无期限）">
+          <button class="todo-add-btn" onclick="addUserTodo('daily')">添加</button>
+        </div>
       </div>
       <div id="todo-list-daily"></div>
       <div id="todo-done-daily" class="todo-done-section"></div>
@@ -4486,9 +4498,11 @@
         <div class="todo-summary" id="todo-summary-work"></div>
       </div>
       <div class="todo-add-row">
-        <input id="todo-input-work" type="text" placeholder="要推进什么事？" onkeydown="if(event.key==='Enter')addUserTodo('work')">
-        <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选）">
-        <button class="todo-add-btn" onclick="addUserTodo('work')">添加</button>
+        <textarea id="todo-input-work" class="todo-text-input" rows="2" placeholder="要推进什么事？" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('work')}"></textarea>
+        <div class="todo-add-bottom">
+          <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选）">
+          <button class="todo-add-btn" onclick="addUserTodo('work')">添加</button>
+        </div>
       </div>
       <div id="todo-list-work"></div>
       <div id="todo-done-work" class="todo-done-section"></div>
@@ -5554,6 +5568,32 @@
       <div class="co-actions">
         <button class="co-cancel" onclick="closeDateModal()">取消</button>
         <button class="co-save" onclick="submitDateRecord()">保存日期</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 待办 编辑弹窗（v95）==================== -->
+  <div id="todo-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeTodoEditModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeTodoEditModal()" aria-label="关闭">✕</button>
+        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">编辑待办</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📝 待办内容</label>
+          <textarea id="te-text" rows="3" placeholder="要做什么？"></textarea>
+        </div>
+        <div class="co-field">
+          <label>📅 完成期限（可选，留空=无期限）</label>
+          <input type="date" id="te-date" title="点击选择日期，手机上会弹出日历">
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeTodoEditModal()">取消</button>
+        <button class="co-save" onclick="submitTodoEdit()">保存修改</button>
+        <button class="co-del" onclick="deleteTodoFromEdit()">删除</button>
       </div>
     </div>
   </div>
@@ -10662,10 +10702,9 @@ function renderTodoListForCat(cat) {
       <span class="todo-act">
         <span class="todo-row">
           <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">完成</button>
-          <button class="todo-btn mini" onclick="editUserTodo(${o.i})" title="修改内容">改</button>
+          <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">改</button>
         </span>
         <span class="todo-row">
-          <button class="todo-btn mini" onclick="setTodoDeadline(${o.i})" title="设置或修改完成期限">期限</button>
           <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
         </span>
       </span>
@@ -10866,26 +10905,60 @@ function setTodoDeadline(i) {
   try { finToast(ut.deadline ? ('已设期限：' + ut.deadline) : '已取消期限'); } catch (e) {}
 }
 
-// 修改待办文字内容
-function editUserTodo(idx) {
+// ==================== 待办 编辑弹窗（v95：完整编辑页，文本+日历，替代原生 prompt）====================
+let __teEditIdx = -1;
+function openTodoEditModal(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
   const ut = store.userTodos[idx];
-  const r = (typeof prompt === 'function') ? prompt('修改待办内容：', ut.text || '') : null;
-  if (r === null) return;
-  const v = (r || '').trim();
-  if (!v) { try { finToast('内容不能为空，已取消修改'); } catch (e) {} return; }
-  if (v === ut.text) return;
-  const _oldTodo = hamiSnapshot('userTodos', idx);   // v62：改动前拍快照
-  ut.text = v;
-  // v62：待办的身份键是「日期+文字」，改文字 = 换键，云端那条旧待办会被当成另一条并回来。
-  // 把旧键写进墓碑，之后再推/拉云端确认。
-  hamiTombSnapshot('userTodos', _oldTodo, ut);
+  __teEditIdx = idx;
+  const m = document.getElementById('todo-edit-modal');
+  if (m) m.dataset.editIdx = String(idx);
+  const tEl = document.getElementById('te-text');
+  const dEl = document.getElementById('te-date');
+  if (tEl) tEl.value = ut.text || '';
+  if (dEl) dEl.value = ut.deadline || '';
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  setTimeout(function () { try { tEl && tEl.focus(); } catch (e) {} }, 50);
+}
+function closeTodoEditModal() {
+  const m = document.getElementById('todo-edit-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function submitTodoEdit() {
+  const m = document.getElementById('todo-edit-modal');
+  let idx = __teEditIdx;
+  if (m && m.dataset.editIdx) { const p = parseInt(m.dataset.editIdx, 10); if (!isNaN(p)) idx = p; }
+  if (idx < 0 || !store.userTodos || !store.userTodos[idx]) { closeTodoEditModal(); return; }
+  const text = (document.getElementById('te-text').value || '').trim();
+  if (!text) { try { finToast('内容不能为空'); } catch (e) {} return; }
+  const date = (document.getElementById('te-date').value || '').trim();
+  const ut = store.userTodos[idx];
+  // v62：身份键=日期+文字，改文字=换键，需把旧键写进墓碑避免云端并回重复
+  try { hamiTombSnapshot('userTodos', hamiSnapshot('userTodos', idx), ut); } catch (e) {}
+  ut.text = text;
+  ut.deadline = date;
   try { hamiDeleteSync(); } catch (e) {}
   saveData();
+  closeTodoEditModal();
   try { renderTodoPanel(); } catch (e) {}
   try { renderHomeTodo(); } catch (e) {}
-  try { finToast('已修改待办'); } catch (e) {}
+  try { finToast('✅ 已保存修改'); } catch (e) {}
 }
+async function deleteTodoFromEdit() {
+  const m = document.getElementById('todo-edit-modal');
+  let idx = __teEditIdx;
+  if (m && m.dataset.editIdx) { const p = parseInt(m.dataset.editIdx, 10); if (!isNaN(p)) idx = p; }
+  if (idx < 0 || !store.userTodos || !store.userTodos[idx]) { closeTodoEditModal(); return; }
+  let ok = true;
+  try { ok = await hamiConfirm('确定删除这条待办吗？'); } catch (e) {}
+  if (!ok) return;
+  closeTodoEditModal();
+  removeUserTodo(idx);
+}
+// 兼容旧入口（语音/其他调用）
+function editUserTodo(idx) { openTodoEditModal(idx); }
+function setTodoDeadline(idx) { openTodoEditModal(idx); }
 
 function toggleUserTodo(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
@@ -16325,6 +16398,7 @@ function toggleImpDates() {
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     const dm = document.getElementById('date-modal');
+    const te = document.getElementById('todo-edit-modal');
     const tm = document.getElementById('travel-modal');
     const tripModal = document.getElementById('trip-modal');
     const tripDayModal = document.getElementById('trip-day-modal');
@@ -16333,6 +16407,7 @@ document.addEventListener('keydown', function (e) {
     else if (tripDayModal && tripDayModal.style.display !== 'none') { closeTripDayModal(); e.preventDefault(); }
     else if (tripModal && tripModal.style.display !== 'none') { closeTripModal(); e.preventDefault(); }
     else if (dm && dm.style.display !== 'none') { closeDateModal(); e.preventDefault(); }
+    else if (te && te.style.display !== 'none') { closeTodoEditModal(); e.preventDefault(); }
     else if (tm && tm.style.display !== 'none') { closeTravelModal(); e.preventDefault(); }
   }
 });
