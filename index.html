@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-15-92">
+<meta name="hami-build" content="2026-09-15-93">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -983,7 +983,7 @@
     position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    height: 66px; min-width: 0; padding: 3px 2px 2px;
+    height: 60px; min-width: 0; padding: 3px 2px 2px;
     border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
     display: flex; flex-direction: column; align-items: stretch;
     box-sizing: border-box; overflow: hidden; cursor: pointer;
@@ -1011,18 +1011,18 @@
   }
   .weight-cal-main.weight-cal-main-empty { color: #d8c4ce; font-weight: 500; font-size: 12px; }
   .weight-cal-main.weight-cal-main-fill { color: #b6a0ac; font-weight: 600; font-size: 12px; }
-  /* 底部一行：变化值 + 运动圆点（v71 紧凑一行） */
+  /* 底部两行（v93）：体重变化在上、运动圆点在下，格子高度维持原样不改高 */
   .weight-cal-foot {
-    display: flex; align-items: center; justify-content: space-between;
-    min-height: 11px; padding: 0 1px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; min-height: 16px; padding: 0 1px;
   }
   .weight-cal-change {
-    font-size: 9px; font-weight: 700; line-height: 1;
+    font-size: 8px; font-weight: 700; line-height: 1;
     white-space: nowrap; font-variant-numeric: tabular-nums;
   }
   .weight-cal-change.weight-cal-change-empty { visibility: hidden; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; align-items: center; }
-  .weight-cal-ex-dot { font-size: 8px; }
+  .weight-cal-ex-dot { font-size: 7px; }
   /* 旧 class 兼容：外部响应式块可能还引用 .weight-cal-stack / .weight-cal-weight */
   .weight-cal-stack { display: none !important; }
   .weight-cal-weight { font-size: 13px; font-weight: 800; color: #4a3340; background: transparent; }
@@ -3025,7 +3025,7 @@
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
       .weight-cal-grid { gap: 2px; }
-      .weight-cal-cell { height: 58px !important; border-radius: 6px; padding: 2px 1px 1px !important; }
+      .weight-cal-cell { height: 50px !important; border-radius: 6px; padding: 2px 1px 1px !important; }
       .weight-cal-day { font-size: 10px !important; }
       .weight-cal-main { font-size: 11px !important; }
       .weight-cal-main.weight-cal-main-empty, .weight-cal-main.weight-cal-main-fill { font-size: 10px !important; }
@@ -3170,7 +3170,7 @@
       grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
       gap: 4px !important;
     }
-    .weight-cal-cell { height: 66px !important; padding: 3px 2px !important; }
+    .weight-cal-cell { height: 60px !important; padding: 3px 2px !important; }
     .weight-cal-day { font-size: 12px !important; }
     .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
@@ -3228,7 +3228,7 @@
       grid-column: 1 / -1;
     }
     .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px !important; }
-    .weight-cal-cell { height: 60px !important; }
+    .weight-cal-cell { height: 52px !important; }
     .weight-cal-day { font-size: 11px !important; }
     .weight-cal-main { font-size: 12px !important; }
     th, td { padding: 5px 4px; }
@@ -3290,7 +3290,7 @@
     gap: 3px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    height: 62px !important; padding: 3px 2px !important; min-width: 0;
+    height: 56px !important; padding: 3px 2px !important; min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 11px !important; }
   body.hami-force-desktop .weight-cal-main { font-size: 13px !important; }
@@ -3404,7 +3404,7 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { height: 62px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 56px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
@@ -3463,7 +3463,7 @@
     grid-template-columns: repeat(7, minmax(50px, 1fr)) !important;
     gap: 3px !important;
   }
-  body.hami-force-mini .weight-cal-cell { height: 66px !important; padding: 2px 2px !important; }
+  body.hami-force-mini .weight-cal-cell { height: 60px !important; padding: 2px 2px !important; }
   body.hami-force-mini .weight-cal-day { font-size: 12px !important; }
   body.hami-force-mini .weight-cal-main { font-size: 13px !important; }
   body.hami-force-mini .weight-cal-weight { font-size: 11px !important; padding: 0 3px; }
@@ -4155,7 +4155,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-15-92';
+  var BUILD_VER = '2026-09-15-93';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
