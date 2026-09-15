@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-14-90">
+<meta name="hami-build" content="2026-09-15-91">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4155,7 +4155,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-14-90';
+  var BUILD_VER = '2026-09-15-91';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -10822,6 +10822,15 @@ function addUserTodo(cat) {
   const deadline = (dateEl && dateEl.value) ? dateEl.value : '';
   if (!store.userTodos) store.userTodos = [];
   store.userTodos.push({ date: todayStr(), text: text, done: false, category: cat, deadline: deadline, createdAt: Date.now() });
+  // v91：添加后自动跳转到新项所在页（TODO_PAGE=3 分页时，新项可能落到第 2 页被藏起来，导致主人以为「记录不了」）
+  try {
+    const newI = store.userTodos.length - 1;
+    const catItems = (store.userTodos || []).map((ut, i) => ({ ut, i }))
+      .filter(o => (o.ut.category || 'daily') === cat && !o.ut.done);
+    const sorted = sortTodos(catItems);
+    const pos = sorted.findIndex(o => o.i === newI);
+    if (pos >= 0) __todoPage[cat] = Math.floor(pos / TODO_PAGE);
+  } catch (e) {}
   saveData();
   inp.value = '';
   if (dateEl) dateEl.value = '';
