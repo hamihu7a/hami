@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-15-91">
+<meta name="hami-build" content="2026-09-15-92">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -983,7 +983,7 @@
     position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    height: 60px; min-width: 0; padding: 3px 2px 2px;
+    height: 66px; min-width: 0; padding: 3px 2px 2px;
     border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
     display: flex; flex-direction: column; align-items: stretch;
     box-sizing: border-box; overflow: hidden; cursor: pointer;
@@ -3290,7 +3290,7 @@
     gap: 3px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    height: 56px !important; padding: 3px 2px !important; min-width: 0;
+    height: 62px !important; padding: 3px 2px !important; min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 11px !important; }
   body.hami-force-desktop .weight-cal-main { font-size: 13px !important; }
@@ -3404,7 +3404,7 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { height: 56px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 62px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
@@ -4155,7 +4155,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-15-91';
+  var BUILD_VER = '2026-09-15-92';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
