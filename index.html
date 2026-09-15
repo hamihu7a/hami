@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-09-15-93">
+<meta name="hami-build" content="2026-09-15-94">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4155,7 +4155,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-15-93';
+  var BUILD_VER = '2026-09-15-94';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -15249,7 +15249,7 @@ function renderReminder() {
       const icon = isBirthday ? '🎂' : (isAnniversary ? '💕' : '🔔');
       const typeLabel = isBirthday ? '生日' : (isAnniversary ? '纪念日' : '其他提醒');
       const typeColor = isBirthday ? '#ff7f9e' : (isAnniversary ? '#e878a6' : '#a08fc4');
-      const lunarTag = d.isLunar ? '<span style="font-size:12px;padding:1px 6px;border-radius:6px;background:#fff0d6;color:#c08020;">农历</span>' : '<span style="font-size:12px;padding:1px 6px;border-radius:6px;background:#e8f4fd;color:#2080c0;">公历</span>';
+      const lunarTag = d.isLunar ? '<span style="font-size:11px;padding:1px 5px;border-radius:6px;background:#fff0d6;color:#c08020;">农历</span>' : '<span style="font-size:11px;padding:1px 5px;border-radius:6px;background:#e8f4fd;color:#2080c0;">公历</span>';
 
       // 倒计时显示（支持 生日/纪念日/其他提醒 三类）
       let countText, countNum, countLabel, countColor;
@@ -15278,25 +15278,25 @@ function renderReminder() {
       // 显示日期（农历生日直接显示农历月日 + 下次对应新历日，避免"按新历倒计时"的误解）
       const dateDisplay = (d.isLunar && d.lunarLabel) ? ('农历' + d.lunarLabel + (d.nextDate ? ' · 下次 ' + d.nextDate : '')) : (d.hasYear ? d.date : (d.date + '（无年份）'));
 
-      const itemHtml = `<div style="padding:12px 14px;background:#fff8fa;border-radius:14px;margin-bottom:10px;border:1px solid #ffe4ec;">
+      const itemHtml = `<div style="padding:8px 10px;background:#fff8fa;border-radius:12px;margin-bottom:6px;border:1px solid #ffe4ec;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
-              <span style="font-size:16px;">${icon}</span>
-              <span style="font-size:15px;font-weight:700;color:#d14b73;">${d.name}</span>
-              <span style="font-size:12px;padding:1px 6px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:2px;">
+              <span style="font-size:13px;">${icon}</span>
+              <span style="font-size:14px;font-weight:700;color:#d14b73;">${d.name}</span>
+              <span style="font-size:11px;padding:1px 5px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
               ${lunarTag}
             </div>
-            <div style="font-size:12px;color:#7d4a5a;">📅 ${dateDisplay}</div>
-            ${countText ? `<div style="font-size:12px;color:#8a6270;margin-top:3px;">${countText}</div>` : ''}
-            ${d.remark ? `<div style="font-size:12px;color:#8a6270;margin-top:2px;">📝 ${d.remark}</div>` : ''}
+            <div style="font-size:11px;color:#7d4a5a;">📅 ${dateDisplay}</div>
+            ${countText ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
+            ${d.remark ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">📝 ${d.remark}</div>` : ''}
           </div>
-          <div style="text-align:center;min-width:64px;padding-left:8px;">
-            <div style="font-size:22px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
-            <div style="font-size:12px;color:#7d4a5a;margin-top:2px;">${countLabel}</div>
+          <div style="text-align:center;min-width:52px;padding-left:6px;">
+            <div style="font-size:17px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
+            <div style="font-size:10px;color:#7d4a5a;margin-top:1px;">${countLabel}</div>
           </div>
         </div>
-        <div style="margin-top:8px;text-align:right;">
+        <div style="margin-top:4px;text-align:right;">
           <button class="row-edit-btn" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
           <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
         </div>
@@ -15431,14 +15431,14 @@ function renderImpNext() {
   else if (next.isLunar && next.lunarLabel) sub = '📅 农历' + next.lunarLabel + (next.nextDate ? '（' + next.nextDate + '）' : '') + (next.thisYearAge ? ' · 今年 ' + next.thisYearAge + ' 岁' : '');
   else if (next.thisYearAge) sub = '🌟 今年 ' + next.thisYearAge + ' 岁';
   else sub = '📅 ' + next.date;
-  el.innerHTML = '<div style="padding:14px;background:linear-gradient(135deg,#ffd9e6,#ffeef2);border-radius:14px;border:1px solid #ffb3c6;display:flex;align-items:center;gap:12px;">'
-    + '<div style="font-size:30px;">' + icon + '</div>'
+  el.innerHTML = '<div style="padding:8px 10px;background:linear-gradient(135deg,#ffd9e6,#ffeef2);border-radius:12px;border:1px solid #ffb3c6;display:flex;align-items:center;gap:8px;">'
+    + '<div style="font-size:22px;">' + icon + '</div>'
     + '<div style="flex:1;min-width:0;">'
-    + '<div style="font-size:13px;color:#a14a64;">📌 最近的重要日子</div>'
-    + '<div style="font-size:16px;font-weight:800;color:#d14b73;">' + escapeHtml(next.name) + '</div>'
+    + '<div style="font-size:11px;color:#a14a64;">📌 最近的重要日子</div>'
+    + '<div style="font-size:14px;font-weight:800;color:#d14b73;">' + escapeHtml(next.name) + '</div>'
     + '<div style="font-size:12px;color:#8a6270;">' + sub + '</div>'
     + '</div>'
-    + '<div style="text-align:center;"><div style="font-size:26px;font-weight:800;color:#e85f7a;line-height:1;">' + next.daysLeft + '</div><div style="font-size:11px;color:#a14a64;">' + label + '</div></div>'
+    + '<div style="text-align:center;"><div style="font-size:20px;font-weight:800;color:#e85f7a;line-height:1;">' + next.daysLeft + '</div><div style="font-size:10px;color:#a14a64;">' + label + '</div></div>'
     + '</div>';
 }
 
