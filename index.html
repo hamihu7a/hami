@@ -4165,7 +4165,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-15-95';
+  var BUILD_VER = '2026-09-16-96';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -5587,7 +5587,7 @@
         </div>
         <div class="co-field">
           <label>📅 完成期限（可选，留空=无期限）</label>
-          <input type="date" id="te-date" title="点击选择日期，手机上会弹出日历">
+          <input type="date" id="te-todo-date" title="点击选择日期，手机上会弹出日历">
         </div>
       </div>
       <div class="co-actions">
@@ -10914,7 +10914,7 @@ function openTodoEditModal(idx) {
   const m = document.getElementById('todo-edit-modal');
   if (m) m.dataset.editIdx = String(idx);
   const tEl = document.getElementById('te-text');
-  const dEl = document.getElementById('te-date');
+  const dEl = document.getElementById('te-todo-date');
   if (tEl) tEl.value = ut.text || '';
   if (dEl) dEl.value = ut.deadline || '';
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
@@ -10932,7 +10932,7 @@ function submitTodoEdit() {
   if (idx < 0 || !store.userTodos || !store.userTodos[idx]) { closeTodoEditModal(); return; }
   const text = (document.getElementById('te-text').value || '').trim();
   if (!text) { try { finToast('内容不能为空'); } catch (e) {} return; }
-  const date = (document.getElementById('te-date').value || '').trim();
+  const date = (document.getElementById('te-todo-date').value || '').trim();
   const ut = store.userTodos[idx];
   // v62：身份键=日期+文字，改文字=换键，需把旧键写进墓碑避免云端并回重复
   try { hamiTombSnapshot('userTodos', hamiSnapshot('userTodos', idx), ut); } catch (e) {}
