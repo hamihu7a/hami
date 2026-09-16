@@ -389,7 +389,7 @@
   .hero-top {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     width: 100%;
   }
   /* 第一行：左侧时间列(时间+日期)在左，右侧信息组(已同步+版本号)在右竖排靠右；底部对齐不留空白 */
@@ -635,13 +635,11 @@
   .desktop-hero.has-custom-bg .desktop-quote { z-index: 2; }
   /* 上传背景图时，文字统一改回白色（左侧已压暗，白字清晰且醒目） */
   .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 150px; }
-  .desktop-hero.has-custom-bg .desktop-time,
-  .desktop-hero.has-custom-bg .desktop-date {
+  /* 时间：手机端大字，描边阴影要轻——只用一层柔和投影，避免边框感 */
+  .desktop-hero.has-custom-bg .desktop-time {
     color: #fff;
-    opacity: 0.92;
-    text-shadow: -1px -1px 2px rgba(60,40,50,0.35), 1px -1px 2px rgba(60,40,50,0.35),
-                 -1px 1px 2px rgba(60,40,50,0.35), 1px 1px 2px rgba(60,40,50,0.35),
-                 0 0 4px rgba(60,40,50,0.35);
+    opacity: 0.95;
+    text-shadow: 0 1px 3px rgba(60,40,50,0.22);
   }
   .desktop-hero.has-custom-bg .sync-status,
   .desktop-hero.has-custom-bg .hami-version-tag {
@@ -4222,7 +4220,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-104';
+  var BUILD_VER = '2026-09-16-105';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4443,7 +4441,6 @@
         <div class="hero-main-row">
           <div class="hero-time-col">
             <span class="desktop-time" id="hero-time" data-page-node-id="qDAyQ0znk6MY3StSN4Mcq6">--:--</span>
-            <span class="desktop-date" data-page-node-id="7wx6sISPNJ8SpDZfKYimmi"><span id="hero-date" data-page-node-id="qv1QrwBM2rqjfvy9f3z7DR">--</span> · <span id="hero-week" data-page-node-id="9TjfuMKfgG4Ygde4boJg99">--</span></span>
           </div>
           <div class="hero-meta-wrap">
             <span class="sync-status" id="sync-status" data-page-node-id="F1Ezip9Qz1qPZdZr5HlGjP"><span class="dot" data-page-node-id="S3J5rTCE311dLaSWKBVjfO"></span><span id="sync-status-text" data-page-node-id="6LqAQ2H9V6vRuLSOXBCSGQ">同步中…</span></span>
