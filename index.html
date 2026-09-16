@@ -635,11 +635,13 @@
   .desktop-hero.has-custom-bg .desktop-quote { z-index: 2; }
   /* 上传背景图时，文字统一改回白色（左侧已压暗，白字清晰且醒目） */
   .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 150px; }
-  /* 时间：手机端大字，描边阴影要轻——只用一层柔和投影，避免边框感 */
+  /* 时间：手机端大字——保留四向描边保证在背景图上清晰可辨，但颜色调浅（0.35 → 0.25），不脏不重 */
   .desktop-hero.has-custom-bg .desktop-time {
     color: #fff;
     opacity: 0.95;
-    text-shadow: 0 1px 3px rgba(60,40,50,0.22);
+    text-shadow: -1px -1px 2px rgba(60,40,50,0.25), 1px -1px 2px rgba(60,40,50,0.25),
+                 -1px 1px 2px rgba(60,40,50,0.25), 1px 1px 2px rgba(60,40,50,0.25),
+                 0 0 4px rgba(60,40,50,0.25);
   }
   .desktop-hero.has-custom-bg .sync-status,
   .desktop-hero.has-custom-bg .hami-version-tag {
@@ -4220,7 +4222,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-105';
+  var BUILD_VER = '2026-09-16-106';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
