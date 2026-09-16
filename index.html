@@ -2017,6 +2017,9 @@
   .fin-flow-amt.transfer { color: #8a72e0; }
   /* 模拟人生收入在账本中做视觉区分 */
   .fin-flow-row.sims-income-row { border-left: 4px solid #c9b6e4; background: #faf5ff; }
+  /* 定制单(紫) 与 美化档(粉) 分色——收入账本 + 模拟人生总收入 通用，一眼区分两类明细 */
+  .fin-flow-row.ledger-custom { border-left: 4px solid #b48bf2 !important; background: #faf6ff !important; }
+  .fin-flow-row.ledger-beauty { border-left: 4px solid #ff9eb5 !important; background: #fff5f8 !important; }
   .sims-income-tag {
     font-size: 10px; font-weight: 700; color: #fff; background: #c9b6e4;
     padding: 1px 6px; border-radius: 999px; margin-left: 6px; flex-shrink: 0;
@@ -4222,7 +4225,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-106';
+  var BUILD_VER = '2026-09-16-107';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4608,12 +4611,12 @@
     <div class="stats-grid" id="income-stats" data-page-node-id="LrsVrBX5z7kImlmJOKn3Hd"></div>
 
     <div class="card" data-page-node-id="1yTwwXJ5BL9mZO9m2zatMb">
-      <div class="card-title" data-page-node-id="FO5Dpgb8QElODa9gsI1AIs"><span data-page-node-id="wwzRzZpfbMlWHMW8wBlczC">📝</span> 定制单明细</div>
+      <div class="card-title" style="color:#b48bf2;" data-page-node-id="FO5Dpgb8QElODa9gsI1AIs"><span data-page-node-id="wwzRzZpfbMlWHMW8wBlczC">📝</span> 定制单明细</div>
       <div id="custom-orders-table" data-page-node-id="oneQJfB8C3PAnRESw7kVbw"></div>
     </div>
 
     <div class="card" data-page-node-id="PPqFPzTa3RV6gIw1GukMGp">
-      <div class="card-title" data-page-node-id="t9GABmgDXd3j1Is0sDegKV"><span data-page-node-id="XDWa4ftBUZAnytXmWEm519">🎨</span> 美化档明细</div>
+      <div class="card-title" style="color:#ff9eb5;" data-page-node-id="t9GABmgDXd3j1Is0sDegKV"><span data-page-node-id="XDWa4ftBUZAnytXmWEm519">🎨</span> 美化档明细</div>
       <div id="beauty-records-table" data-page-node-id="8pgE1oGOVMXZLNpwumwleh"></div>
     </div>
 
@@ -11313,8 +11316,8 @@ function renderIncome() {
   const totalIncome = customIncome + modIncome;
 
   document.getElementById('income-stats').innerHTML = `
-    <div class="stat-card"><div class="label">定制单收入</div><div class="value green">¥${customIncome}</div></div>
-    <div class="stat-card"><div class="label">美化档收入</div><div class="value green">¥${modIncome}</div></div>
+    <div class="stat-card"><div class="label">定制单收入</div><div class="value" style="color:#b48bf2;">¥${customIncome}</div></div>
+    <div class="stat-card"><div class="label">美化档收入</div><div class="value" style="color:#ff9eb5;">¥${modIncome}</div></div>
     <div class="stat-card"><div class="label">月总收入</div><div class="value green">¥${totalIncome}</div></div>
     <div class="stat-card"><div class="label">待完成</div><div class="value ${overdueCount > 0 ? 'red' : ''}">${pendingCount}</div><div class="unit">${overdueCount > 0 ? '⚠️ '+overdueCount+'单逾期' : '暂无逾期'}</div></div>
   `;
@@ -11346,7 +11349,7 @@ function renderIncome() {
       const dateStr = (o.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       const deadlineStr = (o.deadline || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       html += `
-        <div class="fin-flow-row">
+        <div class="fin-flow-row ledger-custom">
           <div class="card-actions">
             <button class="row-edit-btn" onclick="openCustomOrderModal(${idx})" aria-label="修改">✏️</button>
             <button class="row-del-btn" onclick="deleteCustomOrder(${idx})" aria-label="删除">🗑</button>
@@ -11425,14 +11428,14 @@ function renderIncome() {
         const amt = (b.amount != null ? b.amount : (b.count * MOD_PRICE));
         const dateStr = (b.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
         bhtml += `
-          <div class="fin-flow-row">
+          <div class="fin-flow-row ledger-beauty">
             <div class="card-actions">
               <button class="row-edit-btn" onclick="openBeautyRecordModal(${idx})" aria-label="修改">✏️</button>
               <button class="row-del-btn" onclick="deleteBeautyRecord(${idx})" aria-label="删除">🗑</button>
             </div>
             <div class="fin-flow-line1">
               <div class="fin-flow-cat">
-                <span class="rank-icon" style="background:#ff8db8;color:#fff;">${ICON_SVGS.palette || ''}</span>
+                <span class="rank-icon" style="background:#ff9eb5;color:#fff;">${ICON_SVGS.palette || ''}</span>
                 <span class="fin-flow-cat-name">美化档 ×${b.count}</span>
               </div>
               <span class="fin-flow-amt income">¥${fmtMoney(amt)}</span>
@@ -13691,7 +13694,7 @@ const INCOME_CATEGORIES = [
   { key: 'brand_collab', icon: 'handshake', name: '商单合作', color: '#a78bfa' },
   { key: 'sims_income', icon: 'gamepad', name: '模拟人生收入', color: '#c9b6e4' },
   { key: 'mod',       icon: 'mod',     name: '美化档收入', color: '#ff9eb5' },
-  { key: 'custom',    icon: 'palette', name: '定制单收入', color: '#30b0e0' },
+  { key: 'custom',    icon: 'palette', name: '定制单收入', color: '#b48bf2' },
   { key: 'side',      icon: 'gamepad', name: '其他副业',   color: '#FF9EBC' },
   { key: 'redpacket',     icon: 'gift',    name: '红包',       color: '#e85f7a' },
   { key: 'zz_redpacket',  icon: 'heart',   name: '庄子红包',   color: '#ff6b9e' },
@@ -14544,7 +14547,7 @@ function renderIncomeLedger() {
     else if (it.source === 'co') { editFn = 'openCustomOrderModal(' + it.ref + ')'; delFn = 'deleteCustomOrder(' + it.ref + ')'; }
     else { editFn = 'openBeautyRecordModal(' + it.ref + ')'; delFn = 'deleteBeautyRecord(' + it.ref + ')'; }
     html += `
-        <div class="fin-flow-row ${isSims ? 'sims-income-row' : ''}">
+        <div class="fin-flow-row ${isSims ? 'sims-income-row' : ''} ${it.source === 'co' ? 'ledger-custom' : (it.source === 'bea' ? 'ledger-beauty' : '')}">
           <div class="card-actions">
             <button class="row-edit-btn" onclick="${editFn}" aria-label="编辑">✏️</button>
             <button class="row-del-btn" onclick="${delFn}" aria-label="删除">🗑</button>
