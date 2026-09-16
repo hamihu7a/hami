@@ -392,12 +392,19 @@
     gap: 4px;
     width: 100%;
   }
-  /* 第一行：大时间在左，信息组在右竖排靠右；底部对齐——版本号(最下行)与时间最低端齐平，不留空白 */
+  /* 第一行：左侧时间列(时间+日期)在左，右侧信息组(已同步+版本号)在右竖排靠右；底部对齐不留空白 */
   .hero-main-row {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 12px;
+  }
+  /* 左侧时间列：大时间在上，几月几日紧贴在时间下面（时间只上挪一点点给日期腾位） */
+  .hero-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
   }
   .desktop-time {
     font-size: 26px;
@@ -407,7 +414,7 @@
     line-height: 1.1;
     flex-shrink: 0;
   }
-  /* 右侧信息小组：已同步 / 几月几日 / 版本号 纵向叠放，靠右 */
+  /* 右侧信息小组：已同步 / 版本号 上下紧挨，靠右 */
   .hero-meta-wrap {
     display: flex;
     flex-direction: column;
@@ -4215,7 +4222,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-103';
+  var BUILD_VER = '2026-09-16-104';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4434,10 +4441,12 @@
       </div>
       <div class="hero-top">
         <div class="hero-main-row">
-          <span class="desktop-time" id="hero-time" data-page-node-id="qDAyQ0znk6MY3StSN4Mcq6">--:--</span>
+          <div class="hero-time-col">
+            <span class="desktop-time" id="hero-time" data-page-node-id="qDAyQ0znk6MY3StSN4Mcq6">--:--</span>
+            <span class="desktop-date" data-page-node-id="7wx6sISPNJ8SpDZfKYimmi"><span id="hero-date" data-page-node-id="qv1QrwBM2rqjfvy9f3z7DR">--</span> · <span id="hero-week" data-page-node-id="9TjfuMKfgG4Ygde4boJg99">--</span></span>
+          </div>
           <div class="hero-meta-wrap">
             <span class="sync-status" id="sync-status" data-page-node-id="F1Ezip9Qz1qPZdZr5HlGjP"><span class="dot" data-page-node-id="S3J5rTCE311dLaSWKBVjfO"></span><span id="sync-status-text" data-page-node-id="6LqAQ2H9V6vRuLSOXBCSGQ">同步中…</span></span>
-            <span class="desktop-date" data-page-node-id="7wx6sISPNJ8SpDZfKYimmi"><span id="hero-date" data-page-node-id="qv1QrwBM2rqjfvy9f3z7DR">--</span> · <span id="hero-week" data-page-node-id="9TjfuMKfgG4Ygde4boJg99">--</span></span>
             <span class="hami-version-tag" id="hami-version-tag" title="当前网页版本号，主人核对用" data-page-node-id="WnazAGtKdcouywtGyX3ADt">版本：加载中…</span>
           </div>
         </div>
