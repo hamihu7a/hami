@@ -4225,7 +4225,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-108';
+  var BUILD_VER = '2026-09-16-109';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4595,7 +4595,7 @@
     <div class="fin-topbar" data-page-node-id="hQ0U2h27qp1CdMJCX0yhH4">
       <div class="fin-month" data-page-node-id="9ak9OWrEG1wdMwTQAqEpUh">
         <span style="font-size:14px;" data-page-node-id="EH09bHf0Qw2zJTg180epvy">📅</span>
-        <select id="income-month" onchange="renderIncome()" data-page-node-id="GR4KBEH9FjltDrbEQngSVS">
+        <select id="income-month" onchange="__incomeMonthPinned=true;renderIncome()" data-page-node-id="GR4KBEH9FjltDrbEQngSVS">
           <option value="2026-07" data-page-node-id="lpDJ7Vp7bveNJHbQTewvGp">2026年7月</option>
           <option value="2026-08" selected data-page-node-id="cd4CQuMZyNz3yb1rzBt8HH">2026年8月</option>
           <option value="2026-09" data-page-node-id="9DrlDB0yvJdj5Ef16gbogB">2026年9月</option>
@@ -6701,6 +6701,8 @@ function saveData(skipCloud) {
       });
     }
   } catch (e) {}
+  // v109：存盘前给所有缺 id 的老记录补上身份（补一次即可，之后永远稳定）
+  try { if (typeof hamiEnsureIds === 'function') hamiEnsureIds(); } catch (e) {}
   let savedOk = false;
   // 更新时间戳，便于与 IndexedDB 备份比较新旧
   try { store._lastSavedAt = Date.now(); } catch (e) {}
@@ -6724,6 +6726,9 @@ function saveData(skipCloud) {
   // 云同步：改动后立刻推送到云端（零登录，GitHub 加密后端）
   // skipCloud=true：云端合并流程内部自己存盘时传 true，避免「拉→存→推→拉」无限递归
   try { if (!skipCloud && typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch(e) {}
+  // v109：任何一次存档都排一次「全站重渲」，保证所有面板看到同一份数据
+  // （重渲期间 _hamiRenderingNow 为真，render 内部若再调 saveData 不会再排队，不会打转）
+  try { if (typeof hamiRequestFullRender === 'function') hamiRequestFullRender(); } catch (e) {}
   return savedOk;
 }
 
@@ -7623,7 +7628,8 @@ function _contentKey(k, it) {
   if (k === 'futurePosts') {
     return 'fpC:' + String(it.title || '').trim() + '|' + String(it.date || '') + '|' + String(it.account || 'big');
   }
-  if (k === 'weightRecords') return 'wC_' + (it.date || '');
+  // v109：体重一天记两次（早晚）不该互相顶掉 → 内容键补上数值
+  if (k === 'weightRecords') return 'wC_' + (it.date || '') + '|' + (it.value != null ? it.value : (it.after != null ? it.after : ''));
   if (k === 'exerciseRecords') return 'eC_' + (it.date || '');
   if (k === 'mediaRecords') return 'mrC_' + (it.date || '') + '|' + String(it.title || '');
   if (k === 'inspireRecords') return 'irC_' + (it.date || '') + '|' + String(it.title || '');
@@ -7632,13 +7638,17 @@ function _contentKey(k, it) {
   // v61：记账按「日期+类型+分类」作内容键。
   // 主键 ar_<date>_<type>_<amount>_<note> 含金额/备注，云端幽灵一旦金额/备注字段被改就漏；
   // 加一个不含金额/备注的内容键兜底，让墓碑/合并/渲染前 dedup 都能从多角度抓住同一条。
-  if (k === 'accountRecords') return 'arC_' + (it.date || '') + '|' + (it.type || '') + '|' + (it.category || '');
+  // v109：记账不能只用「日期+类型+分类」当内容键 —— 一天吃两顿饭、两杯奶茶会被当成重复丢一笔。
+  // 补上金额 + 时间 + 备注，同分类同日多笔各自独立。
+  if (k === 'accountRecords') return 'arC_' + (it.date || '') + '|' + (it.type || '') + '|' + (it.category || '')
+    + '|' + (it.amount != null ? it.amount : '') + '|' + (it.ts || it.time || '') + '|' + (it.note || '');
   // v62：补齐其余列表的内容键。以前这些列表只有一个主键（且主键里混着可编辑字段），
   // 云端那份"id 不一致的幽灵"在合并时抓不住，删除后刷新又复活。
   // 内容键一律只用「日期」这类稳定字段，绝不含金额/标题/备注等主人可改的内容。
-  if (k === 'toiletRecords') return 'tC_' + (it.date || '');
+  // v109：如厕一天多次、出行同一天去两个地方，都不能只用日期区分
+  if (k === 'toiletRecords') return 'tC_' + (it.date || '') + '|' + (it.count != null ? it.count : '');
   if (k === 'maskRecords') return 'mC_' + (it.date || '');
-  if (k === 'travelPlans') return 'tpC_' + (it.date || '');
+  if (k === 'travelPlans') return 'tpC_' + (it.date || '') + '|' + String(it.destination || '');
   // v62 修正：行程字段是 city/start，内容键用「城市+开始日期」才能区分不同行程
   if (k === 'trips') return 'trC_' + (it.city || '') + '|' + (it.start || '');
   // v108 修正：定制单/美化档的「日期」绝不能单独当内容键！
@@ -7659,6 +7669,13 @@ function _allDedupKeys(k, it) {
   const out = [];
   const main = _dedupKey(k, it);
   if (main) out.push(main);
+  // v109：id 作为「附加身份」。主人改了金额/日期/标题后，主键会变，
+  // 但只要 id 相同，合并时仍认得出是同一条 → 云端旧版本不会被并回来（根治「改了变新增」）。
+  // 放在主键之后、内容键之前：老数据没有 id 时，仍靠主键+内容键正常去重，不会重复。
+  if (it && typeof it === 'object' && it.id) {
+    const idk = 'IDK_' + k + '|' + it.id;
+    if (out.indexOf(idk) < 0) out.push(idk);
+  }
   const cnt = _contentKey(k, it);
   if (cnt && out.indexOf(cnt) < 0) out.push(cnt);
   return out;
@@ -8072,6 +8089,87 @@ function hamiDeleteSync() {
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e) {}
 }
+// v109：全站统一「新增记录」入口。
+// 每一个面板记一笔都必须经过它，自动做三件事：
+//  ① 补一个稳定唯一 id（以后改任何字段，身份都不漂移 → 根治「改了变新增」）
+//  ② 撤销同键墓碑（根治「删过这一天，之后再也记不进去」）
+//  ③ 真正 push 进数组
+// 主人要求的「记了就别再消失」，靠的就是 ②：新建 = 主人明确要它回来，旧墓碑必须让位。
+function _hamiNewId(listKey) {
+  const P = {
+    userTodos: 'ut', exerciseItems: 'ei', customOrders: 'co', beautyRecords: 'bea',
+    weightRecords: 'w', bodyRecords: 'bd', exerciseRecords: 'ex', mediaRecords: 'md',
+    futurePosts: 'fp', topicLibrary: 'tl', benchmarkNotes: 'bn', inspireRecords: 'ir',
+    periodRecords: 'pr', washRecords: 'ws', toiletRecords: 'tl2', maskRecords: 'mk',
+    accountRecords: 'ar', importantDates: 'imp', travelPlans: 'tv', trips: 'trip',
+    publishSchedule: 'sch'
+  };
+  return (P[listKey] || 'rec') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+function hamiPushRecord(listKey, item) {
+  try {
+    if (!Array.isArray(store[listKey])) store[listKey] = [];
+    if (item && typeof item === 'object' && !Array.isArray(item)) {
+      if (!item.id) item.id = _hamiNewId(listKey);
+      try { hamiTombRevoke(listKey, item); } catch (e) {}
+      store[listKey].push(item);
+      return item;
+    }
+    store[listKey].push(item);
+  } catch (e) {
+    try { store[listKey].push(item); } catch (e2) {}
+  }
+  return item;
+}
+// v109：全站身份兜底 —— 任何一条记录都必须有稳定 id。
+// 有 id = 身份固定：主人以后改金额、改日期、改标题、改备注，
+// 云端都认得出"还是这一条"，绝不会再冒出一条新的（根治「改了变新增」）。
+var HAMI_ID_LISTS = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords',
+  'bodyRecords', 'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'benchmarkNotes',
+  'inspireRecords', 'periodRecords', 'washRecords', 'toiletRecords', 'maskRecords', 'accountRecords',
+  'importantDates', 'travelPlans', 'trips', 'publishSchedule'];
+function hamiEnsureIds() {
+  try {
+    for (let i = 0; i < HAMI_ID_LISTS.length; i++) {
+      const k = HAMI_ID_LISTS[i];
+      const arr = store[k];
+      if (!Array.isArray(arr)) continue;
+      for (let j = 0; j < arr.length; j++) {
+        const it = arr[j];
+        if (it && typeof it === 'object' && !Array.isArray(it) && !it.id) it.id = _hamiNewId(k);
+      }
+    }
+  } catch (e) {}
+}
+// v109：全站统一「整屏刷新」。
+// 以前每个删除/新增只调自己那一个 render，于是「模拟人生里删了记账，个人支出里还在」。
+// 现在任何数据变动 400ms 后把所有面板一起重渲一次，保证处处看到的是同一份数据。
+var _hamiFullRenderTimer = null;
+var _hamiRenderingNow = false;
+function hamiRenderAllNow() {
+  if (_hamiRenderingNow) return;
+  _hamiRenderingNow = true;
+  try {
+    const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
+      'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
+      'renderHabit', 'renderWashPredict', 'renderImpNext', 'renderTripPlans', 'renderAccount',
+      'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder', 'renderTodoPanel',
+      'renderCustomBoard', 'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo'];
+    fns.forEach(function (n) {
+      try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
+    });
+  } finally { _hamiRenderingNow = false; }
+}
+function hamiRequestFullRender() {
+  try {
+    if (_hamiRenderingNow || (typeof _cloudRendering !== 'undefined' && _cloudRendering)) return;
+    if (_hamiFullRenderTimer) clearTimeout(_hamiFullRenderTimer);
+    _hamiFullRenderTimer = setTimeout(function () {
+      _hamiFullRenderTimer = null;
+      try { hamiRenderAllNow(); } catch (e) {}
+    }, 400);
+  } catch (e) {}
+}
 // v54：统一删除收尾。把「加墓碑 + 本地 splice + 存档并推云端 + 立刻刷新面板」封装起来，
 // 让所有删除按钮行为一致，避免有的面板删后没反应、有的删了又从云端复活。
 function hamiDeleteRecord(listKey, idx, options) {
@@ -8084,6 +8182,8 @@ function hamiDeleteRecord(listKey, idx, options) {
   if (typeof options.afterLocal === 'function') { try { options.afterLocal(item); } catch(e){} }
   hamiDeleteSync();
   if (typeof options.render === 'function') { try { options.render(); } catch(e){} }
+  // v109：不管哪个面板发起的删除，全站一起刷新，杜绝「这边删了那边还在」
+  try { hamiRequestFullRender(); } catch (e) {}
   return true;
 }
 // v62：统一「编辑保存」收尾。根治全站「改了变新增 / 改完刷新又回退」。
@@ -8099,10 +8199,13 @@ function hamiEditRecord(listKey, idx, newItem, renderFn) {
     if (!newItem || typeof newItem !== 'object') return false;
     // 强制继承原 id：只要旧记录有 id，新版本必须用同一个 id，身份永不漂移
     if (oldItem && oldItem.id && !newItem.id) newItem.id = oldItem.id;
+    // v109：两条都没有 id 时，给新版补一个（否则改一改身份就漂了，云端会并回旧记录）
+    if ((!oldItem || !oldItem.id) && !newItem.id) newItem.id = _hamiNewId(listKey);
     if (typeof hamiTombOldVersion === 'function') hamiTombOldVersion(listKey, oldItem, newItem);
     arr[idx] = newItem;
     if (typeof hamiDeleteSync === 'function') hamiDeleteSync();
     if (typeof renderFn === 'function') { try { renderFn(); } catch (e) {} }
+    try { hamiRequestFullRender(); } catch (e) {}
     return true;
   } catch (e) { return false; }
 }
@@ -9247,7 +9350,7 @@ function buildSpendRe() {
 function __recordToiletCore(date) {
   const existing = store.toiletRecords.find(r => r.date === date);
   if (existing) existing.count = (existing.count || 1) + 1;
-  else store.toiletRecords.push({ date: date, count: 1 });
+  else hamiPushRecord('toiletRecords', { date: date, count: 1 });
 }
 
 // ============ 中文数字 / 全角数字 归一化 ============
@@ -9522,14 +9625,15 @@ function sendHamiCmd() {
         const existing = store.weightRecords.findIndex(r => r.date === date);
         const old = existing >= 0 ? store.weightRecords[existing] : {};
         const rec = Object.assign({}, old, { date: date, value: it.value, after: it.value, note: old.note || '已称' });
-        if (existing >= 0) store.weightRecords[existing] = rec; else store.weightRecords.push(rec);
+        // v109：走统一编辑收尾（保留 id + 旧版本写墓碑），杜绝「改体重变新增一条」
+        if (existing >= 0) hamiEditRecord('weightRecords', existing, rec, null); else hamiPushRecord('weightRecords', rec);
         hints.push('体重 ' + it.value.toFixed(1) + 'kg');
         acted = true;
         break;
       }
       case 'periodStart': {
         const open = store.periodRecords.find(p => !p.end);
-        if (!open) { store.periodRecords.push({ start: date, end: '' }); hints.push('经期开始'); }
+        if (!open) { hamiPushRecord('periodRecords', { start: date, end: '' }); hints.push('经期开始'); }
         else hints.push('经期进行中');
         acted = true;
         break;
@@ -9542,7 +9646,7 @@ function sendHamiCmd() {
         break;
       }
       case 'wash':
-        if (!store.washRecords.some(r => r.date === date)) store.washRecords.push({ date: date });
+        if (!store.washRecords.some(r => r.date === date)) hamiPushRecord('washRecords', { date: date });
         hints.push('洗头');
         acted = true;
         break;
@@ -9552,14 +9656,14 @@ function sendHamiCmd() {
         acted = true;
         break;
       case 'mask':
-        if (!store.maskRecords.some(r => r.date === date)) store.maskRecords.push({ date: date });
+        if (!store.maskRecords.some(r => r.date === date)) hamiPushRecord('maskRecords', { date: date });
         hints.push('敷面膜');
         acted = true;
         break;
       case 'exercise': {
         const exRec = { date: date, aerobics: true, cardio: true, weights: true, cardioType: '', weightsContent: '', sets: '', duration: it.duration };
         const existing = store.exerciseRecords.findIndex(r => r.date === date);
-        if (existing >= 0) store.exerciseRecords[existing] = exRec; else store.exerciseRecords.push(exRec);
+        if (existing >= 0) hamiEditRecord('exerciseRecords', existing, exRec, null); else hamiPushRecord('exerciseRecords', exRec);
         hints.push('运动打卡' + (it.duration && it.duration !== '已打卡' ? '(' + it.duration + ')' : ''));
         acted = true;
         break;
@@ -9567,7 +9671,7 @@ function sendHamiCmd() {
       case 'exerciseCancel': {
         const exRec = { date: date, aerobics: false, cardio: false, weights: false, cardioType: '', weightsContent: '', sets: '', duration: '取消' };
         const existing = store.exerciseRecords.findIndex(r => r.date === date);
-        if (existing >= 0) store.exerciseRecords[existing] = exRec; else store.exerciseRecords.push(exRec);
+        if (existing >= 0) hamiEditRecord('exerciseRecords', existing, exRec, null); else hamiPushRecord('exerciseRecords', exRec);
         hints.push('休息日');
         acted = true;
         break;
@@ -9579,7 +9683,7 @@ function sendHamiCmd() {
             return r.date === date && r.type === 'income' && r.category === 'sims_income' && (r.note || '').indexOf('模拟人生') >= 0;
           });
           if (exist) { exist.amount = fmtMoney(exist.amount + amt); exist.ts = Date.now(); }
-          else store.accountRecords.push({ date: date, type: 'income', amount: amt, category: 'sims_income', note: '模拟人生定制单收入', ts: Date.now() });
+          else hamiPushRecord('accountRecords', { date: date, type: 'income', amount: amt, category: 'sims_income', note: '模拟人生定制单收入', ts: Date.now() });
           hints.push('模拟人生收入' + amt.toFixed(2) + '元');
           acted = true;
         }
@@ -9588,20 +9692,20 @@ function sendHamiCmd() {
       case 'beauty':
         if (!store.beautyRecords) store.beautyRecords = [];
         const _cmdBea = { id: 'bea_' + Date.now(), date: date, count: it.count, amount: it.count * MOD_PRICE, note: '指令自动记', status: 'done' };
-        store.beautyRecords.push(_cmdBea);
+        hamiPushRecord('beautyRecords', _cmdBea);
         try { hamiTombRevoke('beautyRecords', _cmdBea); } catch (e) {}
         hints.push('美化档×' + it.count);
         acted = true;
         break;
       case 'custom':
-        store.customOrders.push({ date: date, deadline: addDaysStr(date, 7), amount: it.amount, desc: it.desc, status: 'done' });
+        hamiPushRecord('customOrders', { date: date, deadline: addDaysStr(date, 7), amount: it.amount, desc: it.desc, status: 'done' });
         hints.push('定制单' + (it.amount ? it.amount.toFixed(2) + '元' : ''));
         acted = true;
         break;
       case 'income': {
         const amt = it.amount;
         if (amt > 0 && amt <= 1000000) {
-          store.accountRecords.push({ date: date, type: 'income', amount: amt, category: it.category, note: it.note, ts: Date.now() });
+          hamiPushRecord('accountRecords', { date: date, type: 'income', amount: amt, category: it.category, note: it.note, ts: Date.now() });
           hints.push('收入·' + getCategoryInfo(it.category, 'income').name);
           acted = true;
         }
@@ -9610,7 +9714,7 @@ function sendHamiCmd() {
       case 'expense': {
         const amt = it.amount;
         if (amt > 0 && amt <= 1000000) {
-          store.accountRecords.push({ date: date, type: 'expense', amount: amt, category: it.category, note: it.note, ts: Date.now() });
+          hamiPushRecord('accountRecords', { date: date, type: 'expense', amount: amt, category: it.category, note: it.note, ts: Date.now() });
           hints.push('支出·' + getCategoryInfo(it.category, 'expense').name + ' ¥' + fmtMoney(amt));
           acted = true;
         } else if (amt > 1000000) {
@@ -9625,7 +9729,7 @@ function sendHamiCmd() {
         break;
       }
       case 'inspire':
-        store.inspireRecords.push({ date: date, type: 'note', platform: '我的灵感', topic: '随手记', title: it.text, traffic: '', detail: { copy: it.text, tags: '', advice: '', stats: '', link: '' } });
+        hamiPushRecord('inspireRecords', { date: date, type: 'note', platform: '我的灵感', topic: '随手记', title: it.text, traffic: '', detail: { copy: it.text, tags: '', advice: '', stats: '', link: '' } });
         hints.push('灵感笔记');
         acted = true;
         break;
@@ -9639,15 +9743,15 @@ function sendHamiCmd() {
         // 同名同类型视为更新，避免"修改生日"变成新增一条
         const existing = store.importantDates.findIndex(x => x.type === it.kind && x.name === it.name);
         const rec = { type: it.kind, name: it.name, date: it.date, remark: it.lunar ? '农历' : '公历', isLunar: !!it.lunar };
-        if (existing >= 0) store.importantDates[existing] = rec;
-        else store.importantDates.push(rec);
+        // v109：同名同类型 = 同一条，走统一编辑；否则「改生日」会变成新增一条
+        if (existing >= 0) hamiEditRecord('importantDates', existing, rec, null); else hamiPushRecord('importantDates', rec);
         hints.push(it.kind === 'anniversary' ? '纪念日' : '生日提醒');
         acted = true;
         break;
       }
       case 'todo':
         if (!store.userTodos) store.userTodos = [];
-        store.userTodos.push({ date: date, text: it.text, done: false, category: getTodoCat(it.text) });
+        hamiPushRecord('userTodos', { date: date, text: it.text, done: false, category: getTodoCat(it.text) });
         hints.push('待办');
         acted = true;
         break;
@@ -9739,7 +9843,7 @@ function loadData() {
         store.beautyRecords = [];
         Object.keys(p.modSales).forEach(function (m) {
           const c = p.modSales[m] && p.modSales[m].count ? p.modSales[m].count : 0;
-          if (c > 0) store.beautyRecords.push({ id: 'bea_' + m, date: m + '-01', count: c, amount: c * MOD_PRICE, note: '旧数据迁移', status: 'done' });
+          if (c > 0) hamiPushRecord('beautyRecords', { id: 'bea_' + m, date: m + '-01', count: c, amount: c * MOD_PRICE, note: '旧数据迁移', status: 'done' });
         });
       }
       if (p.weightRecords !== undefined) store.weightRecords = mergeByDatePriority(store.weightRecords, p.weightRecords, r => r && r.after != null);
@@ -9885,6 +9989,8 @@ function tryRecoverStoreFromIDB() {
     const backup = rec.store;
     // 墓碑必须保留（否则已删除的记录会随备份一起复活）
     const keepTomb = store.__deleted;
+    // v109：解禁名单同样必须保留（否则主人刚记回来的记录又被旧墓碑清掉）
+    const keepRevoked = store.__revoked;
     for (const key in store) {
       if (backup[key] !== undefined) store[key] = backup[key];
     }
@@ -9899,6 +10005,16 @@ function tryRecoverStoreFromIDB() {
         if (!Array.isArray(store.__deleted[lk])) store.__deleted[lk] = [];
         const seen = new Set(store.__deleted[lk]);
         a.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__deleted[lk].push(k); } });
+      });
+    }
+    if (keepRevoked && Object.keys(keepRevoked).length) {
+      store.__revoked = Object.assign({}, keepRevoked, store.__revoked || {});
+      Object.keys(keepRevoked).forEach(function (lk) {
+        const a = keepRevoked[lk];
+        if (!Array.isArray(a) || !a.length) return;
+        if (!Array.isArray(store.__revoked[lk])) store.__revoked[lk] = [];
+        const seen = new Set(store.__revoked[lk]);
+        a.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__revoked[lk].push(k); } });
       });
     }
     // 用墓碑再剔一遍，确保备份里被删过的记录不会复活
@@ -10077,7 +10193,7 @@ function applyWeightSeedV1() {
   let added = 0;
   seed.forEach(function (s) {
     const exists = (store.weightRecords || []).some(function (r) { return r && r.date === s.date; });
-    if (!exists) { store.weightRecords.push(s); added++; }
+    if (!exists) { hamiPushRecord('weightRecords', s); added++; }
   });
   store.weightSeedV1Applied = true;
   if (added > 0) {
@@ -10099,7 +10215,7 @@ function applyWorkTodoSeedV1() {
   const existing = new Set((store.userTodos || []).map(t => t.text));
   seed.forEach(function (text) {
     if (!existing.has(text)) {
-      store.userTodos.push({ date: todayStr(), text: text, done: false, category: 'work' });
+      hamiPushRecord('userTodos', { date: todayStr(), text: text, done: false, category: 'work' });
     }
   });
   store.workTodosSeedV1Applied = true;
@@ -10130,13 +10246,13 @@ function applyScreenshotSeedV1() {
   weights.forEach(function (s) {
     const ex = store.weightRecords.findIndex(function (r) { return r && r.date === s.date; });
     const rec = { date: s.date, value: s.value, after: s.value, before: s.value, note: '已称' };
-    if (ex >= 0) store.weightRecords[ex] = rec; else store.weightRecords.push(rec);
+    if (ex >= 0) store.weightRecords[ex] = rec; else hamiPushRecord('weightRecords', rec);
   });
   // 洗头（按日期去重）
   const wash = ['2026-08-11', '2026-08-08', '2026-08-03', '2026-07-29'];
   if (!store.washRecords) store.washRecords = [];
   wash.forEach(function (d) {
-    if (!store.washRecords.some(function (r) { return r && r.date === d; })) store.washRecords.push({ date: d });
+    if (!store.washRecords.some(function (r) { return r && r.date === d; })) hamiPushRecord('washRecords', { date: d });
   });
   // 经期（覆盖同 start）
   const periods = [
@@ -10146,7 +10262,7 @@ function applyScreenshotSeedV1() {
   if (!store.periodRecords) store.periodRecords = [];
   periods.forEach(function (p) {
     const ex = store.periodRecords.findIndex(function (r) { return r && r.start === p.start; });
-    if (ex >= 0) store.periodRecords[ex] = p; else store.periodRecords.push(p);
+    if (ex >= 0) store.periodRecords[ex] = p; else hamiPushRecord('periodRecords', p);
   });
   // 如厕（覆盖同日期）
   const toilet = [
@@ -10159,13 +10275,13 @@ function applyScreenshotSeedV1() {
   if (!store.toiletRecords) store.toiletRecords = [];
   toilet.forEach(function (t) {
     const ex = store.toiletRecords.findIndex(function (r) { return r && r.date === t.date; });
-    if (ex >= 0) store.toiletRecords[ex] = { date: t.date, count: t.count }; else store.toiletRecords.push({ date: t.date, count: t.count });
+    if (ex >= 0) store.toiletRecords[ex] = { date: t.date, count: t.count }; else hamiPushRecord('toiletRecords', { date: t.date, count: t.count });
   });
   // 面膜（按日期去重）
   const mask = ['2026-08-12', '2026-08-04'];
   if (!store.maskRecords) store.maskRecords = [];
   mask.forEach(function (d) {
-    if (!store.maskRecords.some(function (r) { return r && r.date === d; })) store.maskRecords.push({ date: d });
+    if (!store.maskRecords.some(function (r) { return r && r.date === d; })) hamiPushRecord('maskRecords', { date: d });
   });
   store.screenshotSeedV1Applied = true;
   try { saveData(); } catch (e) {}
@@ -10225,7 +10341,7 @@ function applyTripSeedV1() {
     return;
   }
   // 本地还没有「广州」行程：全新注入真实内容
-  store.trips.push({
+  hamiPushRecord('trips', {
     city: '广州', start: '2026-08-14', end: '2026-08-16',
     remark: '广州三日游',
     seedVer: 2, days: buildGzDays()
@@ -10590,7 +10706,7 @@ function ensureDailyInspire() {
     if (needNew) {
       const dayIndex = (store.inspireRecords || []).length % INSPIRE_POOL.length;
       const newInspire = { ...INSPIRE_POOL[dayIndex], date: today };              // 从过滤池抽
-      store.inspireRecords.push(newInspire);
+      hamiPushRecord('inspireRecords', newInspire);
       saveData();
     }
     // 不足间隔：今日推荐显示最近那条（不新增），实现「每3天更新」而非「每天」
@@ -10602,7 +10718,7 @@ window.refreshInspireToday = function () {
   const today = todayStr();
   store.inspireRecords = (store.inspireRecords || []).filter(r => r.date !== today);
   const dayIndex = (store.inspireRecords || []).length % INSPIRE_POOL.length;
-  store.inspireRecords.push({ ...INSPIRE_POOL[dayIndex], date: today });          // 从过滤池抽
+  hamiPushRecord('inspireRecords', { ...INSPIRE_POOL[dayIndex], date: today });          // 从过滤池抽
   saveData();
   try { renderInspire(); } catch (e) {}
 };
@@ -11037,7 +11153,7 @@ function addUserTodo(cat) {
   const dateEl = document.getElementById('todo-date-' + cat);
   const deadline = (dateEl && dateEl.value) ? dateEl.value : '';
   if (!store.userTodos) store.userTodos = [];
-  store.userTodos.push({ date: todayStr(), text: text, done: false, category: cat, deadline: deadline, createdAt: Date.now() });
+  hamiPushRecord('userTodos', { date: todayStr(), text: text, done: false, category: cat, deadline: deadline, createdAt: Date.now() });
   // v91：添加后自动跳转到新项所在页（TODO_PAGE=3 分页时，新项可能落到第 2 页被藏起来，导致主人以为「记录不了」）
   try {
     const newI = store.userTodos.length - 1;
@@ -11224,7 +11340,9 @@ function switchPanel(name, navEl) {
     try {
       const sel = document.getElementById('income-month');
       const cur = todayStr().substring(0, 7);
-      if (sel) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
+      // v109：只在「本次打开页面后第一次进收入面板」自动跳到当月。
+      // 主人手动选过月份以后就一直尊重主人的选择 —— 否则给上个月记一笔，切回来就被跳回当月，看着像"没了"。
+      if (sel && !__incomeMonthPinned) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
       renderIncome();
     } catch (e) {}
   }
@@ -11327,6 +11445,18 @@ function applyDarkModePref() {
 let __orderPage = 0;     // 定制单明细当前页
 let __beautyPage = 0;    // 美化档明细当前页
 let __incomeRenderedMonth = '';   // 记录上次渲染月份，用于翻页归零
+// v109：收入面板的月份是否被主人手动选过（选过就不再被强行拉回当月）
+var __incomeMonthPinned = false;
+// v109：刚记了一笔（定制单/美化档）时，把收入面板月份固定到这笔的月份，保证一定看得见
+function hamiPinIncomeMonth(dateStr) {
+  try {
+    const m = (dateStr || '').substring(0, 7);
+    if (!m) return;
+    const sel = document.getElementById('income-month');
+    if (sel) Array.from(sel.options).forEach(function (o) { o.selected = o.value === m; });
+    __incomeMonthPinned = true;
+  } catch (e) {}
+}
 function orderGo(delta) {
   const monthEl = document.getElementById('income-month');
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
@@ -11639,12 +11769,13 @@ function submitCustomOrder() {
   } else {
     if (!store.customOrders[editingCoIdx]) {
       const _newCo = { id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc };
-      store.customOrders.push(_newCo);
+      hamiPushRecord('customOrders', _newCo);
       // v108：同美化档，撤销同键墓碑，避免新单被旧墓碑误杀
       try { hamiTombRevoke('customOrders', _newCo); } catch (e) {}
     }
   }
   editingCoIdx = -1;
+  try { hamiPinIncomeMonth(date); } catch (e) {}
   saveData();
   closeCustomOrderModal();
   try { renderIncome(); } catch (e) {}
@@ -11716,12 +11847,13 @@ function submitBeautyRecord() {
     hamiEditRecord('beautyRecords', editingBeautyIdx, _newBea, null);
   } else {
     const _newBea = { id: 'bea_' + Date.now(), date: date, count: count, amount: amount, note: note, status: 'done' };
-    store.beautyRecords.push(_newBea);
+    hamiPushRecord('beautyRecords', _newBea);
     // v108：撤销同键墓碑。否则「同一天已有一条 / 以前删过这一天」留下的墓碑，
     // 会在下一次云端合并时把刚记的这条当成"已删除"清掉（记一笔→切走→回来就没了）。
     try { hamiTombRevoke('beautyRecords', _newBea); } catch (e) {}
   }
   editingBeautyIdx = -1;
+  try { hamiPinIncomeMonth(date); } catch (e) {}
   saveData();
   closeBeautyRecordModal();
   try { renderIncome(); } catch (e) {}
@@ -12277,7 +12409,7 @@ function submitSchedule() {
     const s = store.publishSchedule[editingSchIdx];
     s.date = date; s.account = schAccount; s.type = schType; s.status = schStatus; s.title = title; s.note = note;
   } else {
-    store.publishSchedule.push({ id: 'sch_' + Date.now(), date: date, account: schAccount, type: schType, status: schStatus, title: title, note: note });
+    hamiPushRecord('publishSchedule', { id: 'sch_' + Date.now(), date: date, account: schAccount, type: schType, status: schStatus, title: title, note: note });
   }
   saveData();
   closeScheduleModal();
@@ -12287,8 +12419,11 @@ function submitSchedule() {
 function deleteSchedule(idx) {
   if (!store.publishSchedule || !store.publishSchedule[idx]) { finToast('找不到这条排期'); return false; }
   if (!confirm('删除这条排期吗？')) return false;
+  // v109：以前只 splice，没写墓碑 → 云端一合并这条排期又回来了（删不掉）
+  try { hamiTombAdd('publishSchedule', store.publishSchedule[idx]); } catch (e) {}
   store.publishSchedule.splice(idx, 1);
   saveData();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { renderPublishCalendar(); } catch (e) {}
   return true;
 }
@@ -12548,7 +12683,7 @@ function submitFuturePost() {
       const tags = parseFuturePostTags(parts[2] || '');
       const date = parts[3] || addDaysToDate(start, i);
       const isDy = fpBatchAccount === 'douyin' || !!document.getElementById('fp-batch-douyin').checked;
-      store.futurePosts.push({
+      hamiPushRecord('futurePosts', {
         id: 'fp_' + Date.now() + '_' + i,
         title: title, content: content, tags: tags, date: date,
         account: fpBatchAccount || 'big', douyin: isDy,
@@ -12576,7 +12711,7 @@ function submitFuturePost() {
   if (!store.futurePosts) store.futurePosts = [];
   if (editingFpIdx >= 0 && store.futurePosts[editingFpIdx]) {
     const _oldFp = store.futurePosts[editingFpIdx];
-    data.id = _oldFp.id;
+    data.id = _oldFp.id || ('fp_' + Date.now());
     data.done = _oldFp.done;
     data.createdAt = _oldFp.createdAt || Date.now();
     store.futurePosts[editingFpIdx] = Object.assign({}, _oldFp, data);
@@ -12587,7 +12722,7 @@ function submitFuturePost() {
   } else {
     data.id = 'fp_' + Date.now();
     data.createdAt = Date.now();
-    store.futurePosts.push(data);
+    hamiPushRecord('futurePosts', data);
   }
   saveData(); closeFuturePostModal();
   try { dedupFuturePosts(); } catch (e) {}
@@ -12693,7 +12828,7 @@ function addLinkedMediaRecord(p, silent, overrideDate) {
     if (!silent) hamiToast('✅ 已更新联动记录\n「自媒体更新记录」已按 ' + recDate + ' 刷新为：' + accName + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
     return;
   }
-  store.mediaRecords.push({
+  hamiPushRecord('mediaRecords', {
     id: 'mr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     futurePostId: p.id,
     date: recDate,
@@ -13131,7 +13266,7 @@ function submitMediaRecord() {
     // 以前直接赋值，改标题/日期后云端那条旧记录会被当成另一条并回来（改了变新增）。
     hamiEditRecord('mediaRecords', editingMrIdx, _newMr, null);
   } else {
-    store.mediaRecords.push({
+    hamiPushRecord('mediaRecords', {
       id: 'mr_' + Date.now(),
       date: date,
       account: mrAccount,
@@ -13238,7 +13373,7 @@ function submitExerciseItem() {
     // exerciseItems 的去重键含项目名/时长/组数，改任一项都会换键 → 云端旧记录否则必并回来
     hamiEditRecord('exerciseItems', editingEiIdx, _newEi, null);
   } else {
-    store.exerciseItems.push({ id: 'ei_' + Date.now(), date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
+    hamiPushRecord('exerciseItems', { id: 'ei_' + Date.now(), date: date, type: eiType, name: name, duration: duration, sets: sets, note: note });
   }
   saveData();
   closeExerciseItemModal();
@@ -13340,7 +13475,7 @@ function submitWeightEdit() {
       finToast(date + ' 已有记录了哦～请点该行的 ✏️ 修改按钮去更新');
       return;
     }
-    store.weightRecords.push({ date: date, value: val, after: val, note: note });
+    hamiPushRecord('weightRecords', { date: date, value: val, after: val, note: note });
     finToast('✅ 已记体重 ' + val.toFixed(1) + ' kg（' + date + '）');
   }
   saveData();
@@ -13409,14 +13544,18 @@ function submitBodyRecord() {
   if (!store.bodyRecords) store.bodyRecords = [];
   if (bodyEditIdx >= 0) {
     const r = store.bodyRecords[bodyEditIdx];
+    const _oldBody = hamiSnapshot('bodyRecords', bodyEditIdx);
     r.date = date;
     r.chest = parseFloat(chest.toFixed(1));
     r.waist = parseFloat(waist.toFixed(1));
     r.hip = parseFloat(hip.toFixed(1));
     r.note = note;
+    // v109：旧版本写墓碑 + 立刻推/拉云端，否则改三围会多出一条旧数据
+    try { hamiTombSnapshot('bodyRecords', _oldBody, r); } catch (e) {}
+    try { hamiDeleteSync(); } catch (e) {}
     finToast('✅ 已更新身体数据');
   } else {
-    store.bodyRecords.push({ date: date, chest: parseFloat(chest.toFixed(1)), waist: parseFloat(waist.toFixed(1)), hip: parseFloat(hip.toFixed(1)), note: note });
+    hamiPushRecord('bodyRecords', { date: date, chest: parseFloat(chest.toFixed(1)), waist: parseFloat(waist.toFixed(1)), hip: parseFloat(hip.toFixed(1)), note: note });
     finToast('✅ 已记身体数据');
   }
   saveData();
@@ -13427,8 +13566,11 @@ async function deleteBodyRecord(idx) {
   const r = store.bodyRecords && store.bodyRecords[idx];
   if (!r) { finToast('记录不存在'); return; }
   if (!await hamiConfirm('确定删除 ' + r.date + ' 的身体数据吗？')) return;
+  // v109：补墓碑，否则删完云端又并回来
+  try { hamiTombAdd('bodyRecords', r); } catch (e) {}
   store.bodyRecords.splice(idx, 1);
   saveData();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
   try { renderBodyStats(); } catch (e) {}
   finToast('🗑 已删除身体数据');
 }
@@ -14136,7 +14278,8 @@ function commitRecord(closeIt) {
   if (addModalEditingIdx >= 0 && store.accountRecords[addModalEditingIdx]) {
     // 原地修改：保留原 id + ts，仅覆盖业务字段
     const _oldRec = store.accountRecords[addModalEditingIdx];
-    rec.id = _oldRec.id;
+    // v109：老记录可能没 id，补一个 —— 有 id 之后改金额/改日期都不会再被当成"另一条"
+    rec.id = _oldRec.id || ('fr_' + Date.now());
     rec.ts = _oldRec.ts || rec.ts;
     store.accountRecords[addModalEditingIdx] = rec;
     // v60：把「旧版本独有的身份键」写墓碑。
@@ -14146,7 +14289,7 @@ function commitRecord(closeIt) {
     try { hamiTombMirrorSave(); } catch (e) {}
   } else {
     if (!rec.id) rec.id = 'fr_' + Date.now();
-    store.accountRecords.push(rec);
+    hamiPushRecord('accountRecords', rec);
     addModalEditingIdx = -1;
   }
   try { saveData(); } catch(e) {}
@@ -16240,7 +16383,7 @@ function submitTripRecord() {
     ensureTripDays(obj);
     finToast('🗺️ 行程已更新');
   } else {
-    store.trips.push(obj);
+    hamiPushRecord('trips', obj);
     ensureTripDays(obj);
     finToast('🗺️ 行程已创建');
   }
@@ -16541,7 +16684,7 @@ function submitDateRecord() {
   store.importantDates = store.importantDates.filter(function (x) {
     return !(x && x.type === obj.type && x.name === obj.name);
   });
-  store.importantDates.push(obj);
+  hamiPushRecord('importantDates', obj);
   try { saveData(); } catch (e) {}
   try { hamiDeleteSync(); } catch (e) {}   // v62：立刻推/拉云端，让墓碑马上生效
   renderReminder();
@@ -16643,7 +16786,7 @@ function submitTravelRecord() {
     // 旧键写进墓碑后云端那条旧计划才不会被当成「另一条」并回来。
     hamiEditRecord('travelPlans', tmEditIdx, obj, null);
   } else {
-    store.travelPlans.push(obj);
+    hamiPushRecord('travelPlans', obj);
   }
   try { saveData(); } catch (e) {}
   renderReminder();
@@ -18286,13 +18429,16 @@ function logWash() {
   const today = todayStr();
   const idx = store.washRecords.findIndex(w => w.date === today);
   if (idx >= 0) {
+    // v109：取消洗头也是"删除"，必须写墓碑，否则云端一合并又算洗过了
+    try { hamiTombAdd('washRecords', store.washRecords[idx]); } catch (e) {}
     store.washRecords.splice(idx, 1);
     saveData();
+    try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
     renderWash(); renderPeriod(); renderCountdown();
     hamiToast('🧴 已取消今天的洗头记录~');
     return;
   }
-  store.washRecords.push({ date: today });
+  hamiPushRecord('washRecords', { date: today });
   saveData();
   renderWash();
   renderPeriod();
@@ -18318,7 +18464,7 @@ function logToilet() {
 function logMask() {
   const today = todayStr();
   if (!store.maskRecords.some(m => m.date === today)) {
-    store.maskRecords.push({ date: today });
+    hamiPushRecord('maskRecords', { date: today });
     saveData();
   }
   renderMask();
@@ -18334,7 +18480,7 @@ function logWashForDate() {
   const el = document.getElementById('wash-date-input');
   const date = (el && el.value) ? el.value : todayStr();
   if (!store.washRecords.some(w => w.date === date)) {
-    store.washRecords.push({ date: date });
+    hamiPushRecord('washRecords', { date: date });
     saveData();
   }
   renderPeriod();
@@ -18355,7 +18501,7 @@ function startOpenPeriod() {
     hamiToast('已有一条进行中的经期（' + open.start + ' 开始），请先「结束本次」再记新的~');
     return;
   }
-  store.periodRecords.push({ start: s, end: '' });
+  hamiPushRecord('periodRecords', { start: s, end: '' });
   if (sEl) sEl.value = '';
   saveData(); renderPeriod(); renderFitness(); rerenderSynced();
   hamiToast('🩸 已记录开始：' + s + '（进行中）');
@@ -18416,7 +18562,7 @@ function logPeriodHistory() {
     hamiTombSnapshot('periodRecords', _oldP, store.periodRecords[editingPeriodIdx]);
     try { hamiDeleteSync(); } catch (e2) {}
   } else {
-    store.periodRecords.push({ start: s, end: e });
+    hamiPushRecord('periodRecords', { start: s, end: e });
   }
   editingPeriodIdx = -1;
   if (sEl) sEl.value = '';
@@ -18492,7 +18638,7 @@ function logMaskForDate() {
   const el = document.getElementById('mask-date-input');
   const date = (el && el.value) ? el.value : todayStr();
   if (!store.maskRecords.some(m => m.date === date)) {
-    store.maskRecords.push({ date: date });
+    hamiPushRecord('maskRecords', { date: date });
     saveData();
   }
   renderMask();
@@ -18778,7 +18924,7 @@ setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e)
     var exists = store.accountRecords.some(function (r) {
       return r.date === date && r.type === 'expense' && Math.abs((r.amount || 0) - amount) < 0.001 && (r.note || '') === note;
     });
-    if (!exists) store.accountRecords.push({ date: date, type: 'expense', amount: amount, category: category, note: note });
+    if (!exists) hamiPushRecord('accountRecords', { date: date, type: 'expense', amount: amount, category: category, note: note });
   }
   // 【止血·第零批】已移除启动期强制补录的 4 笔演示支出（滴滴/洗头/看医生/买裙子）。
   // 它们会导致用户删掉的支出每次刷新又复活，现已删除；正常记账不受影响。
@@ -18842,7 +18988,7 @@ setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e)
         return p && p.date === date;
       });
       if (exists) return;
-      store.futurePosts.push({
+      hamiPushRecord('futurePosts', {
         id: 'fp_seed_' + plan.offset + '_' + Date.now(),
         title: plan.title,
         content: plan.content,
