@@ -4225,7 +4225,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-107';
+  var BUILD_VER = '2026-09-16-108';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -7641,8 +7641,15 @@ function _contentKey(k, it) {
   if (k === 'travelPlans') return 'tpC_' + (it.date || '');
   // v62 修正：行程字段是 city/start，内容键用「城市+开始日期」才能区分不同行程
   if (k === 'trips') return 'trC_' + (it.city || '') + '|' + (it.start || '');
-  if (k === 'customOrders') return 'coC_' + (it.date || '');
-  if (k === 'beautyRecords') return 'brC_' + (it.date || '');
+  // v108 修正：定制单/美化档的「日期」绝不能单独当内容键！
+  // 以前 coC_日期 / brC_日期 意味着「同一天只能有一条记录」：
+  // 主人同一天记第二笔时，第二笔的内容键跟第一笔一模一样，
+  // 云端合并去重（unionArrays）会把它当成重复直接丢掉 —— 这正是
+  // 「记一笔美化档，切到别的区域再回来就没了」的真凶。
+  // 改成「日期 + 金额 + 描述/档数」，同一天记多笔各自独立；
+  // 删除传播仍由主键（含 id，br_xxx_日期 / co_xxx_日期）负责，不会失效。
+  if (k === 'customOrders') return 'coC_' + (it.date || '') + '|' + (it.amount != null ? it.amount : '') + '|' + String(it.desc || '');
+  if (k === 'beautyRecords') return 'brC_' + (it.date || '') + '|' + (it.count != null ? it.count : '') + '|' + (it.amount != null ? it.amount : '');
   if (k === 'exerciseItems') return 'eiC_' + (it.date || '') + '|' + String(it.name || '');
   return '';
 }
@@ -7659,6 +7666,9 @@ function _allDedupKeys(k, it) {
 // v57：启动加载阶段按本地墓碑剔一遍所有被删记录。
 // 防止"云端旧数据里残留被删条目"在主页面渲染后又出现。
 function applyTombOnLoad() {
+  // v108：先恢复解禁名单并清掉同名墓碑，否则刚记的记录一加载就被旧墓碑抹掉
+  try { hamiRevokedMirrorMerge(); } catch (e) {}
+  try { hamiTombPurgeRevoked(); } catch (e) {}
   if (!store.__deleted || typeof store.__deleted !== 'object') return;
   let changed = false;
   Object.keys(store.__deleted).forEach(function (listKey) {
@@ -7794,7 +7804,29 @@ function mergeStoreInto(local, remote) {
   // 保证任何设备拉取时都不会把主人已删的记录并回来（不像账本只有 accountDeleted）。
   // 注意：必须在下方 unionArrays / deepMergeUnion 之前执行。
   try {
-    // 并集墓碑：remote.__deleted ∪ local.__deleted
+    // v108：先并集「解禁名单」remote.__revoked ∪ local.__revoked
+    // 主人新建记录时会把该记录的键写进解禁名单，云端的旧墓碑必须让位，
+    // 否则刚记的美化档/定制单在下一次合并时被旧墓碑当成"已删除"清掉。
+    const rr = (remote && typeof remote === 'object') ? (remote.__revoked || null) : null;
+    if (rr && typeof rr === 'object') {
+      if (!local.__revoked || typeof local.__revoked !== 'object') local.__revoked = {};
+      Object.keys(rr).forEach(function (listKey) {
+        const rarr = rr[listKey];
+        if (!Array.isArray(rarr) || !rarr.length) return;
+        if (!local.__revoked[listKey]) local.__revoked[listKey] = [];
+        const seen = new Set(local.__revoked[listKey]);
+        rarr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.__revoked[listKey].push(k); } });
+      });
+      // 解禁名单生效：把本机墓碑（含刚从云端并进来的）里同键的墓碑清掉
+      if (local.__deleted && local.__revoked) {
+        Object.keys(local.__revoked).forEach(function (lk) {
+          if (!Array.isArray(local.__deleted[lk]) || !local.__deleted[lk].length) return;
+          const rs = new Set(local.__revoked[lk]);
+          local.__deleted[lk] = local.__deleted[lk].filter(function (k) { return !rs.has(k); });
+        });
+      }
+    }
+    // 并集墓碑：remote.__deleted ∪ local.__deleted（已在解禁名单里的键一律不加）
     const rd = (remote && typeof remote === 'object') ? (remote.__deleted || null) : null;
     if (rd && typeof rd === 'object') {
       if (!local.__deleted || typeof local.__deleted !== 'object') local.__deleted = {};
@@ -7803,7 +7835,12 @@ function mergeStoreInto(local, remote) {
         if (!Array.isArray(rarr) || !rarr.length) return;
         if (!local.__deleted[listKey]) local.__deleted[listKey] = [];
         const seen = new Set(local.__deleted[listKey]);
-        rarr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.__deleted[listKey].push(k); } });
+        const revokedSet = (local.__revoked && Array.isArray(local.__revoked[listKey])) ? new Set(local.__revoked[listKey]) : null;
+        rarr.forEach(function (k) {
+          if (!k) return;
+          if (revokedSet && revokedSet.has(k)) return;   // v108：已解禁，云端旧墓碑不再生效
+          if (!seen.has(k)) { seen.add(k); local.__deleted[listKey].push(k); }
+        });
         // 每列表墓碑最多保留 300 条
         if (local.__deleted[listKey].length > 300) local.__deleted[listKey] = local.__deleted[listKey].slice(-300);
       });
@@ -7815,16 +7852,19 @@ function mergeStoreInto(local, remote) {
         const keys = ld[listKey];
         if (!Array.isArray(keys) || !keys.length) return;
         const keySet = new Set(keys);
+        const revokedSet = (local.__revoked && Array.isArray(local.__revoked[listKey])) ? new Set(local.__revoked[listKey]) : null;
         // v57：任一 dedup key 命中墓碑即过滤（主键 + 内容键）
         const matchTomb = function (it) {
           if (it == null) return false;
           if (typeof _allDedupKeys === 'function') {
             const ks = _allDedupKeys(listKey, it);
-            for (let i = 0; i < ks.length; i++) if (ks[i] && keySet.has(ks[i])) return true;
+            for (let i = 0; i < ks.length; i++) {
+              if (ks[i] && keySet.has(ks[i]) && !(revokedSet && revokedSet.has(ks[i]))) return true;
+            }
             return false;
           }
           const dk = (typeof _dedupKey === 'function') ? _dedupKey(listKey, it) : (JSON.stringify(it));
-          return !!(dk && keySet.has(dk));
+          return !!(dk && keySet.has(dk) && !(revokedSet && revokedSet.has(dk)));
         };
         // 本地数组剔除
         if (Array.isArray(local[listKey])) {
@@ -7904,6 +7944,13 @@ function hamiTombAdd(listKey, item) {
       if (store.__deleted[listKey].indexOf(dk) < 0) store.__deleted[listKey].push(dk);
     });
     if (store.__deleted[listKey].length > 600) store.__deleted[listKey] = store.__deleted[listKey].slice(-600);
+    // v108：主人重新删除 → 取消之前的解禁标记，删除才能继续正常传播
+    try {
+      if (store.__revoked && Array.isArray(store.__revoked[listKey]) && store.__revoked[listKey].length) {
+        store.__revoked[listKey] = store.__revoked[listKey].filter(function (k) { return keys.indexOf(k) < 0; });
+        try { hamiRevokedMirrorSave(); } catch (e2) {}
+      }
+    } catch (e3) {}
   } catch (e) {}
 }
 // v60：编辑旧版本墓碑。
@@ -7930,6 +7977,43 @@ function hamiTombOldVersion(listKey, oldItem, newItem) {
     }
   } catch (e) {}
 }
+// v108：新建记录 = 主人明确要「把它记回来」，必须先撤销同键墓碑。
+// 否则：主人删过/改过某一天的记录留下的旧墓碑，会在下一次云端合并时
+// 把刚记下的新记录当成「已删除」清掉 —— 表现就是「记一笔，切走再回来就没了」。
+// 做法：把新记录的所有去重键写进 store.__revoked[列表名]（解禁名单），
+// 合并时云端/本机的同键墓碑一律让位，删除按钮重新按下去时才取消解禁。
+function hamiTombRevoke(listKey, item) {
+  try {
+    if (!item) return;
+    const keys = (typeof _allDedupKeys === 'function') ? _allDedupKeys(listKey, item) : [];
+    if (!keys.length) return;
+    if (!store.__revoked || typeof store.__revoked !== 'object') store.__revoked = {};
+    if (!Array.isArray(store.__revoked[listKey])) store.__revoked[listKey] = [];
+    keys.forEach(function (k) {
+      if (!k) return;
+      if (store.__revoked[listKey].indexOf(k) < 0) store.__revoked[listKey].push(k);
+    });
+    if (store.__revoked[listKey].length > 600) store.__revoked[listKey] = store.__revoked[listKey].slice(-600);
+    // 本机墓碑里同键的立刻解禁
+    try { hamiTombPurgeRevoked(); } catch (e) {}
+    try { hamiRevokedMirrorSave(); } catch (e) {}
+    try { if (typeof hamiTombMirrorSave === 'function') hamiTombMirrorSave(); } catch (e) {}
+  } catch (e) {}
+}
+// v108：用解禁名单清一遍墓碑（合并前/加载后都要跑，保证云端旧墓碑不会误杀新记录）
+function hamiTombPurgeRevoked() {
+  try {
+    if (!store.__revoked || typeof store.__revoked !== 'object') return;
+    if (!store.__deleted || typeof store.__deleted !== 'object') return;
+    Object.keys(store.__revoked).forEach(function (lk) {
+      const rk = store.__revoked[lk];
+      if (!Array.isArray(rk) || !rk.length) return;
+      if (!Array.isArray(store.__deleted[lk]) || !store.__deleted[lk].length) return;
+      const rs = new Set(rk);
+      store.__deleted[lk] = store.__deleted[lk].filter(function (k) { return !rs.has(k); });
+    });
+  } catch (e) {}
+}
 // v60：墓碑镜像写进独立 localStorage 键。
 // 即使 store.__deleted 被云端合并 / IndexedDB 恢复整块覆盖，墓碑也能从这里捞回来，
 // 杜绝「删了又复活」。
@@ -7953,6 +8037,32 @@ function hamiTombMirrorMerge() {
       arr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__deleted[lk].push(k); } });
     });
     localStorage.setItem(TOMB_MIRROR_KEY, JSON.stringify(store.__deleted));
+  } catch (e) {}
+  // v108：解禁名单先于墓碑生效（否则本地镜像里的旧墓碑会把刚记的新记录又清掉）
+  try { hamiRevokedMirrorMerge(); } catch (e) {}
+  try { hamiTombPurgeRevoked(); } catch (e) {}
+}
+// v108：解禁名单同样做独立镜像，防止被云端合并整块覆盖后失效
+var REVOKED_MIRROR_KEY = 'hami_revoked_mirror_v1';
+function hamiRevokedMirrorSave() {
+  try {
+    if (!store.__revoked || typeof store.__revoked !== 'object') return;
+    localStorage.setItem(REVOKED_MIRROR_KEY, JSON.stringify(store.__revoked));
+  } catch (e) {}
+}
+function hamiRevokedMirrorMerge() {
+  try {
+    let cur = {};
+    try { cur = JSON.parse(localStorage.getItem(REVOKED_MIRROR_KEY) || '{}') || {}; } catch (e) { cur = {}; }
+    if (!store.__revoked || typeof store.__revoked !== 'object') store.__revoked = {};
+    Object.keys(cur).forEach(function (lk) {
+      const arr = cur[lk];
+      if (!Array.isArray(arr) || !arr.length) return;
+      if (!Array.isArray(store.__revoked[lk])) store.__revoked[lk] = [];
+      const seen = new Set(store.__revoked[lk]);
+      arr.forEach(function (k) { if (k && !seen.has(k)) { store.__revoked[lk].push(k); } });
+    });
+    localStorage.setItem(REVOKED_MIRROR_KEY, JSON.stringify(store.__revoked));
   } catch (e) {}
 }
 // 删除后双向同步：先本地存档，再立刻推云端（带墓碑），再拉云端剔除，杜绝"刷新又回来"
@@ -9477,7 +9587,9 @@ function sendHamiCmd() {
       }
       case 'beauty':
         if (!store.beautyRecords) store.beautyRecords = [];
-        store.beautyRecords.push({ id: 'bea_' + Date.now(), date: date, count: it.count, amount: it.count * MOD_PRICE, note: '指令自动记', status: 'done' });
+        const _cmdBea = { id: 'bea_' + Date.now(), date: date, count: it.count, amount: it.count * MOD_PRICE, note: '指令自动记', status: 'done' };
+        store.beautyRecords.push(_cmdBea);
+        try { hamiTombRevoke('beautyRecords', _cmdBea); } catch (e) {}
         hints.push('美化档×' + it.count);
         acted = true;
         break;
@@ -11526,7 +11638,10 @@ function submitCustomOrder() {
     hamiEditRecord('customOrders', editingCoIdx, _newCo, null);
   } else {
     if (!store.customOrders[editingCoIdx]) {
-      store.customOrders.push({ id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc });
+      const _newCo = { id: 'co_' + Date.now(), date: date, deadline: deadline, amount: amount, status: coStatus, desc: desc };
+      store.customOrders.push(_newCo);
+      // v108：同美化档，撤销同键墓碑，避免新单被旧墓碑误杀
+      try { hamiTombRevoke('customOrders', _newCo); } catch (e) {}
     }
   }
   editingCoIdx = -1;
@@ -11600,7 +11715,11 @@ function submitBeautyRecord() {
     // v62：统一编辑收尾（改档数/日期会换键 → 旧键写墓碑，云端旧记录不再并回来）
     hamiEditRecord('beautyRecords', editingBeautyIdx, _newBea, null);
   } else {
-    store.beautyRecords.push({ id: 'bea_' + Date.now(), date: date, count: count, amount: amount, note: note, status: 'done' });
+    const _newBea = { id: 'bea_' + Date.now(), date: date, count: count, amount: amount, note: note, status: 'done' };
+    store.beautyRecords.push(_newBea);
+    // v108：撤销同键墓碑。否则「同一天已有一条 / 以前删过这一天」留下的墓碑，
+    // 会在下一次云端合并时把刚记的这条当成"已删除"清掉（记一笔→切走→回来就没了）。
+    try { hamiTombRevoke('beautyRecords', _newBea); } catch (e) {}
   }
   editingBeautyIdx = -1;
   saveData();
