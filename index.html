@@ -385,19 +385,28 @@
   .panel { display: none; }
   .panel.active { display: block; animation: fadeIn .35s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  /* ===== 顶部 hero 布局：左侧激励语，右侧信息小组（已同步·版本·刷新 + 时间日期）全部靠右 ===== */
-  .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  /* ===== 顶部 hero 布局：单列靠右 =====
+   * 顺序（从上往下）：大时间 → 三条激励语 → 版本+刷新 → 已同步 → 日期
+   * 激励语占满整行宽度，确保不再被挤成竖排 */
+  .hero-top {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    width: 100%;
+  }
   .hero-top .desktop-quote {
-    flex: 1 1 auto;
-    min-width: 0;
+    align-self: stretch;
+    text-align: left;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    overflow: hidden;
   }
-  /* 右侧信息小组：纵向叠放，整体靠右对齐 */
-  .hero-meta-wrap { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; flex-shrink: 0; }
-  /* 第一行：已同步 · 版本 · 刷新（刷新在最右），不换行 */
+  /* 时间：靠右、靠上、大号 */
+  .hero-clock-block { display: block; text-align: right; }
+  /* 信息小组：版本+刷新 / 已同步 / 日期 纵向叠放，右对齐 */
+  .hero-meta-wrap { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 1px; }
+  /* 版本号 + 刷新按钮一行，刷新在最右 */
   .hero-meta-row { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; flex-wrap: nowrap; }
   .sync-status { font-size:12px; color: var(--c-muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
   .sync-status .dot { width: 7px; height: 7px; border-radius: 50%; background: #8fd6a0; box-shadow: 0 0 6px rgba(143,214,160,.7); }
@@ -406,8 +415,6 @@
   .sync-status.fail { color: #c25f5f; }
   /* 版本号水印：淡色胶囊，主人核对"我用的是不是最新"用 */
   .hami-version-tag { font-size: 11px; color: var(--c-muted); padding: 2px 10px; background: rgba(255,255,255,0.6); border-radius: 8px; white-space: nowrap; letter-spacing: 0.3px; }
-  /* 第二行：时间 + 日期（在已同步·版本下方），右对齐 */
-  .hero-clock-block { display: flex; flex-direction: column; align-items: flex-end; gap: 0; margin-top: 0; }
   .hero-refresh {
     flex-shrink: 0; width: 34px; height: 34px; border: none; border-radius: 50%;
     background: rgba(255,255,255,0.35); color: rgba(255,255,255,0.95);
@@ -499,19 +506,17 @@
     opacity: 0.85;
     white-space: nowrap;
   }
-  /* 三条激励语：完全融入 hero 渐变，无背景容器/无边框/无模糊，仅保留内边距保证行距 */
+  /* 三条激励语：完全融入 hero 渐变，无背景容器/无边框/无模糊，横向一行，不被挤成竖排 */
   .desktop-quote {
     background: transparent;
     padding: 0;
   }
   .desktop-quote .quote-line {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--c-text-2);
-    margin-bottom: 1px;
-    line-height: 1.3;
+    margin-bottom: 2px;
+    line-height: 1.35;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .desktop-quote .quote-line:last-child { margin-bottom: 0; }
 
@@ -614,7 +619,7 @@
   .desktop-hero.has-custom-bg .hero-clock-block,
   .desktop-hero.has-custom-bg .desktop-quote { z-index: 2; }
   /* 上传背景图时，文字统一改回白色（左侧已压暗，白字清晰且醒目） */
-  .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 130px; }
+  .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 150px; }
   .desktop-hero.has-custom-bg .desktop-time,
   .desktop-hero.has-custom-bg .desktop-date {
     color: #fff;
@@ -2954,7 +2959,7 @@
       bottom: 0;
       padding: 14px 12px 24px;
     }
-    .desktop-time { font-size: 24px; }
+    .desktop-time { font-size: 22px; }
     .desktop-hero { padding: 10px 12px; }
     .stat-card .value { font-size: 18px; }
     th, td { padding: 8px 5px; font-size:12px; }
@@ -2970,17 +2975,17 @@
       .cat-coin { width: 22px; height: 22px; font-size: 13px; }
       .cat-bubble { font-size:12px; padding: 6px 10px; max-width: 180px; }
 
-      /* hero 右对齐小组在超小屏缩小，避免挤掉左侧激励语 */
-      .hero-top { gap: 8px; }
+      /* hero 右对齐小组在超小屏缩小 */
+      .hero-top { gap: 3px; }
       .hero-meta-row { gap: 3px; }
-      .desktop-time { font-size: 22px; }
+      .desktop-time { font-size: 20px; }
       .desktop-date { font-size: 10px; }
       .hami-version-tag { font-size: 9px; padding: 1px 6px; }
       .sync-status { font-size: 10px; gap: 3px; }
       .sync-status .dot { width: 5px; height: 5px; }
-      .hero-refresh { width: 26px; height: 26px; }
-      .hero-refresh svg { width: 14px; height: 14px; }
-      .desktop-quote .quote-line { font-size: 10px; margin-bottom: 0; line-height: 1.25; }
+      .hero-refresh { width: 24px; height: 24px; }
+      .hero-refresh svg { width: 13px; height: 13px; }
+      .desktop-quote .quote-line { font-size: 10px; margin-bottom: 1px; line-height: 1.25; }
 
       /* 头像在超小屏要更精致 */
       .nav-header .avatar { width: 42px; height: 42px; }
@@ -3011,8 +3016,8 @@
       }
 
       /* hero 卡片 */
-      .desktop-time { font-size: 22px; }
-      .desktop-hero { padding: 10px 10px; min-height: 110px; }
+      .desktop-time { font-size: 20px; }
+      .desktop-hero { padding: 10px 10px; min-height: 120px; }
       .desktop-hero .motto { font-size:12px; }
 
       /* 统计卡 */
@@ -4200,7 +4205,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-99';
+  var BUILD_VER = '2026-09-16-100';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4418,10 +4423,12 @@
         <button id="main-lock-btn" class="main-lock-btn" title="锁定/解锁主面板宽度" onclick="toggleMainLock()" data-page-node-id="QQZmvQ7S8eUvgCP6nxwQ7u">🔓</button>
       </div>
       <div class="hero-top">
+        <div class="hero-clock-block">
+          <span class="desktop-time" id="hero-time" data-page-node-id="qDAyQ0znk6MY3StSN4Mcq6">--:--</span>
+        </div>
         <div class="desktop-quote" id="desktop-quote" data-page-node-id="zbTTl79erNZ2ZDcIfw4fwL"></div>
         <div class="hero-meta-wrap">
           <div class="hero-meta-row">
-            <span class="sync-status" id="sync-status" data-page-node-id="F1Ezip9Qz1qPZdZr5HlGjP"><span class="dot" data-page-node-id="S3J5rTCE311dLaSWKBVjfO"></span><span id="sync-status-text" data-page-node-id="6LqAQ2H9V6vRuLSOXBCSGQ">同步中…</span></span>
             <span class="hami-version-tag" id="hami-version-tag" title="当前网页版本号，主人核对用" data-page-node-id="WnazAGtKdcouywtGyX3ADt">版本：加载中…</span>
             <button class="hero-refresh" id="hami-cmd-refresh" title="刷新网页并同步最新数据" aria-label="刷新网页并同步最新数据" onclick="cmdRefreshAction()" data-page-node-id="HY8mXSO7b9tdQeUSne7TAK">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="tuwDYSGcL6POdWDRKalBP2">
@@ -4430,10 +4437,8 @@
               </svg>
             </button>
           </div>
-          <div class="hero-clock-block">
-            <span class="desktop-time" id="hero-time" data-page-node-id="qDAyQ0znk6MY3StSN4Mcq6">--:--</span>
-            <span class="desktop-date" data-page-node-id="7wx6sISPNJ8SpDZfKYimmi"><span id="hero-date" data-page-node-id="qv1QrwBM2rqjfvy9f3z7DR">--</span> · <span id="hero-week" data-page-node-id="9TjfuMKfgG4Ygde4boJg99">--</span></span>
-          </div>
+          <span class="sync-status" id="sync-status" data-page-node-id="F1Ezip9Qz1qPZdZr5HlGjP"><span class="dot" data-page-node-id="S3J5rTCE311dLaSWKBVjfO"></span><span id="sync-status-text" data-page-node-id="6LqAQ2H9V6vRuLSOXBCSGQ">同步中…</span></span>
+          <span class="desktop-date" data-page-node-id="7wx6sISPNJ8SpDZfKYimmi"><span id="hero-date" data-page-node-id="qv1QrwBM2rqjfvy9f3z7DR">--</span> · <span id="hero-week" data-page-node-id="9TjfuMKfgG4Ygde4boJg99">--</span></span>
         </div>
       </div>
       </div>
