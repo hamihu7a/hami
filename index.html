@@ -386,12 +386,19 @@
   .panel.active { display: block; animation: fadeIn .35s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   /* ===== 顶部 hero 布局：左侧激励语，右侧信息小组（已同步·版本·刷新 + 时间日期）全部靠右 ===== */
-  .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-  .hero-top .desktop-quote { flex: 1; min-width: 0; }
+  .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .hero-top .desktop-quote {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
   /* 右侧信息小组：纵向叠放，整体靠右对齐 */
-  .hero-meta-wrap { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 4px; flex-shrink: 0; }
+  .hero-meta-wrap { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; flex-shrink: 0; }
   /* 第一行：已同步 · 版本 · 刷新（刷新在最右），不换行 */
-  .hero-meta-row { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: nowrap; }
+  .hero-meta-row { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; flex-wrap: nowrap; }
   .sync-status { font-size:12px; color: var(--c-muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
   .sync-status .dot { width: 7px; height: 7px; border-radius: 50%; background: #8fd6a0; box-shadow: 0 0 6px rgba(143,214,160,.7); }
   .sync-status-text { white-space: nowrap; }
@@ -400,7 +407,7 @@
   /* 版本号水印：淡色胶囊，主人核对"我用的是不是最新"用 */
   .hami-version-tag { font-size: 11px; color: var(--c-muted); padding: 2px 10px; background: rgba(255,255,255,0.6); border-radius: 8px; white-space: nowrap; letter-spacing: 0.3px; }
   /* 第二行：时间 + 日期（在已同步·版本下方），右对齐 */
-  .hero-clock-block { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; margin-top: 2px; }
+  .hero-clock-block { display: flex; flex-direction: column; align-items: flex-end; gap: 0; margin-top: 0; }
   .hero-refresh {
     flex-shrink: 0; width: 34px; height: 34px; border: none; border-radius: 50%;
     background: rgba(255,255,255,0.35); color: rgba(255,255,255,0.95);
@@ -461,7 +468,7 @@
   .desktop-hero {
     background: linear-gradient(135deg, #e8c4d8 0%, #c896b8 50%, #dcb0cc 100%);
     border-radius: 22px;
-    padding: 12px 16px;
+    padding: 10px 14px;
     margin-bottom: var(--space-block);              /* hero ↔ alert banner 间留 --space-block(10px) 的呼吸，不黏也不宽 */
     color: var(--c-text-2);
     box-shadow: 0 6px 24px rgba(180, 130, 160, 0.25);
@@ -480,14 +487,14 @@
   }
   /* 时间·日期：大时间不转行，日期靠右 */
   .desktop-time {
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     white-space: nowrap;
     line-height: 1.1;
   }
   .desktop-date {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--c-text-2);
     opacity: 0.85;
     white-space: nowrap;
@@ -495,13 +502,16 @@
   /* 三条激励语：完全融入 hero 渐变，无背景容器/无边框/无模糊，仅保留内边距保证行距 */
   .desktop-quote {
     background: transparent;
-    padding: 1px 1px 0;
+    padding: 0;
   }
   .desktop-quote .quote-line {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--c-text-2);
-    margin-bottom: 2px;
-    line-height: 1.35;
+    margin-bottom: 1px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .desktop-quote .quote-line:last-child { margin-bottom: 0; }
 
@@ -604,7 +614,7 @@
   .desktop-hero.has-custom-bg .hero-clock-block,
   .desktop-hero.has-custom-bg .desktop-quote { z-index: 2; }
   /* 上传背景图时，文字统一改回白色（左侧已压暗，白字清晰且醒目） */
-  .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 170px; }
+  .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 130px; }
   .desktop-hero.has-custom-bg .desktop-time,
   .desktop-hero.has-custom-bg .desktop-date {
     color: #fff;
@@ -2944,8 +2954,8 @@
       bottom: 0;
       padding: 14px 12px 24px;
     }
-    .desktop-time { font-size: 28px; }
-    .desktop-hero { padding: 12px 12px; }
+    .desktop-time { font-size: 24px; }
+    .desktop-hero { padding: 10px 12px; }
     .stat-card .value { font-size: 18px; }
     th, td { padding: 8px 5px; font-size:12px; }
 
@@ -2961,12 +2971,16 @@
       .cat-bubble { font-size:12px; padding: 6px 10px; max-width: 180px; }
 
       /* hero 右对齐小组在超小屏缩小，避免挤掉左侧激励语 */
-      .hero-top { gap: 10px; }
-      .hero-meta-row { gap: 4px; }
-      .desktop-time { font-size: 24px; }
-      .desktop-date { font-size: 11px; }
-      .hami-version-tag { font-size: 10px; padding: 1px 7px; }
-      .hero-refresh { width: 30px; height: 30px; }
+      .hero-top { gap: 8px; }
+      .hero-meta-row { gap: 3px; }
+      .desktop-time { font-size: 22px; }
+      .desktop-date { font-size: 10px; }
+      .hami-version-tag { font-size: 9px; padding: 1px 6px; }
+      .sync-status { font-size: 10px; gap: 3px; }
+      .sync-status .dot { width: 5px; height: 5px; }
+      .hero-refresh { width: 26px; height: 26px; }
+      .hero-refresh svg { width: 14px; height: 14px; }
+      .desktop-quote .quote-line { font-size: 10px; margin-bottom: 0; line-height: 1.25; }
 
       /* 头像在超小屏要更精致 */
       .nav-header .avatar { width: 42px; height: 42px; }
@@ -2997,8 +3011,8 @@
       }
 
       /* hero 卡片 */
-      .desktop-time { font-size: 24px; }
-      .desktop-hero { padding: 10px 10px; min-height: 150px; }
+      .desktop-time { font-size: 22px; }
+      .desktop-hero { padding: 10px 10px; min-height: 110px; }
       .desktop-hero .motto { font-size:12px; }
 
       /* 统计卡 */
@@ -4186,7 +4200,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-98';
+  var BUILD_VER = '2026-09-16-99';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
