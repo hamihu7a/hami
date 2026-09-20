@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-20-113" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-20-114" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -11716,11 +11716,15 @@ function renderIncome() {
     return dates[0] || '暂无记录';
   })();
 
+  // v2026-09-20-114 今日收入（模拟人生口径）：今天这一天的定制单 + 美化档收入
+  const todayIncSim = monthOrders.filter(o => o.date === today).reduce((s,o) => s + (parseFloat(o.amount) || 0), 0)
+                    + monthBeauty.filter(b => b.date === today).reduce((s,b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
+
   document.getElementById('income-stats').innerHTML = `
     <div class="stat-card"><div class="label">定制单收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#b48bf2;">¥${customIncome}</div></div>
     <div class="stat-card"><div class="label">美化档收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#ff9eb5;">¥${modIncome}</div></div>
     <div class="stat-card"><div class="label">月总收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${totalIncome}</div></div>
-    <div class="stat-card"><div class="label">待完成</div><div class="label">最后更新：${lastMD}</div><div class="value ${overdueCount > 0 ? 'red' : ''}">${pendingCount}</div><div class="unit">${overdueCount > 0 ? '⚠️ '+overdueCount+'单逾期' : '暂无逾期'}</div></div>
+    <div class="stat-card"><div class="label">🌞 今日收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(todayIncSim)}</div></div>
   `;
 
   // v2026-09-06-28 按"定制完成日期"（deadline）升序：已废弃——v2026-09-20-113 起改为按「记录日期」降序，最新记录在最上面
@@ -14659,13 +14663,20 @@ function renderAccount() {
   const isAll = month === 'all';
   const periodLabel = isAll ? '总' : '本月';
 
+  // v2026-09-20-114 今日收入：今天这一天的手动收入 + 定制单 + 美化档（与上方「本月收入」口径完全一致，只是范围收窄到今天）
+  const _today = todayStr();
+  const todayManualInc = records.filter(r => r.date === _today && r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const todayOrderInc = (store.customOrders || []).filter(o => o.date === _today).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  const todayBeautyInc = (store.beautyRecords || []).filter(b => b.date === _today).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
+  const todayIncome = todayManualInc + todayOrderInc + todayBeautyInc;
+
   // 4 个统计卡片
   const statsEl = document.getElementById('account-stats');
   if (statsEl) statsEl.innerHTML = `
     <div class="stat-card"><div class="label">💰 ${periodLabel}收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(totalIncome)}</div></div>
     <div class="stat-card"><div class="label">💸 ${periodLabel}支出</div><div class="label">最后更新：${lastMD}</div><div class="value red">¥${fmtMoney(totalExpense)}</div></div>
     <div class="stat-card"><div class="label">📊 ${periodLabel}结余</div><div class="label">最后更新：${lastMD}</div><div class="value ${balance >= 0 ? 'green' : 'red'}">¥${fmtMoney(balance)}</div></div>
-    <div class="stat-card"><div class="label">📝 记账笔数</div><div class="label">最后更新：${lastMD}</div><div class="value">${inMonth.length}</div><div class="unit">笔</div></div>
+    <div class="stat-card"><div class="label">🌞 今日收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(todayIncome)}</div></div>
     <div class="income-breakdown" style="grid-column:1/-1;">
       <span>📦 <b>定制单自动联动</b>（来自【模拟人生总收入】）</span>
       <span class="ord-chip">¥${fmtMoney(customOrdersIncome)}</span>
