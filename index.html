@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-20-111" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-20-112" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -11980,6 +11980,7 @@ function closeBeautyRecordModal() {
   editingBeautyIdx = -1;
 }
 function updateBeautyAmount() {
+  if (beautyAmountManuallyEdited) return; // 手动改过金额就不再被档数覆盖
   const cEl = document.getElementById('beauty-count');
   const aEl = document.getElementById('beauty-amount');
   if (!cEl || !aEl) return;
@@ -11993,7 +11994,10 @@ function submitBeautyRecord() {
   const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
   const count = parseInt(cEl ? cEl.value : '');
   if (isNaN(count) || count <= 0) { finToast('请填写有效档数'); return; }
-  const amount = count * MOD_PRICE;
+  // 金额：手动改过则以手动金额为准；否则按 档数×单价 自动算
+  const amtInputEl = document.getElementById('beauty-amount');
+  const manualAmt = amtInputEl ? parseFloat(amtInputEl.value) : NaN;
+  const amount = (beautyAmountManuallyEdited && !isNaN(manualAmt) && manualAmt >= 0) ? manualAmt : count * MOD_PRICE;
   const note = (nEl && nEl.value ? nEl.value : '').trim();
   if (!store.beautyRecords) store.beautyRecords = [];
   if (editingBeautyIdx >= 0 && store.beautyRecords[editingBeautyIdx]) {
@@ -14627,7 +14631,10 @@ function renderAccount() {
   // 联动：定制单明细金额自动计入收入（所有金额，不分状态）
   const ordersAll = (store.customOrders || []).filter(o => o.date && (month === 'all' || o.date.startsWith(month)));
   const customOrdersIncome = ordersAll.reduce((s,o) => s + (parseFloat(o.amount) || 0), 0);
-  const totalIncome = manualIncome + customOrdersIncome;
+  // 联动：美化档明细金额自动计入收入（与收入账本/统计表口径一致）
+  const beautyAll = (store.beautyRecords || []).filter(b => b.date && (month === 'all' || b.date.startsWith(month)));
+  const beautyIncome = beautyAll.reduce((s,b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
+  const totalIncome = manualIncome + customOrdersIncome + beautyIncome;
   const totalExpense = inMonth.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
   const balance = totalIncome - totalExpense;
 
@@ -14635,7 +14642,8 @@ function renderAccount() {
   const _allRecs = store.accountRecords || [];
   const _allManualInc = _allRecs.filter(r => r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const _allOrderInc = (store.customOrders || []).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
-  const _allInc = _allManualInc + _allOrderInc;
+  const _allBeautyInc = (store.beautyRecords || []).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
+  const _allInc = _allManualInc + _allOrderInc + _allBeautyInc;
   const _allExp = _allRecs.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const _deposit = parseFloat(store.depositBalance) || 0;
   const disposable = _deposit + _allInc - _allExp;
@@ -14648,7 +14656,7 @@ function renderAccount() {
   if (_dispEl) _dispEl.textContent = '¥' + fmtMoney(disposable);
 
   const lastMD = (function(){
-    const pool = [...records, ...ordersAll];
+    const pool = [...records, ...ordersAll, ...beautyAll];
     if (pool.length === 0) return '暂无记录';
     const dates = pool.map(x => x.date).filter(Boolean).sort().reverse();
     return dates[0] || '暂无记录';
@@ -14667,7 +14675,10 @@ function renderAccount() {
       <span>📦 <b>定制单自动联动</b>（来自【模拟人生总收入】）</span>
       <span class="ord-chip">¥${fmtMoney(customOrdersIncome)}</span>
       <span style="color:#8a6270;">共 ${ordersAll.length} 单</span>
-      <span style="margin-left:auto;color:#8a6270;">手动记录 ¥${fmtMoney(manualIncome)} + 定制单 ¥${fmtMoney(customOrdersIncome)} = <b>¥${fmtMoney(totalIncome)}</b></span>
+      <span>🎨 <b>美化档自动联动</b></span>
+      <span class="ord-chip">¥${fmtMoney(beautyIncome)}</span>
+      <span style="color:#8a6270;">共 ${beautyAll.length} 笔</span>
+      <span style="margin-left:auto;color:#8a6270;">手动 ¥${fmtMoney(manualIncome)} + 定制单 ¥${fmtMoney(customOrdersIncome)} + 美化档 ¥${fmtMoney(beautyIncome)} = <b>¥${fmtMoney(totalIncome)}</b></span>
     </div>
   `;
 
