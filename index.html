@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-20-112" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-20-113" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2200,7 +2200,8 @@
   .stat-card .unit { font-size: 11px; color: #8a6270; }
   /* 体重/收支 stat-card 顶部留白减少，让首行 label 往上挪一点点腾出空间给「最后更新」行 */
   #fitness-stats .stat-card,
-  #account-stats .stat-card {
+  #account-stats .stat-card,
+  #income-stats .stat-card {
     padding-top: 11px;
   }
 
@@ -11707,40 +11708,41 @@ function renderIncome() {
   const modIncome = modCount * MOD_PRICE;
   const totalIncome = customIncome + modIncome;
 
+  // v2026-09-20-113 最后更新日期（与「个人支出与收入」面板同款）：取本月定制单+美化档里最新的一条记录日期
+  const lastMD = (function(){
+    const pool = [...monthOrders, ...monthBeauty];
+    if (pool.length === 0) return '暂无记录';
+    const dates = pool.map(x => x.date).filter(Boolean).sort().reverse();
+    return dates[0] || '暂无记录';
+  })();
+
   document.getElementById('income-stats').innerHTML = `
-    <div class="stat-card"><div class="label">定制单收入</div><div class="value" style="color:#b48bf2;">¥${customIncome}</div></div>
-    <div class="stat-card"><div class="label">美化档收入</div><div class="value" style="color:#ff9eb5;">¥${modIncome}</div></div>
-    <div class="stat-card"><div class="label">月总收入</div><div class="value green">¥${totalIncome}</div></div>
-    <div class="stat-card"><div class="label">待完成</div><div class="value ${overdueCount > 0 ? 'red' : ''}">${pendingCount}</div><div class="unit">${overdueCount > 0 ? '⚠️ '+overdueCount+'单逾期' : '暂无逾期'}</div></div>
+    <div class="stat-card"><div class="label">定制单收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#b48bf2;">¥${customIncome}</div></div>
+    <div class="stat-card"><div class="label">美化档收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#ff9eb5;">¥${modIncome}</div></div>
+    <div class="stat-card"><div class="label">月总收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${totalIncome}</div></div>
+    <div class="stat-card"><div class="label">待完成</div><div class="label">最后更新：${lastMD}</div><div class="value ${overdueCount > 0 ? 'red' : ''}">${pendingCount}</div><div class="unit">${overdueCount > 0 ? '⚠️ '+overdueCount+'单逾期' : '暂无逾期'}</div></div>
   `;
 
-  // v2026-09-06-28 按"定制完成日期"（deadline）升序：截止日期近的靠前；无 deadline 排到末尾
+  // v2026-09-06-28 按"定制完成日期"（deadline）升序：已废弃——v2026-09-20-113 起改为按「记录日期」降序，最新记录在最上面
   const _orderList = store.customOrders
     .map((o, idx) => ({ o, idx }))
     .filter(x => x.o.date && x.o.date.startsWith(month))
     .sort((a, b) => {
-      const da = a.o.deadline || '9999-99-99';
-      const db = b.o.deadline || '9999-99-99';
-      const dc = da.localeCompare(db);
+      const dc = (b.o.date || '').localeCompare(a.o.date || ''); // 日期：近 → 远，最新记录在最上面
       if (dc !== 0) return dc;
-      return (a.o.date || '').localeCompare(b.o.date || ''); // 截止同一天再用下单日期排
+      return (b.idx || 0) - (a.idx || 0);                       // 同日：后记的靠前
     });
   if (_orderList.length === 0) {
     document.getElementById('custom-orders-table').innerHTML = `<div class="empty-state"><div class="big-icon">📝</div><p>本月暂无定制单</p></div>`;
   } else {
-    // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
-    const maxPg = Math.max(0, Math.ceil(_orderList.length / ACC_PAGE) - 1);
-    if ((__orderPage || 0) > maxPg) __orderPage = maxPg;
-    const start = (__orderPage || 0) * ACC_PAGE;
-    const pageList = _orderList.slice(start, start + ACC_PAGE);
-    let html = '';
-    pageList.forEach(x => {
+    // v2026-09-20-113 改为「折叠」：默认只显示最新 3 条，超过 3 条给「展开全部」按钮
+    document.getElementById('custom-orders-table').innerHTML = foldCollapsible('customOrders', _orderList, function (x) {
       const o = x.o, idx = x.idx;
       const overdue = o.status !== 'done' && new Date(o.deadline) < new Date(today);
       const badge = o.status === 'done' ? '<span class="badge done">已交付</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge making">制作中</span>');
       const dateStr = (o.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
       const deadlineStr = (o.deadline || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
-      html += `
+      return `
         <div class="fin-flow-row ledger-custom">
           <div class="card-actions">
             <button class="row-edit-btn" onclick="openCustomOrderModal(${idx})" aria-label="修改">✏️</button>
@@ -11760,66 +11762,67 @@ function renderIncome() {
           </div>
         </div>`;
     });
-    if (_orderList.length > ACC_PAGE) {
-      html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-        <button class="flow-toggle-btn" type="button" onclick="orderGo(-1)" ${(__orderPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-        <span style="font-size:12px;color:#8a6270;">第 ${(__orderPage || 0) + 1}/${maxPg + 1} 页 · 共 ${_orderList.length} 单</span>
-        <button class="flow-toggle-btn" type="button" onclick="orderGo(1)" ${(__orderPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
-      </div>`;
-    }
-    document.getElementById('custom-orders-table').innerHTML = html;
   }
 
   const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
-  // v64：月度收入明细默认收起只显示 3 个月，点「展开全部」看其余 6 个月
+  // v2026-09-20-113 月度收入明细：按月份由近到远排序（最新记录在最上面），超过 3 个月自动折叠
   const miRows = months.map(m => {
     const mc = store.customOrders.filter(o => o.date.startsWith(m) && o.status === 'done').reduce((s,o)=>s+o.amount, 0);
     const mm = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0) * MOD_PRICE;
-    const total = mc + mm;
-    const monthLabel = m.replace('-', '年') + '月';
+    return { month: m, mc: mc, mm: mm, total: mc + mm };
+  })
+  .filter(r => r.total > 0)                          // 只保留有记录的月份，空月份不再占位
+  .sort((a, b) => b.month.localeCompare(a.month))    // 最新月份在最上面
+  .map(r => {
+    const monthLabel = r.month.replace('-', '年') + '月';
     return `
       <div class="monthly-income-row">
         <div class="mi-head">
           <span class="mi-month">${monthLabel}</span>
-          <span class="mi-total ${total > 0 ? 'has' : ''}">${total > 0 ? '¥' + fmtMoney(total) : '¥0'}</span>
+          <span class="mi-total ${r.total > 0 ? 'has' : ''}">${r.total > 0 ? '¥' + fmtMoney(r.total) : '¥0'}</span>
         </div>
         <div class="mi-detail">
-          <span class="mi-item"><i class="mi-dot custom"></i>定制单 ${mc > 0 ? '¥' + fmtMoney(mc) : '—'}</span>
-          <span class="mi-item"><i class="mi-dot beauty"></i>美化档 ${mm > 0 ? '¥' + fmtMoney(mm) : '—'}</span>
+          <span class="mi-item"><i class="mi-dot custom"></i>定制单 ${r.mc > 0 ? '¥' + fmtMoney(r.mc) : '—'}</span>
+          <span class="mi-item"><i class="mi-dot beauty"></i>美化档 ${r.mm > 0 ? '¥' + fmtMoney(r.mm) : '—'}</span>
         </div>
       </div>`;
   });
-  const miCollapsed = __collapseState['monthlyIncome'] !== true;
-  const miShow = miCollapsed ? miRows.slice(0, FOLD_PAGE) : miRows;
-  let miHtml = '<div class="monthly-income-list">';
-  miHtml += miShow.join('');
-  miHtml += '</div>';
-  if (miRows.length > FOLD_PAGE) {
-    miHtml += '<div class="flow-toggle-wrap" style="justify-content:center;margin-top:4px;">'
-      + '<button class="flow-toggle-btn" type="button" onclick="toggleFoldCollapse(\'monthlyIncome\')">'
-      + (miCollapsed ? '展开全部 ▾（共' + miRows.length + '个月）' : '收起 ▴')
-      + '</button></div>';
+  let miHtml;
+  if (miRows.length === 0) {
+    miHtml = `<div class="empty-state"><div class="big-icon">📈</div><p>暂无月度收入记录</p></div>`;
+  } else {
+    const miCollapsed = __collapseState['monthlyIncome'] !== true;
+    const miShow = miCollapsed ? miRows.slice(0, FOLD_PAGE) : miRows;
+    miHtml = '<div class="monthly-income-list">' + miShow.join('') + '</div>';
+    if (miRows.length > FOLD_PAGE) {
+      miHtml += '<div class="flow-toggle-wrap" style="justify-content:center;margin-top:4px;">'
+        + '<button class="flow-toggle-btn" type="button" onclick="toggleFoldCollapse(\'monthlyIncome\')">'
+        + (miCollapsed ? '展开全部 ▾（共' + miRows.length + '个月）' : '收起 ▴')
+        + '</button></div>';
+    }
   }
   document.getElementById('monthly-income-list').innerHTML = miHtml;
 
   // 美化档明细表
   const beautyTableEl = document.getElementById('beauty-records-table');
   if (beautyTableEl) {
-    const recs = (store.beautyRecords || []).filter(b => b.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+    const recs = (store.beautyRecords || [])
+      .map((b, idx) => ({ b, idx }))
+      .filter(x => x.b.date && x.b.date.startsWith(month))
+      .sort((a, c) => {
+        const dc = (c.b.date || '').localeCompare(a.b.date || ''); // 日期：近 → 远，最新记录在最上面
+        if (dc !== 0) return dc;
+        return c.idx - a.idx;                                     // 同日：后记的靠前
+      });
     if (recs.length === 0) {
       beautyTableEl.innerHTML = `<div class="empty-state"><div class="big-icon">🎨</div><p>本月暂无美化档记录</p><p style="font-size:12px;margin-top:6px;">每月底报销量时告诉我「美化档×N」，或点上方「➕ 记美化档」</p></div>`;
     } else {
-      // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
-      const maxPg = Math.max(0, Math.ceil(recs.length / ACC_PAGE) - 1);
-      if (__beautyPage > maxPg) __beautyPage = maxPg;
-      const start = __beautyPage * ACC_PAGE;
-      const pageList = recs.slice(start, start + ACC_PAGE);
-      let bhtml = '';
-      pageList.forEach(b => {
-        const idx = store.beautyRecords.indexOf(b);
+      // v2026-09-20-113 改为「折叠」：默认只显示最新 3 条，超过 3 条给「展开全部」按钮
+      beautyTableEl.innerHTML = foldCollapsible('beautyRecords', recs, function (x) {
+        const b = x.b, idx = x.idx;
         const amt = (b.amount != null ? b.amount : (b.count * MOD_PRICE));
         const dateStr = (b.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
-        bhtml += `
+        return `
           <div class="fin-flow-row ledger-beauty">
             <div class="card-actions">
               <button class="row-edit-btn" onclick="openBeautyRecordModal(${idx})" aria-label="修改">✏️</button>
@@ -11838,14 +11841,6 @@ function renderIncome() {
             </div>
           </div>`;
       });
-      if (recs.length > ACC_PAGE) {
-        bhtml += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;">
-          <button class="flow-toggle-btn" type="button" onclick="beautyGo(-1)" ${__beautyPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-          <span style="font-size:12px;color:#8a6270;">第 ${__beautyPage + 1}/${maxPg + 1} 页 · 共 ${recs.length} 条</span>
-          <button class="flow-toggle-btn" type="button" onclick="beautyGo(1)" ${__beautyPage >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
-        </div>`;
-      }
-      beautyTableEl.innerHTML = bhtml;
     }
   }
 }
@@ -15193,7 +15188,7 @@ function foldCollapsible(key, items, renderItem) {
 }
 function toggleFoldCollapse(key) {
   __collapseState[key] = !(__collapseState[key] === true);
-  const map = { mediaDetail: renderMedia, monthlyIncome: renderIncome };
+  const map = { mediaDetail: renderMedia, monthlyIncome: renderIncome, customOrders: renderIncome, beautyRecords: renderIncome };
   const fn = map[key];
   if (typeof fn === 'function') fn();
 }
