@@ -4225,7 +4225,7 @@
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
 (function(){
-  var BUILD_VER = '2026-09-16-109';
+  var BUILD_VER = '2026-09-20-110';
   window.BUILD_VER = BUILD_VER;
   var stored = localStorage.getItem('hami_html_build_ver');
   var qs = location.search;
@@ -4685,8 +4685,9 @@
           <input type="number" id="beauty-count" inputmode="decimal" min="0" step="1" placeholder="如 3" oninput="updateBeautyAmount()" data-page-node-id="74aV0elWuGNEsKcNE7QBFI" />
         </div>
         <div class="co-field" data-page-node-id="DB5ftsL0VPB8CxL25H80C6">
-          <label data-page-node-id="9xLNt6pvtqm4CNziGmgoXN">💰 金额（元，自动=档数×98）</label>
-          <input type="number" id="beauty-amount" inputmode="decimal" min="0" step="0.01" readonly placeholder="自动计算" data-page-node-id="KbU6vOxKrBIjAYFCNCTJMQ" />
+          <label data-page-node-id="9xLNt6pvtqm4CNziGmgoXN">💰 金额（元，自动=档数×98；可手动改，以手动为准）</label>
+          <input type="number" id="beauty-amount" inputmode="decimal" min="0" step="0.01" placeholder="自动计算（可手动改）" oninput="onBeautyAmountManualEdit()" data-page-node-id="KbU6vOxKrBIjAYFCNCTJMQ" />
+          <button type="button" onclick="resetBeautyAmountAuto()" style="margin-top:6px;padding:7px 11px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:8px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12px;font-weight:700;cursor:pointer;min-height:32px;" data-page-node-id="KbU6vOxKrBIjAYFCNCTJMr">🔄 按档数重算</button>
         </div>
         <div class="co-field" data-page-node-id="W6k8ZPwMYvLLqzZi4hGfNF">
           <label data-page-node-id="YIYXvCmpPdk2TR49ZXAqba">📝 备注</label>
@@ -9154,6 +9155,154 @@ function exportAllData() {
   }
 }
 
+// ==================== 🛡️ 完整备份：一键产「代码+数据+账号」3 文件，写进 F 盘 ====================
+// 固定文件名覆盖式写入 → 永远只有最新 3 个文件，不堆积历史。
+const BACKUP_DIR_KEY = 'hami_backup_dir_handle';   // IndexedDB 里存 F 盘目录句柄
+const BACKUP_HTML_NAME = 'Hami工作台.html';
+const BACKUP_DATA_NAME = '哈米数据备份.json';
+const BACKUP_ACCT_NAME = '哈密自媒体账号备份.json';
+
+function _idbOpenBackup() {
+  return new Promise(function (resolve, reject) {
+    try {
+      const req = indexedDB.open('hami_backup_dir_db', 1);
+      req.onupgradeneeded = function () { try { req.result.createObjectStore('kv'); } catch (e) {} };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    } catch (e) { reject(e); }
+  });
+}
+function _idbBackupGet(key) {
+  return _idbOpenBackup().then(function (db) {
+    return new Promise(function (resolve) {
+      try {
+        const tx = db.transaction('kv', 'readonly');
+        const r = tx.objectStore('kv').get(key);
+        r.onsuccess = function () { resolve(r.result || null); };
+        r.onerror = function () { resolve(null); };
+      } catch (e) { resolve(null); }
+    });
+  }).catch(function () { return null; });
+}
+function _idbBackupSet(key, val) {
+  return _idbOpenBackup().then(function (db) {
+    return new Promise(function (resolve) {
+      try {
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(val, key);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { resolve(false); };
+      } catch (e) { resolve(false); }
+    });
+  }).catch(function () { return false; });
+}
+function _writeFileToDir(dirHandle, name, text) {
+  return dirHandle.getFileHandle(name, { create: true }).then(function (fh) {
+    return fh.createWritable();
+  }).then(function (w) {
+    return w.write(text).then(function () { return w.close(); });
+  });
+}
+function _buildDataBundle() {
+  const bundle = { _type: 'hami-backup', _version: 1, _exportedAt: new Date().toISOString(), data: {} };
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (k === STORAGE_KEY || k.indexOf('hami_') === 0) bundle.data[k] = localStorage.getItem(k);
+  }
+  return bundle;
+}
+function _buildAccountsBundle() {
+  const bundle = { _type: 'hami-accounts-backup', _version: 1, _exportedAt: new Date().toISOString(), data: {} };
+  try {
+    const st = (typeof store !== 'undefined' && store) ? store : {};
+    ['accounts', 'accountsMeta'].forEach(function (k) { if (st[k] != null) bundle.data[k] = st[k]; });
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('hami_account') === 0) bundle.data[k] = localStorage.getItem(k);
+    }
+  } catch (e) {}
+  return bundle;
+}
+function _triggerDownload(name, text) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1000);
+}
+
+// 主入口：产出 3 文件并写入 F 盘（已授权时）；silent=true 用于自动备份（不弹窗）
+async function exportFullBackup(silent) {
+  const st = document.getElementById('settings-backup-status');
+  const say = function (msg, color) { if (st && !silent) { st.style.color = color || '#c75b86'; st.textContent = msg; } };
+  try {
+    const htmlText = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const dataText = JSON.stringify(_buildDataBundle(), null, 2);
+    const acctText = JSON.stringify(_buildAccountsBundle(), null, 2);
+
+    let dirHandle = null;
+    if (window.showDirectoryPicker) {
+      dirHandle = await _idbBackupGet(BACKUP_DIR_KEY);
+      if (dirHandle) {
+        try {
+          const p = await dirHandle.requestPermission({ mode: 'readwrite' });
+          if (p !== 'granted') dirHandle = null;
+        } catch (e) { /* silent 模式权限可能失败，保留原句柄 */ }
+      }
+      if (!dirHandle && !silent) {
+        try {
+          dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+          await _idbBackupSet(BACKUP_DIR_KEY, dirHandle);
+        } catch (e) { dirHandle = null; }
+      }
+    }
+
+    if (dirHandle) {
+      await _writeFileToDir(dirHandle, BACKUP_HTML_NAME, htmlText);
+      await _writeFileToDir(dirHandle, BACKUP_DATA_NAME, dataText);
+      await _writeFileToDir(dirHandle, BACKUP_ACCT_NAME, acctText);
+      try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
+      try { updateBackupAge(); } catch (e) {}
+      say('已把 3 个文件写入 F 盘：' + BACKUP_HTML_NAME + '、' + BACKUP_DATA_NAME + '、' + BACKUP_ACCT_NAME, '#1a9e4b');
+      if (typeof finToast === 'function') finToast('✅ 完整备份已存到 F 盘（3 个文件）');
+      return true;
+    } else {
+      say('当前浏览器不支持直接写文件夹，已改为下载到「下载」文件夹，请手动移进 F:\\Hami工作台。', '#d14b73');
+      _triggerDownload(BACKUP_DATA_NAME, dataText);
+      setTimeout(function () { _triggerDownload(BACKUP_ACCT_NAME, acctText); }, 400);
+      setTimeout(function () { _triggerDownload('Hami工作台.完整备份.html', htmlText); }, 800);
+      try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
+      try { updateBackupAge(); } catch (e) {}
+      return false;
+    }
+  } catch (e) {
+    console.error('[exportFullBackup] 失败', e);
+    say('备份失败：' + ((e && e.message) ? e.message : e), '#d14b73');
+    return false;
+  }
+}
+
+// 每半月自动备份（页面打开 8 秒后 + 之后每天各检查一次；未到时间/未授权则静默跳过）
+const AUTO_BACKUP_INTERVAL_DAYS = 15;
+async function maybeAutoFullBackup() {
+  try {
+    const ts = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10);
+    const days = (Date.now() - ts) / 86400000;
+    if (ts && days < AUTO_BACKUP_INTERVAL_DAYS) return;
+    const dirHandle = await _idbBackupGet(BACKUP_DIR_KEY);
+    if (!dirHandle) return;
+    try {
+      const p = await dirHandle.requestPermission({ mode: 'readwrite' });
+      if (p !== 'granted') return;
+    } catch (e) { return; }
+    await exportFullBackup(true);
+  } catch (e) { console.error('[maybeAutoFullBackup] 失败', e); }
+}
+setTimeout(function () { maybeAutoFullBackup(); }, 8000);
+setInterval(function () { maybeAutoFullBackup(); }, 86400000);
+
 async function importAllData(file) {
   const st = document.getElementById('settings-backup-status');
   if (!file) return;
@@ -11792,6 +11941,10 @@ async function deleteCustomOrder(idx) {
 
 // ==================== 美化档明细 记美化档 弹窗（模拟人生总收入面板） ====================
 let editingBeautyIdx = -1;
+// 金额「手动优先」标记：主人一旦手动改过金额，就不再被「档数×单价」覆盖
+let beautyAmountManuallyEdited = false;
+function onBeautyAmountManualEdit() { beautyAmountManuallyEdited = true; }
+function resetBeautyAmountAuto() { beautyAmountManuallyEdited = false; updateBeautyAmount(); }
 function openBeautyRecordModal(idx) {
   editingBeautyIdx = (typeof idx === 'number' && idx >= 0 && store.beautyRecords && store.beautyRecords[idx]) ? idx : -1;
   const dEl = document.getElementById('beauty-date');
@@ -11805,12 +11958,15 @@ function openBeautyRecordModal(idx) {
     if (cEl) cEl.value = b.count;
     if (nEl) nEl.value = b.note || '';
     if (aEl) aEl.value = (b.amount != null ? b.amount : (b.count * MOD_PRICE)).toFixed(2);
+    // 原金额 ≠ 档数×单价 → 视为优惠价/手动价，标记手动，避免被档数变化覆盖
+    beautyAmountManuallyEdited = (b.amount != null && Number(b.amount) !== Number(b.count) * MOD_PRICE);
     if (title) title.textContent = '✏️ 修改美化档';
   } else {
     if (dEl) dEl.value = todayStr();
     if (cEl) cEl.value = '';
     if (nEl) nEl.value = '';
     if (aEl) aEl.value = '';
+    beautyAmountManuallyEdited = false;
     if (title) title.textContent = '➕ 记美化档';
   }
   const m = document.getElementById('beauty-record-modal');
@@ -16907,6 +17063,8 @@ function autoExportAccountsBackup() {
   } catch (e) { console.error('[autoExportAccountsBackup] 失败', e); }
 }
 function maybeAutoExportAccountsBackup() {
+  // 已按主人要求关闭：与「下载完整备份(存到F盘)」重复，避免每天往「下载」文件夹堆积
+  return;
   try {
     const today = new Date().toDateString();
     const last = localStorage.getItem('hami_accounts_auto_backup_day');
