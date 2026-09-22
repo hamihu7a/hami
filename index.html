@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-20-114" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-22-115" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -7711,20 +7711,47 @@ function applyTombOnLoad() {
 }
 function unionArrays(la, ra, key) {
   const seen = {}; const out = [];
+  // v2026-09-20-115【修复「已完成图文全部退回未完成」】
+  // 背景：本地数组在前(la)、远端在后(ra)。旧逻辑「谁先出现谁赢」意味着
+  // 云端那份 `done:false` 的旧快照永远排在本地 `done:true` 之后 —— 后到的被当"重复"丢掉，
+  // 于是主人几天前标记完成、今天一拉云端就全部退回未完成。
+  // 修法：futurePosts 走「合并同条」而不是「先到先得」——同一条记录若两边都有，
+  // 取「信息更完整」的那份：done 为 true 优先，其次 createdAt / date 较新的一方。
+  const isFp = (key === 'futurePosts');
+  const _mergeFp = function (a, b) {
+    // a = 已收录的，b = 新来的同条
+    if (!a || typeof a !== 'object') return b;
+    if (!b || typeof b !== 'object') return a;
+    const ad = !!a.done, bd = !!b.done;
+    if (ad !== bd) return bd ? b : a;             // 只要有一边标了完成，就用完成的那份
+    // 两边完成状态一致 → 取「创建/更新更晚」的一份，保住最新编辑
+    const at = a.updatedAt || a.createdAt || 0;
+    const bt = b.updatedAt || b.createdAt || 0;
+    if (bt !== at) return bt > at ? b : a;
+    return a;
+  };
+  const outIndexOf = {};   // dedupKey → out 中的下标，便于原地替换
   (la || []).concat(ra || []).forEach(function (it) {
     if (it == null) return;   // 丢弃 null/undefined 脏数据，避免后续访问 .date 等字段抛错、搞崩面板
     if (typeof it !== 'object') { out.push(it); return; }
     // v57：主键 + 内容键任一命中已 seen 即跳过
     const ks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(key, it) : [((typeof _dedupKey === 'function') ? _dedupKey(key, it) : JSON.stringify(it))];
-    let dup = false;
+    let hitKey = '';
     for (let i = 0; i < ks.length; i++) {
       const dk = ks[i];
-      if (dk && seen[dk]) { dup = true; break; }
+      if (dk && seen[dk]) { hitKey = dk; break; }
     }
-    if (dup) return;
+    if (hitKey) {
+      // 已收录过同一条 → futurePosts 走"择优合并"，其它列表保持原行为（先到先得）
+      if (isFp) {
+        const oi = outIndexOf[hitKey];
+        if (oi != null && out[oi] !== undefined) out[oi] = _mergeFp(out[oi], it);
+      }
+      return;
+    }
     for (let i = 0; i < ks.length; i++) {
       const dk = ks[i];
-      if (dk) seen[dk] = true;
+      if (dk) { seen[dk] = true; if (isFp) outIndexOf[dk] = out.length; }
     }
     out.push(it);
   });
@@ -7753,33 +7780,53 @@ function dedupFuturePosts() {
       });
     }
   } catch (e) {}
-  // 第一遍：建 id → 保留最晚出现位置（远端覆盖本地，所以 unionArrays 中后到的就是最新版本）
-  const idLatestIdx = {};
-  for (let i = 0; i < store.futurePosts.length; i++) {
-    const p = store.futurePosts[i];
-    if (p && p.id) idLatestIdx[p.id] = i;
-  }
-  // 第二遍：同 id 只保留最后；缺 id 的按内容键去重
+  // v2026-09-20-115【修复「已完成图文全部退回未完成」】
+  // 旧逻辑「同 id 保留最后出现的」+ 注释「远端在后=最新」是错的：
+  // unionArrays 是「本地在前、远端在后」，云端那份 done:false 的旧快照排在后面，
+  // dedup 时反而把它当"最新"保留，本地 done:true 被丢掉 → 状态集体回退。
+  // 新逻辑：同一条只保留一份，择优规则 = done 为 true 优先，其次 updatedAt/createdAt 较新者。
+  const _fpBetter = function (a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    const ad = !!a.done, bd = !!b.done;
+    if (ad !== bd) return bd ? b : a;
+    const at = a.updatedAt || a.createdAt || 0;
+    const bt = b.updatedAt || b.createdAt || 0;
+    if (bt !== at) return bt > at ? b : a;
+    return a;
+  };
   const seenKey = new Set();
   const out = [];
+  const idPos = {};        // id → out 下标
+  const ckPos = {};        // 内容键 → out 下标
   for (let i = 0; i < store.futurePosts.length; i++) {
     const p = store.futurePosts[i];
     if (!p) continue;
-    if (p.id) {
-      if (idLatestIdx[p.id] !== i) continue;
-      const ck = _contentKey('futurePosts', p);
-      if (ck) seenKey.add(ck);
-      out.push(p);
-    } else {
-      const ck = _contentKey('futurePosts', p);
-      if (ck && seenKey.has(ck)) continue;
-      if (ck) seenKey.add(ck);
-      out.push(p);
+    const ck = _contentKey('futurePosts', p);
+    const hit = (p.id && idPos[p.id] != null) ? idPos[p.id] : ((ck && ckPos[ck] != null) ? ckPos[ck] : null);
+    if (hit != null) {
+      out[hit] = _fpBetter(out[hit], p);   // 同一条 → 择优（完成优先 / 更新更晚）
+      if (p.id) idPos[p.id] = hit;
+      if (ck) ckPos[ck] = hit;
+      continue;
     }
+    if (ck && seenKey.has(ck)) continue;
+    if (ck) seenKey.add(ck);
+    const pos = out.length;
+    out.push(p);
+    if (p.id) idPos[p.id] = pos;
+    if (ck) ckPos[ck] = pos;
   }
-  if (out.length !== store.futurePosts.length) {
+  // v2026-09-20-115：不能只看「数量变没变」。
+  // 择优合并会把 done:false 换成 done:true —— 数量一样，内容却变了，旧写法就漏存了，
+  // 于是"本机明明是已完成，刷新后又变回未完成"。这里改成逐条比对，任何一条被替换/剔除都存盘。
+  let _fpChanged = (out.length !== store.futurePosts.length);
+  if (!_fpChanged) {
+    for (let i = 0; i < out.length; i++) { if (out[i] !== store.futurePosts[i]) { _fpChanged = true; break; } }
+  }
+  if (_fpChanged) {
     store.futurePosts = out;
-    try { saveData(true); } catch (e) {}
+    try { saveData(); } catch (e) {}
   }
 }
 function deepMergeObjects(a, b) {
@@ -12926,10 +12973,60 @@ async function deleteFuturePost(idOrIdx) {
   if (idx < 0 || !store.futurePosts[idx]) return;
   const p = store.futurePosts[idx];
   if (!await hamiConfirm('确定删除「' + (p.title || '这条图文计划') + '」吗？')) return;
-  hamiDeleteRecord('futurePosts', idx, {
-    afterLocal: function (item) { if (item && item.id) removeLinkedMediaRecord(item.id); },
-    render: renderFuturePosts
-  });
+  // v2026-09-20-115【修复「删除按钮点了没用、删不掉」】
+  // 根因：云端同一条记录可能存在多个"变体"（同 id 不同内容键，或同内容不同 id 的幽灵）。
+  // hamiDeleteRecord 只对"当前这一条"写墓碑，云端那些变体的键命中不了墓碑，
+  // 删除后紧接着的 pullAndMerge 就把它们并回来 → 界面上看起来"根本没删掉"。
+  // 修法：删之前把本地所有"同 id 或同内容键"的变体全部写墓碑，并把 id 键也写进去，
+  // 让云端无论以哪种身份回来的那一份都被拦下。
+  try {
+    const _selfKeys = (typeof _allDedupKeys === 'function') ? _allDedupKeys('futurePosts', p) : [];
+    const _ck = (typeof _contentKey === 'function') ? _contentKey('futurePosts', p) : '';
+    if (p.id) _selfKeys.push('IDK_futurePosts|' + p.id);
+    const _ks = new Set(_selfKeys.filter(Boolean));
+    if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
+    if (!Array.isArray(store.__deleted.futurePosts)) store.__deleted.futurePosts = [];
+    (store.futurePosts || []).forEach(function (q) {
+      if (!q) return;
+      const qKs = (typeof _allDedupKeys === 'function') ? _allDedupKeys('futurePosts', q) : [];
+      const qCk = (typeof _contentKey === 'function') ? _contentKey('futurePosts', q) : '';
+      const sameId = p.id && q.id && q.id === p.id;
+      const sameCk = _ck && qCk && qCk === _ck;
+      if (sameId || sameCk) {
+        qKs.forEach(function (k) { if (k) _ks.add(k); });
+        if (q.id) _ks.add('IDK_futurePosts|' + q.id);
+        if (qCk) _ks.add(qCk);
+      }
+    });
+    _ks.forEach(function (k) {
+      if (store.__deleted.futurePosts.indexOf(k) < 0) store.__deleted.futurePosts.push(k);
+    });
+    try { hamiTombMirrorSave(); } catch (e) {}
+    // 一并把同 id / 同内容键的残留变体从本地清掉，避免下一次 dedup 又把它们拣回来。
+    // 注意：这里同时把 p 自己也从数组里摘掉，后面不再调 hamiDeleteRecord（否则 idx 会错位、误删别人）。
+    store.futurePosts = store.futurePosts.filter(function (q) {
+      if (!q) return false;
+      if (q === p) return false;
+      const qKs = (typeof _allDedupKeys === 'function') ? _allDedupKeys('futurePosts', q) : [];
+      for (let i = 0; i < qKs.length; i++) if (qKs[i] && _ks.has(qKs[i])) return false;
+      return true;
+    });
+    // 删掉那条计划在「自媒体更新记录」里的联动记录（撤销完成）
+    if (p.id) { try { removeLinkedMediaRecord(p.id); } catch (e) {} }
+    // 存档 + 推云端 + 全站重渲（这里不再走 hamiDeleteRecord，避免二次 splice 错位）
+    try { saveData(); } catch (e) {}
+    try { hamiTombMirrorSave(); } catch (e) {}
+    try { if (typeof hamiDeleteSync === 'function') hamiDeleteSync(); } catch (e) {}
+    try { renderFuturePosts(); } catch (e) {}
+    try { if (typeof renderMedia === 'function') renderMedia(); } catch (e) {}
+    try { if (typeof hamiRequestFullRender === 'function') hamiRequestFullRender(); } catch (e) {}
+  } catch (e) {
+    // 兜底：强化墓碑那段万一抛错，退回原来的通用删除路径，保证按钮永远有反应
+    try { hamiDeleteRecord('futurePosts', idx, {
+      afterLocal: function (item) { if (item && item.id) removeLinkedMediaRecord(item.id); },
+      render: renderFuturePosts
+    }); } catch (e2) {}
+  }
   hamiToast('🗑️ 已删除');
 }
 function toggleFuturePostDone(idOrIdx) {
@@ -12938,6 +13035,10 @@ function toggleFuturePostDone(idOrIdx) {
   const p = store.futurePosts[idx];
   const nowDone = !p.done;
   p.done = nowDone;
+  // v2026-09-20-115：标记完成/撤销时打上更新时间戳。
+  // 合并时同一条记录两边状态不一致（一边 done:true、一边 done:false），
+  // 靠 done 优先 + updatedAt 兜底判定，才能保证「主人在本机点的状态」不被云端旧快照顶掉。
+  try { p.updatedAt = Date.now(); } catch (e) {}
   if (nowDone) {
     // 标记完成 → 自动联动一条到「自媒体更新记录」
     // addLinkedMediaRecord 内部按 futurePostId 去重，重复点击完成不会重复创建；
