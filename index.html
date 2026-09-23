@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-22-115" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-23-116" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -7601,7 +7601,11 @@ function _dedupKey(k, it) {
     case 'washRecords': return 'wsh_' + (it.date || '');
     case 'maskRecords': return 'm_' + (it.date || '');
     case 'mediaRecords': return 'mr_' + (it.id || it.date || '');
-    case 'futurePosts': return 'fp_' + (it.id || it.title || '');
+    // v2026-09-23-116【根治「已完成图文退回 / 删不掉」】
+    // 旧主键 = 'fp_' + 随机id，本地与云端给老记录补的 id 不一致 → 合并去重命中失败，
+    // 云端 done:false 旧快照被当「另一条」并回（退回未完成），删除墓碑也抓不住（删不掉）。
+    // 改用内容键(title|date|account)作主身份：不再依赖漂移的随机 id，同一条永远对得上。
+    case 'futurePosts': return 'fp_' + (it.title || '') + '|' + (it.date || '') + '|' + (it.account || 'big');
     case 'accountRecords': return 'ar_' + (it.date || '') + '_' + (it.type || '') + '_' + (it.amount || '') + '_' + (it.note || '');
     case 'customOrders': return 'co_' + (it.id || it.date || '');
     case 'inspireRecords': return 'ir_' + (it.date || '') + '_' + (it.title || '');
@@ -8381,7 +8385,30 @@ async function pullAndMerge() {
     catch (e2) { remote = null; }
   }
   if (remote && remote.store) {
+    // v2026-09-23-116【根治「已完成图文全部退回未完成 / 删除失效」双保险】
+    // ① __dedupKey 已改内容键为主身份，消除随机 id 漂移导致的去重失败；
+    // ② 这里再快照本机每条记录的完成意图(done)，合并后凡能匹配到本机指纹的记录，
+    //    强制恢复为本机意图——本机刚点过的「完成 / 撤销」，云端任何旧值都顶不掉。
+    // 撤销场景同样受保护：本机主动撤销(done:false)，云端那份 done:true 也不会把它重新点亮。
+    // 删除场景不受影响：被删记录已不在 store 里，快照里没有它的指纹，不会错误复活。
+    var _fpSnap = {};
+    try {
+      (store.futurePosts || []).forEach(function (p) {
+        if (!p) return;
+        _allDedupKeys('futurePosts', p).forEach(function (k) { if (k) _fpSnap[k] = !!p.done; });
+      });
+    } catch (e) {}
     mergeStoreInto(store, remote.store);
+    try {
+      (store.futurePosts || []).forEach(function (p) {
+        if (!p) return;
+        var _d = null;
+        _allDedupKeys('futurePosts', p).forEach(function (k) {
+          if (k && _fpSnap[k] !== undefined && _d === null) _d = _fpSnap[k];
+        });
+        if (_d !== null) p.done = _d;
+      });
+    } catch (e) {}
     try { dedupFuturePosts(); } catch (e) {}
     try { saveData(true); } catch (e) {}   // 传 true：云端合并自己存盘不再回推，防死循环
     // 云端合并完成后重渲全部面板（旧代码只重渲主页，其它面板仍显示本地旧数据）
