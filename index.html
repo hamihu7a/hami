@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-23-116" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-23-117" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4241,7 +4241,7 @@
 })();
 </script>
 <!-- 顶部版本号水印（第一时间写入；固定口令不跟随当前时间变化，主人刷新对账用） -->
-<!-- 口令格式：09.06-#10（月.日-#序号）；每次修改推送一个固定编码，主人刷新再多次也是同一个 -->
+<!-- 版本水印格式：月.日-序号（如 9.23-117，不补零、无#号）；每次修改递增序号，主人刷新再多次也是同一个 -->
 <script>
 (function(){
   try{
@@ -4251,7 +4251,7 @@
     if(tag){
       if(m){
         // 口令=月.日-#序号（序号取 BUILD_VER 最后一段）
-        tag.textContent='版本：'+m[2]+'.'+m[3]+'-#'+m[4];
+        tag.textContent='版本：'+parseInt(m[2],10)+'.'+parseInt(m[3],10)+'-'+m[4];
       }else{
         tag.textContent='版本：'+(bv||'?');
       }
@@ -8310,7 +8310,7 @@ function refreshVersionTag() {
   if (!el) return;
   const v = String(window.BUILD_VER || '');
   const m = v.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
-  if (m) { el.textContent = '版本：' + m[2] + '.' + m[3] + '-#' + m[4]; return; }
+  if (m) { el.textContent = '版本：' + parseInt(m[2],10) + '.' + parseInt(m[3],10) + '-' + m[4]; return; }
   el.textContent = '版本：' + v;
 }
 function _fmtSyncTime(ts) {
