@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-24-119" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-24-120" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -7593,6 +7593,17 @@ async function _ghPut(contentB64, sha, message) {
 }
 
 // ---------- 合并（remote 并入 local）----------
+// v120：出游目的地归一化（根治「删广州计划又复活」）
+// 旧逻辑身份键直接用 destination 原值，遇到「广州市 / 广州出行 / 广州站」或改过日期的
+// 云端旧副本，键对不上墓碑 → 删了又复活。这里把省会/后缀统一抹掉，再算键。
+function normDest(d) {
+  if (!d) return '';
+  try {
+    var s = String(d).toLowerCase().trim().replace(/\s+/g, '');
+    s = s.replace(/省|市|自治区|特别行政区|地区|县|区|出行|旅游|旅行|游玩|站/g, '');
+    return s;
+  } catch (e) { return String(d || ''); }
+}
 function _dedupKey(k, it) {
   switch (k) {
     case 'weightRecords': return 'w_' + (it.date || '') + '_' + (it.value != null ? it.value : (it.after != null ? it.after : ''));
@@ -7610,7 +7621,7 @@ function _dedupKey(k, it) {
     case 'customOrders': return 'co_' + (it.id || it.date || '');
     case 'inspireRecords': return 'ir_' + (it.date || '') + '_' + (it.title || '');
     case 'periodRecords': return 'pr_' + (it.start || '') + '_' + (it.end || '');
-    case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (it.destination || '');
+    case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (typeof normDest === 'function' ? normDest(it.destination) : (it.destination || ''));
     // v62 修正：行程对象的字段是 city/start，不是 date/destination！
     // 旧写法算出「tr__」——所有行程的键都一样，云端并集时只保留第一条，
     // 主人建了多个行程就会「只剩一个 / 删不掉（删哪个都被当成同一个）」。
@@ -7655,7 +7666,7 @@ function _contentKey(k, it) {
   // v109：如厕一天多次、出行同一天去两个地方，都不能只用日期区分
   if (k === 'toiletRecords') return 'tC_' + (it.date || '') + '|' + (it.count != null ? it.count : '');
   if (k === 'maskRecords') return 'mC_' + (it.date || '');
-  if (k === 'travelPlans') return 'tpC_' + (it.date || '') + '|' + String(it.destination || '');
+  if (k === 'travelPlans') return 'tpC_' + (it.date || '') + '|' + (typeof normDest === 'function' ? normDest(it.destination) : String(it.destination || ''));
   // v62 修正：行程字段是 city/start，内容键用「城市+开始日期」才能区分不同行程
   if (k === 'trips') return 'trC_' + (it.city || '') + '|' + (it.start || '');
   // v108 修正：定制单/美化档的「日期」绝不能单独当内容键！
@@ -17107,12 +17118,29 @@ async function deleteTravelRecord(idx) {
   if (!store.travelPlans || !store.travelPlans[idx]) return;
   const target = store.travelPlans[idx];
   const name = target.destination || '这条';
-  if (!await hamiConfirm('确定删除出游计划「' + name + '」吗？')) return;
-  hamiTombAdd('travelPlans', target);   // v39 墓碑
-  store.travelPlans.splice(idx, 1);
+  if (!await hamiConfirm('确定删除出游计划「' + name + '」吗？\n（同目的地的其它副本也会一并清除，避免删了又复活）')) return;
+  // v120：删除这条时，把「目的地归一化相同」的所有副本（不同日期/细微字眼差异的云端幽灵）一并清除 + 写墓碑，
+  // 否则只删当前这一份，云端的旧副本键对不上 → 刷新/换设备又复活。
+  const nd = (typeof normDest === 'function') ? normDest(target.destination) : (target.destination || '');
+  let removed = 0;
+  for (let i = store.travelPlans.length - 1; i >= 0; i--) {
+    const it = store.travelPlans[i];
+    if (!it) continue;
+    const ind = (typeof normDest === 'function') ? normDest(it.destination) : (it.destination || '');
+    if (ind === nd) {
+      hamiTombAdd('travelPlans', it);   // v39 墓碑（含归一化内容键，云端的旧副本也能命中）
+      store.travelPlans.splice(i, 1);
+      removed++;
+    }
+  }
+  if (removed === 0) {
+    hamiTombAdd('travelPlans', target);
+    store.travelPlans.splice(idx, 1);
+    removed = 1;
+  }
   hamiDeleteSync();
   renderReminder();
-  try { finToast('已删除出游计划「' + name + '」'); } catch (e) {}
+  try { finToast('已删除出游计划「' + name + '」及其同目的地副本共 ' + removed + ' 条'); } catch (e) {}
 }
 
 // 勾选准备清单
