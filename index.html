@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-23-118" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-24-119" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -10841,6 +10841,14 @@ function collectCheckinAlerts() {
   if (maskInfo.needRemind) {
     alerts.push({ icon: '🧖', text: '该敷面膜 ' + maskInfo.count + '/' + maskInfo.goal });
   }
+  // 洗头提醒（v119 新增）：距上次洗头 ≥4 天（第4天起）才提醒，洗完自动消失
+  const _washes = [...(store.washRecords || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  if (_washes.length) {
+    const _washDaysAgo = Math.round((new Date(today + 'T00:00:00') - new Date(_washes[0].date + 'T00:00:00')) / 86400000);
+    if (_washDaysAgo >= 4) {
+      alerts.push({ icon: '🧴', text: '已' + _washDaysAgo + '天没洗头啦，该洗头了~' });
+    }
+  }
   return alerts;
 }
 
@@ -19131,7 +19139,8 @@ function renderCountdown() {
   wrap.innerHTML = html;
 
   // 自动轮播：每 4 秒切到下一页（上下方向：旧页向上淡出，新页从下推上来）
-  if (pages.length > 1) {
+  // v119：即使只有 1 条提醒也持续滚动（主人反馈只有一条时静止不动，看着像坏了）
+  if (pages.length >= 1) {
     if (window.__countdownTimer) clearInterval(window.__countdownTimer);
     window.__countdownTimer = setInterval(() => {
       const w = document.getElementById('desktop-countdown');
