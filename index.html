@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-24-120" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-24-121" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -6112,6 +6112,20 @@
           </div>
           <button onclick="purgeFutureGhost()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);" data-page-node-id="eqW7xBQ4wzkMblCtskqjb9">
             🧹 立即清理幽灵记录
+          </button>
+        </div>
+
+        <!-- ===== v121：一键清理「重要日期」重复记录 ===== -->
+        <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,248,250,0.95);border:1.5px solid #e890a8;">
+          <div style="font-size:14px;font-weight:800;color:#b3325c;margin-bottom:6px;">🧹 一键清理「重要日期」重复记录</div>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">
+            如果重要日期里冒出了好几条"日期一样、只是名字不同"的重复项，点下面按钮：
+            同一天、同一类型只保留信息最全的那条，其余彻底删除并同步云端。
+            <br><b style="color:#b3325c;">注意：同一天、同一类型若有两条不同的纪念日，也会被合并成一条，必要时请重新添加。</b>
+          </div>
+          <div id="imp-dates-dedupe-status" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">点下面按钮开始清理…</div>
+          <button onclick="dedupeImportantDates()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);">
+            🧹 立即清理重复日期
           </button>
         </div>
       </div>
@@ -17000,8 +17014,14 @@ function submitDateRecord() {
   if (editIdx >= 0 && store.importantDates && store.importantDates[editIdx]) {
     try { hamiTombOldVersion('importantDates', store.importantDates[editIdx], obj); } catch (e) {}
   }
-  // v39 根治「修改日期/重复保存会冒出第二条」：重要日期以「类型+名字」为唯一身份，
-  // 保存时一律先剔除同「类型+名字」的旧条目，再追加最新一条（编辑/新增都走同一逻辑）。
+  // v121 根治「改名产生重复 + 改了还是旧名」：
+  // 编辑模式下，先按索引精确移除被编辑的那条旧记录（无论它当前叫什么名字/类型），
+  // 否则用「新名」去过滤旧记录时，旧名那条永远筛不掉 → 旧名还在 + 新名又追加，
+  // 每改一次名就多一条"只是名字不一样"的副本。
+  if (editIdx >= 0 && store.importantDates && store.importantDates[editIdx]) {
+    store.importantDates.splice(editIdx, 1);
+  }
+  // 再以「类型+名字」去重兜底（防历史残留同名副本），然后追加最新一条。
   store.importantDates = store.importantDates.filter(function (x) {
     return !(x && x.type === obj.type && x.name === obj.name);
   });
@@ -17027,6 +17047,46 @@ async function deleteDateRecord(idx) {
   hamiDeleteSync();
   renderReminder();
   try { finToast('已删除「' + name + '」'); } catch (e) {}
+}
+// v121：一键清理重要日期重复项（解决「改名/改日期产生 N 条同名不同名副本」）。
+// 按「类型+日期」分组：同组只保留信息最完整（名字更长、有备注优先）的一条，
+// 其余全部写墓碑删除并同步云端，确保删得干净、不再复活。
+// 注意：同一天、同一类型若本来就有两条不同的纪念日，也会被合并成一条（必要时重新添加）。
+async function dedupeImportantDates() {
+  const status = document.getElementById('imp-dates-dedupe-status');
+  if (!confirm('这会删除重要日期里「同一天、同一类型」的重复条目（只保留信息最全的那条）。确定继续吗？')) return;
+  if (!store.importantDates || !store.importantDates.length) { if (status) status.textContent = '没有需要整理的重要日期。'; return; }
+  const groups = {};
+  store.importantDates.forEach(function (x, i) {
+    if (!x) return;
+    const key = (x.type || '') + '|' + (x.date || '');
+    (groups[key] = groups[key] || []).push(i);
+  });
+  const keep = new Set();
+  let removed = 0;
+  Object.keys(groups).forEach(function (gk) {
+    const idxs = groups[gk];
+    if (idxs.length <= 1) { idxs.forEach(function (i) { keep.add(i); }); return; }
+    let best = idxs[0];
+    idxs.forEach(function (i) {
+      const a = store.importantDates[i], b = store.importantDates[best];
+      const sa = (a.name || '').length + (a.remark ? 2 : 0);
+      const sb = (b.name || '').length + (b.remark ? 2 : 0);
+      if (sa > sb) best = i;
+    });
+    keep.add(best);
+    idxs.forEach(function (i) {
+      if (i === best) return;
+      try { hamiTombAdd('importantDates', store.importantDates[i]); } catch (e) {}
+      removed++;
+    });
+  });
+  store.importantDates = store.importantDates.filter(function (x, i) { return keep.has(i); });
+  try { saveData(); } catch (e) {}
+  try { hamiDeleteSync(); } catch (e) {}
+  try { renderReminder(); } catch (e) {}
+  if (status) status.textContent = '✅ 已清理 ' + removed + ' 条重复，保留 ' + store.importantDates.length + ' 条。其它设备请刷新页面同步。';
+  try { finToast('已清理 ' + removed + ' 条重复日期'); } catch (e) {}
 }
 // 重要日期：展开/收起「其余」折叠区
 function toggleImpDates() {
