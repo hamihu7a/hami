@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-24-121" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-25-122" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -15908,22 +15908,12 @@ function checkReminderAlerts() {
 }
 
 // 显示提醒横幅 + 弹窗
+// v120：主人的要求——任何提醒都只在倒计时卡片轮播里轮播，不再额外显示横幅；
+//       本函数只保留出游当天的弹窗确认，横幅渲染已移除。
 function showReminderBanners() {
   const banners = checkReminderAlerts();
   const container = document.getElementById('reminder-banner');
-  if (!container) return;
-  if (banners.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
-  let html = '';
-  banners.forEach(b => {
-    html += `<div style="padding:12px 16px;border-radius:12px;margin-bottom:10px;background:${b.bg};color:${b.color};font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;border:1px solid ${b.color}22;">
-      <span style="font-size:18px;">${b.icon}</span>
-      <span>${b.text}</span>
-    </div>`;
-  });
-  container.innerHTML = html;
+  if (container) container.innerHTML = '';
 
   // 出游弹窗确认（仅首次打开时弹）
   const travelBanners = banners.filter(b => b.isTravel);
@@ -19074,8 +19064,13 @@ function renderCountdown() {
 
   // 1. 生日：倒数前5天(5~3) + 倒数第2天(2) + 当天(0)；跳过倒数第1天(1)
   //    ★ 农历生日须按农历历法推算目标公历日，不能用 getNextAnniversary（仅新历，会把农历当新历算错倒计时）
+  //    ★ 按名字去重：数据里可能有「XX」和「XX生日」两条重复记录，只展示一条
+  const seenBdayNames = new Set();
   (store.importantDates || []).forEach(d => {
     if (d.type !== 'birthday') return;
+    const nameKey = String(d.name || '').replace(/的?生日/g, '').trim();
+    if (nameKey && seenBdayNames.has(nameKey)) return;
+    if (nameKey) seenBdayNames.add(nameKey);
     const info = calcDateInfo(d, todayDate);
     if (!info) return;
     const days = info.daysLeft;
@@ -19195,7 +19190,7 @@ function renderCountdown() {
     const daysText = isPlaceholder ? '—' : (item.hideDays ? '' : (item.days === 0 ? '今天' : item.days));
     const unit = isPlaceholder || item.hideDays || item.days === 0 ? '' : '天';
     return `
-      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);display:flex;align-items:center;gap:10px;overflow:hidden;">
+      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px 16px 8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);display:flex;align-items:center;gap:10px;overflow:hidden;">
         <div style="text-align:center;flex-shrink:0;background:rgba(209,75,115,0.10);border-radius:8px;padding:5px 8px;line-height:1.2;min-width:46px;">
           <div style="font-size:13px;font-weight:800;color:#d14b73;">${isPlaceholder ? '—' : ('周' + weekday)}</div>
           <div style="font-size:11px;color:#d14b73;font-weight:600;letter-spacing:0.3px;">${monthDay}</div>
@@ -19211,18 +19206,18 @@ function renderCountdown() {
   }
 
   // 一页一张卡片，整行占满，每张独立一行（上下轮播）
+  // v120：分页小点改为竖排（从上到下），绝对定位贴卡片右缘，不再占横向空间挤压文字
   let html = `<div class="countdown-page" style="position:relative;">`;
   page.forEach(item => html += boxHtml(item));
-  html += `</div>`;
-  // 右侧分页小点（保留指示，主人的原话：右边的小点是轮播效果最好的指示）
   if (pages.length > 1) {
-    html += `<div class="countdown-dots" style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:6px;">`;
+    html += `<div class="countdown-dots" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;z-index:2;">`;
     pages.forEach((_, idx) => {
-      const active = idx === pageIndex ? 'background:#d14b73;width:14px;' : 'background:rgba(209,75,115,0.4);width:6px;';
-      html += `<span class="countdown-dot" style="height:6px;border-radius:3px;transition:all .3s;${active}"></span>`;
+      const active = idx === pageIndex ? 'background:#d14b73;height:14px;' : 'background:rgba(209,75,115,0.4);height:5px;';
+      html += `<span class="countdown-dot" style="width:5px;border-radius:3px;transition:all .3s;${active}"></span>`;
     });
     html += `</div>`;
   }
+  html += `</div>`;
 
   wrap.innerHTML = html;
 
