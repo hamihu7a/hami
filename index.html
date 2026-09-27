@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-123" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-124" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1447,7 +1447,7 @@
     flex-wrap: wrap;
   }
   .media-record-date {
-    font-size: 12px; color: #8a6270; font-weight: 600; min-width: 76px;
+    font-size: 12px; color: #8a6270; font-weight: 600; min-width: 42px; font-variant-numeric: tabular-nums;
   }
   .media-record-account {
     font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
@@ -1456,6 +1456,10 @@
   .media-record-account.acc-small { background: #eaf6fc; color: #5a85a6; }
   .media-record-account.acc-douyin { background: #f5f5f5; color: #444; }
   .media-record-sync { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .media-record-title {
+    flex-basis: 100%; font-size: 13px; color: #4a3540; padding-left: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .media-record-actions { display: flex; gap: 6px; flex-shrink: 0; }
   .media-record-btn {
     border: none; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600;
@@ -1583,7 +1587,7 @@
   }
   @media (max-width: 420px) {
     .media-record-main { gap: 6px; }
-    .media-record-date { min-width: 68px; font-size: 11px; }
+    .media-record-date { min-width: 38px; font-size: 11px; }
     .media-record-account { font-size: 11px; padding: 2px 7px; }
     .media-record-sync { font-size: 11px; }
     .media-record-actions { gap: 4px; }
@@ -12556,11 +12560,14 @@ function renderMedia() {
       const idx = store.mediaRecords.indexOf(r);
       const accName = r.account === 'big' ? '美化档大号' : r.account === 'small' ? '定制人物小号' : '抖音';
       const dyMark = r.douyin ? '<span class="sync-badge yes">已同步</span>' : '<span class="sync-badge no">未同步</span>';
+      // v124：加标题行（与日历下面更新明细同款排版：日期/账号标签/状态在上，标题独占一行）
+      const title = crEscapeHtml(r.title || ('更新' + (r.count || 1) + '条'));
       return `<div class="media-record-item">
         <div class="media-record-main">
-          <div class="media-record-date">${r.date}</div>
-          <div class="media-record-account acc-${r.account}">${accName}</div>
+          <div class="media-record-date">${(r.date || '').substring(5)}</div>
+          <div class="media-record-account acc-${r.account}">${accName}${r.douyin ? '-抖音' : ''}</div>
           <div class="media-record-sync">${dyMark}</div>
+          <div class="media-record-title">${title}</div>
         </div>
         <div class="media-record-actions">
           <button class="media-record-btn edit" onclick="openMediaRecordModal(${idx})" aria-label="修改">修改</button>
