@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-132" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-133" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -146,7 +146,10 @@
     overflow-y: auto;
   }
     /* 头像上方留一点间距（不再贴死指令栏） */
-  .sidebar > .nav-header { margin-top: 0; padding: 10px 12px 14px; }
+    /* v133：头像区钉死在侧栏顶部——侧栏往下滚到「工具/设置」时头像不动：
+       sticky 钉在指令栏下沿（电脑端侧栏 padding-top=56px，top 取同值），
+       背景与侧栏同色（#fff5ee）不透明，滚过的菜单项不会从头像后面透出来 */
+    .sidebar > .nav-header { margin-top: 0; padding: 10px 12px 14px; position: sticky; top: 56px; z-index: 20; background: #fff5ee; }
   /* 侧边栏拖拽手柄：半透明圆形，位于侧边栏底部「左侧宽度」下方，按住左右拖动改变宽度 */
   .nav-header-row {
     position: relative;
@@ -2975,6 +2978,8 @@
       padding: 0 0 12px 0;
     }
     .nav-header { padding: 14px 6px 10px; }
+    /* v133：手机端侧栏整体从 56px 起（top:56px）且 padding-top 为 0，头像区钉在侧栏可视区最顶 */
+    .sidebar > .nav-header { top: 0; }
     .nav-header .avatar { width: 36px; height: 36px; font-size: 20px; }
     .sidebar-grip { width: 38px; height: 38px; font-size: 19px; }
     .main-grip { width: 36px; height: 36px; font-size: 18px; right: 6px; }
