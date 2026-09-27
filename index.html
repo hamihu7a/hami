@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-130" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-131" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -11606,7 +11606,12 @@ function switchPanel(name, navEl) {
     }
     const sidebar = document.getElementById('sidebar');
     if (sidebar) sidebar.classList.remove('open');
-    // 滚到顶部
+    // 滚到顶部：主面板的滚动容器是 .main（position:fixed + overflow-y:auto），
+    // 直接 window.scrollTo 对 .main 无效，必须滚动 .main 本身才能回到时间与激励语那一屏
+    try {
+      const mainEl = document.querySelector('.main');
+      if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {}
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
   } catch (e) {
     try { hamiToast('切换失败：' + (e.message || e)); } catch (e2) {}
@@ -17279,15 +17284,15 @@ function renderFollowerChange(data) {
   const prev = data.prevFollowers;
   const cur = data.followers;
   if (prev == null || isNaN(prev) || cur == null || isNaN(cur)) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value same">—</span></div>';
+    return '<div class="ac-follower-change"><span class="ac-change-label">增长</span><span class="ac-change-value same">—</span></div>';
   }
   const diff = cur - prev;
   if (diff > 0) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value up">+' + diff + '</span></div>';
+    return '<div class="ac-follower-change"><span class="ac-change-label">增长</span><span class="ac-change-value up">+' + diff + '</span></div>';
   } else if (diff < 0) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value down">' + diff + '</span></div>';
+    return '<div class="ac-follower-change"><span class="ac-change-label">增长</span><span class="ac-change-value down">' + diff + '</span></div>';
   }
-  return '<div class="ac-follower-change"><span class="ac-change-label">粉丝变化</span><span class="ac-change-value same">0</span></div>';
+  return '<div class="ac-follower-change"><span class="ac-change-label">增长</span><span class="ac-change-value same">0</span></div>';
 }
 
 // 主页自媒体账号概览
@@ -19508,6 +19513,10 @@ initSettingsPanel();
 ensureDefaults();
 ensureDailyInspire();
 saveData();
+
+// 打开网页：体重日历一律定位到「今天所在月」（像日历软件一样，打开即回到本月；
+// 手动翻到其他月份在本会话内有效，重新打开仍回到当前月，避免一打开就停在空白的未来月份）
+try { store.weightCalMonth = todayStr().substring(0, 7); saveData(); } catch (e) {}
 
 // 写入数据版本号
 try { localStorage.setItem('hami_data_version', DATA_VERSION); } catch(e) {}
