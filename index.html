@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-135" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-136" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -265,6 +265,11 @@
     font-weight: 700;
     color: var(--c-pink-deep);
   }
+  /* v136：默认「Hami 小助理」并排一行（br 隐藏，靠 br 前空格分隔两词）。
+     真手机由 max-width:768px 媒体查询恢复两行；
+     浏览器媒体查询误报 ≤768 时由 body.hami-force-desktop 规则强制压回一行（!important）。 */
+  .nav-header .nav-title br { display: none; }
+  .nav-header .nav-title { white-space: nowrap; }
   .nav-header .nav-motto {
     font-size:12px;
     color: #8a6270;
@@ -2983,7 +2988,9 @@
     .nav-header .avatar { width: 36px; height: 36px; font-size: 20px; }
     .sidebar-grip { width: 38px; height: 38px; font-size: 19px; }
     .main-grip { width: 36px; height: 36px; font-size: 18px; right: 6px; }
-    .nav-header .nav-title { font-size: 14px; }
+    .nav-header .nav-title { font-size: 14px; white-space: normal; }
+    /* v136：真手机（≤768 视口且无 force 类）恢复两行——侧栏只有 100px，并排放不下 */
+    .nav-header .nav-title br { display: inline; }
     .nav-header .nav-motto { font-size:12px; }
     .nav-group-title { font-size: 14px; padding: 10px 6px 4px; }
     .nav-item { font-size:12px; padding: 7px 6px 7px 12px; gap: 6px; }
@@ -3365,6 +3372,10 @@
   body.hami-force-desktop .sidebar .nav-text { font-size: 13px; }
   body.hami-force-desktop .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
   body.hami-force-desktop .nav-header { padding: 10px 12px 14px !important; }
+  /* v136：JS 强制桌面兜底——媒体查询误报 ≤768 时手机恢复规则会重新显示 br，
+     这里用 body 类规则无视视口强制一行（主人电脑端命中此路径的概率最高） */
+  body.hami-force-desktop .sidebar .nav-header .nav-title br { display: none !important; }
+  body.hami-force-desktop .sidebar .nav-header .nav-title { white-space: nowrap; }
   body.hami-force-desktop .nav-header .avatar { width: 64px; height: 64px; font-size: 32px; }
   body.hami-force-desktop .nav-item { font-size: 13px; padding: 10px 14px; gap: 10px; }
   body.hami-force-desktop .main {
@@ -3489,6 +3500,7 @@
   body.hami-force-narrow .sidebar .nav-header { padding: 10px 12px 14px !important; }
   body.hami-force-narrow .sidebar .nav-header .avatar { width: 44px; height: 44px; font-size: 22px; }
   body.hami-force-narrow .sidebar .nav-header .nav-title { font-size: 12px; }
+  body.hami-force-narrow .sidebar .nav-header .nav-title br { display: none; }
   /* v2026-09-06-25 主人反馈"每天进步一点点不见了"：之前这里 display:none 把窄屏下这句藏掉了。
      这句话是主人的心头好，任何宽度都必须显示——改为缩小字号而非隐藏。 */
   body.hami-force-narrow .sidebar .nav-header .nav-motto { display: block; font-size: 11px; }
@@ -3548,6 +3560,7 @@
   body.hami-force-mini .sidebar .nav-header { padding: 10px 12px 14px !important; }
   body.hami-force-mini .sidebar .nav-header .avatar { width: 50px; height: 50px; font-size: 26px; }
   body.hami-force-mini .sidebar .nav-header .nav-title { font-size: 14px; }
+  body.hami-force-mini .sidebar .nav-header .nav-title br { display: none; }
   body.hami-force-mini .sidebar .nav-header .nav-motto { display: block; font-size: 12px; }
   /* 体重日历：7 列横排，每列内容完整显示；溢出时整行横向滚动 */
   body.hami-force-mini .weight-cal-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
