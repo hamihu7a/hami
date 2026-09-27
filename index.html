@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-128" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-129" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -2154,32 +2154,33 @@
   }
   /* v2026-09-06-29 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
   #income-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  #income-stats .stat-card { padding: 10px 8px; }
+  #income-stats .stat-card { padding: 7px 8px; }
   #income-stats .stat-card .value { font-size: 18px; }
-  #income-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
+  #income-stats .stat-card .label { font-size: 11px; margin-bottom: 2px; }
   /* v2026-09-06-29 自媒体更新记录「上2下2」专属：4 张卡永远 2×2 */
   #media-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  #media-stats .stat-card { padding: 10px 8px; }
-  #media-stats .stat-card .value { font-size: 18px; }
-  #media-stats .stat-card .label { font-size: 11px; margin-bottom: 3px; }
+  /* v129：主人要求压扁——数值+单位同行、少留白、字号别太小 */
+  #media-stats .stat-card { padding: 7px 8px; }
+  #media-stats .stat-card .value { font-size: 19px; }
+  #media-stats .stat-card .label { font-size: 11.5px; margin-bottom: 2px; white-space: nowrap; }
   /* v2026-09-07-30 健康记录 4 张卡「上2下2 紧密」：主人要求紧密排版 */
   #fitness-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
-  #fitness-stats .stat-card { padding: 10px 6px; }
-  #fitness-stats .stat-card .value { font-size: 17px; }
-  #fitness-stats .stat-card .label { font-size: 10px; margin-bottom: 2px; }
-  #fitness-stats .stat-card .unit { font-size: 10px; }
+  #fitness-stats .stat-card { padding: 7px 6px; }
+  #fitness-stats .stat-card .value { font-size: 18px; }
+  #fitness-stats .stat-card .label { font-size: 11px; margin-bottom: 2px; white-space: nowrap; }
+  #fitness-stats .stat-card .unit { font-size: 11px; }
   /* v2026-09-08 经期记录 4 张卡「上2下2 紧密」 */
   #period-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
-  #period-stats .stat-card { padding: 10px 6px; }
-  #period-stats .stat-card .value { font-size: 17px; }
-  #period-stats .stat-card .label { font-size: 10px; margin-bottom: 2px; }
-  #period-stats .stat-card .unit { font-size: 10px; }
-  /* v2026-09-08 如厕/敷面膜 3 张卡横向并排 */
+  #period-stats .stat-card { padding: 7px 6px; }
+  #period-stats .stat-card .value { font-size: 18px; }
+  #period-stats .stat-card .label { font-size: 11px; margin-bottom: 2px; white-space: nowrap; }
+  #period-stats .stat-card .unit { font-size: 11px; }
+  /* v2026-09-08 如厕/敷面膜 3 张卡横向并排（v129：字号加大、仍紧凑不转行） */
   #toilet-stats, #mask-stats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
-  #toilet-stats .stat-card, #mask-stats .stat-card { padding: 8px 3px; }
-  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 15px; white-space: nowrap; }
-  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 9px; margin-bottom: 1px; }
-  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 9px; }
+  #toilet-stats .stat-card, #mask-stats .stat-card { padding: 7px 4px; }
+  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 16px; white-space: nowrap; }
+  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 10.5px; margin-bottom: 2px; white-space: nowrap; }
+  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 10.5px; white-space: nowrap; }
   /* v2026-09-06-28 历史推荐表：标题列允许换行且不溢出；表头紧凑 */
   #inspire-history td:first-child,
   #inspire-history td:nth-child(2),
@@ -2194,18 +2195,20 @@
   .stat-card {
     background: rgba(255,255,255,0.85);
     border-radius: var(--radius-sm);
-    padding: 10px 8px;
+    padding: 7px 8px;
     text-align: center;
     box-shadow: var(--shadow-xs);
     border: 1px solid var(--c-line);
     transition: box-shadow var(--t), transform var(--t);
   }
   .stat-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-  .stat-card .label { font-size:11px; color: var(--c-muted); margin-bottom: 3px; }
+  .stat-card .label { font-size:11px; color: var(--c-muted); margin-bottom: 2px; }
   .stat-card .value { font-size: 19px; font-weight: 700; color: var(--c-pink-deep); }
   .stat-card .value.green { color: #e88a4f; }
   .stat-card .value.red { color: #e85f7a; }
-  .stat-card .unit { font-size: 11px; color: #8a6270; }
+  /* v129：数值+单位并排一行，卡片高度减半（原来"10"和"条"各占一行太空洞） */
+  .stat-card .value { display: inline-block; }
+  .stat-card .unit { display: inline-block; margin-left: 3px; font-size: 11px; color: #8a6270; }
   /* 体重/收支 stat-card 顶部留白减少，让首行 label 往上挪一点点腾出空间给「最后更新」行 */
   #fitness-stats .stat-card,
   #account-stats .stat-card,
@@ -3049,11 +3052,11 @@
       .desktop-hero { padding: 10px 10px; min-height: 120px; }
       .desktop-hero .motto { font-size:12px; }
 
-      /* 统计卡 */
-      .stat-card { padding: 12px 10px; }
-      .stat-card .label { font-size:12px; }
-      .stat-card .value { font-size: 17px; }
-      .stat-card .unit { font-size:12px; }
+      /* 统计卡（v129：手机端同样压扁——数值+单位同行、少留白） */
+      .stat-card { padding: 7px 8px; }
+      .stat-card .label { font-size:11px; }
+      .stat-card .value { font-size: 18px; }
+      .stat-card .unit { font-size:11px; }
 
       /* 表格 */
       th, td { padding: 4px 3px; font-size:11px; }
@@ -4158,16 +4161,17 @@
   .mini-count.acc-small { background:#7fb3d5; color:#fff; }
   .mini-count.acc-douyin { background:#4a4a4a; color:#fff; }
 .schedule-list { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
-.sch-item { display:flex; align-items:center; justify-content:space-between; gap:8px; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:8px 10px; }
+.sch-item { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:8px 10px; }
 .sch-item.done { background:#f6fff9; border-left:3px solid #6fcf97; opacity:1; }
-.sch-item-main { display:flex; align-items:center; gap:7px; flex-wrap:wrap; min-width:0; }
+.sch-item-main { display:flex; align-items:center; gap:7px; flex-wrap:wrap; flex:1; min-width:0; }
 .sch-item-date { font-size:12px; color:#9a6b7b; font-variant-numeric:tabular-nums; }
 .sch-item-acc { font-size:11px; padding:1px 7px; border-radius:20px; color:#fff; }
 .sch-item-acc.acc-big { background:#ff7f9e; }
 .sch-item-acc.acc-small { background:#7fb3d5; }
 .sch-item-acc.acc-douyin { background:#4a4a4a; }
 .sch-item-type { font-size:11px; color:#8a6270; background:#f6e9ef; border-radius:20px; padding:1px 7px; }
-.sch-item-title { font-size:13px; color:#4a3540; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px; }
+/* v129：标题独占一行、完整显示不截断（主人要求尽量显示完整），按钮钉在第一行右侧不会被挤出边 */
+.sch-item-title { flex-basis:100%; font-size:13px; color:#4a3540; line-height:1.45; word-break:break-word; }
 .sch-item-actions { display:flex; gap:5px; flex-shrink:0; }
 .sch-btn { font-size:12px; border:1px solid #ecc7d4; background:#fff; color:#c45c7c; border-radius:7px; padding:3px 8px; cursor:pointer; }
 .sch-btn.ok { background:#e9f7ef; border-color:#bfe6cd; color:#2f8a52; }
@@ -4202,7 +4206,6 @@
 
 @media (max-width: 480px) {
   .kanban-sec-body { grid-template-columns:1fr; }
-  .sch-item-title { max-width:120px; }
 }
 
 /* ===== 身体数据（三围） ===== */
