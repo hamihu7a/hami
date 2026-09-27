@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-134" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-135" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -3195,6 +3195,10 @@
     .sidebar .nav-text { font-size: 13px; }
     .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
     .nav-header { padding: 10px 12px 14px !important; }
+    /* v135：电脑端侧栏够宽，「Hami 小助理」并排一行不转行——
+       br 隐藏后靠 br 前的空格分隔两词；手机端窄侧栏（max-width:768px）不受影响仍两行 */
+    .sidebar .nav-title br { display: none; }
+    .sidebar .nav-title { white-space: nowrap; }
     .nav-header .avatar { width: 64px; height: 64px; font-size: 32px; }
     .nav-item { font-size: 13px; padding: 10px 14px; gap: 10px; }
     /* 桌面端 sidebar 220px 已在 :root 覆盖；.main 显式 fixed（与基础规则一致，杜绝被覆写） */
@@ -4309,7 +4313,7 @@
   <div class="nav-header-row" data-page-node-id="z2nb1qbvcKDnEwS2q2PmOh">
     <div class="avatar" onclick="try{playSound('menu');}catch(e){} switchPanel('desktop', document.getElementById('home-btn'))" style="cursor:pointer;" data-page-node-id="TjGeSbqrRMYRjIJHCsmoPy"><img src="data:image/jpeg;base64,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" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" alt="Hami" data-page-node-id="rnpwwBTLH9VmsYiDYHWbkc"></div>
   </div>
-    <div class="nav-title" data-page-node-id="ueKdJiLp61dFPC6UFBTxxM">Hami<br data-page-node-id="KXLgXDyYacywVWYXGlrRCB">小助理</div>
+    <div class="nav-title" data-page-node-id="ueKdJiLp61dFPC6UFBTxxM">Hami <br data-page-node-id="KXLgXDyYacywVWYXGlrRCB">小助理</div>
     <div class="nav-motto" data-page-node-id="4vC2Mf7fgLy8uksBTGQeg1">每天进步一点点</div>
   </div>
 
@@ -11651,6 +11655,15 @@ function switchPanel(name, navEl) {
       const mainEl = document.querySelector('.main');
       if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {}
+    // v135：点头像回主页时，左侧任务栏也一起滚回最上面——
+    // 头像区虽然 sticky 钉顶，但侧栏菜单分组（财务记录→工具/设置）滚下去后仍停在原地，
+    // 回主页应该整栏回到开头；其他菜单项切换不动侧栏（避免点了底部的菜单又被卷走）
+    if (name === 'desktop') {
+      try {
+        const sbEl = document.getElementById('sidebar');
+        if (sbEl) sbEl.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {}
+    }
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
   } catch (e) {
     try { hamiToast('切换失败：' + (e.message || e)); } catch (e2) {}
