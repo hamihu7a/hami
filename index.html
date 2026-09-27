@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-124" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-125" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1436,28 +1436,26 @@
 
   /* ============ 自媒体更新记录 精简卡片式明细 ============ */
   .media-record-list { display: flex; flex-direction: column; gap: 8px; }
+  /* v125：紧凑排版 = 第一行（日期+账号+已同步+按钮靠右），第二行标题独占，不再乱换行 */
   .media-record-item {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
-    padding: 11px 13px; transition: background .12s ease, box-shadow .12s ease;
+    padding: 9px 12px; transition: background .12s ease, box-shadow .12s ease;
   }
   .media-record-item:hover { background: #fff0f5; box-shadow: 0 3px 10px rgba(209,75,115,0.08); }
-  .media-record-main {
-    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
-    flex-wrap: wrap;
-  }
+  .media-record-main { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: nowrap; }
   .media-record-date {
-    font-size: 12px; color: #8a6270; font-weight: 600; min-width: 42px; font-variant-numeric: tabular-nums;
+    font-size: 12px; color: #8a6270; font-weight: 600; flex-shrink: 0; font-variant-numeric: tabular-nums;
   }
   .media-record-account {
-    font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
   }
   .media-record-account.acc-big { background: #ffe4ec; color: #d14b73; }
   .media-record-account.acc-small { background: #eaf6fc; color: #5a85a6; }
   .media-record-account.acc-douyin { background: #f5f5f5; color: #444; }
-  .media-record-sync { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .media-record-sync { font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+  .media-record-actions { display: flex; gap: 5px; flex-shrink: 0; margin-left: auto; }
   .media-record-title {
-    flex-basis: 100%; font-size: 13px; color: #4a3540; padding-left: 1px;
+    margin-top: 4px; font-size: 13px; color: #4a3540;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .media-record-actions { display: flex; gap: 6px; flex-shrink: 0; }
@@ -1587,7 +1585,8 @@
   }
   @media (max-width: 420px) {
     .media-record-main { gap: 6px; }
-    .media-record-date { min-width: 38px; font-size: 11px; }
+    .media-record-date { font-size: 11px; }
+    .media-record-title { font-size: 12px; }
     .media-record-account { font-size: 11px; padding: 2px 7px; }
     .media-record-sync { font-size: 11px; }
     .media-record-actions { gap: 4px; }
@@ -7915,7 +7914,14 @@ function mergeStoreInto(local, remote) {
         if (!Array.isArray(rarr) || !rarr.length) return;
         if (!local.__revoked[listKey]) local.__revoked[listKey] = [];
         const seen = new Set(local.__revoked[listKey]);
-        rarr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.__revoked[listKey].push(k); } });
+        // v125 修复「删了又复活 / 删不掉」：远端解禁名单里的键若本机已写了墓碑(刚删除)，
+        // 则墓碑优先、不再把它解禁，否则删除永远被"当初创建时写入的解禁"顶掉、云端旧副本每次合并又被并回来。
+        const delSet = (local.__deleted && Array.isArray(local.__deleted[listKey])) ? new Set(local.__deleted[listKey]) : null;
+        rarr.forEach(function (k) {
+          if (!k) return;
+          if (delSet && delSet.has(k)) return;   // 已删除 → 解禁无效，墓碑生效
+          if (!seen.has(k)) { seen.add(k); local.__revoked[listKey].push(k); }
+        });
       });
       // 解禁名单生效：把本机墓碑（含刚从云端并进来的）里同键的墓碑清掉
       if (local.__deleted && local.__revoked) {
@@ -10183,6 +10189,8 @@ function loadData() {
     // v60：先从独立镜像键捞回墓碑（防止 store.__deleted 被云端合并/备份恢复整块覆盖而丢失）
     try { if (typeof hamiTombMirrorMerge === 'function') hamiTombMirrorMerge(); } catch (e) {}
     try { applyTombOnLoad(); } catch (e) {}
+    // v125：自动清理重要日期里"一个名字包含另一个"（如「严靖诗」与「严靖诗生日」）的重复副本
+    try { if (typeof autoCleanImportantDates === 'function') autoCleanImportantDates(); } catch (e) {}
     // v57：未来图文加载后再 dedup 一次（清掉同 id / 同内容重复）
     try { dedupFuturePosts(); } catch (e) {}
     // 工作代办去重：因早期种子/同步 bug，同一文本可能重复出现（主人截图显示 4 条重复 N 次），
@@ -12567,12 +12575,12 @@ function renderMedia() {
           <div class="media-record-date">${(r.date || '').substring(5)}</div>
           <div class="media-record-account acc-${r.account}">${accName}${r.douyin ? '-抖音' : ''}</div>
           <div class="media-record-sync">${dyMark}</div>
-          <div class="media-record-title">${title}</div>
+          <div class="media-record-actions">
+            <button class="media-record-btn edit" onclick="openMediaRecordModal(${idx})" aria-label="修改">修改</button>
+            <button class="media-record-btn del" onclick="deleteMediaRecord(${idx})" aria-label="删除">删除</button>
+          </div>
         </div>
-        <div class="media-record-actions">
-          <button class="media-record-btn edit" onclick="openMediaRecordModal(${idx})" aria-label="修改">修改</button>
-          <button class="media-record-btn del" onclick="deleteMediaRecord(${idx})" aria-label="删除">删除</button>
-        </div>
+        <div class="media-record-title">${title}</div>
       </div>`;
     });
     document.getElementById('media-table').innerHTML = html;
@@ -17041,6 +17049,51 @@ async function deleteDateRecord(idx) {
 // 按「类型+日期」分组：同组只保留信息最完整（名字更长、有备注优先）的一条，
 // 其余全部写墓碑删除并同步云端，确保删得干净、不再复活。
 // 注意：同一天、同一类型若本来就有两条不同的纪念日，也会被合并成一条（必要时重新添加）。
+// v125：启动自动清理重要日期的"同名包含"重复（如「严靖诗」与「严靖诗生日」——
+// 改名时多出的一条，名字彼此包含）。只合并这种明显是同一人的副本，绝不误删不同人。
+// 用 hamiTombAdd 写墓碑删除，确保本地与云端（含旧解禁名单）一并清干净、不再复活。
+function autoCleanImportantDates() {
+  try {
+    if (!Array.isArray(store.importantDates)) return;
+    const groups = {};
+    store.importantDates.forEach(function (x, i) {
+      if (!x || !x.date) return;
+      const k = (x.type || '') + '|' + (x.isLunar ? 1 : 0) + '|' + x.date;
+      (groups[k] = groups[k] || []).push({ x: x, i: i });
+    });
+    const toRemove = [];
+    Object.keys(groups).forEach(function (k) {
+      const arr = groups[k];
+      if (arr.length < 2) return;
+      for (let a = 0; a < arr.length; a++) {
+        for (let b = a + 1; b < arr.length; b++) {
+          const na = (arr[a].x.name || '').trim(), nb = (arr[b].x.name || '').trim();
+          if (!na || !nb || na === nb) continue;
+          let keep = null, drop = null;
+          if (nb.indexOf(na) >= 0) { keep = arr[b]; drop = arr[a]; }
+          else if (na.indexOf(nb) >= 0) { keep = arr[a]; drop = arr[b]; }
+          if (keep && drop && toRemove.indexOf(drop) < 0) {
+            // 备注更多 / 名字更长的优先保留
+            const ka = (keep.x.remark ? 1 : 0) + String(keep.x.name || '').length;
+            const da = (drop.x.remark ? 1 : 0) + String(drop.x.name || '').length;
+            if (da > ka) { const t = keep; keep = drop; drop = t; }   // 信息更全的留
+            toRemove.push(drop);
+          }
+        }
+      }
+    });
+    let removed = 0;
+    toRemove.forEach(function (entry) {
+      const idx = store.importantDates.indexOf(entry.x);
+      if (idx >= 0) {
+        hamiTombAdd('importantDates', entry.x);            // 写墓碑 + 解除旧解禁，云端也清
+        store.importantDates.splice(idx, 1);
+        removed++;
+      }
+    });
+    if (removed) { try { saveData(); } catch (e) {} try { hamiDeleteSync(); } catch (e) {} }
+  } catch (e) {}
+}
 async function dedupeImportantDates() {
   const status = document.getElementById('imp-dates-dedupe-status');
   if (!confirm('这会删除重要日期里「同一天、同一类型」的重复条目（只保留信息最全的那条）。确定继续吗？')) return;
