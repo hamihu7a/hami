@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-127" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-128" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1475,10 +1475,6 @@
   .media-record-btn.edit { background: #fff0f4; color: #d14b73; }
   .media-record-btn.del { background: #ffe0e0; color: #c25f5f; }
   .media-record-btn:hover { filter: brightness(0.96); }
-  .media-backfill-tip {
-    margin-bottom: 10px; font-size: 12px; padding: 8px 10px; border-radius: 10px;
-    background: #fff0f4; color: #d14b73; font-weight: 600;
-  }
   .media-progress-row { margin-bottom: 14px; }
   .media-progress-row:last-child { margin-bottom: 0; }
   .media-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
@@ -4318,10 +4314,6 @@
       <span class="nav-icon" data-page-node-id="Cy5YP5ASeDTO9MEdFweXKu">📅</span>
       <span class="nav-text" data-page-node-id="ejyS3GFtsJC0y9Th6FdrQP">未来更新<br data-page-node-id="1YqX3Z9TH3OgVe5mD6Cxmd">图文记录</span>
     </button>
-    <button class="nav-item" type="button" onclick="switchPanel('creator', this)" data-page-node-id="wlBVTdC71WbGQ6mspDT2Il">
-      <span class="nav-icon" data-page-node-id="72Lnyao6wAmw9zs7EJYREm">🎨</span>
-      <span class="nav-text" data-page-node-id="YO2GhFAvvjeQSn2bJyiXDF">创作助手<br data-page-node-id="XDKXZKxbolSDvu0JTnuJDL">7合1工具</span>
-    </button>
   </div>
 
   <!-- 三·健康记录 -->
@@ -5051,7 +5043,6 @@
 
     <div class="card" data-page-node-id="k53n6nqnEbem2PKKM3R9WW">
       <div class="card-title" data-page-node-id="i7bSmXPao0TQWfS0BZ2uqO">更新明细记录</div>
-      <div id="media-backfill-tip" class="media-backfill-tip" style="display:none;" data-page-node-id="GblsQY3JmBbZjQhYgAz9Tt"></div>
       <div id="media-table" class="media-record-list" data-page-node-id="mH8Q2hAVGpTFo8bGHxhsIv"></div>
     </div>
 
@@ -5998,20 +5989,6 @@
         <button type="button" onclick="saveFpBigEditor()" style="flex:1;border:none;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);color:#fff;border-radius:10px;padding:10px;font-weight:800;cursor:pointer;" data-page-node-id="FCH6tEmGYaMdiwebsDHiax">完成并同步</button>
       </div>
     </div>
-  </div>
-
-  <div id="panel-creator" class="panel" data-page-node-id="kgNHAxDF4GBCJ5pFEuuy2a">
-    <div class="panel-header" data-page-node-id="7Bm3nH2xK7gSB5xtneGV1W">
-      <span class="icon" data-page-node-id="UeTEXcynLMiRLCUuoqOMlN">🎨</span>
-      <h2 data-page-node-id="08VCCh2tBEvjXhuFMkDHdd">创作助手 · 7合1工具</h2>
-    </div>
-    <p style="font-size:12px;color:var(--c-muted);margin:0 0 10px;" data-page-node-id="ZXSSv1UNNC5IouAE908dKR">模拟人生自媒体日常记录与经营小工具，全部存你本地浏览器，不上网。下方随时切换 7 个工具。</p>
-    <iframe id="cs-frame" class="creator-frame" src="creator-studio.html" title="创作助手" loading="lazy" style="width:100%;border:none;min-height:760px;display:block;border-radius:14px;background:#fff;" data-page-node-id="ZXK7tMDtaeToTvuQ2wFwV1"></iframe>
-    <script>
-      window.addEventListener('message', function(e){
-        try{ if(e.data && e.data.__csResize){ var f=document.getElementById('cs-frame'); if(f) f.style.height=e.data.__csResize+'px'; } }catch(_){}
-      });
-    </script>
   </div>
 
   <div id="panel-settings" class="panel" data-page-node-id="N016sMNMUI4hMp7Xsnc2NI">
@@ -12649,16 +12626,6 @@ function renderMedia() {
   histHtml += `<tr style="background:rgba(255,158,181,0.12);"><td>合计</td><td colspan="3"></td><td><b>${totalAll} 条</b></td></tr>`;
   document.getElementById('media-history').innerHTML = histHtml;
 
-  // 发布 7~30 天还没回填数据的提醒
-  try {
-    const now = Date.now();
-    const pending = store.mediaRecords.filter(function (r) { return r.createdAt && (now - r.createdAt) >= 7*86400000 && (now - r.createdAt) < 30*86400000 && !(r.likes||r.collects||r.comments); });
-    const tip = document.getElementById('media-backfill-tip');
-    if (tip) {
-      if (pending.length > 0) { tip.style.display = 'block'; tip.style.color = '#d14b73'; tip.innerHTML = '有 ' + pending.length + ' 条笔记发布超过 7 天还没填数据（赞/藏/评），记得回去补一下，复盘才准~'; }
-      else { tip.style.display = 'none'; }
-    }
-  } catch (e) {}
 }
 
 // v126：自媒体更新明细翻页（每页 3 条，‹ › 翻页查看）
