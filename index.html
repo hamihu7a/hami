@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-129" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-130" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -8003,26 +8003,40 @@ function mergeStoreInto(local, remote) {
       }
     }
   } catch (e) {}
+  // ====== 多设备同步核心：Last-Write-Wins（最后写入者胜）======
+  // 旧逻辑「本地优先 + deepMergeUnion 本地优先」在单设备没问题，但多设备下，
+  // 任何一端本地的旧值都会把云端刚改的新值覆盖掉 —— 正是「电脑改了手机不同步 /
+  // 手机显示修改前数据 / 删除改名跨设备失效」的根因。
+  // 改为：比较两端 _lastSavedAt，较新一方整块胜出；但把较旧一方「独有的新增记录」
+  // 并入胜出方（数组并集），确保某端刚记、还没来得及推送的记录不会丢。
   const localTs = local._lastSavedAt || 0;
   const remoteTs = remote._lastSavedAt || 0;
-  Object.keys(remote).forEach(function (k) {
-    if (k === '_lastSavedAt') { local._lastSavedAt = Math.max(localTs, remoteTs); return; }
-    const lv = local[k]; const rv = remote[k];
-    if (Array.isArray(rv)) {
-      // 数组：按业务键去重取并集（体重按日期+值等），不因为时间戳丢记录
-      local[k] = unionArrays(lv && Array.isArray(lv) ? lv : [], rv, k);
-    } else if (rv && typeof rv === 'object' && !Array.isArray(rv)) {
-      // 对象（待办/打卡/经期/账号数据等）：一律双向补全取并集，不再按时间戳整块丢弃。
-      // 【关键修复·根治跨设备丢数据】旧逻辑「云端比本机旧就整块跳过」正是数据丢失的真凶：
-      // 本机刚记过一笔 → localTs 变新 → 云端的 dailyCheckin / accounts / periodRestDays
-      // 永远拉不进本机 → 随后本机 push 又拿这份不完整数据覆盖云端 → 别处记录彻底消失。
-      local[k] = deepMergeUnion(lv && typeof lv === 'object' && !Array.isArray(lv) ? lv : {}, rv);
-    } else if (rv != null && rv !== '') {
-      // 标量（目标体重/起始体重/存款本金等）：本机为空才采用云端真实值；
-      // 本机已有值则保留本机，遵循「只增不减」，避免被云端旧值回退抹掉。
-      if (lv == null || lv === '') local[k] = rv;
+  const winner = (remoteTs >= localTs) ? remote : local;
+  const loser  = (remoteTs >= localTs) ? local : remote;
+  // 1) 优胜方的所有字段覆盖进 local（数组/对象/标量一律以优胜方为准）
+  Object.keys(winner).forEach(function (k) {
+    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
+    local[k] = winner[k];
+  });
+  // 2) 把「失败方独有的数组记录」补进 local，避免丢另一端刚记未推送的数据
+  Object.keys(loser).forEach(function (k) {
+    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
+    if (Array.isArray(loser[k]) && Array.isArray(local[k])) {
+      const seen = new Set();
+      local[k].forEach(function (it) { _allDedupKeys(k, it).forEach(function (d) { if (d) seen.add(d); }); });
+      loser[k].forEach(function (it) {
+        if (it == null) return;
+        const oks = _allDedupKeys(k, it);
+        let hit = false;
+        for (let i = 0; i < oks.length; i++) { if (oks[i] && seen.has(oks[i])) { hit = true; break; } }
+        if (!hit) local[k].push(it);
+      });
+    } else if (Array.isArray(loser[k]) && !local[k]) {
+      local[k] = loser[k].slice();
     }
   });
+  // 3) 时间戳取较大者，保证下一次合并稳定收敛
+  local._lastSavedAt = Math.max(localTs, remoteTs);
   return local;
 }
 
@@ -8432,24 +8446,9 @@ async function pullAndMerge() {
     //    强制恢复为本机意图——本机刚点过的「完成 / 撤销」，云端任何旧值都顶不掉。
     // 撤销场景同样受保护：本机主动撤销(done:false)，云端那份 done:true 也不会把它重新点亮。
     // 删除场景不受影响：被删记录已不在 store 里，快照里没有它的指纹，不会错误复活。
-    var _fpSnap = {};
-    try {
-      (store.futurePosts || []).forEach(function (p) {
-        if (!p) return;
-        _allDedupKeys('futurePosts', p).forEach(function (k) { if (k) _fpSnap[k] = !!p.done; });
-      });
-    } catch (e) {}
+    // v130 同步核心已改为「Last-Write-Wins（最后写入者胜）」：较新一方的全量数据整体胜出，
+    // 失败方「独有的新增记录」才并入，不再用「本地完成意图快照」强制覆盖（那会与 LWW 冲突）。
     mergeStoreInto(store, remote.store);
-    try {
-      (store.futurePosts || []).forEach(function (p) {
-        if (!p) return;
-        var _d = null;
-        _allDedupKeys('futurePosts', p).forEach(function (k) {
-          if (k && _fpSnap[k] !== undefined && _d === null) _d = _fpSnap[k];
-        });
-        if (_d !== null) p.done = _d;
-      });
-    } catch (e) {}
     try { dedupFuturePosts(); } catch (e) {}
     try { saveData(true); } catch (e) {}   // 传 true：云端合并自己存盘不再回推，防死循环
     // 云端合并完成后重渲全部面板（旧代码只重渲主页，其它面板仍显示本地旧数据）
