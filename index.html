@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-133" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-134" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4188,28 +4188,47 @@
 .sch-btn.del { color:#d46a6a; border-color:#f0cccc; }
 .sch-btn:hover { filter:brightness(.97); }
 
-/* ===== 定制单进度看板 ===== */
-.kanban-stack { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
-.kanban-section { background:#fbf3f6; border-radius:12px; padding:8px; }
-.kanban-sec-head { font-size:13px; font-weight:600; color:#5a3a48; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-.kanban-count { font-size:11px; background:#ffd9e4; color:#c45c7c; border-radius:20px; padding:0 7px; }
-.kanban-sec-body { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; min-height:40px; }
-.kanban-empty { font-size:12px; color:#bba6b0; text-align:center; padding:10px 0; }
-.kb-card { background:#fff; border:1px solid #f0d8e2; border-radius:10px; padding:8px; }
-.kb-card.overdue { border-color:#f0b3b3; background:#fff6f6; }
-.kb-card-desc { font-size:13px; color:#4a3540; line-height:1.35; word-break:break-word; }
-.kb-card-meta { display:flex; justify-content:space-between; gap:6px; margin-top:5px; font-size:11px; color:#9a6b7b; }
-.kb-amt { color:#2f8a52; font-weight:600; }
-.kb-card-actions { display:flex; gap:4px; margin-top:7px; flex-wrap:wrap; }
-.kb-move { height:24px; border-radius:6px; border:1px solid #e3d3dc; background:#faf4f7; color:#9a6b7b; cursor:pointer; font-size:12px; padding:0 8px; }
-.kb-edit, .kb-del { font-size:12px; border:1px solid #e3d3dc; background:#fff; border-radius:6px; padding:2px 8px; cursor:pointer; }
-.kb-edit { color:#7d9bd6; }
-.kb-del { color:#d46a6a; }
-.kb-move:hover, .kb-edit:hover, .kb-del:hover { filter:brightness(.96); }
-.kb-pager { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.kb-page-btn { border:1px solid #e3d3dc; background:#faf4f7; color:#9a6b7b; border-radius:18px; padding:4px 14px; font-size:12px; cursor:pointer; font-family:inherit; }
-.kb-page-btn:hover:not([disabled]) { background:#ffe3ec; }
-.kb-page-info { font-size:12px; color:#8a6270; }
+/* ===== 定制单进度看板（v134 重设计：紧凑排版 + 制作中/已交付状态配色 + 渐变徽章） ===== */
+.kanban-stack { display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+.kanban-section { border-radius:14px; padding:8px; border:1px solid transparent; }
+.kanban-section.making { background:linear-gradient(160deg,#fff3ec 0%,#ffeef3 100%); border-color:#ffd9c4; }
+.kanban-section.done   { background:linear-gradient(160deg,#f3efff 0%,#fdeff6 100%); border-color:#e3d6ff; }
+.kanban-sec-head { font-size:12.5px; font-weight:700; color:#5a3a48; margin-bottom:7px; display:flex; align-items:center; gap:6px; }
+.kb-sec-ico { font-size:14px; line-height:1; }
+.kb-sec-label { letter-spacing:.5px; }
+.kanban-count { min-width:18px; text-align:center; font-size:11px; font-weight:700; color:#fff; border-radius:20px; padding:1px 7px; }
+.kanban-section.making .kanban-count { background:linear-gradient(135deg,#ff9a76,#ff6f9c); box-shadow:0 2px 6px rgba(255,111,156,.35); }
+.kanban-section.done   .kanban-count { background:linear-gradient(135deg,#b79cff,#8f6fd8); box-shadow:0 2px 6px rgba(143,111,216,.35); }
+.kb-sec-sum { margin-left:auto; font-size:11px; font-weight:700; color:#c45c7c; background:rgba(255,255,255,.78); border:1px solid #ffd9e4; border-radius:20px; padding:1px 8px; white-space:nowrap; }
+.kanban-section.done .kb-sec-sum { color:#7a5fc0; border-color:#e3d6ff; }
+.kanban-sec-body { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; min-height:34px; }
+.kanban-empty { font-size:11.5px; color:#c9aeb9; text-align:center; padding:9px 0; }
+.kb-card { position:relative; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:7px 8px 7px 12px; box-shadow:0 1px 4px rgba(255,158,181,.10); transition:transform .15s ease, box-shadow .15s ease; overflow:hidden; }
+.kb-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; }
+.kb-card.st-making::before { background:linear-gradient(180deg,#ffb199,#ff7fa3); }
+.kb-card.st-done::before   { background:linear-gradient(180deg,#c3a6ff,#8f6fd8); }
+.kb-card.overdue { border-color:#f5b5b5; background:#fff7f7; }
+.kb-card.overdue::before { background:linear-gradient(180deg,#ff9a9a,#e85f5f); }
+.kb-card:hover { transform:translateY(-1px); box-shadow:0 4px 10px rgba(209,75,115,.16); }
+.kb-card-desc { font-size:12.5px; font-weight:600; color:#4a3540; line-height:1.35; word-break:break-word; }
+.kb-card-meta { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:5px; flex-wrap:wrap; }
+.kb-amt { font-size:11px; font-weight:700; color:#fff; background:linear-gradient(135deg,#ff8aa6,#ff6f9c); border-radius:20px; padding:1px 8px; box-shadow:0 1px 4px rgba(255,111,156,.30); white-space:nowrap; }
+.kb-dead { font-size:10.5px; color:#b06a80; background:#fff0f4; border:1px solid #ffd9e4; border-radius:20px; padding:1px 7px; white-space:nowrap; }
+.kb-dead.soon { color:#c77429; background:#fff6e8; border-color:#ffe3b8; }
+.kb-dead.late { color:#fff; font-weight:600; background:linear-gradient(135deg,#ff8f8f,#e85f5f); border-color:transparent; }
+.kb-dead.none { color:#c9aeb9; background:#faf4f7; border-color:#f0e2e8; }
+.kb-card-actions { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+.kb-move, .kb-edit, .kb-del { height:22px; line-height:18px; border-radius:20px; border:1px solid transparent; background:#fff; cursor:pointer; font-size:11px; padding:0 9px; font-family:inherit; transition:filter .15s ease, transform .15s ease; }
+.kb-move { font-weight:600; }
+.kanban-section.making .kb-move { background:linear-gradient(135deg,#4cd08d,#2fae6e); color:#fff; box-shadow:0 2px 5px rgba(47,174,110,.30); }
+.kanban-section.done   .kb-move { background:#fff; border-color:#d8c8ff; color:#8f6fd8; }
+.kb-edit { border-color:#ffc0d0; background:#fff5f8; color:#d14b73; }
+.kb-del  { border-color:#f3c3c3; background:#fffafa; color:#d46a6a; }
+.kb-move:hover, .kb-edit:hover, .kb-del:hover { filter:brightness(.95); transform:translateY(-1px); }
+.kb-pager { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.kb-page-btn { border:1px solid #ffd0de; background:linear-gradient(135deg,#fff5f8,#ffeef4); color:#d14b73; border-radius:20px; padding:3px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+.kb-page-btn:hover:not([disabled]) { background:linear-gradient(135deg,#ffe3ec,#ffd6e4); }
+.kb-page-info { font-size:11px; color:#b06a80; background:#fff; border:1px solid #f0d8e2; border-radius:20px; padding:2px 10px; }
 .kb-page-btn[disabled] { cursor:not-allowed; }
 
 @media (max-width: 480px) {
@@ -11398,19 +11417,31 @@ function renderCustomBoard() {
     const maxPg = Math.max(0, Math.ceil(total / CUSTOM_PAGE) - 1);
     const page = Math.min(customBoardPages[ph.key] || 0, maxPg);
     const list = all.slice(page * CUSTOM_PAGE, page * CUSTOM_PAGE + CUSTOM_PAGE);
-    html += '<div class="kanban-section"><div class="kanban-sec-head">' + ph.label + ' <span class="kanban-count">' + total + '</span></div><div class="kanban-sec-body">';
+    const sumAmt = all.reduce(function (s, x) { return s + (Number(x.o.amount) || 0); }, 0);
+    const secIco = ph.key === 'making' ? '🎨' : '✅';
+    html += '<div class="kanban-section ' + ph.key + '"><div class="kanban-sec-head">'
+      + '<span class="kb-sec-ico">' + secIco + '</span><span class="kb-sec-label">' + ph.label + '</span>'
+      + '<span class="kanban-count">' + total + '</span>'
+      + (total > 0 ? '<span class="kb-sec-sum">¥' + (typeof fmtMoney === 'function' ? fmtMoney(sumAmt) : sumAmt) + '</span>' : '')
+      + '</div><div class="kanban-sec-body">';
     if (total === 0) {
-      html += '<div class="kanban-empty">暂无</div>';
+      html += '<div class="kanban-empty">' + (ph.key === 'making' ? '🌱 暂无制作中的订单' : '🌸 暂无已交付订单') + '</div>';
     } else {
       list.forEach(function (x) {
         const o = x.o; const idx = x.idx;
-        const overdue = (ph.key !== 'done' && o.deadline && o.deadline < today);
+        const dd = o.deadline || '';
+        const overdue = (ph.key !== 'done' && dd && dd < today);
+        const soon = (ph.key !== 'done' && dd && !overdue && ((new Date(dd) - new Date(today)) <= 3 * 86400000));
+        const ddShow = dd ? (dd.slice(0, 4) === today.slice(0, 4) ? dd.slice(5) : dd) : '';
         const moveBtn = ph.key === 'making'
           ? '<button class="kb-move" title="交付" onclick="moveCustomOrder(' + idx + ',1)">→ 交付</button>'
           : '<button class="kb-move" title="回退制作中" onclick="moveCustomOrder(' + idx + ',-1)">← 重做</button>';
-        html += '<div class="kb-card' + (overdue ? ' overdue' : '') + '">'
+        const deadPill = dd
+          ? '<span class="kb-dead' + (overdue ? ' late' : (soon ? ' soon' : '')) + '">' + (overdue ? '逾期 ' : '截止 ') + ddShow + '</span>'
+          : '<span class="kb-dead none">无期限</span>';
+        html += '<div class="kb-card st-' + ph.key + (overdue ? ' overdue' : '') + '">'
           + '<div class="kb-card-desc">' + (o.desc || '定制单') + '</div>'
-          + '<div class="kb-card-meta"><span class="kb-amt">¥' + (typeof fmtMoney === 'function' ? fmtMoney(o.amount) : (o.amount || 0)) + '</span><span class="kb-dead">截止 ' + (o.deadline || '—') + '</span></div>'
+          + '<div class="kb-card-meta"><span class="kb-amt">¥' + (typeof fmtMoney === 'function' ? fmtMoney(o.amount) : (o.amount || 0)) + '</span>' + deadPill + '</div>'
           + '<div class="kb-card-actions">' + moveBtn
           + '<button class="kb-edit" onclick="openCustomOrderModal(' + idx + ')">改</button>'
           + '<button class="kb-del" onclick="deleteCustomOrder(' + idx + ')">删</button></div>'
