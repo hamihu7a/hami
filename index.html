@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-27-125" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-27-126" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -1436,12 +1436,17 @@
 
   /* ============ 自媒体更新记录 精简卡片式明细 ============ */
   .media-record-list { display: flex; flex-direction: column; gap: 8px; }
-  /* v125：紧凑排版 = 第一行（日期+账号+已同步+按钮靠右），第二行标题独占，不再乱换行 */
+  /* v126：紧凑排版 = 第一行（日期+账号+已同步+按钮靠右），第二行标题独占，不再乱换行；
+     v126：账号色带——大号粉色系 / 小号蓝紫系 / 抖音灰黑系，同步抖音再加 🎵 淡紫点缀 */
   .media-record-item {
-    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    background: #fff8fa; border: 1px solid #ffe4ec; border-left: 4px solid #ffb7cd; border-radius: 12px;
     padding: 9px 12px; transition: background .12s ease, box-shadow .12s ease;
   }
   .media-record-item:hover { background: #fff0f5; box-shadow: 0 3px 10px rgba(209,75,115,0.08); }
+  .media-record-item.acc-border-big { border-left-color: #ff7f9e; background: linear-gradient(90deg, #fff0f5, #fff8fa 42%); }
+  .media-record-item.acc-border-small { border-left-color: #8f7bc8; background: linear-gradient(90deg, #f3f0fb, #fbfaff 42%); }
+  .media-record-item.acc-border-douyin { border-left-color: #7a7a7a; background: linear-gradient(90deg, #f4f4f4, #fcfcfc 42%); }
+  .media-record-item.dy-synced { border-color: #ecd6f2; box-shadow: inset 0 0 0 1px rgba(190,140,215,0.16); }
   .media-record-main { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: nowrap; }
   .media-record-date {
     font-size: 12px; color: #8a6270; font-weight: 600; flex-shrink: 0; font-variant-numeric: tabular-nums;
@@ -1450,8 +1455,12 @@
     font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
   }
   .media-record-account.acc-big { background: #ffe4ec; color: #d14b73; }
-  .media-record-account.acc-small { background: #eaf6fc; color: #5a85a6; }
-  .media-record-account.acc-douyin { background: #f5f5f5; color: #444; }
+  .media-record-account.acc-small { background: #e9e2f8; color: #7a5fc0; }
+  .media-record-account.acc-douyin { background: #efefef; color: #3a3a3a; }
+  .media-dy-chip {
+    font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; flex-shrink: 0;
+    background: linear-gradient(135deg, #ead9ff, #ffd9ea); color: #9558b8;
+  }
   .media-record-sync { font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
   .media-record-actions { display: flex; gap: 5px; flex-shrink: 0; margin-left: auto; }
   .media-record-title {
@@ -8081,6 +8090,19 @@ function hamiTombOldVersion(listKey, oldItem, newItem) {
     if (added && store.__deleted[listKey].length > 600) {
       store.__deleted[listKey] = store.__deleted[listKey].slice(-600);
     }
+    // v126【根治「编辑改了又回退」的最后漏水口】：
+    // 编辑时写的旧版墓碑，其键很可能还在主人当初创建该记录时写入的解禁名单 __revoked 里。
+    // 合并时「解禁名单生效」一步会把这些同键墓碑直接洗掉 → 云端旧版记录每次合并又被并回来，
+    // 表现为「改名改不动 / 改完刷新回旧名」。所以编辑写墓碑时必须同步把旧键从解禁名单除名
+    // （与 hamiTombAdd 的 v108 逻辑对齐：删除/编辑都是主人的明确意图，旧解禁必须让位）。
+    if (added && store.__revoked && Array.isArray(store.__revoked[listKey]) && store.__revoked[listKey].length) {
+      const tSet = new Set(store.__deleted[listKey]);
+      const before = store.__revoked[listKey].length;
+      store.__revoked[listKey] = store.__revoked[listKey].filter(function (k) { return !(k && tSet.has(k)); });
+      if (store.__revoked[listKey].length !== before) {
+        try { hamiRevokedMirrorSave(); } catch (e2) {}
+      }
+    }
   } catch (e) {}
 }
 // v108：新建记录 = 主人明确要「把它记回来」，必须先撤销同键墓碑。
@@ -12563,17 +12585,27 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = `<div class="empty-state"><p>本月暂无更新记录</p><p style="font-size:12px;margin-top:6px;">发笔记后点上方「记一条」添加：哪个号、是否同步抖音</p></div>`;
   } else {
     const monthRecordsDesc = monthRecords.slice().reverse(); // 近→远
-    // v64：自媒体更新记录明细默认收起只显示 3 条，点「展开全部」看其余（原 foldRecords 分页改为一次性展开）
-    const html = foldCollapsible('mediaDetail', monthRecordsDesc, function (r) {
+    // v126：改成翻页式——每页固定 3 条，其余用 ‹ › 翻页查看，不再「展开全部」一次性铺开
+    const MEDIA_PAGE = 3;
+    const totalPages = Math.ceil(monthRecordsDesc.length / MEDIA_PAGE);
+    if (typeof __mediaDetailPage !== 'number' || __mediaDetailPage < 0) __mediaDetailPage = 0;
+    if (__mediaDetailPage >= totalPages) __mediaDetailPage = totalPages - 1;
+    const start = __mediaDetailPage * MEDIA_PAGE;
+    const pageRecords = monthRecordsDesc.slice(start, start + MEDIA_PAGE);
+    let html = '<div class="media-record-list">';
+    pageRecords.forEach(function (r) {
       const idx = store.mediaRecords.indexOf(r);
       const accName = r.account === 'big' ? '美化档大号' : r.account === 'small' ? '定制人物小号' : '抖音';
       const dyMark = r.douyin ? '<span class="sync-badge yes">已同步</span>' : '<span class="sync-badge no">未同步</span>';
       // v124：加标题行（与日历下面更新明细同款排版：日期/账号标签/状态在上，标题独占一行）
       const title = crEscapeHtml(r.title || ('更新' + (r.count || 1) + '条'));
-      return `<div class="media-record-item">
+      // v126：账号色带（大号粉/小号蓝紫）+ 同步抖音加 🎵 小点缀
+      const dyChip = r.douyin ? '<span class="media-dy-chip" title="已同步抖音">🎵</span>' : '';
+      html += `<div class="media-record-item acc-border-${r.account}${r.douyin ? ' dy-synced' : ''}">
         <div class="media-record-main">
           <div class="media-record-date">${(r.date || '').substring(5)}</div>
-          <div class="media-record-account acc-${r.account}">${accName}${r.douyin ? '-抖音' : ''}</div>
+          <div class="media-record-account acc-${r.account}">${accName}</div>
+          ${dyChip}
           <div class="media-record-sync">${dyMark}</div>
           <div class="media-record-actions">
             <button class="media-record-btn edit" onclick="openMediaRecordModal(${idx})" aria-label="修改">修改</button>
@@ -12583,6 +12615,14 @@ function renderMedia() {
         <div class="media-record-title">${title}</div>
       </div>`;
     });
+    html += '</div>';
+    if (totalPages > 1) {
+      html += `<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">
+        <button class="date-fold-btn" type="button" onclick="mediaDetailGo(-1)" ${__mediaDetailPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <span style="font-size:12px;color:#8a6270;font-weight:600;">第 ${__mediaDetailPage + 1}/${totalPages} 页 · 共 ${monthRecordsDesc.length} 条</span>
+        <button class="date-fold-btn" type="button" onclick="mediaDetailGo(1)" ${__mediaDetailPage >= totalPages - 1 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      </div>`;
+    }
     document.getElementById('media-table').innerHTML = html;
   }
 
@@ -12615,6 +12655,13 @@ function renderMedia() {
       else { tip.style.display = 'none'; }
     }
   } catch (e) {}
+}
+
+// v126：自媒体更新明细翻页（每页 3 条，‹ › 翻页查看）
+let __mediaDetailPage = 0;
+function mediaDetailGo(delta) {
+  __mediaDetailPage = Math.max(0, (__mediaDetailPage || 0) + delta);
+  try { renderMedia(); } catch (e) {}
 }
 
 // ==================== 发布排期日历 ====================
