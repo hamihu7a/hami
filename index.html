@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-29-140" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-09-29-141" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -766,7 +766,7 @@
   .bg-set-btn:hover { background: rgba(255,255,255,0.55); }
 
   /* ===== 主页右面板：时间与激励语卡片顶部 —— 拖拽 ↔ 与锁定 🔒 上下并排、透明玻璃风、置于时间正上方 ===== */
-  .hero-year-ring { position: relative; width: 96px; height: 96px; flex: 0 0 auto; opacity: 0.92; margin-bottom: 2px; }
+  .hero-year-ring { position: relative; width: 96px; height: 96px; flex: 0 0 auto; opacity: 1; margin-bottom: 2px; }
   /* 主面板过窄时防止内容横向溢出 */
   .main { overflow-x: hidden; }
 
@@ -3479,11 +3479,11 @@
 
   /* ===== 年度倒计时环CSS 开始（#hero-year-ring 半透明环，置于时间与激励语左上角，可整段删除，不影响其它任何功能/排版） ===== */
   .lp-ring{ transform:rotate(-90deg); display:block; }
-  .lp-ring-track{ fill:none; stroke:rgba(255,255,255,0.32); stroke-width:11; }
+  .lp-ring-track{ fill:none; stroke:rgba(110,55,100,0.28); stroke-width:11; }
   .lp-ring-fill{ fill:none; stroke:url(#lpGrad); stroke-width:11; stroke-linecap:round; transition:stroke-dasharray .5s ease; }
   .lp-ring-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .lp-ring-num{ font-size:24px; font-weight:800; color:rgba(255,255,255,0.96); line-height:1; }
-  .lp-ring-lab{ font-size:10px; color:rgba(255,255,255,0.82); margin-top:4px; }
+  .lp-ring-num{ font-size:26px; font-weight:800; color:#5e2750; line-height:1; text-shadow:0 1px 2px rgba(255,255,255,0.65); }
+  .lp-ring-lab{ font-size:10px; color:#7a3a6b; margin-top:4px; text-shadow:0 1px 2px rgba(255,255,255,0.6); }
   /* ===== 年度倒计时环CSS 结束 ===== */
 
   body.hami-force-narrow .weight-cal-change { font-size: 9px !important; }
@@ -4455,7 +4455,7 @@
       <!-- 年度倒计时环：今年还剩多少天（半透明玻璃风，置于时间与激励语左上角，替代原拖拽/锁定两键） -->
       <div class="hero-year-ring" id="hero-year-ring" data-page-node-id="HYR0001YearRing">
         <svg class="lp-ring" viewBox="0 0 120 120" width="96" height="96">
-          <defs><linearGradient id="lpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.92"/><stop offset="1" stop-color="#ffe0ec" stop-opacity="0.7"/></linearGradient></defs>
+          <defs><linearGradient id="lpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a83c8e" stop-opacity="0.95"/><stop offset="1" stop-color="#d06bb0" stop-opacity="0.92"/></linearGradient></defs>
           <circle class="lp-ring-track" cx="60" cy="60" r="52"></circle>
           <circle class="lp-ring-fill" id="hero-year-ring-fill" cx="60" cy="60" r="52"></circle>
         </svg>
