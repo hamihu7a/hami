@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-146" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-147" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -6102,6 +6102,9 @@
             <button onclick="checkDataRescue()" style="padding:11px 16px;border:1.5px solid #d14b73;border-radius:10px;background:#fff;color:#d14b73;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;" data-page-node-id="tz735oKapI1r2pO25wTPlB">
               重新检查
             </button>
+            <button onclick="hamiRecoverFromSnapshot()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);" data-page-node-id="hamiRecoverSnapBtn">
+              🛡️ 恢复最近自动备份
+            </button>
           </div>
         </div>
 
@@ -6860,6 +6863,57 @@ function loadStoreFromIDB() {
       req.onerror = function (e) { reject(e); };
     });
   }).catch(function (e) { console.error('[loadStoreFromIDB] 失败', e); return null; });
+}
+
+// ===== 数据安全网（v2026-10-05）：任何"合并/恢复"会改写 store 前，先把当前 store 自动快照入环 =====
+// 这样即便未来同步再出任何幺蛾子，主人都能从「🚑 数据急救 → 恢复最近自动备份」把数据捞回来，绝不彻底消失。
+var HAMI_SNAP_KEY = 'hami_sync_snapshots';
+function hamiDedupKeysSafe(k, it) {
+  try { if (typeof _allDedupKeys === 'function') { var a = _allDedupKeys(k, it); if (Array.isArray(a) && a.length) return a; } } catch (e) {}
+  try { return [JSON.stringify(it)]; } catch (e) { return [String(it && it.date) + '|' + String(it && it.id)]; }
+}
+function hamiSnapshotBeforeRisk(tag) {
+  try {
+    var snap = { tag: tag || 'risk', ts: Date.now(), store: JSON.parse(JSON.stringify(store)) };
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem(HAMI_SNAP_KEY) || '[]'); } catch (e) {}
+    if (!Array.isArray(arr)) arr = [];
+    arr.push(snap);
+    while (arr.length > 6) arr.shift();
+    localStorage.setItem(HAMI_SNAP_KEY, JSON.stringify(arr));
+  } catch (e) {}
+}
+// 从最近快照回捞：以「记录条数最多」的快照为主，并集回灌（补本地缺失、绝不删本地已有），避免二次丢失
+function hamiRecoverFromSnapshot() {
+  try {
+    var arr = JSON.parse(localStorage.getItem(HAMI_SNAP_KEY) || '[]');
+    if (!Array.isArray(arr) || !arr.length) { hamiToast('没有可用的自动备份快照'); return false; }
+    var best = null, bestN = -1;
+    arr.forEach(function (s) { var n = countStoreRecords(s.store || {}); if (n > bestN) { bestN = n; best = s; } });
+    var curN = countStoreRecords(store);
+    if (!best || bestN <= curN) { hamiToast('最新快照（' + bestN + ' 条）不比当前（' + curN + ' 条）多，无需恢复'); return false; }
+    var snapStore = best.store;
+    Object.keys(snapStore).forEach(function (k) {
+      if (k === '__deleted' || k === '__revoked' || k === '_lastSavedAt') return;
+      var sv = snapStore[k];
+      if (Array.isArray(sv) && Array.isArray(store[k])) {
+        var seen = {};
+        store[k].forEach(function (it) { hamiDedupKeysSafe(k, it).forEach(function (d) { if (d) seen[d] = 1; }); });
+        sv.forEach(function (it) {
+          if (it == null) return;
+          var ks = hamiDedupKeysSafe(k, it), hit = false;
+          for (var i = 0; i < ks.length; i++) { if (ks[i] && seen[ks[i]]) { hit = true; break; } }
+          if (!hit) store[k].push(it);
+        });
+      } else if (store[k] === undefined || store[k] === null || (typeof store[k] === 'object' && !Array.isArray(store[k]) && Object.keys(store[k]).length === 0)) {
+        store[k] = sv;
+      }
+    });
+    try { saveData(); } catch (e) {}
+    hamiToast('✅ 已从自动备份恢复（' + curN + ' → ' + countStoreRecords(store) + ' 条）');
+    try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e) {}
+    return true;
+  } catch (e) { console.error(e); hamiToast('恢复失败：' + (e && e.message)); return false; }
 }
 
 // 统计本地数据总条数（数组取长度，对象取键数），用于备份提醒阈值判断
@@ -8464,6 +8518,8 @@ function renderAllFromCloud() {
 
 async function pullAndMerge() {
   if (!hamiCloudEnabled()) return;
+  // v2026-10-05 安全网：合并改写 store 前先快照当前（本地）数据，任何误删都能从「🚑 数据急救」捞回
+  try { hamiSnapshotBeforeRisk('pull'); } catch (e) {}
   cloudStatus('⏳ 正在从云端拉取…', '#c75b86');
   const got = await _ghGet();
   if (!got) { cloudStatus('☁️ 云端暂无数据，将把本机数据上传', '#5aa86a'); return; }
@@ -10141,6 +10197,9 @@ function loadData() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const p = JSON.parse(saved);
+      // v2026-10-05 关键修复：刷新后必须恢复「上次保存时间戳」，否则 store._lastSavedAt 恒为 0，
+      // 云端拉取合并时永远判「云端更新」→ 本地刚记的数据成了失败方，一旦云端缺字段就被整列清空（多重丢数据的真凶）。
+      if (p._lastSavedAt) { try { store._lastSavedAt = p._lastSavedAt; } catch (e) {} }
       if (p.customOrders !== undefined) store.customOrders = p.customOrders;
       if (p.modSales && Object.keys(p.modSales).length > 0) store.modSales = p.modSales;
       if (p.beautyRecords !== undefined) store.beautyRecords = p.beautyRecords;
@@ -10288,23 +10347,36 @@ function tryRecoverStoreFromIDB() {
     if (!rec || !rec.store) return;
     const localCount = (typeof countStoreRecords === 'function') ? countStoreRecords(store) : 0;
     const idbCount = (typeof countStoreRecords === 'function') ? countStoreRecords(rec.store) : 0;
-    // v60 铁律：只有在「本地真的丢了大片数据」时才恢复。
-    // 旧逻辑只比时间戳，而 IDB 备份的 savedAt 几乎总比本地新（同一次 save 里后写），
-    // 于是每次刷新都会拿备份整块覆盖 → 主人刚删的/刚改的全被还原，表现就是「删了又回来」。
-    // 删几条属于正常变少，绝不能触发恢复；只有本地几乎空了、或备份条数是本地 2 倍以上才算真丢。
-    if (localCount > 0 && idbCount <= localCount * 2) return;
-    // 用 IBD 备份覆盖当前 store（保留当前运行时的默认值结构）
+    // v2026-10-05 改为「并集回灌（只增不减）」后，恢复本身不再会删数据，
+    // 因此无需再用"本地是否几乎空"来拦，只要 IDB 有数据就补回本地缺失项。
+    if (idbCount === 0) return;
+    // 数据安全网：恢复前先快照当前 store，万一恢复反而丢数据也能回捞
+    try { hamiSnapshotBeforeRisk('idb-recover'); } catch (e) {}
+    // 用 IBD 备份【并集】回灌：只补本地缺失的记录，绝不删除本地已有数据。
+    // v2026-10-05 修复：旧逻辑"整块覆盖"会在 IDB 备份较全时抹掉本地最近新增的记录，
+    // 这正是"记录整列消失 / 改了又没"的元凶之一。现改为严格只增不减。
     const backup = rec.store;
     // 墓碑必须保留（否则已删除的记录会随备份一起复活）
     const keepTomb = store.__deleted;
     // v109：解禁名单同样必须保留（否则主人刚记回来的记录又被旧墓碑清掉）
     const keepRevoked = store.__revoked;
-    for (const key in store) {
-      if (backup[key] !== undefined) store[key] = backup[key];
-    }
-    for (const key in backup) {
-      if (!(key in store)) store[key] = backup[key];
-    }
+    Object.keys(backup).forEach(function (key) {
+      if (key === '_lastSavedAt' || key === '__deleted' || key === '__revoked') return;
+      const bv = backup[key];
+      if (Array.isArray(bv) && Array.isArray(store[key])) {
+        const seen = {};
+        store[key].forEach(function (it) { hamiDedupKeysSafe(key, it).forEach(function (d) { if (d) seen[d] = 1; }); });
+        bv.forEach(function (it) {
+          if (it == null) return;
+          const ks = hamiDedupKeysSafe(key, it);
+          let hit = false;
+          for (let i = 0; i < ks.length; i++) { if (ks[i] && seen[ks[i]]) { hit = true; break; } }
+          if (!hit) store[key].push(it);
+        });
+      } else if (store[key] === undefined || store[key] === null || (typeof store[key] === 'object' && !Array.isArray(store[key]) && Object.keys(store[key]).length === 0)) {
+        store[key] = bv;
+      }
+    });
     if (keepTomb && Object.keys(keepTomb).length) {
       store.__deleted = Object.assign({}, keepTomb, store.__deleted || {});
       Object.keys(keepTomb).forEach(function (lk) {
@@ -10423,16 +10495,29 @@ function restoreFromIDBBackup() {
     const when = rec.savedAt ? new Date(rec.savedAt).toLocaleString('zh-CN') : '未知时间';
     const ok = await hamiConfirm(
       '要用内部备份恢复数据吗？\n\n备份时间：' + when +
-      '\n备份数据：' + idbCount + ' 条\n当前数据：' + curCount + ' 条\n\n恢复后当前数据会被备份覆盖，完成后页面自动刷新。'
+      '\n备份数据：' + idbCount + ' 条\n当前数据：' + curCount + ' 条\n\n会把备份里缺失的记录补回当前数据（当前数据不会丢失），完成后页面自动刷新。'
     );
     if (!ok) return;
     const backup = rec.store;
-    for (const key in store) {
-      if (backup[key] !== undefined) store[key] = backup[key];
-    }
-    for (const key in backup) {
-      if (!(key in store)) store[key] = backup[key];
-    }
+    // v2026-10-05 修复：改成「并集回灌（只增不减）」，绝不再用备份整块覆盖当前数据，
+    // 否则点"从内部备份找回"反而会把当前独有的记录删掉（主人反馈的"恢复反而丢数据"真凶）。
+    Object.keys(backup).forEach(function (key) {
+      if (key === '_lastSavedAt' || key === '__deleted' || key === '__revoked') return;
+      const bv = backup[key];
+      if (Array.isArray(bv) && Array.isArray(store[key])) {
+        const seen = {};
+        store[key].forEach(function (it) { hamiDedupKeysSafe(key, it).forEach(function (d) { if (d) seen[d] = 1; }); });
+        bv.forEach(function (it) {
+          if (it == null) return;
+          const ks = hamiDedupKeysSafe(key, it);
+          let hit = false;
+          for (let i = 0; i < ks.length; i++) { if (ks[i] && seen[ks[i]]) { hit = true; break; } }
+          if (!hit) store[key].push(it);
+        });
+      } else if (store[key] === undefined || store[key] === null || (typeof store[key] === 'object' && !Array.isArray(store[key]) && Object.keys(store[key]).length === 0)) {
+        store[key] = bv;
+      }
+    });
     try { saveData(); } catch (e) {}
     try { hamiToast('已恢复，正在刷新页面…'); } catch (e) {}
     setTimeout(function () { location.reload(); }, 900);
