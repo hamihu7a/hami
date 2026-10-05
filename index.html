@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-148" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-149" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -6742,11 +6742,18 @@ function saveData(skipCloud) {
       if (ok) ok.remove();
     }
   } catch (e) {
-    console.error('[saveData] 本地保存失败', e);
-    if (!_saveFailedNotified) { _saveFailedNotified = true; try { showSaveFailedBanner(e); } catch (e2) {} }
+    console.error('[saveData] 本地保存失败（已自动转存浏览器内部备份）', e);
+    // v2026-10-05 修复：旧逻辑仅在「第一次」失败弹横幅、之后静默，导致主人在不知情下以为数据已存。
+    // 现在每次失败都刷新提示，确保主人能看到「本地存储已满/失败，数据已存入浏览器内部备份」避免误判。
+    try {
+      const old = document.getElementById('save-failed-banner');
+      if (old) old.remove();
+      showSaveFailedBanner(e);
+    } catch (e2) {}
   }
   // 双重保险：全部数据备份到 IndexedDB（容量更大、浏览器清理时更不易丢）
   try { saveStoreToIDB(); } catch (e) {}
+  try { pushStoreSnap(); } catch (e) {}
   // 兼容旧账号备份
   try { saveAccountsToIDB(); } catch (e) {}
   try { renderBackupReminder(); } catch(e) {}
@@ -6764,6 +6771,7 @@ const HAMI_IDB_NAME = 'hami_accounts_db';
 const HAMI_IDB_STORE = 'backups';
 const HAMI_IDB_KEY_ACCOUNTS = 'accounts_v1';
 const HAMI_IDB_KEY_STORE = 'store_v1';
+const HAMI_IDB_KEY_SNAPS = 'store_snaps_v1';
 function openHamiIDB() {
   return new Promise(function (resolve, reject) {
     if (!window.indexedDB) { resolve(null); return; }
@@ -6831,15 +6839,9 @@ function saveStoreToIDB() {
       try { getReq = os.get(HAMI_IDB_KEY_STORE); } catch (e) { resolve(false); return; }
       getReq.onsuccess = function () {
         try {
-          const old = getReq.result;
-          const oldCount = (old && old.store) ? countStoreRecords(old.store) : 0;
-          const newCount = countStoreRecords(store);
-          if (oldCount >= 3 && newCount < oldCount * 0.6) {
-            console.warn('[saveStoreToIDB] 数据量骤降（备份 ' + oldCount + ' 条 → 当前 ' + newCount + ' 条），已保护备份不被覆盖');
-            try { window._hamiBackupProtected = { oldCount: oldCount, newCount: newCount, savedAt: old.savedAt }; } catch (e) {}
-            resolve(false);
-            return;
-          }
+          // v2026-10-05 修复：移除「数据量骤降保护」。旧逻辑在 store 条数少于旧备份 60% 时直接丢弃当前数据，
+          // 导致被旧存档覆盖后的「偏少」状态永远写不进 IDB —— 9.18 之后数据既不在 localStorage 也不在 IDB。
+          // 现在始终写入最新一份 store_v1；历史全量快照已另存到快照环（pushStoreSnap），可随时并集捞回，绝不丢。
           os.put({
             key: HAMI_IDB_KEY_STORE,
             store: store,
@@ -6851,6 +6853,27 @@ function saveStoreToIDB() {
       getReq.onerror = function () { resolve(false); };
     });
   }).catch(function (e) { console.error('[saveStoreToIDB] 失败', e); });
+}
+// 快照环：每次保存追加一份完整 store，保留最近 6 份。无论数据增减都留底，
+// 即使某次被旧存档覆盖导致当前偏少，之前的全量快照仍在，恢复时并集即可捞回 9.18 之后数据。
+function pushStoreSnap() {
+  try {
+    openHamiIDB().then(function (db) {
+      if (!db) return;
+      const tx = db.transaction(HAMI_IDB_STORE, 'readwrite');
+      const os = tx.objectStore(HAMI_IDB_STORE);
+      const getReq = os.get(HAMI_IDB_KEY_SNAPS);
+      getReq.onsuccess = function () {
+        try {
+          let snaps = (getReq.result && getReq.result.snaps) || [];
+          snaps.push({ ts: store._lastSavedAt || Date.now(), store: store });
+          while (snaps.length > 6) snaps.shift();
+          os.put({ key: HAMI_IDB_KEY_SNAPS, snaps: snaps });
+        } catch (e) {}
+      };
+      getReq.onerror = function () {};
+    }).catch(function (e) {});
+  } catch (e) {}
 }
 function loadStoreFromIDB() {
   return openHamiIDB().then(function (db) {
@@ -10332,75 +10355,70 @@ function tryRecoverAccountsFromIDB() {
 // IndexedDB 全量兜底恢复：localStorage 写入失败/被清理时，用 IndexedDB 里更新的备份恢复
 function tryRecoverStoreFromIDB() {
   if (!window.indexedDB) return;
-  loadStoreFromIDB().then(function (rec) {
-    if (!rec || !rec.store) return;
-    const localCount = (typeof countStoreRecords === 'function') ? countStoreRecords(store) : 0;
-    const idbCount = (typeof countStoreRecords === 'function') ? countStoreRecords(rec.store) : 0;
-    // v2026-10-05 改为「并集回灌（只增不减）」后，恢复本身不再会删数据，
-    // 因此无需再用"本地是否几乎空"来拦，只要 IDB 有数据就补回本地缺失项。
-    if (idbCount === 0) return;
-    // 数据安全网：恢复前先快照当前 store，万一恢复反而丢数据也能回捞
-    try { hamiSnapshotBeforeRisk('idb-recover'); } catch (e) {}
-    // 用 IBD 备份【并集】回灌：只补本地缺失的记录，绝不删除本地已有数据。
-    // v2026-10-05 修复：旧逻辑"整块覆盖"会在 IDB 备份较全时抹掉本地最近新增的记录，
-    // 这正是"记录整列消失 / 改了又没"的元凶之一。现改为严格只增不减。
-    const backup = rec.store;
-    // 墓碑必须保留（否则已删除的记录会随备份一起复活）
-    const keepTomb = store.__deleted;
-    // v109：解禁名单同样必须保留（否则主人刚记回来的记录又被旧墓碑清掉）
-    const keepRevoked = store.__revoked;
-    Object.keys(backup).forEach(function (key) {
-      if (key === '_lastSavedAt' || key === '__deleted' || key === '__revoked') return;
-      const bv = backup[key];
-      if (Array.isArray(bv) && Array.isArray(store[key])) {
-        const seen = {};
-        store[key].forEach(function (it) { hamiDedupKeysSafe(key, it).forEach(function (d) { if (d) seen[d] = 1; }); });
-        bv.forEach(function (it) {
-          if (it == null) return;
-          const ks = hamiDedupKeysSafe(key, it);
-          let hit = false;
-          for (let i = 0; i < ks.length; i++) { if (ks[i] && seen[ks[i]]) { hit = true; break; } }
-          if (!hit) store[key].push(it);
-        });
-      } else if (store[key] === undefined || store[key] === null || (typeof store[key] === 'object' && !Array.isArray(store[key]) && Object.keys(store[key]).length === 0)) {
-        store[key] = bv;
+  openHamiIDB().then(function (db) {
+    if (!db) return;
+    const tx = db.transaction(HAMI_IDB_STORE, 'readonly');
+    const os = tx.objectStore(HAMI_IDB_STORE);
+    const g1 = os.get(HAMI_IDB_KEY_STORE);   // 最新一份 store_v1
+    const g2 = os.get(HAMI_IDB_KEY_SNAPS);    // 历史快照环 store_snaps_v1
+    Promise.all([
+      new Promise(function (res) { g1.onsuccess = function () { res(g1.result); }; g1.onerror = function () { res(null); }; }),
+      new Promise(function (res) { g2.onsuccess = function () { res(g2.result); }; g2.onerror = function () { res(null); }; })
+    ]).then(function (arr) {
+      const rec = arr[0], snapsRec = arr[1];
+      // 收集所有可用备份源：最新一份 + 快照环里的每一份历史（多版本留底，绝不依赖单份）
+      const sources = [];
+      if (rec && rec.store && typeof rec.store === 'object') sources.push(rec.store);
+      if (snapsRec && Array.isArray(snapsRec.snaps)) {
+        snapsRec.snaps.forEach(function (s) { if (s && s.store && typeof s.store === 'object') sources.push(s.store); });
       }
-    });
-    if (keepTomb && Object.keys(keepTomb).length) {
-      store.__deleted = Object.assign({}, keepTomb, store.__deleted || {});
-      Object.keys(keepTomb).forEach(function (lk) {
-        const a = keepTomb[lk];
-        if (!Array.isArray(a) || !a.length) return;
-        if (!Array.isArray(store.__deleted[lk])) store.__deleted[lk] = [];
-        const seen = new Set(store.__deleted[lk]);
-        a.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__deleted[lk].push(k); } });
+      if (!sources.length) return;
+      // 数据安全网：恢复前先快照当前 store，万一恢复反而丢数据也能回捞
+      try { hamiSnapshotBeforeRisk('idb-recover'); } catch (e) {}
+      // 按记录条数降序：最全的快照先灌，其余只补「本地缺失」项（只增不减，绝不删已有数据）
+      sources.sort(function (a, b) { return countStoreRecords(b) - countStoreRecords(a); });
+      sources.forEach(function (src) {
+        Object.keys(src).forEach(function (key) {
+          if (key === '_lastSavedAt' || key === '__deleted' || key === '__revoked') return;
+          const sv = src[key];
+          if (Array.isArray(sv) && Array.isArray(store[key])) {
+            const seen = {};
+            store[key].forEach(function (it) { hamiDedupKeysSafe(key, it).forEach(function (d) { if (d) seen[d] = 1; }); });
+            sv.forEach(function (it) {
+              if (it == null) return;
+              const ks = hamiDedupKeysSafe(key, it);
+              let hit = false;
+              for (let i = 0; i < ks.length; i++) { if (ks[i] && seen[ks[i]]) { hit = true; break; } }
+              if (!hit) { for (let i = 0; i < ks.length; i++) { if (ks[i]) seen[ks[i]] = 1; } store[key].push(it); }
+            });
+          } else if (store[key] === undefined || store[key] === null || (typeof store[key] === 'object' && !Array.isArray(store[key]) && Object.keys(store[key]).length === 0)) {
+            store[key] = sv;
+          }
+        });
       });
-    }
-    if (keepRevoked && Object.keys(keepRevoked).length) {
-      store.__revoked = Object.assign({}, keepRevoked, store.__revoked || {});
-      Object.keys(keepRevoked).forEach(function (lk) {
-        const a = keepRevoked[lk];
-        if (!Array.isArray(a) || !a.length) return;
-        if (!Array.isArray(store.__revoked[lk])) store.__revoked[lk] = [];
-        const seen = new Set(store.__revoked[lk]);
-        a.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store.__revoked[lk].push(k); } });
-      });
-    }
-    // 用墓碑再剔一遍，确保备份里被删过的记录不会复活
-    try { applyTombOnLoad(); } catch (e) {}
-    try {
-      saveData();
-      hamiToast('已从浏览器内部备份找回最新数据（体重/打卡等）\n如果仍不对，请去设置恢复完整备份');
-    } catch (e) {}
-    // 重新渲染所有可能受影响的 panels
-    try { renderHome(); } catch (e) {}
-    try { renderDesktopWeight(); } catch (e) {}
-    try { renderFitness(); } catch (e) {}
-    try { renderHealth(); } catch (e) {}
-    try { renderCheckin(); } catch (e) {}
-    try { renderDesktopAccounts(); } catch (e) {}
-    try { renderAccount(); } catch (e) {}
-  }).catch(function (e) { console.error('[tryRecoverStoreFromIDB] 恢复失败', e); });
+      // 墓碑 / 解禁名单并集保留（确保旧备份里被删过的记录不会复活）
+      try {
+        const delMerge = function (tk) {
+          if (!store[tk] || typeof store[tk] !== 'object') return;
+          Object.keys(store[tk]).forEach(function (lk) {
+            const a = store[tk][lk];
+            if (!Array.isArray(a) || !a.length) return;
+            if (!Array.isArray(store[tk][lk])) store[tk][lk] = [];
+            const seen = new Set(store[tk][lk]);
+            a.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); store[tk][lk].push(k); } });
+          });
+        };
+        delMerge('__deleted');
+        delMerge('__revoked');
+      } catch (e) {}
+      try { applyTombOnLoad(); } catch (e) {}
+      try {
+        saveData();
+        hamiToast('✅ 已从浏览器内部备份（含历史快照，共 ' + sources.length + ' 份）并集找回数据');
+      } catch (e) {}
+      try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e) {}
+    }).catch(function (e) { console.error('[tryRecoverStoreFromIDB] 恢复失败', e); });
+  }).catch(function (e) { console.error('[tryRecoverStoreFromIDB] 打开 IDB 失败', e); });
 }
 
 // ==================== 数据急救：内部备份比当前数据更全时，一键找回 ====================
