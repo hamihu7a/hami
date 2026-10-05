@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-143" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-144" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -7673,7 +7673,9 @@ function _contentKey(k, it) {
   // v109：体重一天记两次（早晚）不该互相顶掉 → 内容键补上数值
   if (k === 'weightRecords') return 'wC_' + (it.date || '') + '|' + (it.value != null ? it.value : (it.after != null ? it.after : ''));
   if (k === 'exerciseRecords') return 'eC_' + (it.date || '');
-  if (k === 'mediaRecords') return 'mrC_' + (it.date || '') + '|' + String(it.title || '');
+  // v144：图文只要带稳定 id 就用 id 作主身份（不再用「日期+标题」内容键），
+  // 避免同一天多条 / 同标题 / 旧记录无 id 被当重复直接丢掉（刷新丢图文、双端不同步的根因之一）。
+  if (k === 'mediaRecords') return (it && it.id) ? '' : ('mrC_' + (it.date || '') + '|' + String(it.title || ''));
   if (k === 'inspireRecords') return 'irC_' + (it.date || '') + '|' + String(it.title || '');
   if (k === 'periodRecords') return 'prC_' + (it.start || '');
   // v127：内容键同样只认 id（与上面主身份键一致），名字改了也不会让墓碑/合并错乱。无 id 旧数据回退 type|date。
@@ -7905,6 +7907,10 @@ function deepMergeUnion(a, b) {
 }
 function mergeStoreInto(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
+  // v144：合并前先给本地/云端两边都补上稳定 id（v109 已保证 mediaRecords 等都有 id），
+  // 让下方去重以 id 为准，彻底消除「无 id 旧记录只按日期去重 → 同一天多条被合并掉」的丢数据。
+  try { if (typeof hamiEnsureIds === 'function') hamiEnsureIds(); } catch (e) {}
+  try { if (typeof hamiEnsureIds === 'function') { const _bk = store; store = remote; hamiEnsureIds(); store = _bk; } } catch (e) {}
   // ===== 通用删除墓碑（v39 根治「所有板块删了又复活」）=====
   // 任一条记录被删除时，把它的"去重键"写进 local.__deleted[列表名]。
   // 合并前先把本地/云端的墓碑并集，再从两个方向的对应数组里剔除这些键，
@@ -8028,27 +8034,41 @@ function mergeStoreInto(local, remote) {
   const remoteTs = remote._lastSavedAt || 0;
   const winner = (remoteTs >= localTs) ? remote : local;
   const loser  = (remoteTs >= localTs) ? local : remote;
-  // 1) 优胜方的所有字段覆盖进 local（数组/对象/标量一律以优胜方为准）
+  // 1) 优胜方的标量/对象字段覆盖进 local；【数组字段绝不整体覆盖】——
+  //    整体覆盖会把失败方该列表里「独有」的记录直接抹掉（正是「刷新后图文消失 / 手机电脑不同步」的根因）。
+  //    数组字段改在 step2 按「稳定 id 并集」处理，保证任一端独有的记录都保留。
   Object.keys(winner).forEach(function (k) {
     if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
+    if (Array.isArray(winner[k])) return; // 数组留到 step2 做并集，绝不整体替换
     local[k] = winner[k];
   });
-  // 2) 把「失败方独有的数组记录」补进 local，避免丢另一端刚记未推送的数据
-  Object.keys(loser).forEach(function (k) {
-    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
-    if (Array.isArray(loser[k]) && Array.isArray(local[k])) {
-      const seen = new Set();
-      local[k].forEach(function (it) { _allDedupKeys(k, it).forEach(function (d) { if (d) seen.add(d); }); });
-      loser[k].forEach(function (it) {
+  // 2) 数组字段改为「双方并集」：优胜方优先、失败方独有项全部补回。
+  //    同一 id 冲突时优胜方胜出（保留编辑最新结果）；但只要某端独有的记录，永远不丢——
+  //    彻底根治「刷新丢数据」和「双端不同步（一端新增另一端看不到）」。
+  const _unionKeys = Object.keys(local).filter(function (k) {
+    return k !== '_lastSavedAt' && k !== '__deleted' && k !== '__revoked'
+      && Array.isArray(local[k]) && Array.isArray(remote[k]);
+  });
+  _unionKeys.forEach(function (k) {
+    const seen = new Set();
+    const out = [];
+    // 先放优胜方，再放失败方独有项，保证失败方独有记录一定保留
+    [winner[k], loser[k]].forEach(function (arr) {
+      if (!Array.isArray(arr)) return;
+      arr.forEach(function (it) {
         if (it == null) return;
         const oks = _allDedupKeys(k, it);
         let hit = false;
         for (let i = 0; i < oks.length; i++) { if (oks[i] && seen.has(oks[i])) { hit = true; break; } }
-        if (!hit) local[k].push(it);
+        if (!hit) { for (let i = 0; i < oks.length; i++) { if (oks[i]) seen.add(oks[i]); } out.push(it); }
       });
-    } else if (Array.isArray(loser[k]) && !local[k]) {
-      local[k] = loser[k].slice();
-    }
+    });
+    local[k] = out;
+  });
+  // 2b) 仅云端有、本地没有的数组字段，直接采用云端（不丢数据）
+  Object.keys(remote).forEach(function (k) {
+    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
+    if (!Array.isArray(local[k]) && Array.isArray(remote[k])) local[k] = remote[k].slice();
   });
   // 3) 时间戳取较大者，保证下一次合并稳定收敛
   local._lastSavedAt = Math.max(localTs, remoteTs);
