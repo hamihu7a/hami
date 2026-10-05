@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-158" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-160" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5688,6 +5688,7 @@
         <h3 style="font-size:15px;font-weight:800;color:#d14b73;white-space:nowrap;" data-page-node-id="AbwBiINA33qELCGAz79Egh">可支配余额</h3>
         <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:6px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;" data-page-node-id="fYrfJj3L6v79aghS26bpQY">✏️ 修改</button>
         <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;" data-page-node-id="Hed04DNmRgCsKtk9H41dAw">💾 保存</button>
+        <button id="account-deposit-unlock-btn" type="button" onclick="unlockDepositBalance()" title="解除锁定，恢复「本金 + 账单」自动联动" style="border:none;background:#e8f5ec;color:#2f8f4e;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;" data-page-node-id="UNLK159DepositBtn">🔓 恢复联动</button>
       </div>
       <div id="account-disposable-display" style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:#fff;border:1.5px dashed #ffc2d6;border-radius:14px;" data-page-node-id="EFuQwIZDzlr3eiQmBHrZQp">
         <span style="font-size:13px;color:#7d4a5a;font-weight:600;" data-page-node-id="JAGAohuGaCgqDUtl3Zfag7">当前可支配余额</span>
@@ -5701,7 +5702,7 @@
         <button type="button" onclick="saveDepositBalance()" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;" data-page-node-id="RKI9MOpnPZhotk4mNMufg7">💾 保存</button>
         <button type="button" onclick="cancelEditDeposit()" style="border:none;background:#f3e3e8;color:#7d4a5a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;" data-page-node-id="xGXACELcpxN3bwo5FJARR2">取消</button>
       </div>
-      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;" data-page-node-id="CynAsWlFSpraFejvUQ1SEQ">这里的金额是"本金 + 所有账单自动算出来的"。想改它？点右上角「✏️ 修改」直接改这个数。</p>
+      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;" data-page-node-id="CynAsWlFSpraFejvUQ1SEQ">平时它 = "本金 + 所有账单"自动算。点「✏️ 修改」手填的话，<b style="color:#d14b73;">就以主人填的数为准，记账不会再加进去</b>；等<b style="color:#d14b73;">下一次记新账</b>时会自动恢复联动（也可立刻点「🔓 恢复联动」）。</p>
     </div>
 
   </div>
@@ -6490,7 +6491,9 @@ let store = {
   maskRecords: [],     // 敷面膜记录 { date }
   accountRecords: [],   // 记账记录 { date, type('income'/'expense'), category, subCategory, amount, note }
   accountDeleted: [],   // 删除标记（墓碑）：主人删过的记账唯一指纹，云端合并用它防止"删了又复活"
-  depositBalance: 0,    // 可支配余额：本金（主人手头现有存款），与所有账单联动增减
+  depositBalance: 0,    // 可支配余额：未锁定时为本金（随账单联动）；锁定中存的是反算后的本金（不显示）
+  depositLocked: false, // v160 主人要求：手动改后锁定（以主人填的数为准，不增不减），直到「记了新的账」自动解锁并继续联动
+  depositLockedShown: null, // v160 锁定期真正显示给主人的那个数（主人手填值）
   weightCalMonth: '',   // 体重日历当前查看月份（YYYY-MM），空字符串表示跟随今天所在月
   accounts: {
     big: {
@@ -8567,6 +8570,10 @@ function _hamiNewId(listKey) {
 function hamiPushRecord(listKey, item) {
   try {
     if (!Array.isArray(store[listKey])) store[listKey] = [];
+    // v160：只要记了新的账（账单流水），就自动解除可支配余额的锁定，恢复「本金 + 账单」联动
+    if (listKey === 'accountRecords' && store.depositLocked === true) {
+      try { autoUnlockDepositOnNewRecord(); } catch (e) {}
+    }
     if (item && typeof item === 'object' && !Array.isArray(item)) {
       if (!item.id) item.id = _hamiNewId(listKey);
       try { hamiTombRevoke(listKey, item); } catch (e) {}
@@ -10498,6 +10505,9 @@ function loadData() {
       if (p.accountRecords !== undefined) store.accountRecords = p.accountRecords;
       // 可支配余额本金：显式恢复，避免刷新后被默认 0 覆盖
       if (p.depositBalance !== undefined) store.depositBalance = p.depositBalance;
+      // v160：锁定标记 + 锁定期显示值一起恢复，否则刷新后会退回自动联动或显示错误金额
+      if (p.depositLocked !== undefined) store.depositLocked = !!p.depositLocked;
+      if (p.depositLockedShown !== undefined) store.depositLockedShown = p.depositLockedShown;
       // 体重日历当前查看月份：恢复用户上次切换的月份
       if (p.weightCalMonth !== undefined) store.weightCalMonth = p.weightCalMonth;
       // 账号数据：主人手动更新后从存档恢复（持久化），避免刷新被内置默认值覆盖
@@ -12167,7 +12177,11 @@ function calcAccountNetForDeposit() {
 function refreshDisposableDisplay() {
   const dEl = document.getElementById('account-disposable-value');
   if (!dEl) return;
-  const cur = (parseFloat(store.depositBalance) || 0) + calcAccountNetForDeposit();
+  // v160：锁定时显示主人手填的固定值，否则走「本金 + 账单」
+  const _dep = parseFloat(store.depositBalance) || 0;
+  const cur = (store.depositLocked === true)
+    ? (parseFloat(store.depositLockedShown) || 0)
+    : (_dep + calcAccountNetForDeposit());
   dEl.textContent = '¥' + fmtMoney(cur);
 }
 function editDepositBalance() {
@@ -12177,8 +12191,11 @@ function editDepositBalance() {
   const tip = document.getElementById('account-deposit-saved-tip');
   const input = document.getElementById('account-deposit-input');
   if (tip) tip.style.opacity = '0';
-  // 预填：当前显示的可支配余额（本金+账单），主人改的就是它
-  const cur = (parseFloat(store.depositBalance) || 0) + calcAccountNetForDeposit();
+  // 预填：当前显示的可支配余额（锁定时=主人填的固定值；否则=本金+账单）
+  const _dep0 = parseFloat(store.depositBalance) || 0;
+  const cur = (store.depositLocked === true)
+    ? (parseFloat(store.depositLockedShown) || 0)
+    : (_dep0 + calcAccountNetForDeposit());
   if (input) input.value = cur.toFixed(2);
   if (display) display.style.display = 'none';
   if (editor) { editor.style.display = 'flex'; }
@@ -12192,6 +12209,8 @@ function cancelEditDeposit() {
   if (editor) editor.style.display = 'none';
   if (display) display.style.display = 'flex';
   if (editBtn) editBtn.style.display = 'inline-block';
+  const _ub2 = document.getElementById('account-deposit-unlock-btn');
+  if (_ub2) _ub2.style.display = (store.depositLocked === true) ? 'inline-block' : 'none';
 }
 function saveDepositBalance() {
   const input = document.getElementById('account-deposit-input');
@@ -12205,21 +12224,56 @@ function saveDepositBalance() {
     if (input) input.focus();
     return;
   }
-  // 反算：本金 = 主人想要的可支配余额 - 当前所有账单收支
-  // 这样以后再记一笔账，可支配余额仍然 = 主人输入的那个值 ± 新增的收支
+  // v160 主人要求：手动改完后锁定——以主人填的数为准，不随账单增减；
+  // 直到「记了新的账」（新增/修改/删除账目或定制单）时自动解锁，恢复「本金 + 账单」联动。
   const net = calcAccountNetForDeposit();
-  store.depositBalance = v - net;
-  // 反算：本次改完后立即存盘。后续云端合并的标量规则（lv 非空保留 lv）会保护主人刚改的值
+  store.depositBalance = v - net;   // 反算本金：解锁瞬间数值不变，之后随账单浮动
+  store.depositLocked = true;       // 标记「主人手填的最终值」
+  store.depositLockedShown = v;     // 锁定期显示的值（就是主人填的这个数）
   try { saveData(); } catch (e) {}
   try { refreshDisposableDisplay(); } catch (e) {}
   if (editor) editor.style.display = 'none';
   if (display) display.style.display = 'flex';
   if (editBtn) editBtn.style.display = 'inline-block';
+  const _ub = document.getElementById('account-deposit-unlock-btn');
+  if (_ub) _ub.style.display = 'inline-block';   // v159：已锁定 → 显示「恢复联动」
   if (tip) {
     tip.style.opacity = '1';
     setTimeout(() => { try { tip.style.opacity = '0'; } catch (e) {} }, 2500);
   }
-  try { hamiToast('可支配余额已改为 ¥' + fmtMoney(v)); } catch (e) {}
+  try { hamiToast('已锁定 ¥' + fmtMoney(v) + '，记下一笔账时会自动恢复联动～'); } catch (e) {}
+}
+
+// v159/v160 主人要求：解除锁定 → 恢复「本金 + 账单」自动联动（以当前显示值为新本金，之后随账单增减）
+function unlockDepositBalance() {
+  const _dep0 = parseFloat(store.depositBalance) || 0;
+  // v160：锁定时显示的是 depositLockedShown，解锁要拿这个当新基准，不能拿反算后的本金
+  const showed = (store.depositLocked === true)
+    ? (parseFloat(store.depositLockedShown) || 0)
+    : (_dep0 + calcAccountNetForDeposit());
+  store.depositLocked = false;
+  // 用当前显示值反算本金，解除瞬间数字不变，之后才随账单联动
+  store.depositBalance = showed - calcAccountNetForDeposit();
+  try { saveData(); } catch (e) {}
+  try { refreshDisposableDisplay(); } catch (e) {}
+  try { renderAccount(); } catch (e) {}
+  try { hamiToast('已恢复联动，之后记账会继续增减～'); } catch (e) {}
+}
+
+// v160 主人要求：锁定期一旦「记了新的账」，自动解除锁定、恢复联动。
+// 解锁瞬间以「主人当初填的那个数」为新基准，然后立刻把这笔新账的净额加上去，
+// 所以主人看到的效果是：新账一记，余额就顺着这笔账变动了，之后再记还会继续联动。
+function autoUnlockDepositOnNewRecord() {
+  if (store.depositLocked !== true) return;
+  const showed = parseFloat(store.depositLockedShown);
+  const base = isFinite(showed) ? showed : ((parseFloat(store.depositBalance) || 0) + calcAccountNetForDeposit());
+  store.depositLocked = false;
+  store.depositLockedShown = null;
+  // 关键：新账此刻可能还没落进 store（hamiPushRecord 是先解锁再 push），
+  // 所以这里先按「当前账单净额」反算本金，push 之后渲染时数字自然跟着新账变。
+  store.depositBalance = base - calcAccountNetForDeposit();
+  try { saveData(); } catch (e) {}
+  try { hamiToast('已记新账，可支配余额恢复自动联动～'); } catch (e) {}
 }
 
 function renderIncome() {
@@ -15291,8 +15345,10 @@ function renderAccount() {
   const _allBeautyInc = (store.beautyRecords || []).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
   const _allInc = _allManualInc + _allOrderInc + _allBeautyInc;
   const _allExp = _allRecs.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  // v160 主人要求：手动改过后锁定（以主人填的数为准，不增不减），直到「记了新的账」自动解锁恢复联动
   const _deposit = parseFloat(store.depositBalance) || 0;
-  const disposable = _deposit + _allInc - _allExp;
+  const _locked = store.depositLocked === true;
+  const disposable = _locked ? (parseFloat(store.depositLockedShown) || 0) : (_deposit + _allInc - _allExp);
   const _depInput = document.getElementById('account-deposit-input');
   const _depEditor = document.getElementById('account-disposable-editor');
   const _isEditing = _depEditor && _depEditor.style.display !== 'none';
@@ -15300,6 +15356,12 @@ function renderAccount() {
   if (_depInput && !_isEditing && document.activeElement !== _depInput) _depInput.value = (store.depositBalance != null ? store.depositBalance : '');
   const _dispEl = document.getElementById('account-disposable-value');
   if (_dispEl) _dispEl.textContent = '¥' + fmtMoney(disposable);
+  // v159/v160：锁定时工具栏显示「🔓 恢复联动」（也可等记新账自动解锁）
+  const _unlockBtn = document.getElementById('account-deposit-unlock-btn');
+  const _editBtnEl = document.getElementById('account-deposit-edit-btn');
+  if (_unlockBtn && _editBtnEl && _editBtnEl.style.display !== 'none') {
+    _unlockBtn.style.display = _locked ? 'inline-block' : 'none';
+  }
 
   const lastMD = (function(){
     const pool = [...records, ...ordersAll, ...beautyAll];
