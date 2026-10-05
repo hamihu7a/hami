@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-153" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-154" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -124,6 +124,32 @@
       }
     }
   }catch(e){ try{ console.error('[fix153]',e); }catch(_){} }
+})();
+</script>
+<script>
+/* v154: 每次打开都去掉 9.18-10.05 自媒体重复条（幂等） */
+(function(){
+  try{
+    var st={};
+    try{ st=JSON.parse(localStorage.getItem('hami_assistant_data')||'{}'); }catch(e){ st={}; }
+    if(!st||typeof st!=='object') st={};
+    var mr=st.mediaRecords;
+    if(Array.isArray(mr)&&mr.length){
+      var seen={}, out=[], changed=false;
+      mr.forEach(function(it){
+        if(!it) return;
+        var d=String(it.date||'');
+        if(d>='2026-09-18'&&d<='2026-10-05'){
+          var k=d+'|'+String(it.title||'');
+          if(seen[k]){ changed=true; return; }
+          seen[k]=1;
+        }
+        out.push(it);
+      });
+      if(changed){ st.mediaRecords=out; st._lastSavedAt=Date.now();
+        localStorage.setItem('hami_assistant_data',JSON.stringify(st)); }
+    }
+  }catch(e){ try{ console.error('[fix154]',e); }catch(_){} }
 })();
 </script>
 <script>
