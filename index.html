@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-144" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-145" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -7675,7 +7675,7 @@ function _contentKey(k, it) {
   if (k === 'exerciseRecords') return 'eC_' + (it.date || '');
   // v144：图文只要带稳定 id 就用 id 作主身份（不再用「日期+标题」内容键），
   // 避免同一天多条 / 同标题 / 旧记录无 id 被当重复直接丢掉（刷新丢图文、双端不同步的根因之一）。
-  if (k === 'mediaRecords') return (it && it.id) ? '' : ('mrC_' + (it.date || '') + '|' + String(it.title || ''));
+  if (k === 'mediaRecords') return 'mrC_' + ((it && it.id) ? it.id : (it && it.date || '')) + '|' + String(it && it.title || '');
   if (k === 'inspireRecords') return 'irC_' + (it.date || '') + '|' + String(it.title || '');
   if (k === 'periodRecords') return 'prC_' + (it.start || '');
   // v127：内容键同样只认 id（与上面主身份键一致），名字改了也不会让墓碑/合并错乱。无 id 旧数据回退 type|date。
@@ -12641,7 +12641,7 @@ function renderMedia() {
     const pageRecords = monthRecordsDesc.slice(start, start + MEDIA_PAGE);
     let html = '<div class="media-record-list">';
     pageRecords.forEach(function (r) {
-      const idx = store.mediaRecords.indexOf(r);
+      const mid = (r.id ? r.id : ('__i' + store.mediaRecords.indexOf(r)));
       const accName = r.account === 'big' ? '美化档大号' : r.account === 'small' ? '定制人物小号' : '抖音';
       const dyMark = r.douyin ? '<span class="sync-badge yes">已同步</span>' : '<span class="sync-badge no">未同步</span>';
       // v124：加标题行（与日历下面更新明细同款排版：日期/账号标签/状态在上，标题独占一行）
@@ -12655,8 +12655,8 @@ function renderMedia() {
           ${dyChip}
           <div class="media-record-sync">${dyMark}</div>
           <div class="media-record-actions">
-            <button class="media-record-btn edit" onclick="openMediaRecordModal(${idx})" aria-label="修改">修改</button>
-            <button class="media-record-btn del" onclick="deleteMediaRecord(${idx})" aria-label="删除">删除</button>
+            <button class="media-record-btn edit" onclick="openMediaRecordModal('${mid}')" aria-label="修改">修改</button>
+            <button class="media-record-btn del" onclick="deleteMediaRecord('${mid}')" aria-label="删除">删除</button>
           </div>
         </div>
         <div class="media-record-title">${title}</div>
@@ -12887,7 +12887,7 @@ function renderPublishCalendar() {
             + '</div></div>';
         } else {
           const r = it.item;
-          const mIdx = store.mediaRecords.indexOf(r);
+          const mId = (r.id ? r.id : ('__i' + store.mediaRecords.indexOf(r)));
           const acc = r.account || 'big';
           const title = (r.title || ('更新' + (r.count || 1) + '条'));
           html += '<div class="sch-item done">'
@@ -12898,7 +12898,7 @@ function renderPublishCalendar() {
             + '<div class="sch-item-title">' + crEscapeHtml(title) + '</div>'
             + '</div>'
             + '<div class="sch-item-actions">'
-            + '<button class="sch-btn edit" onclick="openMediaRecordModal(' + mIdx + ')">改</button>'
+            + '<button class="sch-btn edit" onclick="openMediaRecordModal(\'' + mId + '\')">改</button>'
             + '</div></div>';
         }
       });
@@ -13612,8 +13612,19 @@ function mrPickAccount(acc) {
   });
 }
 let editingMrIdx = -1;
-function openMediaRecordModal(idx) {
-  editingMrIdx = (typeof idx === 'number' && idx >= 0 && store.mediaRecords && store.mediaRecords[idx]) ? idx : -1;
+let editingMrId = null;
+function openMediaRecordModal(idxOrId) {
+  let realIdx = -1;
+  if (typeof idxOrId === 'string') {
+    if (idxOrId.indexOf('__i') === 0) realIdx = parseInt(idxOrId.slice(3), 10);
+    else if (store.mediaRecords) realIdx = store.mediaRecords.findIndex(function (x) { return x && x.id === idxOrId; });
+  } else if (typeof idxOrId === 'number') {
+    realIdx = idxOrId;
+  }
+  editingMrIdx = (realIdx >= 0 && store.mediaRecords && store.mediaRecords[realIdx]) ? realIdx : -1;
+  editingMrId = (editingMrIdx >= 0 && store.mediaRecords[editingMrIdx] && store.mediaRecords[editingMrIdx].id)
+    ? store.mediaRecords[editingMrIdx].id
+    : (editingMrIdx >= 0 ? ('__i' + editingMrIdx) : null);
   const mrDelBtn = document.getElementById('mr-del-btn');
   if (mrDelBtn) mrDelBtn.style.display = editingMrIdx >= 0 ? 'inline-block' : 'none';
   mrAccount = 'big';
@@ -13665,6 +13676,7 @@ function closeMediaRecordModal() {
   const modal = document.getElementById('media-record-modal');
   if (modal) modal.style.display = 'none';
   editingMrIdx = -1;
+  editingMrId = null;
 }
 function submitMediaRecord() {
   const date = (document.getElementById('mr-date').value || todayStr());
@@ -13678,15 +13690,25 @@ function submitMediaRecord() {
   const note = (document.getElementById('mr-note').value || '').trim();
   const accName = mrAccount === 'big' ? '🎨 美化档大号' : mrAccount === 'small' ? '👤 定制人物小号' : '🎵 抖音';
   if (!store.mediaRecords) store.mediaRecords = [];
-  if (editingMrIdx >= 0 && store.mediaRecords[editingMrIdx]) {
+  // v145：用稳定 id 重新定位真实索引（编辑期间数组可能被后台合并改动过，原 idx 已失效，
+  // 否则会"改了却落到另一条/越界变新增"，正是"修改没成功反而多一条一模一样"的根因）
+  let realEditIdx = -1;
+  if (editingMrId != null) {
+    realEditIdx = (typeof editingMrId === 'string' && editingMrId.indexOf('__i') === 0)
+      ? parseInt(editingMrId.slice(3), 10)
+      : (store.mediaRecords.findIndex(function (x) { return x && x.id === editingMrId; }));
+  } else {
+    realEditIdx = editingMrIdx;
+  }
+  if (realEditIdx >= 0 && store.mediaRecords[realEditIdx]) {
     // 原地修改：保留原 id，仅更新字段
-    const orig = store.mediaRecords[editingMrIdx];
+    const orig = store.mediaRecords[realEditIdx];
     const _newMr = Object.assign({}, orig, {
       date: date, account: mrAccount, title: title, content: '更新' + count + '条', douyin: douyin, link: link, likes: likes, collects: collects, comments: comments, note: note, count: count
     });
     // v62：走统一编辑收尾 —— 继承原 id + 旧版本独有键写墓碑 + 立刻推/拉云端。
     // 以前直接赋值，改标题/日期后云端那条旧记录会被当成另一条并回来（改了变新增）。
-    hamiEditRecord('mediaRecords', editingMrIdx, _newMr, null);
+    hamiEditRecord('mediaRecords', realEditIdx, _newMr, null);
   } else {
     hamiPushRecord('mediaRecords', {
       id: 'mr_' + Date.now(),
@@ -13711,7 +13733,14 @@ function submitMediaRecord() {
   try { renderPublishCalendar(); } catch (e) {}
   hamiToast('✅ 已更新：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
 }
-async function deleteMediaRecord(idx) {
+async function deleteMediaRecord(idxOrId) {
+  let idx = -1;
+  if (typeof idxOrId === 'string') {
+    if (idxOrId.indexOf('__i') === 0) idx = parseInt(idxOrId.slice(3), 10);
+    else if (store.mediaRecords) idx = store.mediaRecords.findIndex(function (x) { return x && x.id === idxOrId; });
+  } else if (typeof idxOrId === 'number') {
+    idx = idxOrId;
+  }
   if (!store.mediaRecords || !store.mediaRecords[idx]) { finToast('找不到这条记录，可能已被删除'); return false; }
   const r = store.mediaRecords[idx];
   if (!await hamiConfirm('确定删除 ' + (r.account==='big'?'美化档大号':'定制人物小号') + ' 的更新记录吗？')) return false;
@@ -13724,8 +13753,16 @@ async function deleteMediaRecord(idx) {
   return true;
 }
 async function deleteCurrentMediaRecord() {
-  if (editingMrIdx < 0) { finToast('没有可删除的记录'); return; }
-  const ok = await deleteMediaRecord(editingMrIdx);
+  if (!editingMrId && editingMrIdx < 0) { finToast('没有可删除的记录'); return; }
+  let idx = -1;
+  if (editingMrId) {
+    idx = (typeof editingMrId === 'string' && editingMrId.indexOf('__i') === 0)
+      ? parseInt(editingMrId.slice(3), 10)
+      : (store.mediaRecords ? store.mediaRecords.findIndex(function (x) { return x && x.id === editingMrId; }) : -1);
+  } else {
+    idx = editingMrIdx;
+  }
+  const ok = await deleteMediaRecord(idx);
   if (ok) closeMediaRecordModal();
 }
 
