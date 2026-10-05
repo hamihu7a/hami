@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-09-29-141" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-142" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -4050,7 +4050,7 @@
     }
     @media (max-width: 768px) {
       @media (max-width: 720px) {
-      #lucky-cat { width: 165px; height: 117px; top: 6px; right: 16px; }
+      #lucky-cat { width: 104px; height: 74px; top: 4px; right: 10px; }
     }
     }
 /* ===== 创作专业工具（本地版·零注册）===== */
@@ -8612,12 +8612,13 @@ function hamiPendingBanner(show, msg) {
       'border-radius:8px;background:#e890a8;color:#fff;cursor:pointer;font-size:11.5px;margin-left:4px;">再试一次</span>';
   const btn = document.getElementById('hami-cloud-retry');
   if (btn) btn.onclick = function (e) { e.stopPropagation(); _hamiBannerFailStreak = 0; commitToCloud(); };
-  // 关键修复 ③：横幅停留时间从 4 秒压到 2 秒（正在自动重试就该悄悄做事，不要反复惊动主人）
+  // 关键修复：横幅停留时间延长到 8 秒，且每次失败都弹（不再前 2 次静默），
+  // 让主人明确知道「还没存到云端，先别关页面」，避免误以为同步成功而丢数据。
   _hamiBannerHideTimer = setTimeout(function () {
     const e2 = document.getElementById('hami-cloud-pending');
     if (e2) e2.remove();
     _hamiBannerHideTimer = null;
-  }, 2000);
+  }, 8000);
 }
 
 async function commitToCloud() {
@@ -8656,11 +8657,12 @@ async function commitToCloud() {
       _hamiBannerLastFailKey = key;
       _hamiBannerFailStreak = 1;
     }
-    if (_hamiBannerFailStreak >= 3 || (_hamiBannerFailStreak === 1 && key !== _hamiBannerLastFailKey)) {
+    // 每次推送失败都显式弹横幅（去掉原「前 2 次静默」逻辑），相同错误只更新同一元素不会刷屏
+    if (_hamiBannerFailStreak >= 1) {
       hamiPendingBanner(true, '云端写入失败：' + msg);
     }
     if (!_commitRetryTimer) {
-      _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 20000);
+      _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 10000);
     }
   } finally {
     _commitBusy = false;
@@ -8924,13 +8926,14 @@ try {
     if (document.visibilityState === 'hidden') {
       // 切走/锁屏时立刻把本机改动推上云端，别处设备随时能拉到
       if (hamiSyncReady && hamiCloudEnabled()) { try { pushNow(); } catch (e) {} }
-    } else if (document.visibilityState === 'visible') {
-      // 切回标签页立刻拉一次云端：手机刚记的内容，回到电脑页瞬间出现，不用等 60s 轮询。
-      // 复用已验证的 pullAndMerge（增量合并、按时间戳不丢数据）；加忙标记守卫避免与轮询/推送重叠。
-      if (hamiSyncReady && hamiCloudEnabled() && !_periodicPullBusy && !_syncBusy) {
-        pullAndMerge().catch(function () {});
+      } else if (document.visibilityState === 'visible') {
+        // 切回标签页：先拉云端（拿到别处最新），再补推本地未上云的改动，确保双向都不漏。
+        if (hamiSyncReady && hamiCloudEnabled() && !_periodicPullBusy && !_syncBusy) {
+          pullAndMerge().catch(function () {});
+        }
+        // 关键修复：切回前台时把本地可能没推上去的改动（如手机端刚改的体重）强制补推一次
+        try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch (e) {}
       }
-    }
   });
 } catch (e) {}
 
