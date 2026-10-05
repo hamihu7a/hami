@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-149" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-150" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -7984,6 +7984,42 @@ function deepMergeUnion(a, b) {
 }
 function mergeStoreInto(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
+  // ===== v150 数据恢复自愈：打破「本机墓碑压死云端解禁名单」的死锁 =====
+  // v125 规定「远端解禁名单里的键若本机已写墓碑，则墓碑优先」——日常删除是对的，
+  // 但当云端送来的是考古恢复出来的记录时，本机墓碑会把它们全挡住，刷新后什么都看不到。
+  // 做法：云端 store 带 __forceRecover 时，先把云端解禁名单【无条件】并入本机（不再因本机墓碑而跳过），
+  // 再把本机墓碑里已被解禁的键清掉。只解禁、不覆盖：本机已有数据一律保留，随后照常走「本地优先并集」。
+  try {
+    const fr = remote.__forceRecover;
+    if (fr && fr.ts) {
+      const _doneKey = 'hami_recover_applied';
+      let _done = '';
+      try { _done = String(localStorage.getItem(_doneKey) || ''); } catch (e) {}
+      if (_done !== String(fr.ts)) {
+        const rr = remote.__revoked;
+        if (rr && typeof rr === 'object') {
+          if (!local.__revoked || typeof local.__revoked !== 'object') local.__revoked = {};
+          Object.keys(rr).forEach(function (lk) {
+            const arr = rr[lk];
+            if (!Array.isArray(arr) || !arr.length) return;
+            if (!Array.isArray(local.__revoked[lk])) local.__revoked[lk] = [];
+            const seen = new Set(local.__revoked[lk]);
+            arr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.__revoked[lk].push(k); } });
+            if (local.__revoked[lk].length > 600) local.__revoked[lk] = local.__revoked[lk].slice(-600);
+          });
+          if (local.__deleted && typeof local.__deleted === 'object') {
+            Object.keys(local.__revoked).forEach(function (lk) {
+              if (!Array.isArray(local.__deleted[lk]) || !local.__deleted[lk].length) return;
+              const rs = new Set(local.__revoked[lk]);
+              local.__deleted[lk] = local.__deleted[lk].filter(function (k) { return !rs.has(k); });
+            });
+          }
+        }
+        try { localStorage.setItem(_doneKey, String(fr.ts)); } catch (e) {}
+        try { if (typeof cloudStatus === 'function') cloudStatus('🛟 已从云端恢复 9.18–10.05 的记录', '#1a9e4b'); } catch (e) {}
+      }
+    }
+  } catch (e) { console.error('[recover150]', e); }
   // v144：合并前先给本地/云端两边都补上稳定 id（v109 已保证 mediaRecords 等都有 id），
   // 让下方去重以 id 为准，彻底消除「无 id 旧记录只按日期去重 → 同一天多条被合并掉」的丢数据。
   try { if (typeof hamiEnsureIds === 'function') hamiEnsureIds(); } catch (e) {}
@@ -8109,7 +8145,7 @@ function mergeStoreInto(local, remote) {
   const localTs = local._lastSavedAt || 0;
   const remoteTs = remote._lastSavedAt || 0;
   Object.keys(remote).forEach(function (k) {
-    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
+    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked' || k === '__forceRecover') return;
     const rv = remote[k];
     const lv = local[k];
     if (Array.isArray(rv)) {
