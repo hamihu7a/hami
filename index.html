@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-145" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-146" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -8040,6 +8040,7 @@ function mergeStoreInto(local, remote) {
   Object.keys(winner).forEach(function (k) {
     if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
     if (Array.isArray(winner[k])) return; // 数组留到 step2 做并集，绝不整体替换
+    if (winner[k] == null) return;        // 云端该字段为空/缺失时，绝不把本地有效值清空（根治「某模块突然整列消失」）
     local[k] = winner[k];
   });
   // 2) 数组字段改为「双方并集」：优胜方优先、失败方独有项全部补回。
