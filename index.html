@@ -8527,8 +8527,8 @@ async function pullAndMerge() {
     //    强制恢复为本机意图——本机刚点过的「完成 / 撤销」，云端任何旧值都顶不掉。
     // 撤销场景同样受保护：本机主动撤销(done:false)，云端那份 done:true 也不会把它重新点亮。
     // 删除场景不受影响：被删记录已不在 store 里，快照里没有它的指纹，不会错误复活。
-    // v130 同步核心已改为「Last-Write-Wins（最后写入者胜）」：较新一方的全量数据整体胜出，
-    // 失败方「独有的新增记录」才并入，不再用「本地完成意图快照」强制覆盖（那会与 LWW 冲突）。
+    // v148 同步核心：mergeStoreInto 已改为「本地优先并集」——本地 localStorage 是绝对事实来源，
+    // 云端只补充本地没有的记录，绝不覆盖/删除本地已有数据（根治刷新/同步丢数据）。
     mergeStoreInto(store, remote.store);
     try { dedupFuturePosts(); } catch (e) {}
     try { saveData(true); } catch (e) {}   // 传 true：云端合并自己存盘不再回推，防死循环
