@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-155" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-156" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -150,6 +150,34 @@
         localStorage.setItem('hami_assistant_data',JSON.stringify(st)); }
     }
   }catch(e){ try{ console.error('[fix154]',e); }catch(_){} }
+})();
+</script>
+<script>
+/* v156: 一次性写入主人 10/5 提供的三账号最新数据（带 done 标记，之后主人手动更新不受影响） */
+(function(){
+  try{
+    if(localStorage.getItem('hami_acct_upd_1005')==='1') return;
+    var st={};
+    try{ st=JSON.parse(localStorage.getItem('hami_assistant_data')||'{}'); }catch(e){ st={}; }
+    if(!st||typeof st!=='object') st={};
+    if(!st.accounts||typeof st.accounts!=='object') st.accounts={};
+    var UPD={
+      big:   {followers:5901, following:79, likes:39000},
+      small: {followers:113,  following:2,  likes:867},
+      douyin:{followers:760,  following:73, likes:13000}
+    };
+    Object.keys(UPD).forEach(function(k){
+      var a=st.accounts[k]; if(!a||typeof a!=='object') a=st.accounts[k]={};
+      var u=UPD[k];
+      if(a.followers!=null&&!isNaN(a.followers)) a.prevFollowers=a.followers;
+      a.followers=u.followers; a.following=u.following; a.likes=u.likes;
+    });
+    if(!st.accountsMeta||typeof st.accountsMeta!=='object') st.accountsMeta={};
+    st.accountsMeta.lastUpdate='10月5日 19:35';
+    st._lastSavedAt=Date.now();
+    localStorage.setItem('hami_assistant_data', JSON.stringify(st));
+    localStorage.setItem('hami_acct_upd_1005','1');
+  }catch(e){ try{ console.error('[acctupd]',e); }catch(_){} }
 })();
 </script>
 <script>
