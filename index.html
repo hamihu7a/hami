@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-156" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-157" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -13234,11 +13234,11 @@ function fpPickAccount(acc) {
   });
   const r = document.querySelector('input[name="fp-account"][value="' + acc + '"]');
   if (r) r.checked = true;
-  // 选中抖音时，同步抖音自动勾选且禁用；选中小红书账号时恢复可选
+  // v157 主人要求：未来更新图文 —— 选「大号」自动勾选同步抖音（可手动取消）；选小号自动取消；抖音号保持勾选
   const dy = document.getElementById('fp-douyin');
   if (dy) {
-    dy.checked = (acc === 'douyin');
-    dy.disabled = (acc === 'douyin');
+    dy.checked = (acc === 'big' || acc === 'douyin');
+    dy.disabled = false;
   }
 }
 function fpPickBatchAccount(acc) {
@@ -13248,10 +13248,11 @@ function fpPickBatchAccount(acc) {
   });
   const r = document.querySelector('input[name="fp-batch-account"][value="' + acc + '"]');
   if (r) r.checked = true;
+  // v157 主人要求：批量连更 —— 选「大号」自动勾选同步抖音（可手动取消）
   const dy = document.getElementById('fp-batch-douyin');
   if (dy) {
-    dy.checked = (acc === 'douyin');
-    dy.disabled = (acc === 'douyin');
+    dy.checked = (acc === 'big' || acc === 'douyin');
+    dy.disabled = false;
   }
 }
 function setFuturePostMode(mode) {
@@ -13917,6 +13918,9 @@ function mrPickAccount(acc) {
   document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === acc);
   });
+  // v157 主人要求：自媒体更新记录 —— 选「大号」自动勾选同步抖音，选小号自动取消；抖音号保持勾选
+  var dy = document.getElementById('mr-douyin');
+  if (dy) dy.checked = (acc === 'big' || acc === 'douyin');
 }
 let editingMrIdx = -1;
 let editingMrId = null;
@@ -13970,7 +13974,8 @@ function openMediaRecordModal(idxOrId) {
   if (dEl) dEl.value = todayStr();
   if (tEl) tEl.value = '';
   if (cEl) cEl.value = '1';
-  if (dyEl) dyEl.checked = false;
+  // v157 默认账号是大号 → 默认勾选同步抖音（主人可手动取消）
+  if (dyEl) dyEl.checked = (mrAccount === 'big' || mrAccount === 'douyin');
   if (linkEl) linkEl.value = '';
   if (likesEl) likesEl.value = 0;
   if (collectsEl) collectsEl.value = 0;
