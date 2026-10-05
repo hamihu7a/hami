@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-152" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-153" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -90,6 +90,40 @@
     localStorage.setItem('hami_assistant_data', JSON.stringify(st));
     localStorage.setItem('hami_recover_152','done');
   }catch(e){ try{ console.error('[recover152]',e); }catch(_){} }
+})();
+</script>
+<script>
+/* v153: 每次打开都确保自媒体 9.18-10.05 的记录有账号归属（幂等，不重复写） */
+(function(){
+  try{
+    var DATES=["2026-09-18", "2026-09-19", "2026-09-20", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05"];
+    var st={};
+    try{ st=JSON.parse(localStorage.getItem('hami_assistant_data')||'{}'); }catch(e){ st={}; }
+    if(!st||typeof st!=='object') st={};
+    var mr=st.mediaRecords;
+    if(Array.isArray(mr)&&mr.length){
+      var seen={}, out=[], changed=false;
+      mr.forEach(function(it){
+        if(!it) return;
+        var isNew=false;
+        for(var i=0;i<DATES.length;i++){ if(String(it.date||'').indexOf(DATES[i])>=0){ isNew=true; break; } }
+        if(isNew){
+          if(!it.account||!String(it.account)){ it.account='big'; changed=true; }
+          if(!it.content){ it.content='更新1条'; changed=true; }
+          var k=String(it.date)+'|'+String(it.title||'');
+          if(seen[k]){ changed=true; return; }
+          seen[k]=1;
+        }
+        out.push(it);
+      });
+      if(changed){
+        st.mediaRecords=out;
+        st._lastSavedAt=Date.now();
+        localStorage.setItem('hami_assistant_data', JSON.stringify(st));
+        try{ if(typeof cloudStatus==='function') cloudStatus('🩹 自媒体记录已补回账号归属', '#1a9e4b'); }catch(e){}
+      }
+    }
+  }catch(e){ try{ console.error('[fix153]',e); }catch(_){} }
 })();
 </script>
 <script>
