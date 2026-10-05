@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-147" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-148" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 // ==== v17 终极缓存自愈：iPad 上一次跳到 v15 缓存再也不动，这次必跳到最新版 ====
 (function(){
@@ -8078,54 +8078,43 @@ function mergeStoreInto(local, remote) {
       }
     }
   } catch (e) {}
-  // ====== 多设备同步核心：Last-Write-Wins（最后写入者胜）======
-  // 旧逻辑「本地优先 + deepMergeUnion 本地优先」在单设备没问题，但多设备下，
-  // 任何一端本地的旧值都会把云端刚改的新值覆盖掉 —— 正是「电脑改了手机不同步 /
-  // 手机显示修改前数据 / 删除改名跨设备失效」的根因。
-  // 改为：比较两端 _lastSavedAt，较新一方整块胜出；但把较旧一方「独有的新增记录」
-  // 并入胜出方（数组并集），确保某端刚记、还没来得及推送的记录不会丢。
+  // ====== 数据合并核心：本地优先并集（根治「刷新 / 同步丢数据」）======
+  // 设计铁律：本地 localStorage 是绝对事实来源，云端只作为「补充」，绝不允许覆盖 / 删除本地已有记录。
+  //  - 数组字段：双方并集，云端独有的记录并进来，本地记录一律保留（绝不整列替换 / 清空）；
+  //  - 标量 / 对象字段：本地已有值（含 0 / false / 空串）一律保留，仅当本地为空且云端非空时补充；
+  //  - 时间戳取较大者，保证下一次合并稳定收敛。
   const localTs = local._lastSavedAt || 0;
   const remoteTs = remote._lastSavedAt || 0;
-  const winner = (remoteTs >= localTs) ? remote : local;
-  const loser  = (remoteTs >= localTs) ? local : remote;
-  // 1) 优胜方的标量/对象字段覆盖进 local；【数组字段绝不整体覆盖】——
-  //    整体覆盖会把失败方该列表里「独有」的记录直接抹掉（正是「刷新后图文消失 / 手机电脑不同步」的根因）。
-  //    数组字段改在 step2 按「稳定 id 并集」处理，保证任一端独有的记录都保留。
-  Object.keys(winner).forEach(function (k) {
-    if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
-    if (Array.isArray(winner[k])) return; // 数组留到 step2 做并集，绝不整体替换
-    if (winner[k] == null) return;        // 云端该字段为空/缺失时，绝不把本地有效值清空（根治「某模块突然整列消失」）
-    local[k] = winner[k];
-  });
-  // 2) 数组字段改为「双方并集」：优胜方优先、失败方独有项全部补回。
-  //    同一 id 冲突时优胜方胜出（保留编辑最新结果）；但只要某端独有的记录，永远不丢——
-  //    彻底根治「刷新丢数据」和「双端不同步（一端新增另一端看不到）」。
-  const _unionKeys = Object.keys(local).filter(function (k) {
-    return k !== '_lastSavedAt' && k !== '__deleted' && k !== '__revoked'
-      && Array.isArray(local[k]) && Array.isArray(remote[k]);
-  });
-  _unionKeys.forEach(function (k) {
-    const seen = new Set();
-    const out = [];
-    // 先放优胜方，再放失败方独有项，保证失败方独有记录一定保留
-    [winner[k], loser[k]].forEach(function (arr) {
-      if (!Array.isArray(arr)) return;
-      arr.forEach(function (it) {
-        if (it == null) return;
-        const oks = _allDedupKeys(k, it);
-        let hit = false;
-        for (let i = 0; i < oks.length; i++) { if (oks[i] && seen.has(oks[i])) { hit = true; break; } }
-        if (!hit) { for (let i = 0; i < oks.length; i++) { if (oks[i]) seen.add(oks[i]); } out.push(it); }
-      });
-    });
-    local[k] = out;
-  });
-  // 2b) 仅云端有、本地没有的数组字段，直接采用云端（不丢数据）
   Object.keys(remote).forEach(function (k) {
     if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked') return;
-    if (!Array.isArray(local[k]) && Array.isArray(remote[k])) local[k] = remote[k].slice();
+    const rv = remote[k];
+    const lv = local[k];
+    if (Array.isArray(rv)) {
+      if (!Array.isArray(lv)) {
+        // 本地根本没有这个列表 → 才整体采用云端（本地本就为空，不算丢数据）
+        local[k] = rv.slice();
+      } else {
+        // 并集：本地记录全部保留，只把云端独有的补进来，绝不触碰本地已有记录
+        const seen = new Set();
+        lv.forEach(function (it) {
+          if (it == null) return;
+          const lks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(k, it) : [JSON.stringify(it)];
+          for (let i = 0; i < lks.length; i++) { if (lks[i]) seen.add(lks[i]); }
+        });
+        rv.forEach(function (it) {
+          if (it == null) return;
+          const oks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(k, it) : [JSON.stringify(it)];
+          let hit = false;
+          for (let i = 0; i < oks.length; i++) { if (oks[i] && seen.has(oks[i])) { hit = true; break; } }
+          if (!hit) { for (let i = 0; i < oks.length; i++) { if (oks[i]) seen.add(oks[i]); } local[k].push(it); }
+        });
+      }
+    } else if (lv === undefined || lv === null) {
+      // 本地该字段为空才用云端补充；本地已有值一律保留，绝不覆盖
+      local[k] = rv;
+    }
   });
-  // 3) 时间戳取较大者，保证下一次合并稳定收敛
+  // 时间戳取较大者，保证下一次合并稳定收敛
   local._lastSavedAt = Math.max(localTs, remoteTs);
   return local;
 }
