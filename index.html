@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="RoIBWYtS7aYqi5UB6oCvhJ">
 <head data-page-node-id="pxbggEEM0K3GW9DdJF6D77">
 <meta charset="UTF-8" data-page-node-id="HJUfC0PFPRlTvcKzDB2Hp7">
-<meta name="hami-build" content="2026-10-05-157" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
+<meta name="hami-build" content="2026-10-05-158" data-page-node-id="hyYYZ7S1HuoEBNaAVEZFRj">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -178,6 +178,39 @@
     localStorage.setItem('hami_assistant_data', JSON.stringify(st));
     localStorage.setItem('hami_acct_upd_1005','1');
   }catch(e){ try{ console.error('[acctupd]',e); }catch(_){} }
+})();
+</script>
+<script>
+/* v158: 按主人确认补回 9 月账本 3 条 + 修正 8/07 奶茶金额（一次性，带 done 标记） */
+(function(){
+  try{
+    if(localStorage.getItem('hami_acct_fix_1005')==='1') return;
+    var st={};
+    try{ st=JSON.parse(localStorage.getItem('hami_assistant_data')||'{}'); }catch(e){ st={}; }
+    if(!st||typeof st!=='object') st={};
+    if(!Array.isArray(st.accountRecords)) st.accountRecords=[];
+    var ar=st.accountRecords, changed=false;
+    // 1) 修正 8/07 奶茶：金额 8.06 -> 7.5
+    ar.forEach(function(x){
+      if(x && x.date==='2026-08-07' && x.category==='drink' && Number(x.amount)===8.06 &&
+         String(x.note||'').indexOf('奶茶')>=0){ x.amount=7.5; changed=true; }
+    });
+    // 2) 补回 3 条（去重：同日期同金额同备注 已存在则跳过）
+    var ADD=[
+      {date:'2026-09-02', type:'expense', amount:51.2, category:'daily', note:'9月2日用¥51.2', ts:1788278400000, id:'ar_1789641967875_vj5nfv'},
+      {date:'2026-09-06', type:'expense', amount:15, category:'digital', note:'手机订阅¥15', ts:1788624000000, id:'ar_1789566424447_r56gka'},
+      {date:'2026-09-06', time:'23:46', type:'expense', category:'study', amount:3700, account:'默认账本', reimburse:'', discount:'', image:'', tag:'', note:'9.6日3700元交通', ts:1788709486608, id:'ar_1789566424447_2jvvbn'}
+    ];
+    ADD.forEach(function(n){
+      var dup=ar.some(function(x){ return x && x.date===n.date && Number(x.amount)===Number(n.amount) && String(x.note||'')===String(n.note||''); });
+      if(!dup){ ar.push(n); changed=true; }
+    });
+    if(changed){
+      st._lastSavedAt=Date.now();
+      localStorage.setItem('hami_assistant_data', JSON.stringify(st));
+    }
+    localStorage.setItem('hami_acct_fix_1005','1');
+  }catch(e){ try{ console.error('[acctfix158]',e); }catch(_){} }
 })();
 </script>
 <script>
