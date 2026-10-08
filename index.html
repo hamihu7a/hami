@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-179">
+<meta name="hami-build" content="2026-10-08-180">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -10699,6 +10699,9 @@ function loadData() {
     try { applyTombOnLoad(); } catch (e) {}
     // v125：自动清理重要日期里"一个名字包含另一个"（如「严靖诗」与「严靖诗生日」）的重复副本
     try { if (typeof autoCleanImportantDates === 'function') autoCleanImportantDates(); } catch (e) {}
+    // v180：一次性清掉存量脏数据（同名同类型的重复副本 + 主人早已删除的默认项）。
+    // 放在 autoCleanImportantDates 之后、ensureDefaults 之前：先写墓碑，播种时就会被墓碑拦住不再种回。
+    try { if (typeof cleanupImportantDatesV180 === 'function') cleanupImportantDatesV180(); } catch (e) {}
     // v57：未来图文加载后再 dedup 一次（清掉同 id / 同内容重复）
     try { dedupFuturePosts(); } catch (e) {}
     // 工作代办去重：因早期种子/同步 bug，同一文本可能重复出现（主人截图显示 4 条重复 N 次），
@@ -16658,7 +16661,10 @@ function calcDateInfo(d, today) {
 function checkReminderAlerts() {
   const today = new Date(todayStr() + 'T00:00:00');
   const banners = [];
-  const dates = store.importantDates || [];
+  // v180：同名同类型只提醒一条（数据里若残留幽灵副本，OLD+NEW 不会各弹一次）
+  const dates = (typeof visibleImportantDates === 'function')
+    ? visibleImportantDates().map(function (i) { return store.importantDates[i]; })
+    : (store.importantDates || []);
   const travels = store.travelPlans || [];
 
   // 生日提醒（提前4天 + 当天），农历/公历均按正确历法计算
@@ -16741,7 +16747,7 @@ function showReminderBanners() {
 // v26：重要日期也每页 4 条翻页
 let __impDatePage = 0;
 function impDateGo(delta) {
-  const n = (store.importantDates || []).length;
+  const n = (typeof visibleImportantDates === 'function') ? visibleImportantDates().length : ((store.importantDates || []).length);
   const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
   __impDatePage = Math.max(0, Math.min((__impDatePage || 0) + delta, mp));
   renderReminder();
@@ -16750,7 +16756,9 @@ function renderReminder() {
   const today = new Date(todayStr() + 'T00:00:00');
 
   // ========== 重要日期（Days Matter 风格列表）==========
-  const dates = store.importantDates || [];
+  // v180：只渲染「同名同类型里最优的那条」；__visIdx 保存 store 原始下标，保证编辑/删除不错位
+  const __visIdx = (typeof visibleImportantDates === 'function') ? visibleImportantDates() : null;
+  const dates = __visIdx ? __visIdx.map(function (i) { return store.importantDates[i]; }) : (store.importantDates || []);
   if (dates.length === 0) {
     __impDatePage = 0;
     document.getElementById('important-dates').innerHTML = `<div class="empty-state"><div class="big-icon">🎂</div><p>暂无重要日期</p><p style="font-size:12px;margin-top:6px;">告诉我你的生日/纪念日/其他提醒，或点「➕ 新增日期」自己加~</p></div>`;
@@ -16758,7 +16766,7 @@ function renderReminder() {
     // 计算每个日期的信息并排序（按距今最近排列）；保留原始 store 索引 d._idx 用于编辑/删除
     const dateList = dates.map((d, i) => {
       const info = calcDateInfo(d, today);
-      return { ...d, ...info, _idx: i };
+      return { ...d, ...info, _idx: __visIdx ? __visIdx[i] : i };   // v180：用 store 原始下标
     });
     dateList.sort((a, b) => a.sortKey - b.sortKey);
 
@@ -16943,7 +16951,10 @@ function renderWashPredict() {
 function renderImpNext() {
   const el = document.getElementById('imp-next');
   if (!el) return;
-  const dates = store.importantDates || [];
+  // v180：同名同类型只取最优那条（防止幽灵副本抢走"最近倒计时"大卡）
+  const dates = (typeof visibleImportantDates === 'function')
+    ? visibleImportantDates().map(function (i) { return store.importantDates[i]; })
+    : (store.importantDates || []);
   if (dates.length === 0) { el.innerHTML = ''; return; }
   const today = new Date(todayStr() + 'T00:00:00');
   const list = dates.map((d) => { const i = calcDateInfo(d, today); const o = {}; for (const k in d) o[k] = d[k]; for (const k in i) o[k] = i[k]; return o; });
@@ -17857,6 +17868,112 @@ async function deleteDateRecord(idx) {
 // 按「类型+日期」分组：同组只保留信息最完整（名字更长、有备注优先）的一条，
 // 其余全部写墓碑删除并同步云端，确保删得干净、不再复活。
 // 注意：同一天、同一类型若本来就有两条不同的纪念日，也会被合并成一条（必要时重新添加）。
+// ============================================================================
+// v180【根治重要日期：重复条 / 删了又复活 / 改完回到旧版】
+// 背景：v176~v179 一路都在"防守"（修墓碑键、改身份键、播种前查墓碑），
+//   但主人**数据里已经存在的**脏记录从来没被真正清掉 —— 所以刷新后看着"还是老样子"。
+// 双保险：
+//   ① cleanupImportantDatesV180()：一次性把存量脏数据清掉。
+//      规则 A：同名+同类型只留"最真"的一条 —— 打分：有 imp_<时间戳>_ 的 id 最高（越大越新）
+//              > 有 id 但无时间戳 > 无 id（播种出来的幽灵）。
+//      规则 B：主人反复明确说过"早就删除"的默认项（庄梓岗生日 / 和庄梓岗在一起的纪念日）彻底清掉。
+//      全部走 hamiTombAdd 写全键墓碑 → 本地存储、云端同步、默认播种三处都拦得住。
+//   ② visibleImportantDates()：渲染层永久兜底。**不改数据**，只让"同名同类型"永远只显示
+//      最优那一条，并返回正确的 store 原始下标（编辑/删除不会错位）。
+// ============================================================================
+function impDateScore(x) {
+  const id = x && x.id ? String(x.id) : '';
+  const m = id.match(/^imp_(\d+)_/);
+  if (m) return 3000000000000 + parseInt(m[1], 10);   // 主人新建/编辑过：时间戳越大越新
+  if (id) return 2000000000000;                        // 有 id 但读不出时间戳
+  return 1000000000000 + (x && x.remark ? 1 : 0);      // 无 id → 多半是默认播种的幽灵
+}
+// 同名+同类型分组 → Map<key, store 原始下标数组>
+function impDateGroups() {
+  const arr = Array.isArray(store.importantDates) ? store.importantDates : [];
+  const groups = {};
+  arr.forEach(function (x, i) {
+    if (!x) return;
+    const nm = String(x.name || '').trim();
+    const key = nm ? ((x.type || 'birthday') + '|' + nm) : ('__noname_' + i);
+    (groups[key] = groups[key] || []).push(i);
+  });
+  return groups;
+}
+// 每组挑出"最优"那条，返回升序的 store 原始下标数组（供渲染使用，不动数据）
+function visibleImportantDates() {
+  const arr = Array.isArray(store.importantDates) ? store.importantDates : [];
+  const groups = impDateGroups();
+  const picked = [];
+  Object.keys(groups).forEach(function (key) {
+    const idxs = groups[key];
+    if (!idxs.length) return;
+    let best = idxs[0], bestScore = -1;
+    idxs.forEach(function (i) {
+      const s = impDateScore(arr[i]);
+      if (s > bestScore) { bestScore = s; best = i; }
+    });
+    picked.push(best);
+  });
+  picked.sort(function (a, b) { return a - b; });
+  return picked;
+}
+var IMP_DATE_CLEAN_FLAG = 'hami_impdate_clean_v180';
+function cleanupImportantDatesV180() {
+  try {
+    if (localStorage.getItem(IMP_DATE_CLEAN_FLAG)) return;
+    localStorage.setItem(IMP_DATE_CLEAN_FLAG, '1');   // 全局只跑一次，之后靠下面的渲染兜底
+    if (!Array.isArray(store.importantDates) || !store.importantDates.length) return;
+
+    const arr = store.importantDates;
+    const victims = [];
+    const pushVictim = function (x) { if (x && victims.indexOf(x) < 0) victims.push(x); };
+
+    // 规则 A：同名+同类型只留最优那条
+    const groups = impDateGroups();
+    Object.keys(groups).forEach(function (key) {
+      const idxs = groups[key];
+      if (idxs.length < 2) return;
+      let best = idxs[0], bestScore = -1;
+      idxs.forEach(function (i) {
+        const s = impDateScore(arr[i]);
+        if (s > bestScore) { bestScore = s; best = i; }
+      });
+      idxs.forEach(function (i) { if (i !== best) pushVictim(arr[i]); });
+    });
+
+    // 规则 B：主人多次明确说过"早就删除"的默认项 → 这次彻底清掉
+    arr.forEach(function (x) {
+      if (!x) return;
+      const nm = String(x.name || '').trim();
+      if (!nm) return;
+      if (nm === '庄梓岗' || nm.indexOf('庄梓岗') >= 0) pushVictim(x);
+    });
+
+    let removed = 0;
+    victims.forEach(function (x) {
+      const idx = store.importantDates.indexOf(x);
+      if (idx >= 0) {
+        try { hamiTombAdd('importantDates', x); } catch (e) {}
+        store.importantDates.splice(idx, 1);
+        removed++;
+      }
+    });
+    if (removed) {
+      try { if (typeof hamiTombMirrorSave === 'function') hamiTombMirrorSave(); } catch (e) {}
+      try { saveData(); } catch (e) {}
+      try { if (typeof hamiDeleteSync === 'function') hamiDeleteSync(); } catch (e) {}
+      try { console.log('[Hami] v180 重要日期一次性清理：移除 ' + removed + ' 条（重复副本 / 主人早已删除的默认项）'); } catch (e) {}
+      // 延迟弹提示，等页面骨架渲染完再出现
+      try {
+        setTimeout(function () {
+          try { hamiToast('🧹 已自动清理 ' + removed + ' 条重复 / 早已删除的重要日期'); } catch (e) {}
+        }, 1500);
+      } catch (e) {}
+    }
+  } catch (e) {}
+}
+
 // v125：启动自动清理重要日期的"同名包含"重复（如「严靖诗」与「严靖诗生日」——
 // 改名时多出的一条，名字彼此包含）。只合并这种明显是同一人的副本，绝不误删不同人。
 // 用 hamiTombAdd 写墓碑删除，确保本地与云端（含旧解禁名单）一并清干净、不再复活。
@@ -20021,7 +20138,9 @@ function renderCountdown() {
   //    ★ 农历生日须按农历历法推算目标公历日，不能用 getNextAnniversary（仅新历，会把农历当新历算错倒计时）
   //    ★ 按名字去重：数据里可能有「XX」和「XX生日」两条重复记录，只展示一条
   const seenBdayNames = new Set();
-  (store.importantDates || []).forEach(d => {
+  ((typeof visibleImportantDates === 'function')
+    ? visibleImportantDates().map(function (i) { return store.importantDates[i]; })
+    : (store.importantDates || [])).forEach(d => {
     if (d.type !== 'birthday') return;
     const nameKey = String(d.name || '').replace(/的?生日/g, '').trim();
     if (nameKey && seenBdayNames.has(nameKey)) return;
