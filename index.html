@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-165">
+<meta name="hami-build" content="2026-10-08-166">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7991,6 +7991,10 @@ function _contentKey(k, it) {
   if (k === 'customOrders') return 'coC_' + (it.date || '') + '|' + (it.amount != null ? it.amount : '') + '|' + String(it.desc || '');
   if (k === 'beautyRecords') return 'brC_' + (it.date || '') + '|' + (it.count != null ? it.count : '') + '|' + (it.amount != null ? it.amount : '');
   if (k === 'exerciseItems') return 'eiC_' + (it.date || '') + '|' + String(it.name || '');
+  // 工作代办：文本+分类即身份（与 saveData/loadData 的去重语义一致）。之前这个函数漏掉了 userTodos，
+  // 导致云端与本地 early 记录 id 不一致时合并认不出是同一条，把云端 done:false 的旧卡当新记录并进来，
+  // 已完成被打回未完成（v166 修复）。
+  if (k === 'userTodos') return 'utC_' + (it.text || '') + '|' + (it.category || 'daily');
   return '';
 }
 // v57：计算一条记录**所有**可能的去重 key（含主键 + 内容键）。
@@ -8364,19 +8368,33 @@ function mergeStoreInto(local, remote) {
         // 本地根本没有这个列表 → 才整体采用云端（本地本就为空，不算丢数据）
         local[k] = rv.slice();
       } else {
-        // 并集：本地记录全部保留，只把云端独有的补进来，绝不触碰本地已有记录
+        // 并集：本地记录全部保留，只把云端独有的补进来，绝不触碰本地已有记录。
+        // v166 修复：命中同一条时「完成优先」升级 —— 本地/云端任一方 done:true 即标记完成，
+        // 不再因 id 不一致把云端 done:false 的旧卡当新记录并进来顶掉已完成（工作代办打回未完成的真凶）。
         const seen = new Set();
-        lv.forEach(function (it) {
+        const localMap = new Map(); // 去重键 → 本地项首次下标
+        lv.forEach(function (it, idx) {
           if (it == null) return;
           const lks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(k, it) : [JSON.stringify(it)];
-          for (let i = 0; i < lks.length; i++) { if (lks[i]) seen.add(lks[i]); }
+          for (let i = 0; i < lks.length; i++) { if (lks[i]) { seen.add(lks[i]); if (!localMap.has(lks[i])) localMap.set(lks[i], idx); } }
         });
         rv.forEach(function (it) {
           if (it == null) return;
           const oks = (typeof _allDedupKeys === 'function') ? _allDedupKeys(k, it) : [JSON.stringify(it)];
-          let hit = false;
-          for (let i = 0; i < oks.length; i++) { if (oks[i] && seen.has(oks[i])) { hit = true; break; } }
-          if (!hit) { for (let i = 0; i < oks.length; i++) { if (oks[i]) seen.add(oks[i]); } local[k].push(it); }
+          let hitIdx = -1;
+          for (let i = 0; i < oks.length; i++) { if (oks[i] && localMap.has(oks[i])) { hitIdx = localMap.get(oks[i]); break; } }
+          if (hitIdx >= 0) {
+            // 认出是同一条：完成优先（仅当本地尚未完成时升级；绝不覆盖本地其它字段）
+            try {
+              const li = lv[hitIdx];
+              if (it && typeof it === 'object' && li && typeof li === 'object') {
+                if (it.done === true && li.done !== true) li.done = true;
+              }
+            } catch (e) {}
+            return; // 不重复 push
+          }
+          for (let i = 0; i < oks.length; i++) { if (oks[i]) seen.add(oks[i]); }
+          local[k].push(it);
         });
       }
     } else if (lv === undefined || lv === null) {
@@ -10566,13 +10584,15 @@ function loadData() {
     // 这里按「文本+分类」保留第一条，清理重复。
     try {
       if (Array.isArray(store.userTodos)) {
-        const seen = new Set();
-        store.userTodos = store.userTodos.filter(function (t) {
+        // v166：按「文本+分类」去重，并保留已完成的那一条（与 saveData 去重语义一致，避免已完成被未完成顶掉）
+        const best = new Map();
+        store.userTodos.forEach(function (t) {
           const key = (t.text || '') + '|' + (t.category || 'daily');
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
+          const ex = best.get(key);
+          if (!ex) { best.set(key, t); return; }
+          if (t.done && !ex.done) best.set(key, t);
         });
+        store.userTodos = Array.from(best.values());
       }
     } catch (e) {}
   } catch(e) {
