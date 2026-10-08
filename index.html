@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-172">
+<meta name="hami-build" content="2026-10-08-173">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5335,7 +5335,7 @@
         </div>
         <div class="co-field">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
-            <input type="checkbox" id="mr-douyin" style="width:18px;height:18px;"> 是否同步抖音
+            <input type="checkbox" id="mr-douyin" checked style="width:18px;height:18px;"> 是否同步抖音
           </label>
         </div>
         <div class="co-field">
@@ -6134,7 +6134,7 @@
           </div>
           <div class="co-field">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
-              <input type="checkbox" id="fp-douyin" style="width:18px;height:18px;"> 🎵 是否同步抖音
+              <input type="checkbox" id="fp-douyin" checked style="width:18px;height:18px;"> 🎵 是否同步抖音
             </label>
           </div>
           <div class="co-field">
@@ -6177,7 +6177,7 @@
           </div>
           <div class="co-field">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
-              <input type="checkbox" id="fp-batch-douyin" style="width:18px;height:18px;"> 🎵 同步抖音
+              <input type="checkbox" id="fp-batch-douyin" checked style="width:18px;height:18px;"> 🎵 同步抖音
             </label>
           </div>
           <div class="co-field">
@@ -13506,10 +13506,10 @@ function fpPickAccount(acc) {
   });
   const r = document.querySelector('input[name="fp-account"][value="' + acc + '"]');
   if (r) r.checked = true;
-  // v157 主人要求：未来更新图文 —— 选「大号」自动勾选同步抖音（可手动取消）；选小号自动取消；抖音号保持勾选
+  // v173 主人要求（更新 v157 规则）：未来更新图文默认一律勾选同步抖音，手动取消才记未同步
   const dy = document.getElementById('fp-douyin');
   if (dy) {
-    dy.checked = (acc === 'big' || acc === 'douyin');
+    dy.checked = true;
     dy.disabled = false;
   }
 }
@@ -13520,10 +13520,10 @@ function fpPickBatchAccount(acc) {
   });
   const r = document.querySelector('input[name="fp-batch-account"][value="' + acc + '"]');
   if (r) r.checked = true;
-  // v157 主人要求：批量连更 —— 选「大号」自动勾选同步抖音（可手动取消）
+  // v173 主人要求（更新 v157 规则）：批量连更默认一律勾选同步抖音，手动取消才记未同步
   const dy = document.getElementById('fp-batch-douyin');
   if (dy) {
-    dy.checked = (acc === 'big' || acc === 'douyin');
+    dy.checked = true;
     dy.disabled = false;
   }
 }
@@ -14015,6 +14015,28 @@ function backfillFutureDoneToMedia() {
   if (changed) { try { saveData(); } catch (e) {} try { renderMedia(); } catch (e) {} }
 }
 
+// v173：一次性把历史图文记录/图文项目默认标记为「已同步抖音」。
+// 主人要求：以往更新的图文默认已同步，以后新增也默认勾选，除非手动取消。
+// 用 localStorage 标记只跑一次；跑完之后主人手动取消「未同步」的记录不会再被改回。
+function backfillDouyinSyncDefault() {
+  try {
+    if (localStorage.getItem('hami_dy_sync_backfill_v1') === '1') return;
+    let changed = false;
+    (store.mediaRecords || []).forEach(function (r) {
+      if (r && r.account !== 'douyin' && !r.douyin) { r.douyin = true; changed = true; }
+    });
+    (store.futurePosts || []).forEach(function (p) {
+      if (p && p.account !== 'douyin' && !p.douyin) { p.douyin = true; changed = true; }
+    });
+    localStorage.setItem('hami_dy_sync_backfill_v1', '1');
+    if (changed) {
+      try { saveData(); } catch (e) {}
+      try { renderMedia(); } catch (e) {}      // 启动序列里 renderMedia 已跑过，迁移后补刷一次
+      try { renderFuturePosts(); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
 // 标题话题库：根据标题里的关键词给出一条更贴近内容的改写示例
 const TITLE_TOPIC_HINTS = [
   { keywords: ['脸型','捏脸'], examples: ['10款小众脸型｜附捏脸参数','3步捏出高级脸'] },
@@ -14199,9 +14221,9 @@ function mrPickAccount(acc) {
   document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === acc);
   });
-  // v157 主人要求：自媒体更新记录 —— 选「大号」自动勾选同步抖音，选小号自动取消；抖音号保持勾选
+  // v173 主人要求（更新 v157 规则）：不管大号小号，默认一律勾选「已同步抖音」，手动取消才记未同步
   var dy = document.getElementById('mr-douyin');
-  if (dy) dy.checked = (acc === 'big' || acc === 'douyin');
+  if (dy) dy.checked = true;
 }
 let editingMrIdx = -1;
 let editingMrId = null;
@@ -14255,8 +14277,8 @@ function openMediaRecordModal(idxOrId) {
   if (dEl) dEl.value = todayStr();
   if (tEl) tEl.value = '';
   if (cEl) cEl.value = '1';
-  // v157 默认账号是大号 → 默认勾选同步抖音（主人可手动取消）
-  if (dyEl) dyEl.checked = (mrAccount === 'big' || mrAccount === 'douyin');
+  // v173 默认一律勾选同步抖音（主人可手动取消）
+  if (dyEl) dyEl.checked = true;
   if (linkEl) linkEl.value = '';
   if (likesEl) likesEl.value = 0;
   if (collectsEl) collectsEl.value = 0;
@@ -20267,6 +20289,7 @@ try { renderPublishCalendar(); } catch(e) { console.log('renderPublishCalendar e
 try { renderCustomBoard(); } catch(e) { console.log('renderCustomBoard error:', e.message); }
 try { renderInspire(); } catch(e) { console.log('renderInspire error:', e.message); }
 try { backfillFutureDoneToMedia(); } catch(e) { console.log('backfillFutureDoneToMedia error:', e.message); }
+try { backfillDouyinSyncDefault(); } catch(e) { console.log('backfillDouyinSyncDefault error:', e.message); }
 try { renderFuturePosts(); } catch(e) { console.log('renderFuturePosts error:', e.message); }
 try { renderPeriod(); } catch(e) { console.log('renderPeriod error:', e.message); }
 try { renderToilet(); } catch(e) { console.log('renderToilet error:', e.message); }
