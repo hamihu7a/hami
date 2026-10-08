@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-167">
+<meta name="hami-build" content="2026-10-08-168">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11022,9 +11022,20 @@ function applyTripSeedV1() {
   var __gzTombed = Array.isArray(store.__deleted && store.__deleted['trips'])
     && __gzSeedKeys.some(function (k) { return k && store.__deleted['trips'].indexOf(k) >= 0; });
   if (__gzTombed) {
+    // 主人主动删过 → 不仅不注入，还把「旧版种子误注入、且主人没来得及再删」的广州行程一并清掉，刷新即干净
+    try {
+      if (Array.isArray(store.trips)) {
+        for (let i = store.trips.length - 1; i >= 0; i--) {
+          const t = store.trips[i];
+          if (t && ('' + (t.city || '')).indexOf('广州') >= 0 && (t.start || '') === '2026-08-14') {
+            store.trips.splice(i, 1);
+          }
+        }
+      }
+    } catch (e) {}
     store.tripSeedV1Applied = true;
     try { saveData(); } catch (e) {}
-    try { console.log('[Hami] 检测到主人已删除广州行程，跳过种子注入（不再复活）'); } catch (e) {}
+    try { console.log('[Hami] 检测到主人已删除广州行程，清理并按墓碑跳过种子注入'); } catch (e) {}
     return;
   }
   // 本地还没有「广州」行程：全新注入真实内容
