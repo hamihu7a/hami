@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-166">
+<meta name="hami-build" content="2026-10-08-167">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11014,6 +11014,19 @@ function applyTripSeedV1() {
     store.tripSeedV1Applied = true;
     return;
   }
+  // v167：根治「删了的广州行程又复活」——先合回镜像墓碑，若主人主动删过（墓碑命中）则绝不注入，尊重删除意图
+  try { if (typeof hamiTombMirrorMerge === 'function') hamiTombMirrorMerge(); } catch (e) {}
+  var __gzSeedKeys = (typeof _allDedupKeys === 'function')
+    ? _allDedupKeys('trips', { city: '广州', destination: '广州', start: '2026-08-14', end: '2026-08-16' })
+    : ['tr_广州_2026-08-14'];
+  var __gzTombed = Array.isArray(store.__deleted && store.__deleted['trips'])
+    && __gzSeedKeys.some(function (k) { return k && store.__deleted['trips'].indexOf(k) >= 0; });
+  if (__gzTombed) {
+    store.tripSeedV1Applied = true;
+    try { saveData(); } catch (e) {}
+    try { console.log('[Hami] 检测到主人已删除广州行程，跳过种子注入（不再复活）'); } catch (e) {}
+    return;
+  }
   // 本地还没有「广州」行程：全新注入真实内容
   hamiPushRecord('trips', {
     city: '广州', start: '2026-08-14', end: '2026-08-16',
@@ -11057,17 +11070,29 @@ function ensureDefaults() {
     });
   })();
   if (store.travelPlans === undefined) {
-    store.travelPlans = [
-      { date: '2026-08-14', destination: '广州·GAF插画艺术节', hotel: false, checklist: [
-        { name: '身份证', done: false },
-        { name: '手机充电器', done: false },
-        { name: '护肤品', done: false },
-        { name: '换洗衣物', done: false },
-        { name: '雨伞', done: false },
-        { name: '常备药', done: false },
-        { name: '耳机', done: false }
-      ], remark: '' }
-    ];
+    // v167：若墓碑已记「广州·GAF」出游清单（主人删过），不再种回，避免清数据后复活
+    var __tpSeed = { date: '2026-08-14', destination: '广州·GAF插画艺术节' };
+    var __tpTombed = false;
+    try {
+      if (typeof hamiTombMirrorMerge === 'function') hamiTombMirrorMerge();
+      var __tpKeys = (typeof _allDedupKeys === 'function') ? _allDedupKeys('travelPlans', __tpSeed) : ['tp_2026-08-14_广州·gaf插画艺术节'];
+      __tpTombed = Array.isArray(store.__deleted && store.__deleted['travelPlans']) && __tpKeys.some(function (k) { return k && store.__deleted['travelPlans'].indexOf(k) >= 0; });
+    } catch (e) {}
+    if (__tpTombed) {
+      store.travelPlans = [];
+    } else {
+      store.travelPlans = [
+        { date: '2026-08-14', destination: '广州·GAF插画艺术节', hotel: false, checklist: [
+          { name: '身份证', done: false },
+          { name: '手机充电器', done: false },
+          { name: '护肤品', done: false },
+          { name: '换洗衣物', done: false },
+          { name: '雨伞', done: false },
+          { name: '常备药', done: false },
+          { name: '耳机', done: false }
+        ], remark: '' }
+      ];
+    }
   }
   // v44：移除演示数据兜底（7月14日伪经期），避免污染主人真实数据导致"预测延期14天"等错乱
   if (store.periodRecords === undefined) store.periodRecords = [];
