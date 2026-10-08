@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-163">
+<meta name="hami-build" content="2026-10-08-164">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -10990,8 +10990,11 @@ function applyTripSeedV1() {
 // 否则厕所/经期记录被删光后下次启动又被默认演示数据复活（这是之前的 P0 bug）
 function ensureDefaults() {
   if (store._seededV2) return;  // 哨兵：已播种过的整库不再补
-  if (store.importantDates === undefined) {
-    store.importantDates = [
+  // v164：重要日期默认播种改为幂等——只补“本地确实没有的同名+同类型+同日期”项，
+  // 不再整批覆盖，避免清掉站点数据后把主人删过的默认项又复活成重复。
+  if (store.importantDates === undefined) store.importantDates = [];
+  (function seedImportantDates() {
+    const SEED = [
       { type: 'birthday', name: '庄梓岗', date: '1998-09-17', remark: '公历' },
       { type: 'birthday', name: '何嘉慧', date: '1997-03-14', remark: '公历' },
       { type: 'birthday', name: '黄晴', date: '1998-10-08', remark: '公历' },
@@ -11007,7 +11010,13 @@ function ensureDefaults() {
       { type: 'birthday', name: '阿婆', date: '1952-07-19', remark: '农历七月十九' },
       { type: 'anniversary', name: '和庄梓岗在一起', date: '2019-12-29', remark: '恋爱纪念日' }
     ];
-  }
+    SEED.forEach(function (d) {
+      const exists = (store.importantDates || []).some(function (x) {
+        return x && x.type === d.type && x.date === d.date && (x.name || '') === d.name;
+      });
+      if (!exists) store.importantDates.push(d);
+    });
+  })();
   if (store.travelPlans === undefined) {
     store.travelPlans = [
       { date: '2026-08-14', destination: '广州·GAF插画艺术节', hotel: false, checklist: [
@@ -16381,7 +16390,7 @@ function calcDateInfo(d, today) {
 
 // 提醒检测：生日提前4天，纪念日提前5天+当天，出游前10/5/当天
 function checkReminderAlerts() {
-  const today = new Date(todayStr());
+  const today = new Date(todayStr() + 'T00:00:00');
   const banners = [];
   const dates = store.importantDates || [];
   const travels = store.travelPlans || [];
@@ -16413,7 +16422,7 @@ function checkReminderAlerts() {
 
   // 出游提醒（前10天、前5天、当天）
   travels.forEach(t => {
-    const travelDate = new Date(t.date);
+    const travelDate = new Date(t.date + 'T00:00:00');
     const daysLeft = Math.ceil((travelDate - today) / 86400000);
     if (daysLeft === 0) {
       const hotelTxt = t.hotel ? '酒店已定 ✓' : '酒店未定 ✗';
@@ -16472,7 +16481,7 @@ function impDateGo(delta) {
   renderReminder();
 }
 function renderReminder() {
-  const today = new Date(todayStr());
+  const today = new Date(todayStr() + 'T00:00:00');
 
   // ========== 重要日期（Days Matter 风格列表）==========
   const dates = store.importantDates || [];
@@ -16670,7 +16679,7 @@ function renderImpNext() {
   if (!el) return;
   const dates = store.importantDates || [];
   if (dates.length === 0) { el.innerHTML = ''; return; }
-  const today = new Date(todayStr());
+  const today = new Date(todayStr() + 'T00:00:00');
   const list = dates.map((d) => { const i = calcDateInfo(d, today); const o = {}; for (const k in d) o[k] = d[k]; for (const k in i) o[k] = i[k]; return o; });
   list.sort((a, b) => a.sortKey - b.sortKey);
   const next = list.find(d => !d.isToday) || list[0];
@@ -16866,7 +16875,7 @@ function renderTripPlans() {
     let checkHtml = '';
     travelsSorted.forEach(function(t){
       const idx = store.travelPlans.indexOf(t);
-      const travelDate = new Date(t.date);
+      const travelDate = new Date(t.date + 'T00:00:00');
       const daysLeft = Math.ceil((travelDate - today) / 86400000);
       let statusClass, statusText;
       if (daysLeft < 0) { statusClass='travel-status-ended'; statusText='已结束'; }
@@ -17636,6 +17645,44 @@ async function dedupeImportantDates() {
   if (status) status.textContent = '✅ 已清理 ' + removed + ' 条重复，保留 ' + store.importantDates.length + ' 条。其它设备请刷新页面同步。';
   try { finToast('已清理 ' + removed + ' 条重复日期'); } catch (e) {}
 }
+// v164：启动时自动清理「重要日期」重复（同类型+同日期合并，保留信息最全的一条）。
+// 与手动 dedupeImportantDates 同一套逻辑，但不弹确认；仅当确有重复时才写盘+同步，平时零副作用。
+function autoDedupeImportantDates() {
+  try {
+    if (!store.importantDates || store.importantDates.length < 2) return;
+    const groups = {};
+    store.importantDates.forEach(function (x, i) {
+      if (!x) return;
+      const key = (x.type || '') + '|' + (x.date || '');
+      (groups[key] = groups[key] || []).push(i);
+    });
+    const keep = new Set();
+    let removed = 0;
+    Object.keys(groups).forEach(function (gk) {
+      const idxs = groups[gk];
+      if (idxs.length <= 1) { idxs.forEach(function (i) { keep.add(i); }); return; }
+      let best = idxs[0];
+      idxs.forEach(function (i) {
+        const a = store.importantDates[i], b = store.importantDates[best];
+        const sa = (a.name || '').length + (a.remark ? 2 : 0);
+        const sb = (b.name || '').length + (b.remark ? 2 : 0);
+        if (sa > sb) best = i;
+      });
+      keep.add(best);
+      idxs.forEach(function (i) {
+        if (i === best) return;
+        try { hamiTombAdd('importantDates', store.importantDates[i]); } catch (e) {}
+        removed++;
+      });
+    });
+    if (removed > 0) {
+      store.importantDates = store.importantDates.filter(function (x, i) { return keep.has(i); });
+      try { saveData(); } catch (e) {}
+      try { hamiDeleteSync(); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
 // 重要日期：展开/收起「其余」折叠区
 function toggleImpDates() {
   const box = document.getElementById('imp-dates-collapsed');
@@ -19992,6 +20039,7 @@ try { initCustomBg(); } catch (e) {}
 })();
 initSettingsPanel();
 ensureDefaults();
+autoDedupeImportantDates();
 ensureDailyInspire();
 saveData();
 
