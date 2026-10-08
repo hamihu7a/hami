@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-173">
+<meta name="hami-build" content="2026-10-08-174">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -12344,6 +12344,12 @@ function beautyGo(delta) {
   __beautyPage = Math.max(0, Math.min((__beautyPage || 0) + delta, mp));
   renderIncome();
 }
+// v174：月度收入明细改成左右翻页（每页 3 个月），页码与翻页函数（照 orderGo/beautyGo 模式）
+let __miPage = 0;
+function monthlyIncomeGo(delta) {
+  __miPage = Math.max(0, (__miPage || 0) + delta);
+  renderIncome();
+}
 
 // —— 可支配余额：主人改的就是当前可支配余额（不再分开本金/最终值）
 // 反算：store.depositBalance = 输入值 - 所有账单收支；这样下次算出还是主人想看到的值
@@ -12559,14 +12565,19 @@ function renderIncome() {
   if (miRows.length === 0) {
     miHtml = `<div class="empty-state"><div class="big-icon">📈</div><p>暂无月度收入记录</p></div>`;
   } else {
-    const miCollapsed = __collapseState['monthlyIncome'] !== true;
-    const miShow = miCollapsed ? miRows.slice(0, FOLD_PAGE) : miRows;
+    // v174：改成翻页式——每页固定 3 个月，其余用 ‹ › 翻页查看（照 v126/v171 模式），不再「展开全部」
+    const MI_PAGE = 3;
+    const miTotalPages = Math.ceil(miRows.length / MI_PAGE);
+    if (typeof __miPage !== 'number' || __miPage < 0) __miPage = 0;
+    if (__miPage >= miTotalPages) __miPage = miTotalPages - 1;
+    const miShow = miRows.slice(__miPage * MI_PAGE, __miPage * MI_PAGE + MI_PAGE);
     miHtml = '<div class="monthly-income-list">' + miShow.join('') + '</div>';
-    if (miRows.length > FOLD_PAGE) {
-      miHtml += '<div class="flow-toggle-wrap" style="justify-content:center;margin-top:4px;">'
-        + '<button class="flow-toggle-btn" type="button" onclick="toggleFoldCollapse(\'monthlyIncome\')">'
-        + (miCollapsed ? '展开全部 ▾（共' + miRows.length + '个月）' : '收起 ▴')
-        + '</button></div>';
+    if (miTotalPages > 1) {
+      miHtml += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
+        + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(-1)"' + (__miPage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+        + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__miPage + 1) + '/' + miTotalPages + ' 页 · 共 ' + miRows.length + ' 个月</span>'
+        + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(1)"' + (__miPage >= miTotalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+        + '</div>';
     }
   }
   document.getElementById('monthly-income-list').innerHTML = miHtml;
