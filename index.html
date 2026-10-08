@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-168">
+<meta name="hami-build" content="2026-10-08-169">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6050,7 +6050,7 @@
   <div id="panel-movie-good" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：每日自动推荐一部电影，含海报、评分、导演及推荐理由。数据每日自动更新~
+      💕 <b>使用说明</b>：每3天轮换推荐一部高分经典电影（片单固定，由小助理维护）~
     </div>
 
     <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
@@ -6067,7 +6067,7 @@
   <div id="panel-movie-now" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：以票根设计展示当前热映和即将上映影片。数据每日自动更新~
+      💕 <b>使用说明</b>：以票根设计展示当前热映和即将上映影片（由小助理定期维护更新）~
     </div>
 
     <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
@@ -6693,100 +6693,160 @@ recommendList: [
     // 近期上映电影（票根展示）
     nowPlaying: [
       {
-        title: '蜘蛛侠：崭新之日',
-        rating: 7.8,
-        director: '德斯汀·克里顿',
-        cast: '汤姆·赫兰德 / 赞达亚',
+        title: '神探之痕迹',
+        rating: null,
+        director: '陈思诚',
+        cast: '张译/马丽/范丞丞/王俊凯/陈飞宇/敖子逸',
+        country: '中国',
+        genres: ['犯罪', '悬疑'],
+        releaseDate: '2026-10-01',
+        status: 'hot',
+        posterColors: ['#1a2a4a', '#c0392b'],
+        posterEmoji: '🔍'
+      },
+      {
+        title: '什么意思夫妇',
+        rating: null,
+        director: '沈春阳',
+        cast: '小沈阳/沈春阳/贾冰/于洋',
+        country: '中国',
+        genres: ['喜剧', '家庭'],
+        releaseDate: '2026-10-01',
+        status: 'hot',
+        posterColors: ['#ff9a9e', '#fad0c4'],
+        posterEmoji: '💑'
+      },
+      {
+        title: '野兽之心',
+        rating: null,
+        director: '大卫·阿耶',
+        cast: '布拉德·皮特/J·K·西蒙斯',
         country: '美国',
-        genres: ['动作', '科幻'],
-        releaseDate: '2026-07-29',
-        status: 'new',
-        posterColors: ['#1a1a2e', '#e94560'],
-        posterEmoji: '🕷️'
-      },
-      {
-        title: '功夫女足',
-        rating: 6.6,
-        director: '周星驰',
-        cast: '张小斐 / 迪丽热巴 / 张艺兴',
-        country: '中国',
-        genres: ['喜剧', '运动'],
-        releaseDate: '2026-07-11',
+        genres: ['剧情', '动作', '冒险'],
+        releaseDate: '2026-09-30',
         status: 'hot',
-        posterColors: ['#2d5016', '#6b8e3d'],
-        posterEmoji: '⚽'
+        posterColors: ['#2c3e50', '#e67e22'],
+        posterEmoji: '🐺'
       },
       {
-        title: '小黄人与大怪兽',
-        rating: 6.8,
-        director: '皮埃尔·柯芬',
-        cast: '照明娱乐出品',
-        country: '美国',
-        genres: ['喜剧', '动画'],
-        releaseDate: '2026-07-03',
-        status: 'hot',
-        posterColors: ['#f5e642', '#faa628'],
-        posterEmoji: '👾'
-      },
-      {
-        title: '三国第一部：争洛阳',
+        title: '活色生香',
         rating: null,
-        director: '追光动画',
-        cast: '《长安三万里》原班人马',
+        director: '罗冬',
+        cast: '闫妮/叶童/倪虹洁',
         country: '中国',
-        genres: ['动画', '历史'],
-        releaseDate: '2026-07-10',
+        genres: ['剧情', '喜剧'],
+        releaseDate: '2026-10-01',
         status: 'hot',
-        posterColors: ['#5c2e2e', '#8b4513'],
-        posterEmoji: '⚔️'
+        posterColors: ['#ff6b9d', '#c44569'],
+        posterEmoji: '🌸'
       },
       {
-        title: '八仙！',
+        title: '侦战',
         rating: null,
-        director: '牟正洋',
-        cast: '东方梦工厂出品',
-        country: '中国',
-        genres: ['喜剧', '动画'],
-        releaseDate: '2026-07-18',
+        director: '孔令政',
+        cast: '古天乐/谢君豪/此沙/任达华',
+        country: '中国香港',
+        genres: ['悬疑', '犯罪'],
+        releaseDate: '2026-10-01',
         status: 'hot',
-        posterColors: ['#4a3c8c', '#7b68ee'],
-        posterEmoji: '仙'
+        posterColors: ['#34495e', '#e74c3c'],
+        posterEmoji: '🕵️'
       },
       {
-        title: '红孩儿火焰山之王',
+        title: '小猪佩奇·完美假期',
         rating: null,
-        director: '国产动漫团队',
-        cast: '孙悟空大闹天宫前传',
+        director: '刘源',
+        cast: '动画电影',
+        country: '中国/英国',
+        genres: ['动画', '亲子'],
+        releaseDate: '2026-10-01',
+        status: 'hot',
+        posterColors: ['#ff9ff3', '#f368e0'],
+        posterEmoji: '🐷'
+      },
+      {
+        title: '熊猫守护者',
+        rating: null,
+        director: '陈设',
+        cast: '动画',
         country: '中国',
-        genres: ['奇幻', '动画'],
-        releaseDate: '2026-07-25',
+        genres: ['动画', '冒险'],
+        releaseDate: '2026-10-01',
+        status: 'hot',
+        posterColors: ['#27ae60', '#2ecc71'],
+        posterEmoji: '🐼'
+      },
+      {
+        title: '新大头儿子和小头爸爸之天眼系列:失控的第七天',
+        rating: null,
+        director: '动画',
+        cast: '中国',
+        country: '中国',
+        genres: ['动画', '家庭'],
+        releaseDate: '2026-10-03',
+        status: 'hot',
+        posterColors: ['#3498db', '#2980b9'],
+        posterEmoji: '👦'
+      },
+      {
+        title: '重生2',
+        rating: null,
+        director: '马浴柯',
+        cast: '动作犯罪',
+        country: '中国',
+        genres: ['动作', '犯罪'],
+        releaseDate: '2026-10-03',
+        status: 'hot',
+        posterColors: ['#8e44ad', '#9b59b6'],
+        posterEmoji: '♻️'
+      },
+      {
+        title: '怨宅',
+        rating: null,
+        director: '惊悚',
+        cast: '中国',
+        country: '中国',
+        genres: ['惊悚', '悬疑'],
+        releaseDate: '2026-10-05',
+        status: 'hot',
+        posterColors: ['#2c3e50', '#7f8c8d'],
+        posterEmoji: '🏚️'
+      },
+      {
+        title: '象行记',
+        rating: null,
+        director: '动画',
+        cast: '中国',
+        country: '中国',
+        genres: ['动画', '冒险'],
+        releaseDate: '2026-10-23',
         status: 'soon',
-        posterColors: ['#8b0000', '#ff4500'],
-        posterEmoji: '🔥'
+        posterColors: ['#16a085', '#1abc9c'],
+        posterEmoji: '🐘'
       },
       {
-        title: '群星闪耀时',
+        title: '阴阳路惊魂',
         rating: null,
-        director: '待公布',
-        cast: '科幻冒险',
+        director: '惊悚',
+        cast: '中国',
         country: '中国',
-        genres: ['科幻', '冒险'],
-        releaseDate: '2026-08-01',
+        genres: ['惊悚', '恐怖'],
+        releaseDate: '2026-10-30',
         status: 'soon',
-        posterColors: ['#0d1b2a', '#415a77'],
-        posterEmoji: '🌌'
+        posterColors: ['#2c3e50', '#34495e'],
+        posterEmoji: '👻'
       },
       {
-        title: '年会不能停2!',
+        title: '孤楼夜幽灵',
         rating: null,
-        director: '待公布',
-        cast: '张若昀 / 白客',
+        director: '惊悚',
+        cast: '中国',
         country: '中国',
-        genres: ['喜剧'],
-        releaseDate: '2026-08-07',
+        genres: ['惊悚', '恐怖'],
+        releaseDate: '2026-10-31',
         status: 'soon',
-        posterColors: ['#5f0f40', '#9a031e'],
-        posterEmoji: '🎉'
+        posterColors: ['#1a1a2e', '#0f3460'],
+        posterEmoji: '👻'
       }
     ]
   }
