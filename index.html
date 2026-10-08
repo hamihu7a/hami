@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-177">
+<meta name="hami-build" content="2026-10-08-178">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6342,6 +6342,13 @@
           <div id="imp-dates-dedupe-status" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">点下面按钮开始清理…</div>
           <button onclick="dedupeImportantDates()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);">
             🧹 立即清理重复日期
+          </button>
+          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin:14px 0 10px;">
+            <b style="color:#b3325c;">改生日后旧日期又冒出来？</b>点下面按钮：同一个人（同名同类型）若出现多个不同日期，
+            只保留您<b>最后编辑</b>的那条，其余彻底删除并同步云端。
+          </div>
+          <button onclick="fixImportantDatesByNameV177()" style="padding:11px 16px;border:none;border-radius:10px;background:#d14b73;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
+            🛠 修复「同名多个日期」（保留最后编辑的）
           </button>
         </div>
       </div>
@@ -17881,6 +17888,63 @@ function autoCleanImportantDates() {
     });
     if (removed) { try { saveData(); } catch (e) {} try { hamiDeleteSync(); } catch (e) {} }
   } catch (e) {}
+}
+// v177：精准修复「同一个人（同名+同类型）出现多个不同日期」——保留最后编辑的那条。
+// 与旧 dedupeImportantDates 的区别：不按日期分组，而是按「名字+类型」分组；
+// 用记录 id 里的时间戳（imp_<ts>_xxx）判断哪条最新，保留最新、其余写墓碑删除。手动触发，绝不自动跑。
+async function fixImportantDatesByNameV177() {
+  const status = document.getElementById('imp-dates-dedupe-status');
+  if (!store.importantDates || !store.importantDates.length) { if (status) status.textContent = '没有重要日期记录。'; return; }
+  // 找同名+同类型但日期不同的组
+  const groups = {};
+  store.importantDates.forEach(function (x, i) {
+    if (!x) return;
+    const nm = (x.name || '').trim();
+    if (!nm) return;
+    const k = (x.type || 'birthday') + '|' + (x.isLunar ? 1 : 0) + '|' + nm;
+    (groups[k] = groups[k] || []).push(i);
+  });
+  const plans = [];   // {keep:i, drops:[i...], name, dates}
+  Object.keys(groups).forEach(function (k) {
+    const idxs = groups[k];
+    if (idxs.length < 2) return;
+    const dates = {};
+    idxs.forEach(function (i) { dates[store.importantDates[i].date] = true; });
+    if (Object.keys(dates).length < 2) return;   // 同名同日期不算
+    // 取 id 时间戳最大的（最新编辑的）保留；无 id 的排最后
+    let keep = idxs[0], keepTs = -1;
+    idxs.forEach(function (i) {
+      const id = String(store.importantDates[i].id || '');
+      const m = id.match(/^imp_(\d+)_/);
+      const ts = m ? parseInt(m[1], 10) : ((store.importantDates[i]._ts) || 0);
+      if (ts > keepTs) { keepTs = ts; keep = i; }
+    });
+    const drops = idxs.filter(function (i) { return i !== keep; });
+    plans.push({ keep: keep, drops: drops, name: store.importantDates[keep].name || '', dates: Object.keys(dates).sort() });
+  });
+  if (!plans.length) { if (status) status.textContent = '✅ 没有发现「同一个人的生日/纪念日出现多个不同日期」的情况。'; try { finToast('没有需要修复的重复'); } catch (e) {} return; }
+  let msg = '检测到以下「同一个人出现多个不同日期」：\n\n';
+  plans.forEach(function (p) { msg += '· ' + p.name + '：共 ' + p.dates.length + ' 个日期（' + p.dates.join('、') + '）→ 只保留最新编辑的那条\n'; });
+  msg += '\n确定修复吗？（会删除多余副本并同步云端，保留的那条以您最后编辑的为准）';
+  if (!await hamiConfirm(msg)) return;
+  let removed = 0;
+  plans.forEach(function (p) {
+    // 从后往前删，避免索引错位
+    const sorted = p.drops.slice().sort(function (a, b) { return b - a; });
+    sorted.forEach(function (i) {
+      const x = store.importantDates[i];
+      if (!x) return;
+      try { hamiTombAdd('importantDates', x); } catch (e) {}
+      store.importantDates.splice(i, 1);
+      removed++;
+    });
+  });
+  try { saveData(); } catch (e) {}
+  try { hamiDeleteSync(); } catch (e) {}
+  try { renderReminder(); } catch (e) {}
+  try { hamiRequestFullRender(); } catch (e) {}
+  if (status) status.textContent = '✅ 已修复 ' + plans.length + ' 个名字、删除 ' + removed + ' 条多余副本，保留 ' + store.importantDates.length + ' 条。';
+  try { finToast('已修复重要日期重复'); } catch (e) {}
 }
 async function dedupeImportantDates() {
   const status = document.getElementById('imp-dates-dedupe-status');
