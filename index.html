@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-161">
+<meta name="hami-build" content="2026-10-08-162">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7739,7 +7739,15 @@ function embedBgConfigIntoHtml(html, cfg) {
   const marker = '<script type="application/json" id="hami-bg-config">';
   const re = new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?<\\/script>');
   if (re.test(html)) return html.replace(re, marker + json + '</' + 'script>');
-  return html.replace('</body>', marker + json + '</' + 'script></body>');
+  return html.replace('<script>
+/* 注册 Service Worker：离线可开 + 始终拉线上最新（网络优先），失败才回缓存。失败静默。 */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>', marker + json + '</' + 'script></body>');
 }
 
 // ============ 云端同步（GitHub 加密后端 · 零登录）============
