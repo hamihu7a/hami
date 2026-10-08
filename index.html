@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-178">
+<meta name="hami-build" content="2026-10-08-179">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11198,7 +11198,20 @@ function ensureDefaults() {
       const exists = (store.importantDates || []).some(function (x) {
         return x && x.type === d.type && x.date === d.date && (x.name || '') === d.name;
       });
-      if (!exists) store.importantDates.push(d);
+      if (exists) return;
+      // v179【根治"删了又复活"】：主人删过的默认项绝不再播种！
+      // 之前只查"数据里有没有"，从不查墓碑 → 删掉的庄梓岗生日/恋爱纪念日、改掉生日的旧日期，
+      // 每次启动都被这条播种逻辑重新种回来（表现为"我明明删了/改了，刷新又回到旧数据"）。
+      // 现在先恢复墓碑镜像，再用种子的全部身份键（含 v179 历史各代兼容键）比对墓碑，任一命中即跳过。
+      try {
+        if (typeof hamiTombMirrorMerge === 'function') hamiTombMirrorMerge();
+        const __sdKeys = (typeof _allDedupKeys === 'function') ? _allDedupKeys('importantDates', d) : [];
+        const __tombs = (store.__deleted && Array.isArray(store.__deleted['importantDates'])) ? store.__deleted['importantDates'] : [];
+        for (let __ki = 0; __ki < __sdKeys.length; __ki++) {
+          if (__sdKeys[__ki] && __tombs.indexOf(__sdKeys[__ki]) >= 0) return;   // 主人删过 → 永不再播
+        }
+      } catch (e) {}
+      store.importantDates.push(d);
     });
   })();
   if (store.travelPlans === undefined) {
