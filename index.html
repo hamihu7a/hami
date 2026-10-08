@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-164">
+<meta name="hami-build" content="2026-10-08-165">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1829,6 +1829,22 @@
     background: rgba(255,255,255,0.6); color: var(--c-pink-deep, #d14b73);
     font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
   }
+  /* v165：已完成图文「翻页」控件（马卡龙粉少女风，与 .future-done-toggle 同调性） */
+  .sch-pager {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 10px;
+  }
+  .sch-page-btn {
+    padding: 6px 14px; border-radius: 999px;
+    border: 1px solid rgba(209,75,115,0.35);
+    background: rgba(255,255,255,0.7); color: var(--c-pink-deep, #d14b73);
+    font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .sch-page-btn:hover:not([disabled]) { background: #ffd5e1; }
+  .sch-page-btn:active:not([disabled]) { transform: scale(0.95); }
+  .sch-page-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .sch-page-info { font-size: 12px; font-weight: 700; color: #a07080; }
   .future-done-toggle:hover { background: rgba(255,224,233,0.7); }
   .future-post-card.future-post-card-compact { padding: 10px 12px 10px 14px; }
   .future-post-card.future-post-card-compact .future-post-title { margin-bottom: 4px; }
@@ -8028,7 +8044,10 @@ function unionArrays(la, ra, key) {
   // 于是主人几天前标记完成、今天一拉云端就全部退回未完成。
   // 修法：futurePosts 走「合并同条」而不是「先到先得」——同一条记录若两边都有，
   // 取「信息更完整」的那份：done 为 true 优先，其次 createdAt / date 较新的一方。
-  const isFp = (key === 'futurePosts');
+  // v165：把「完成优先」保护从 futurePosts 扩展到 userTodos——
+  // 之前 userTodos 走「先到先得」，若云端拉回的是 done:false 旧快照，会把本地已完成的顶回未完成。
+  // 现在两类带 done 的列表合一待遇：同一条若任一为完成态就保留完成。
+  const isDonePriority = (key === 'futurePosts' || key === 'userTodos');
   const _mergeFp = function (a, b) {
     // a = 已收录的，b = 新来的同条
     if (!a || typeof a !== 'object') return b;
@@ -8053,8 +8072,8 @@ function unionArrays(la, ra, key) {
       if (dk && seen[dk]) { hitKey = dk; break; }
     }
     if (hitKey) {
-      // 已收录过同一条 → futurePosts 走"择优合并"，其它列表保持原行为（先到先得）
-      if (isFp) {
+      // 已收录过同一条 → 带 done 的列表走"择优合并（完成优先）"，其它列表保持原行为（先到先得）
+      if (isDonePriority) {
         const oi = outIndexOf[hitKey];
         if (oi != null && out[oi] !== undefined) out[oi] = _mergeFp(out[oi], it);
       }
@@ -8062,7 +8081,7 @@ function unionArrays(la, ra, key) {
     }
     for (let i = 0; i < ks.length; i++) {
       const dk = ks[i];
-      if (dk) { seen[dk] = true; if (isFp) outIndexOf[dk] = out.length; }
+      if (dk) { seen[dk] = true; if (isDonePriority) outIndexOf[dk] = out.length; }
     }
     out.push(it);
   });
@@ -13107,6 +13126,7 @@ function schStepMonth(delta) {
   if (nm < 1) { nm = 12; ny--; }
   if (nm > 12) { nm = 1; ny++; }
   schViewMonth = ny + '-' + String(nm).padStart(2, '0');
+  __schPage = 0;   // v165：切换月份时翻页归零，避免停在无数据的页
   renderPublishCalendar();
 }
 function schAccName(a) { return a === 'big' ? '美化档大号' : a === 'small' ? '定制人物小号' : '抖音'; }
@@ -13245,9 +13265,13 @@ function renderPublishCalendar() {
         combined.push({ kind: 'media', item: r, date: r.date || '', sort: (r.date || '') + (r.time || '00:00') });
       });
       combined.sort(function (a, b) { return a.sort.localeCompare(b.sort); });
-      const COLLAPSE_AT = 3;
-      const showAll = __schExpanded || combined.length <= COLLAPSE_AT;
-      const viewList = showAll ? combined : combined.slice(0, COLLAPSE_AT);
+      // v165：已完成图文列表改为「翻页」——每页 3 条，‹ › 切换，不再「点击展开」一次性铺开
+      const PER_PAGE = 3;
+      const totalPages = Math.max(1, Math.ceil(combined.length / PER_PAGE));
+      if (__schPage < 0) __schPage = 0;
+      if (__schPage > totalPages - 1) __schPage = totalPages - 1;
+      const startIdx = __schPage * PER_PAGE;
+      const viewList = combined.slice(startIdx, startIdx + PER_PAGE);
       let html = '';
       viewList.forEach(function (it) {
         if (it.kind === 'schedule') {
@@ -13283,18 +13307,18 @@ function renderPublishCalendar() {
             + '</div></div>';
         }
       });
-      if (combined.length > COLLAPSE_AT) {
-        if (showAll) {
-          html += '<button class="future-done-toggle" onclick="__schExpanded=false;renderPublishCalendar();">收起 ▲</button>';
-        } else {
-          html += '<button class="future-done-toggle" onclick="__schExpanded=true;renderPublishCalendar();">展开全部 ' + combined.length + ' 条 ▼</button>';
-        }
+      if (combined.length > PER_PAGE) {
+        html += '<div class="sch-pager">';
+        html += '<button class="sch-page-btn" ' + (__schPage <= 0 ? 'disabled' : '') + ' onclick="__schPage=Math.max(0,__schPage-1);renderPublishCalendar();">‹ 上一页</button>';
+        html += '<span class="sch-page-info">第 ' + (__schPage + 1) + ' / ' + totalPages + ' 页</span>';
+        html += '<button class="sch-page-btn" ' + (__schPage >= totalPages - 1 ? 'disabled' : '') + ' onclick="__schPage=Math.min(' + (totalPages - 1) + ',__schPage+1);renderPublishCalendar();">下一页 ›</button>';
+        html += '</div>';
       }
       listEl.innerHTML = html;
     }
   }
 }
-let __schExpanded = false;
+let __schPage = 0;   // v165：发布日历「已完成图文」翻页当前页（每页 3 条）
 
 // ==================== 未来更新图文记录 ====================
 let editingFpIdx = -1;
