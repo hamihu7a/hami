@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-175">
+<meta name="hami-build" content="2026-10-08-176">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -17780,7 +17780,34 @@ function submitDateRecord() {
   //     云端那条约「旧名字」的记录因此被墓碑拦下，不会再并回来变成两条。
   //   · 新增：hamiPushRecord 自动补 id + 撤销同键墓碑（删过再记也能回来）。
   if (editIdx >= 0 && store.importantDates && store.importantDates[editIdx]) {
+    const oldItem = store.importantDates[editIdx];
     hamiEditRecord('importantDates', editIdx, obj, renderReminder);
+    // v176【根治「改生日后冒出旧日期重复条」】：
+    // 去重/合并的分组键是「类型|日期」，改了日期后新版与旧版分组不同，不会被自动去重；
+    // 而云端那条无 id（或两端各自补的随机 id 不一致）的旧记录又躲过墓碑，刷新后并回来，
+    // 于是出现「旧日期 2 条 + 新日期 1 条」。这里在编辑保存后，
+    // 把「同名 + 同类型 + 日期 = 旧日期」的其它残留副本全部写墓碑删除，云端旧记录再也并不回来。
+    try {
+      const oldDate = oldItem.date;
+      const nm = (oldItem.name || '').trim();
+      const tp = oldItem.type || 'birthday';
+      if (oldDate && oldDate !== date) {
+        for (let i = store.importantDates.length - 1; i >= 0; i--) {
+          if (i === editIdx) continue;
+          const x = store.importantDates[i];
+          if (!x) continue;
+          if ((x.type || 'birthday') === tp && (x.name || '').trim() === nm && x.date === oldDate) {
+            try { hamiTombAdd('importantDates', x); } catch (e) {}
+            // 该副本可能带 id，其 id 键也要一并墓碑，否则云端同 id 副本仍会并回来
+            if (x.id) { try { hamiTombAdd('importantDates', { id: x.id, type: tp, name: nm, date: oldDate }); } catch (e) {} }
+            store.importantDates.splice(i, 1);
+            if (i < editIdx) editIdx--;   // 删除位置在当前编辑项之前 → 编辑索引前移
+          }
+        }
+        try { saveData(); } catch (e) {}
+        try { hamiDeleteSync(); } catch (e) {}
+      }
+    } catch (e) {}
     try { finToast('🎉 已保存日期「' + name + '」'); } catch (e) {}
   } else {
     hamiPushRecord('importantDates', obj);
@@ -17839,6 +17866,34 @@ function autoCleanImportantDates() {
         }
       }
     });
+    // v176【根治「改生日后冒出旧日期重复条」】：
+    // 主人把某人的生日改到新日期后，云端那条无 id（或两端补的随机 id 不一致）的旧记录
+    // 会躲过墓碑在下次合并时并回来，表现为「同名同人，却旧日期 2 条 + 新日期 1 条」。
+    // 上半段按「同日期」的分组抓不到它（旧日期与新日期不同组）。
+    // 这里按「同类型 + 同历法 + 同名」再抓一次：同一个人的生日不可能有两个不同日期，
+    // 故只保留最新添加的那条（数组末尾 = 主人刚改出来的新版），其余旧日期副本一律写墓碑删除。
+    try {
+      const byName = {};
+      store.importantDates.forEach(function (x, i) {
+        if (!x || !x.date) return;
+        const nm = (x.name || '').trim();
+        if (!nm) return;
+        const k = (x.type || 'birthday') + '|' + (x.isLunar ? 1 : 0) + '|' + nm;
+        (byName[k] = byName[k] || []).push({ x: x, i: i });
+      });
+      Object.keys(byName).forEach(function (k) {
+        const arr = byName[k];
+        if (arr.length < 2) return;
+        const dates = {};
+        arr.forEach(function (e) { dates[e.x.date] = true; });
+        if (Object.keys(dates).length < 2) return;         // 同名同日期不算（交给上半段）
+        const keepIdx = arr[arr.length - 1].i;             // 保留最靠后 = 最新编辑的新版
+        arr.forEach(function (e) {
+          if (e.i === keepIdx) return;
+          if (toRemove.indexOf(e) < 0) toRemove.push(e);
+        });
+      });
+    } catch (e) {}
     let removed = 0;
     toRemove.forEach(function (entry) {
       const idx = store.importantDates.indexOf(entry.x);
