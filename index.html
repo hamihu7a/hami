@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-09-181">
+<meta name="hami-build" content="2026-10-09-182">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9046,32 +9046,13 @@ async function pushNow() {
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const pulledSha = await pullAndMerge();
+        // v182【根治手机/电脑同步不稳定】之前同步档案把背景图(bgBackups ~679KB)也塞进去，
+        // 导致整个档案膨胀到 1MB+，触发 GitHub 对 >1MB 文件"只读空内容"的官方限制，
+        // 云端数据永远拉不到、手机端推送也极易超时 → 表现为"手机电脑永远不同步"。
+        // 现改为【业务数据单独同步】：背景图不再写入同步档案（背景图以各设备本地 localStorage/IDB 为准，
+        // 本就不会丢失；跨设备背景恢复属锦上添花，绝不该拖垮核心数据同步）。
+        // 去掉背景图后主档案回到 ~400KB，GitHub Contents API 读写都可正常返回，手机端也能稳定同步。
         const payload = { v: 1, updatedAt: Date.now(), store: store };
-        // 把背景图也带上云端（base64 字串 ≤30KB/张；主人换设备 / 清缓存时能一键拉回）
-        // v34：【根治背景图消失】背景图以本地 BG_CACHE 为准（已由 localStorage 主存保证可靠），
-        // 直接写入云端，删除的图也不会被带上云 → 云端等于本地全集。
-        // 仅当本地 BG_CACHE 极端情况下完全为空时，才保留云端已有图、绝不静默清空。
-        try {
-          let bgs = Object.assign({}, BG_CACHE);
-          if (!Object.keys(bgs).length) {
-            // v181：优先复用刚才 pull 已解出来的云端背景图，不再为它单独下载一遍 1MB
-            if (_lastPullBg && Object.keys(_lastPullBg).length) {
-              bgs = _lastPullBg;
-            } else {
-              try {
-                const got = await _ghGet();
-                if (got) {
-                  const r = await decryptStore(got.content.replace(/\s+/g, ''), '');
-                  if (r && r.bgBackups) bgs = r.bgBackups;
-                }
-              } catch (e2) {}
-            }
-          }
-          if (bgs && Object.keys(bgs).length) {
-            payload.bgBackups = bgs;
-            payload.bgBackupsAt = Date.now();
-          }
-        } catch (e3) {}
         const ct = await encryptStore(payload, '');
         // v181：复用刚才 pull 拿到的 sha（同一轮内必然是最新值），不再额外下载一遍拿 sha
         let upSha = pulledSha || ((Date.now() - _lastPullAt < 60000) ? _lastPullSha : null);
