@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-08-180">
+<meta name="hami-build" content="2026-10-09-181">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7965,6 +7965,43 @@ function _b64dec(b64) {
   } catch (e) { return null; }
 }
 
+// v181：缓存最近一次拉取拿到的「档案 sha」与「云端背景图」。
+// 原来 pushNow 一次推送要重复下载 1MB 大档案 2~3 遍（拉合并 1 次 + 取背景图 1 次 + 取 sha 1 次），
+// 手机网络下极易超时 → 同步失败。现在同一轮内直接复用，一次推送只下载 1 遍。
+let _lastPullSha = null;
+let _lastPullBg = null;
+let _lastPullAt = 0;
+
+// v181【根治「手机端和电脑端永远不同步」】
+// 真凶：sync/hami-store.json 已经长到 1MB 以上，而 **GitHub Contents API 对 >1MB 的文件只返回
+// 元数据、content 字段是空字符串**（GitHub 官方限制）。于是 _ghGet 每次都拿到 '' → 解密失败 →
+// 云端数据**一次都没有真正拉到过**：手机上记的体重，电脑端永远看不见。
+// 更糟的是写入端仍能正常拿到 sha 并 PUT 成功，电脑端会用自己本地的老数据把云端覆盖掉，
+// 表现为「手机记完 → 电脑一打开 → 记录没了」。
+// 修法：改用 **git Blobs API** 读文件全文（不受 1MB 限制，实测可读到 1063129 字节）：
+//   refs/heads/<branch> → commit → tree(?recursive=1) → 定位目标路径的 blob sha → GET /git/blobs/<sha>
+// 小档案仍走原 Contents API（更快），content 为空时自动回退，两种情况都稳。
+async function _ghGetBlobB64() {
+  const base = 'https://api.github.com/repos/' + HAMI_SYNC.repo;
+  const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' };
+  const gj = async function (u) {
+    const r = await fetch(u, { headers: hd, cache: 'no-store' });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  };
+  const ref = await gj(base + '/git/refs/heads/' + HAMI_SYNC.branch);
+  if (!ref || !ref.object) return null;
+  const commit = await gj(base + '/git/commits/' + ref.object.sha);
+  if (!commit || !commit.tree) return null;
+  const tree = await gj(base + '/git/trees/' + commit.tree.sha + '?recursive=1');
+  if (!tree || !Array.isArray(tree.tree)) return null;
+  const hit = tree.tree.filter(function (x) { return x && x.path === HAMI_SYNC.path; })[0];
+  if (!hit) return null;                       // 云端还没有档案
+  const blob = await gj(base + '/git/blobs/' + hit.sha);
+  if (!blob || !blob.content) return null;
+  return { b64: blob.content, sha: hit.sha };
+}
 async function _ghGet() {
   const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path + '?ref=' + HAMI_SYNC.branch;
   let res;
@@ -7984,11 +8021,31 @@ async function _ghGet() {
     throw new Error('拉取失败 HTTP ' + res.status);
   }
   const j = await res.json();
+  let rawB64 = j.content;
+  let sha = j.sha;
+  let viaBlob = false;
+  // v181：大文件（>1MB）时 GitHub 只给元数据、content 为空 → 必须回退到 git Blobs API 取全文
+  if (!rawB64) {
+    try {
+      const got = await _ghGetBlobB64();
+      if (got && got.b64) { rawB64 = got.b64; if (got.sha) sha = got.sha; viaBlob = true; }
+    } catch (e) {
+      _diagStep('拉取云端档案', false, '大档案 Blobs 回退失败：' + ((e && e.message) ? e.message : e));
+    }
+  }
+  if (!rawB64) {
+    _diagStep('拉取云端档案', false, '云端档案内容为空（文件可能已损坏，或超过 API 可读上限）');
+    throw new Error('云端档案内容为空');
+  }
   // 解掉外层 Base64 包装，还原成 "base64(iv):base64(密文)" 供解密函数直接使用
-  const inner = _b64dec(j.content);
-  if (inner === null) { _diagStep('拉取云端档案', false, '档案外层 Base64 解码失败（文件可能已损坏）'); throw new Error('云端档案解码失败'); }
-  _diagStep('拉取云端档案', true, 'HTTP 200，已解包');
-  return { sha: j.sha, content: inner };
+  // （Blobs API 返回的本来就是纯 Base64，直接 atob 更快，跳过 _b64dec 的两轮正则扫描）
+  let inner = null;
+  try {
+    inner = viaBlob ? atob(String(rawB64).replace(/\s+/g, '')) : _b64dec(rawB64);
+  } catch (e) { inner = null; }
+  if (inner === null || !inner) { _diagStep('拉取云端档案', false, '档案外层 Base64 解码失败（文件可能已损坏）'); throw new Error('云端档案解码失败'); }
+  _diagStep('拉取云端档案', true, 'HTTP 200，已解包' + (viaBlob ? '（大档案：走 git Blobs API）' : ''));
+  return { sha: sha, content: inner };
 }
 async function _ghPut(contentB64, sha, message) {
   const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path;
@@ -8917,12 +8974,14 @@ function renderAllFromCloud() {
 }
 
 async function pullAndMerge() {
-  if (!hamiCloudEnabled()) return;
+  if (!hamiCloudEnabled()) return null;
   // v2026-10-05 安全网：合并改写 store 前先快照当前（本地）数据，任何误删都能从「🚑 数据急救」捞回
   try { hamiSnapshotBeforeRisk('pull'); } catch (e) {}
   cloudStatus('⏳ 正在从云端拉取…', '#c75b86');
   const got = await _ghGet();
-  if (!got) { cloudStatus('☁️ 云端暂无数据，将把本机数据上传', '#5aa86a'); return; }
+  if (!got) { cloudStatus('☁️ 云端暂无数据，将把本机数据上传', '#5aa86a'); return null; }
+  // v181：记下本次拿到的 sha / 背景图，让同一轮 pushNow 直接复用，省掉重复的 1MB 下载
+  try { if (got.sha) { _lastPullSha = got.sha; _lastPullAt = Date.now(); } } catch (e) {}
   // 关键修复：解密先试【默认密码】，再试【本机进阶密码】。
   // 这样无论云端是哪种密码加密，本机都能合并进来，绝不因密码不一致而丢数据。
   let remote = null;
@@ -8963,13 +9022,16 @@ async function pullAndMerge() {
         }
       }
     } catch (e) {}
+    try { if (remote.bgBackups && Object.keys(remote.bgBackups).length) _lastPullBg = remote.bgBackups; } catch (e) {}
     _lastSyncAt = Date.now(); _persistLastSync();
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
     syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
+    return got.sha || null;
   } else {
     // 云端加密与本地密码都不匹配：不致命，保留本机数据，交给 pushNow 用默认密码上传覆盖，
     // 避免“解不开就整段同步失败 + 数据看不见”。
     cloudStatus('☁️ 云端加密与本地密码不一致，将用本机数据上传', '#c75b86');
+    return got.sha || null;
   }
 }
 async function pushNow() {
@@ -8983,7 +9045,7 @@ async function pushNow() {
     // 既解冲突，又绝不用旧内容覆盖别处刚记的数据（根治数据偶发丢失）。
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
-        await pullAndMerge();
+        const pulledSha = await pullAndMerge();
         const payload = { v: 1, updatedAt: Date.now(), store: store };
         // 把背景图也带上云端（base64 字串 ≤30KB/张；主人换设备 / 清缓存时能一键拉回）
         // v34：【根治背景图消失】背景图以本地 BG_CACHE 为准（已由 localStorage 主存保证可靠），
@@ -8992,13 +9054,18 @@ async function pushNow() {
         try {
           let bgs = Object.assign({}, BG_CACHE);
           if (!Object.keys(bgs).length) {
-            try {
-              const got = await _ghGet();
-              if (got) {
-                const r = await decryptStore(got.content.replace(/\s+/g, ''), '');
-                if (r && r.bgBackups) bgs = r.bgBackups;
-              }
-            } catch (e2) {}
+            // v181：优先复用刚才 pull 已解出来的云端背景图，不再为它单独下载一遍 1MB
+            if (_lastPullBg && Object.keys(_lastPullBg).length) {
+              bgs = _lastPullBg;
+            } else {
+              try {
+                const got = await _ghGet();
+                if (got) {
+                  const r = await decryptStore(got.content.replace(/\s+/g, ''), '');
+                  if (r && r.bgBackups) bgs = r.bgBackups;
+                }
+              } catch (e2) {}
+            }
           }
           if (bgs && Object.keys(bgs).length) {
             payload.bgBackups = bgs;
@@ -9006,8 +9073,13 @@ async function pushNow() {
           }
         } catch (e3) {}
         const ct = await encryptStore(payload, '');
-        const got = await _ghGet();
-        await _ghPut(ct, got ? got.sha : null, 'hami sync ' + new Date().toISOString());
+        // v181：复用刚才 pull 拿到的 sha（同一轮内必然是最新值），不再额外下载一遍拿 sha
+        let upSha = pulledSha || ((Date.now() - _lastPullAt < 60000) ? _lastPullSha : null);
+        if (!upSha) {
+          const got = await _ghGet();
+          upSha = got ? got.sha : null;
+        }
+        await _ghPut(ct, upSha, 'hami sync ' + new Date().toISOString());
         _lastSyncAt = Date.now(); _persistLastSync();
         cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
         syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
