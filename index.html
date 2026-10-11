@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-214">
+<meta name="hami-build" content="2026-10-11-215">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -15962,6 +15962,11 @@ function renderAccount() {
   // 联动：定制单明细金额自动计入收入（所有金额，不分状态）
   const ordersAll = (store.customOrders || []).filter(o => o.date && (month === 'all' || o.date.startsWith(month)));
   const customOrdersIncome = ordersAll.reduce((s,o) => s + (parseFloat(o.amount) || 0), 0);
+  // v214：账本里「定制单收入」（26 年 1~3 月导入的那批）也要计入联动，否则这张卡显示 ¥0 与账本对不上
+  const ledgerCustomAll = ledgerCustomIncomeRows(month);
+  const ledgerCustomIncome = ledgerCustomAll.reduce((s, r) => s + r.amount, 0);
+  const customIncomeAll = customOrdersIncome + ledgerCustomIncome;   // 定制单一列 = 模块订单 + 账本同步
+  const customCountAll = ordersAll.length + ledgerCustomAll.length;
   // 联动：美化档明细金额自动计入收入（与收入账本/统计表口径一致）
   const beautyAll = (store.beautyRecords || []).filter(b => b.date && (month === 'all' || b.date.startsWith(month)));
   const beautyIncome = beautyAll.reduce((s,b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
@@ -15998,7 +16003,7 @@ function renderAccount() {
   }
 
   const lastMD = (function(){
-    const pool = [...records, ...ordersAll, ...beautyAll];
+    const pool = [...records, ...ordersAll, ...beautyAll, ...ledgerCustomAll];
     if (pool.length === 0) return '暂无记录';
     const dates = pool.map(x => x.date).filter(Boolean).sort().reverse();
     return dates[0] || '暂无记录';
@@ -16011,7 +16016,8 @@ function renderAccount() {
   const todayManualInc = records.filter(r => r.date === _today && r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const todayOrderInc = (store.customOrders || []).filter(o => o.date === _today).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
   const todayBeautyInc = (store.beautyRecords || []).filter(b => b.date === _today).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
-  const todayIncome = todayManualInc + todayOrderInc + todayBeautyInc;
+  const todayLedgerCustom = ledgerCustomIncomeRows(null).filter(r => r.date === _today).reduce((s, r) => s + r.amount, 0);
+  const todayIncome = todayManualInc + todayOrderInc + todayBeautyInc + todayLedgerCustom;
 
   // 4 个统计卡片
   const statsEl = document.getElementById('account-stats');
@@ -16022,9 +16028,9 @@ function renderAccount() {
     <div class="stat-card"><div class="label">🌞 今日收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(todayIncome)}</div></div>
     <div class="income-breakdown" style="grid-column:1/-1;">
       <div class="ib-row ib-title"><span class="ib-ico">📦</span>模拟人生自动联动</div>
-      <div class="ib-row"><span class="ib-k">定制单：</span><span class="ib-v">¥${fmtMoney(customOrdersIncome)}</span><span class="ib-c">共 ${ordersAll.length} 单</span></div>
+      <div class="ib-row"><span class="ib-k">定制单：</span><span class="ib-v">¥${fmtMoney(customIncomeAll)}</span><span class="ib-c">共 ${customCountAll} 单</span></div>
       <div class="ib-row"><span class="ib-k">美化档：</span><span class="ib-v">¥${fmtMoney(beautyIncome)}</span><span class="ib-c">共 ${beautyAll.length} 笔</span></div>
-      <div class="ib-row ib-sum"><span class="ib-eq">定制单 ¥${fmtMoney(customOrdersIncome)} + 美化档 ¥${fmtMoney(beautyIncome)} =</span><span class="ib-total">¥${fmtMoney(customOrdersIncome + beautyIncome)}</span></div>
+      <div class="ib-row ib-sum"><span class="ib-eq">定制单 ¥${fmtMoney(customIncomeAll)} + 美化档 ¥${fmtMoney(beautyIncome)} =</span><span class="ib-total">¥${fmtMoney(customIncomeAll + beautyIncome)}</span></div>
     </div>
   `;
 
