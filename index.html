@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-204">
+<meta name="hami-build" content="2026-10-11-205">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6541,7 +6541,7 @@ let store = {
   weightSeedV1Applied: false,  // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
   screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
   tripSeedV1Applied: false,   // 广州三天行程一次性补入标记（true 后不再重复覆盖）
-  startWeight: 90.0,    // 起始体重基准线（此处仍是公斤口径默认值，v199 迁移时统一 ×2 变成斤）
+  startWeight: 180.0,   // 起始体重基准线（单位：斤，1 公斤 = 2 斤；v205 起默认值直接写斤值）
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
     { date: "2026-07-31", aerobics: false, cardio: false, weights: false, cardioType: "", weightsContent: "", sets: "", duration: "休息日" },
@@ -8761,6 +8761,9 @@ async function pullAndMerge() {
     // v148 同步核心：mergeStoreInto 已改为「本地优先并集」——本地 localStorage 是绝对事实来源，
     // 云端只补充本地没有的记录，绝不覆盖/删除本地已有数据（根治刷新/同步丢数据）。
     mergeStoreInto(store, remote.store);
+    // v205：云端合并后立刻把体重数值收敛为斤 + 清理同日重复（幂等），
+    // 防止云端残留的「公斤口径 / 被反复翻倍」的旧值混进本地造成 4 倍、8 倍。
+    try { migrateWeightUnitToJin(); } catch (e) {}
     try { migrateMediaExpToAd(); } catch (e) {}
     try { dedupFuturePosts(); } catch (e) {}
     try { saveData(true); } catch (e) {}   // 传 true：云端合并自己存盘不再回推，防死循环
@@ -10421,18 +10424,32 @@ function migrateMediaExpToAd() {
     if (changed) { try { saveData(); } catch (e) {} }
   } catch (e) {}
 }
-// ==================== v199：体重单位 kg → 斤 ====================
+// ==================== v199 / v205：体重单位 kg → 斤 ====================
 // 主人要求：所有体重数据的单位由「公斤(kg)」统一改为「斤」，数值 ×2（1 公斤 = 2 斤）。
-// 只执行一次：靠 store.weightUnitJinV1 哨兵；该标记会随本地保存 + 云端同步一起走，
-// 所以多设备不会重复 ×2（云端合并时也是先按哨兵判断，缺哨兵的旧数据才换算）。
+//
+// ⚠️ v205 事故修复（务必不要再改回「直接 ×2」）：
+//   v199~204 的写法是「靠 store.weightUnitJinV1 哨兵只跑一次」，但这个哨兵**只写不读**——
+//   保存进了 localStorage，loadData() 却从来不恢复它。于是每打开一次网页就重新 ×2 一次：
+//   88.9 → 177.8 → 355.6 → 711.2 → 1422.4 ……（主人看到的一千四百多斤就是这么来的）。
+//
+// 现在换算本身改成【幂等】——无论执行多少次，正确值都不会再变，被翻倍过量的值也会自动收敛：
+//   ① 数值 > 300 斤：不可能是人的体重，判定为「被反复翻倍」→ 不断对折回来；
+//   ② 折完仍 ≤ 110 斤：判定为「还是公斤口径没换算过」→ ×2 得斤。
+// 正确值（111~300 斤）原样保留，重复执行结果不变，因此可以安全地在每次加载/合并后执行。
 const WEIGHT_JIN_RATIO = 2;
+const WEIGHT_JIN_CORRUPT_ABOVE = 300;  // 超过此值（斤）判定为被反复翻倍，需对折回来
+const WEIGHT_JIN_KG_BELOW = 110;       // 小于等于此值（斤）判定为仍是公斤口径，需 ×2
 function weightKgToJin(v) {
-  if (v == null || v === '' || isNaN(v)) return v;
-  return Math.round(parseFloat(v) * WEIGHT_JIN_RATIO * 100) / 100;
+  const n0 = parseFloat(v);
+  if (!isFinite(n0) || n0 <= 0) return v;
+  let n = n0;
+  while (n > WEIGHT_JIN_CORRUPT_ABOVE) n = n / 2;   // 反复翻倍过的 → 折回人的体重范围
+  if (n <= WEIGHT_JIN_KG_BELOW) n = n * WEIGHT_JIN_RATIO;  // 还是公斤口径 → 换算成斤
+  return Math.round(n * 100) / 100;
 }
-// 把一份「可能仍是公斤口径」数据里的体重相关字段就地换算成斤；已带哨兵则原样返回
+// 把一份数据里的体重相关字段就地换算成斤（幂等，可安全重复执行；云端合并前也走这里）
 function convertWeightFieldsToJin(o) {
-  if (!o || typeof o !== 'object' || o.weightUnitJinV1) return o;
+  if (!o || typeof o !== 'object') return o;
   if (Array.isArray(o.weightRecords)) {
     o.weightRecords.forEach(function (w) {
       if (!w || typeof w !== 'object') return;
@@ -10446,12 +10463,40 @@ function convertWeightFieldsToJin(o) {
   o.weightUnitJinV1 = true;
   return o;
 }
+// 同一日期只保留一条体重记录：历次「并集合并」会留下同日重复（如 08-01 既有 88.9 又有 177.8），
+// 归一化后内容相同，这里按日期去重，保留后写入的那条。返回是否真的有删除。
+function dedupeWeightRecordsByDate() {
+  if (!Array.isArray(store.weightRecords)) return false;
+  const seen = {}; const out = [];
+  for (let i = store.weightRecords.length - 1; i >= 0; i--) {
+    const r = store.weightRecords[i];
+    if (!r || typeof r !== 'object') continue;
+    const d = r.date || '';
+    if (d && seen[d]) continue;
+    if (d) seen[d] = 1;
+    out.push(r);
+  }
+  out.reverse();
+  if (out.length !== store.weightRecords.length) { store.weightRecords = out; return true; }
+  return false;
+}
+// 启动、云端合并后都会调用：把体重数值收敛为正确的斤值并按日期去重（幂等）
 function migrateWeightUnitToJin() {
-  if (store.weightUnitJinV1) return;
-  const _n = (store.weightRecords || []).length;
+  const pick = function (r) { return r ? (r.value != null ? r.value : r.after) : null; };
+  const bVals = JSON.stringify((store.weightRecords || []).map(pick));
+  const bGoal = (store.weightGoal == null ? null : store.weightGoal);
+  const bStart = (store.startWeight == null ? null : store.startWeight);
+  const firstRun = !store.weightJinFixV205;
   convertWeightFieldsToJin(store);
-  try { saveData(); } catch (e) {}
-  try { console.log('[Hami] v199 体重单位已由 kg 换算为斤（×2），共处理 ' + _n + ' 条体重记录'); } catch (e) {}
+  const dropped = dedupeWeightRecordsByDate();
+  const aVals = JSON.stringify((store.weightRecords || []).map(pick));
+  const changed = firstRun || dropped || bVals !== aVals || bGoal !== store.weightGoal || bStart !== store.startWeight;
+  store.weightUnitJinV1 = true;
+  store.weightJinFixV205 = true;
+  if (changed) {
+    try { saveData(); } catch (e) {}
+    try { console.log('[Hami] v205 体重数值已收敛为斤（幂等换算），同日重复已清理，共 ' + (store.weightRecords || []).length + ' 条'); } catch (e) {}
+  }
 }
 
 function loadData() {
@@ -10533,6 +10578,9 @@ function loadData() {
       if (p.weightGoal != null) store.weightGoal = p.weightGoal;
       // 起始体重：同理显式恢复
       if (p.startWeight != null) store.startWeight = p.startWeight;
+      // v205：体重单位哨兵必须显式恢复（v199 漏了这一步，导致每次打开网页都重新 ×2 —— 1422 斤事故的元凶）
+      if (p.weightUnitJinV1) store.weightUnitJinV1 = true;
+      if (p.weightJinFixV205) store.weightJinFixV205 = true;
       // 体重种子一次性标记恢复（避免删记录后下次又复活）
       if (p.weightSeedV1Applied) store.weightSeedV1Applied = p.weightSeedV1Applied;
       if (p.screenshotSeedV1Applied) store.screenshotSeedV1Applied = p.screenshotSeedV1Applied;
