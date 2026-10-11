@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-201">
+<meta name="hami-build" content="2026-10-11-202">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -13600,17 +13600,16 @@ function syncFuturePostMediaRecord(fpId) {
   if (!p || !p.done) return;
   const recs = store.mediaRecords.filter(function (r) { return r.futurePostId === fpId; });
   if (!recs.length) {
-    // 之前未联动，现在标记为完成则补一条（按今天记，保证落在当前月视图）
-    addLinkedMediaRecord(p, false, todayStr());
+    // 之前未联动，现在标记为完成则补一条
+    // v202：补记用「图文自己的日期」，旧逻辑用 todayStr() 会把 8/9 月的老图文记成打开网页那天的月份
+    addLinkedMediaRecord(p, false, p.date || todayStr());
     return;
   }
   const isDy = p.douyin || p.account === 'douyin';
-  const doneDate = todayStr();
   recs.forEach(function (r) {
     r.account = p.account || 'big';
     r.douyin = isDy;
-    // 联动记录日期统一按"今天"记，确保打开「自媒体更新记录」当月就能看见
-    r.date = doneDate;
+    // v202：这里原来有 r.date = todayStr()，会把主人历史记录的日期/月份冲掉，已删除——日期只属于记录本身
     r.title = p.title || r.title;
   });
 }
@@ -13722,17 +13721,17 @@ function addLinkedMediaRecord(p, silent, overrideDate) {
       store.__deleted.mediaRecords = store.__deleted.mediaRecords.filter(function (k) { return k !== ck; });
     }
   } catch (e) {}
-  // 如果已经有联动记录（比如旧版本写错日期），不直接跳过，而是把日期/账号/标题同步成最新状态，
-  // 保证「已完成图文项目」里的记录一定落在当前月、标题最新。
+  // v202【根治「自媒体更新记录的日期被乱改成当月」】
+  // 旧逻辑：r.date = recDate → 每次点「标记完成」都会把这条历史记录的日期直接改写掉，
+  // 于是 8/9 月发的图文被写成 10 月。现在只同步账号/标题/抖音状态，**日期一律不动**。
   const existing = store.mediaRecords.filter(function (r) { return r.futurePostId === p.id; });
   if (existing.length) {
     existing.forEach(function (r) {
-      r.date = recDate;
       r.account = acc;
       r.douyin = isDy;
       r.title = p.title || r.title;
     });
-    if (!silent) hamiToast('✅ 已更新联动记录\n「自媒体更新记录」已按 ' + recDate + ' 刷新为：' + accName + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
+    if (!silent) hamiToast('✅ 已同步联动记录（保留原日期 ' + (existing[0].date || '') + '）：' + accName + ' · 更新1条' + (isDy ? '（同步抖音）' : ''));
     return;
   }
   hamiPushRecord('mediaRecords', {
@@ -13749,7 +13748,7 @@ function addLinkedMediaRecord(p, silent, overrideDate) {
     count: 1,
     createdAt: Date.now()
   });
-  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + recDate + ' · 更新1条' + (isDy ? '（同步抖音）' : '') + '\n请切到「自媒体更新记录」查看（已按今天日期记入当月）');
+  if (!silent) hamiToast('✅ 已标记完成\n已同步到「自媒体更新记录」：' + accName + ' · ' + recDate + ' · 更新1条' + (isDy ? '（同步抖音）' : '') + '\n请切到「自媒体更新记录」按 ' + recDate.slice(0, 7) + ' 月份查看');
 }
 function removeLinkedMediaRecord(fpId) {
   if (!store.mediaRecords || !fpId) return;
@@ -13908,13 +13907,15 @@ function renderFutureDone(doneList, today) {
 }
 
 // 回填：启动时把"已标记完成但漏写自媒体记录"的历史数据补上（修复换版本前已完成的两条没进自媒体记录）
+// v202【重要】补记必须用「图文自己的日期 p.date」，绝不能用 todayStr()——
+// 旧逻辑会把 8 月就发过的老图文，按"打开网页那天"写进当月，看起来就像日期被乱改了。
 function backfillFutureDoneToMedia() {
   if (!store.futurePosts || !store.mediaRecords) return;
   let changed = false;
   (store.futurePosts || []).forEach(function (p) {
     if (p && p.done && p.id) {
       const has = store.mediaRecords.some(function (r) { return r.futurePostId === p.id; });
-      if (!has) { addLinkedMediaRecord(p, true, todayStr()); changed = true; }
+      if (!has) { addLinkedMediaRecord(p, true, p.date || todayStr()); changed = true; }
     }
   });
   if (changed) { try { saveData(); } catch (e) {} try { renderMedia(); } catch (e) {} }
