@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-194">
+<meta name="hami-build" content="2026-10-11-195">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2243,17 +2243,37 @@
   .fin-flow-date { flex-shrink: 0; color: #7d4a5a; }
   .fin-flow-time { flex-shrink: 0; color: #9a7280; }
   .fin-flow-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #5a3a48; font-weight: 500; }
+  /* v194：模拟人生自动联动 —— 固定 4 行版式（标题 / 定制单 / 美化档 / 合计），一律 nowrap 绝不折行 */
   .income-breakdown {
-    margin-top: 8px; padding: 10px 12px;
-    background: #fff8fa; border-radius: 10px;
+    margin-top: 8px; padding: 9px 11px;
+    background: #fff8fa; border-radius: 12px;
     border: 1px dashed #ffd0dc;
     font-size: 12px; color: var(--c-muted);
-    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    display: flex; flex-direction: column; gap: 3px;
   }
-  .income-breakdown b { color: var(--c-pink-deep); }
-  .income-breakdown .ord-chip {
-    background: #fff0d6; color: #c08020;
-    padding: 1px 8px; border-radius: 8px; font-weight: 700;
+  .income-breakdown .ib-row {
+    display: flex; align-items: baseline; gap: 5px;
+    white-space: nowrap; line-height: 1.35;
+  }
+  .income-breakdown .ib-title {
+    align-items: center; gap: 5px;
+    font-size: 12.5px; font-weight: 800; color: var(--c-pink-deep);
+    letter-spacing: .2px; padding-bottom: 4px; border-bottom: 1px dashed #ffdfe9;
+  }
+  .income-breakdown .ib-ico { font-size: 14px; line-height: 1; }
+  .income-breakdown .ib-k { flex-shrink: 0; font-size: 12px; color: #8a6270; }
+  .income-breakdown .ib-v { font-size: 13px; font-weight: 800; color: var(--c-pink-deep); font-family: 'Baloo 2', monospace; }
+  .income-breakdown .ib-c { margin-left: auto; flex-shrink: 0; font-size: 10.5px; color: #b08a97; }
+  .income-breakdown .ib-sum {
+    margin-top: 1px; padding-top: 5px;
+    border-top: 1px dashed #ffdfe9;
+  }
+  /* 合计行：左侧算式可安全收缩（极端大金额时省略号收尾，绝不折行、绝不顶掉右侧总额） */
+  .income-breakdown .ib-eq { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: #8a6270; }
+  .income-breakdown .ib-total {
+    margin-left: auto; flex-shrink: 0;
+    font-size: 15px; font-weight: 800; color: var(--c-pink-deep);
+    font-family: 'Baloo 2', monospace; letter-spacing: .3px;
   }
 
   /* 超小屏：iPhone 17（≤420px）下微调字号与间距 */
@@ -15831,13 +15851,10 @@ function renderAccount() {
     <div class="stat-card"><div class="label">📊 ${periodLabel}结余</div><div class="label">最后更新：${lastMD}</div><div class="value ${balance >= 0 ? 'green' : 'red'}">¥${fmtMoney(balance)}</div></div>
     <div class="stat-card"><div class="label">🌞 今日收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(todayIncome)}</div></div>
     <div class="income-breakdown" style="grid-column:1/-1;">
-      <span>📦 <b>定制单自动联动</b>（来自【模拟人生总收入】）</span>
-      <span class="ord-chip">¥${fmtMoney(customOrdersIncome)}</span>
-      <span style="color:#8a6270;">共 ${ordersAll.length} 单</span>
-      <span>🎨 <b>美化档自动联动</b></span>
-      <span class="ord-chip">¥${fmtMoney(beautyIncome)}</span>
-      <span style="color:#8a6270;">共 ${beautyAll.length} 笔</span>
-      <span style="margin-left:auto;color:#8a6270;">手动 ¥${fmtMoney(manualIncome)} + 定制单 ¥${fmtMoney(customOrdersIncome)} + 美化档 ¥${fmtMoney(beautyIncome)} = <b>¥${fmtMoney(totalIncome)}</b></span>
+      <div class="ib-row ib-title"><span class="ib-ico">📦</span>模拟人生自动联动</div>
+      <div class="ib-row"><span class="ib-k">定制单：</span><span class="ib-v">¥${fmtMoney(customOrdersIncome)}</span><span class="ib-c">共 ${ordersAll.length} 单</span></div>
+      <div class="ib-row"><span class="ib-k">美化档：</span><span class="ib-v">¥${fmtMoney(beautyIncome)}</span><span class="ib-c">共 ${beautyAll.length} 笔</span></div>
+      <div class="ib-row ib-sum"><span class="ib-eq">定制单 ¥${fmtMoney(customOrdersIncome)} + 美化档 ¥${fmtMoney(beautyIncome)} =</span><span class="ib-total">¥${fmtMoney(customOrdersIncome + beautyIncome)}</span></div>
     </div>
   `;
 
