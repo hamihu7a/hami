@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-188">
+<meta name="hami-build" content="2026-10-11-189">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -10054,6 +10054,7 @@ const CATEGORY_ALIAS = {
   drink: ['饮料','奶茶','咖啡','饮品','喝水','茶','果汁','啤酒','酒','酸奶','拿铁','果茶','可乐','雪碧','矿泉水','白酒','红酒','气泡水','椰汁'],
   snack: ['零食','薯片','薯','坚果','饼干','辣条','糖果','巧克力','瓜子','膨化','小吃','果冻','蜜饯','锅巴','海苔','奥利奥'],
   media_ad: ['自媒体','小红书','抖音','视频','博主','创作','拍摄','道具','灯光','补光灯','三脚架','相机配件','直播间','投流','推广费','推广','投放','薯条','加热','巨量','抖加','千川','拍摄场地','模特','提词器','运镜','剪辑','后期','自媒体设备','买粉','涨粉','自媒体投放','视频投放','抖音投放','小红书推广','投流费','推广费','自媒体广告','广告','广告费','广告投放','投广告','打广告','买广告','广告位','信息流广告','广告推广','投放广告','薯条推广','抖加投放','千川投放'],
+  mahjong: ['打麻将','麻将','搓麻将','打牌','搓牌','牌局','麻将输','输麻将','麻将钱','输钱','麻将馆','棋牌','搓麻'],
   other: [],
   // —— 收入 ——
   salary: ['工资','薪水','月薪','发工资','到账工资','底薪','月入'],
@@ -10064,6 +10065,7 @@ const CATEGORY_ALIAS = {
   zz_redpacket: ['庄子红包','男朋友红包','男友红包','老公红包','男朋友转账','男友转账','对象红包','对象转账'],
   refund: ['退款','退钱'],
   invest: ['理财','收益','利息','基金','股票','分红','股息'],
+  mahjong_in: ['打麻将','麻将赢','赢麻将','麻将赢了','赢钱','搓麻将赢','手气好','麻将','搓麻将'],
   other_in: []
 };
 
@@ -15162,6 +15164,7 @@ const EXPENSE_CATEGORIES = [
   { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
   { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' },
   { key: 'media_ad',  icon: 'media',    name: '自媒体广告', color: '#FF4D7D' },
+  { key: 'mahjong',   icon: 'gamepad',  name: '打麻将',   color: '#FF9EBC' },
   { key: 'other',     icon: 'star',     name: '其他',     color: '#c0c0c0' }
 ];
 
@@ -15177,6 +15180,7 @@ const INCOME_CATEGORIES = [
   { key: 'zz_redpacket',  icon: 'heart',   name: '庄子红包',   color: '#ff6b9e' },
   { key: 'refund',        icon: 'undo',    name: '退款',       color: '#9b8aff' },
   { key: 'invest',    icon: 'chart',   name: '理财',       color: '#ffb84d' },
+  { key: 'mahjong_in', icon: 'gamepad', name: '打麻将',   color: '#34c759' },
   { key: 'other_in',  icon: 'star',    name: '其他收入',   color: '#c0c0c0' }
 ];
 
