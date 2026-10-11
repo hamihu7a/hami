@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-195">
+<meta name="hami-build" content="2026-10-11-196">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -20476,6 +20476,12 @@ function renderCountdown() {
     const isPlaceholder = item.placeholder;
     const daysText = isPlaceholder ? '—' : (item.hideDays ? '' : (item.days === 0 ? '今天' : item.days));
     const unit = isPlaceholder || item.hideDays || item.days === 0 ? '' : '天';
+    // v196：打卡类提醒（hideDays）不渲染右侧天数栏——原来空壳仍占 44px+gap，把提示文字挤窄、右边一大片空白
+    const daysCol = (!isPlaceholder && item.hideDays) ? '' : `
+        <div style="flex-shrink:0;text-align:center;min-width:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;line-height:1;">
+          <div style="font-size:22px;font-weight:900;color:#d14b73;white-space:nowrap;">${daysText}</div>
+          <div style="font-size:10px;color:#d14b73;font-weight:600;white-space:nowrap;">${unit}</div>
+        </div>`;
     return `
       <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px 16px 8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);display:flex;align-items:center;gap:10px;overflow:hidden;">
         <div style="text-align:center;flex-shrink:0;background:rgba(209,75,115,0.10);border-radius:8px;padding:5px 8px;line-height:1.2;min-width:46px;">
@@ -20485,10 +20491,7 @@ function renderCountdown() {
         <div style="flex:1;min-width:0;display:flex;align-items:center;">
           <div style="font-size:14px;color:#5a3a48;font-weight:600;line-height:1.45;word-break:break-word;">${item.icon} ${item.label}</div>
         </div>
-        <div style="flex-shrink:0;text-align:center;min-width:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;line-height:1;">
-          <div style="font-size:22px;font-weight:900;color:#d14b73;white-space:nowrap;">${daysText}</div>
-          <div style="font-size:10px;color:#d14b73;font-weight:600;white-space:nowrap;">${unit}</div>
-        </div>
+        ${daysCol}
       </div>`;
   }
 
