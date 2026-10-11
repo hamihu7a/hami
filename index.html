@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-186">
+<meta name="hami-build" content="2026-10-11-187">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -805,12 +805,12 @@
   }
   .hami-cmd-toast.show { opacity:1; }
 
-  /* 云端同步提醒浮层：紧贴「记一下」栏（高 60px）正下方，绝不遮挡输入框与按钮 */
+  /* 云端同步提醒浮层（仅成功时）：显示在工作台正中间，绝不遮挡顶部「记一下」栏 */
   #cloud-sync-toast {
     position: fixed;
-    top: 68px;                 /* 「记一下」栏下方 8px，不越过、不遮挡 */
+    top: 50%;                  /* 工作台正中间：远离顶部「记一下」栏，不再遮挡 */
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     z-index: 9000;
     max-width: calc(100vw - 32px);
     box-sizing: border-box;
@@ -9099,7 +9099,7 @@ async function pushNow() {
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
     syncBadgeShow('同步失败', true);
-    showCloudToast('⚠️ 同步失败，去「设置→数据备份」可手动重试', 'fail');
+    // 失败提示统一交给 commitToCloud 的「还没同步到云端」横幅（已移到工作台正中间），此处不再弹第二条，避免重复
     throw e;   // 失败必须向上抛出，否则上层误以为"推送完成"
   } finally { _syncBusy = false; }
 }
@@ -9139,7 +9139,7 @@ var _hamiBannerLastShowAt = 0;      // 上次显示横幅的时刻：用于去�
 var _hamiBannerFailStreak = 0;       // 连续失败计数：连续失败 3 次才算"真有问题"，前 2 次静默重试不打扰
 var _hamiBannerLastFailKey = '';     // 上次失败的指纹：相同错误不重复计数
 
-// 横幅位置：v175 主人要求固定在屏幕顶部居中（底部会挡住翻页条/底部操作），且文字不拦截点击
+// 横幅位置：v187 主人要求改到「工作台正中间」（顶部会挡住「记一下」输入栏），且文字不拦截点击
 function hamiPendingBanner(show, msg) {
   let el = document.getElementById('hami-cloud-pending');
   if (_hamiBannerHideTimer) { clearTimeout(_hamiBannerHideTimer); _hamiBannerHideTimer = null; }
@@ -9148,11 +9148,11 @@ function hamiPendingBanner(show, msg) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'hami-cloud-pending';
-    // v175 主人要求：横幅从屏幕底部移回顶部居中（底部会挡住翻页条等操作）。
+    // v187 主人要求：横幅改到「工作台正中间」——顶部会挡住「记一下」输入栏，不再贴顶。
     // 关键：外层 pointer-events:none —— 文字部分完全不拦截点击，悬在哪个按钮上都不挡操作；
     //       只有「再试一次」按钮单独 pointer-events:auto 可以点。
     // z-index 9999 仍低于所有面板/弹窗/确认框（100290+），弹窗打开时横幅压在其下。
-    el.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;' +
+    el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;' +
       'background:#fff0f3;border:1px solid #e890a8;color:#b3325c;border-radius:14px;' +
       'padding:7px 14px;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(160,80,110,.22);' +
       'max-width:92vw;text-align:center;pointer-events:none;';
@@ -10047,7 +10047,8 @@ const CATEGORY_ALIAS = {
   office: ['办公','打印','文具','耗材','打印机','纸张','墨盒','订书机','文件夹'],
   home: ['家居','家具','家电','装修','清洁','日用','床上用品','窗帘','地毯','台灯','收纳家具','沙发','床垫','四件套'],
   social: ['礼物','红包','请客','份子','随礼','礼金','人情','人情往来','给妈妈','给朋友','给同事','给领导','生日礼物','探病','乔迁','升学','满月','请吃饭','聚餐后买单'],
-  sibling: ['弟妹','妹妹','弟弟','压岁钱','给妹妹','给弟弟','给外甥','给侄子','给娃','给小孩','外甥','侄子'],
+  sibling: ['弟妹','妹妹','弟弟','家人','给家人','压岁钱','给妹妹','给弟弟','给外甥','给侄子','给娃','给小孩','外甥','侄子'],
+  sanitary: ['卫生巾','姨妈巾','巾','经期','生理期','日用巾'],
   travel: ['旅游','旅行','出游','景点','机票','酒店','民宿','度假','行李','门票','跟团','攻略','行李箱'],
   drink: ['饮料','奶茶','咖啡','饮品','喝水','茶','果汁','啤酒','酒','酸奶','拿铁','果茶','可乐','雪碧','矿泉水','白酒','红酒','气泡水','椰汁'],
   snack: ['零食','薯片','薯','坚果','饼干','辣条','糖果','巧克力','瓜子','膨化','小吃','果冻','蜜饯','锅巴','海苔','奥利奥'],
@@ -15131,6 +15132,7 @@ const EXPENSE_CATEGORIES = [
   { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
   { key: 'beauty',    icon: 'lip',      name: '美妆',     color: '#FFC4D6' },
   { key: 'skincare',  icon: 'bottle',   name: '护肤',     color: '#FF7E9C' },
+  { key: 'sanitary',  icon: 'bag',      name: '卫生巾',   color: '#FF9EC4' },
   { key: 'apps',      icon: 'aicon',    name: '应用软件', color: '#F08080' },
   { key: 'housing',   icon: 'house',    name: '住房',     color: '#A0D8B3' },
   { key: 'transport', icon: 'car',      name: '交通',     color: '#F8B88B' },
@@ -15142,7 +15144,7 @@ const EXPENSE_CATEGORIES = [
   { key: 'office',    icon: 'printer',  name: '办公',     color: '#F0C9B6' },
   { key: 'home',      icon: 'sofa',     name: '家居',     color: '#C9B6E4' },
   { key: 'social',    icon: 'people',   name: '人情',     color: '#FFB997' },
-  { key: 'sibling',   icon: 'baby',     name: '弟妹',     color: '#FFC2D6' },
+  { key: 'sibling',   icon: 'people',   name: '家人',     color: '#FFC2D6' },
   { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3' },
   { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4' },
   { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
