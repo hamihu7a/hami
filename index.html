@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-197">
+<meta name="hami-build" content="2026-10-11-198">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -267,7 +267,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#ff9eb5">
 <meta name="application-name" content="Hami小助理">
-<meta name="description" content="Hami的个人工作台 - 收入/减肥/自媒体/电影推荐">
+<meta name="description" content="Hami的个人工作台 - 收入/减肥/自媒体">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -922,7 +922,7 @@
   #home-weather.has-custom-bg > *,
   #home-fortune.has-custom-bg > * { position: relative; z-index: 1; }
 
-  /* 其余面板（首页/支出/总收入/自媒体/推荐/体重运动/经期洗头/如厕面膜/日期提醒/电影推荐/侧边栏/整主面板）：
+  /* 其余面板（首页/支出/总收入/自媒体/推荐/体重运动/经期洗头/如厕面膜/日期提醒/侧边栏/整主面板）：
      极淡蒙版（0.08），让上传图清晰可见——用户切到该面板时一眼能确认"图已应用"
      注意：.main 是 fixed（见 line 253），fixed 元素本身即可作为伪元素 absolute 定位的包含块，
      不需要被改成 relative；下条规则把 .main 摘出，避免覆写 .main 的 fixed 导致右侧面板掉到底部 */
@@ -4689,22 +4689,9 @@
     </button>
   </div>
 
-  <!-- 七·电影推荐：优质电影 / 院线热映 独立两点 -->
+  <!-- 七·设置工具 -->
   <div class="nav-group">
-    <div class="nav-group-title">七·电影推荐</div>
-    <button class="nav-item" type="button" onclick="switchPanel('movie-good', this)">
-      <span class="nav-icon">🎬</span>
-      <span class="nav-text">优质电影</span>
-    </button>
-    <button class="nav-item" type="button" onclick="switchPanel('movie-now', this)">
-      <span class="nav-icon">🎫</span>
-      <span class="nav-text">院线热映</span>
-    </button>
-  </div>
-
-  <!-- 八·设置工具 -->
-  <div class="nav-group">
-    <div class="nav-group-title">八·设置工具</div>
+    <div class="nav-group-title">七·设置工具</div>
     <button class="nav-item" type="button" onclick="switchPanel('settings', this)">
       <span class="nav-icon">⚙️</span>
       <span class="nav-text">面板设计</span>
@@ -4842,20 +4829,6 @@
     <div class="todo-card">
       <h3>💼 工作代办</h3>
       <div id="desktop-todo-work"></div>
-    </div>
-
-    <!-- 电影推荐：左右两个面板 -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <!-- 左：每日电影推荐（高分好电影） -->
-      <div class="todo-card" style="flex:1;min-width:200px;cursor:pointer;padding:16px;" onclick="switchPanel('movie-good', this)">
-        <h3 style="font-size:14px;margin-bottom:10px;">🎬 每日电影推荐</h3>
-        <div id="desktop-movie-daily"></div>
-      </div>
-      <!-- 右：近期上映电影预览 -->
-      <div class="todo-card" style="flex:1;min-width:200px;cursor:pointer;padding:16px;" onclick="switchPanel('movie-now', this)">
-        <h3 style="font-size:14px;margin-bottom:10px;">🎫 近期上映电影</h3>
-        <div id="desktop-movie-preview"></div>
-      </div>
     </div>
 
   </div>
@@ -6144,41 +6117,6 @@
     </div>
   </div>
 
-  <!-- ==================== 电影推荐 ==================== -->
-  <!-- ==================== 优质电影 ==================== -->
-  <div id="panel-movie-good" class="panel">
-
-    <div class="tip-box">
-      💕 <b>使用说明</b>：每3天轮换推荐一部高分经典电影（片单固定，由小助理维护）~
-    </div>
-
-    <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
-      <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
-        🎯 电影推荐
-        <span id="movie-recommend-date" style="margin-left:auto;font-size:12px;font-weight:400;color:#8a6270;background:#fff0f5;padding:2px 8px;border-radius:10px;"></span>
-      </div>
-      <div id="movie-daily-recommend"></div>
-    </div>
-
-  </div>
-
-  <!-- ==================== 院线热映 ==================== -->
-  <div id="panel-movie-now" class="panel">
-
-    <div class="tip-box">
-      💕 <b>使用说明</b>：以票根设计展示当前热映和即将上映影片（由小助理定期维护更新）~
-    </div>
-
-    <div style="flex:1;min-width:280px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(255,158,181,0.1);">
-      <div style="font-size:15px;font-weight:700;color:#d14b73;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
-        🎫 近期上映
-        <span style="margin-left:auto;font-size:12px;font-weight:400;color:#8a6270;background:#fff0f5;padding:2px 8px;border-radius:10px;">热映中</span>
-      </div>
-      <div id="movie-now-playing"></div>
-    </div>
-
-  </div>
-
   <!-- ==================== 设置工具 ==================== -->
   <!-- ==================== 创作专业工具（本地版·零注册）==================== -->
   <!-- ==================== 未来更新图文记录 ==================== -->
@@ -6647,315 +6585,7 @@ let store = {
       { name: '耳机', done: false }
     ], remark: '' }
   ],
-  trips: [],
-  // 电影推荐数据（每日自动更新）
-  movieData: {
-    lastUpdate: '',
-    // 今日推荐（每天轮换一部）
-    dailyIndex: 0,
-    // 推荐电影库（按评分排序，每日轮换）
-recommendList: [
-      {
-        title: '天书奇谭',
-        engTitle: 'The Legend of Sealed Book',
-        rating: 9.4,
-        director: '王树忱 / 钱运达',
-        cast: '上海美术电影制片厂',
-        country: '中国大陆',
-        year: 1983,
-        genres: ['动画', '奇幻', '冒险'],
-        releaseDate: '1983-01-01',
-        posterColors: ['#4a3a6a', '#e0c44a', '#b0e0e0'],
-        posterEmoji: '📖',
-        reason: '豆瓣9.4分中国动画巅峰！上海美影厂出品，改编自《平妖传》。蛋生与狐狸精的斗法，每一帧都是传统水墨美学的极致呈现。'
-      },
-      {
-        title: '守望者',
-        engTitle: 'Watchmen',
-        rating: 8.4,
-        director: '扎克·施奈德',
-        cast: '帕特里克·威尔森 / 杰基·厄尔·哈利 / 玛琳·阿克曼',
-        country: '美国',
-        year: 2009,
-        genres: ['动作', '科幻', '悬疑'],
-        releaseDate: '2009-03-06',
-        posterColors: ['#1a1a2e', '#e94560', '#f5c518'],
-        posterEmoji: '🦸',
-        reason: '豆瓣8.4分超级英雄电影天花板！扎克·施奈德用反传统手法解构英雄主义。罗夏那句"绝不妥协"成为影史经典台词。终极剪辑版215分钟，史诗级叙事。'
-      },
-      {
-        title: '风声',
-        engTitle: 'The Message',
-        rating: 8.3,
-        director: '陈国富 / 高群书',
-        cast: '周迅 / 李冰冰 / 张涵予 / 苏有朋',
-        country: '中国大陆',
-        year: 2009,
-        genres: ['剧情', '悬疑', '惊悚'],
-        releaseDate: '2009-09-29',
-        posterColors: ['#2a1a1a', '#8a3a3a', '#d4b896'],
-        posterEmoji: '🕊️',
-        reason: '豆瓣8.3分国产谍战巅峰！周迅饰演顾晓梦，在裘庄的密室中谁是"老鬼"？结尾那缝在旗袍上的摩斯密码，看哭无数观众。'
-      },
-      {
-        title: '无人区',
-        engTitle: "No Man's Land",
-        rating: 8.2,
-        director: '宁浩',
-        cast: '徐峥 / 余男 / 黄渤',
-        country: '中国大陆',
-        year: 2013,
-        genres: ['剧情', '犯罪', '冒险'],
-        releaseDate: '2013-12-03',
-        posterColors: ['#c4a060', '#8a6a3a', '#3a2a1a'],
-        posterEmoji: '🦂',
-        reason: '豆瓣8.2分宁浩黑色幽默力作！徐峥饰演利欲熏心的律师深入大西北无人区，在野蛮与文明的碰撞中完成救赎。剧本打磨四年，每一帧都是荒诞寓言。'
-      },
-      {
-        title: '暴裂无声',
-        engTitle: 'Wrath of Silence',
-        rating: 8.2,
-        director: '忻钰坤',
-        cast: '宋洋 / 姜武 / 袁文康',
-        country: '中国大陆',
-        year: 2017,
-        genres: ['剧情', '悬疑', '犯罪'],
-        releaseDate: '2017-10-13',
-        posterColors: ['#5a4a3a', '#a08060', '#d4c8b0'],
-        posterEmoji: '⛰️',
-        reason: '豆瓣8.2分忻钰坤第二部长片！失语矿工寻子之旅，揭开底层与权贵的残酷碰撞。结尾那座山的隐喻，比《心迷宫》更冷峻的社会寓言。'
-      },
-      {
-        title: '老炮儿',
-        engTitle: 'Mr. Six',
-        rating: 8.2,
-        director: '管虎',
-        cast: '冯小刚 / 张涵予 / 许晴 / 李易峰',
-        country: '中国大陆',
-        year: 2015,
-        genres: ['剧情', '犯罪'],
-        releaseDate: '2015-12-24',
-        posterColors: ['#3a3a3a', '#8a5a3a', '#c4a890'],
-        posterEmoji: '🐦',
-        reason: '豆瓣8.2分管虎佳作！冯小刚饰演的六爷，用老北京江湖规矩对抗新时代。冰湖上那场决斗，是旧时代最后的体面与尊严。'
-      },
-      {
-        title: '穿越时空的少女',
-        engTitle: 'The Girl Who Leapt Through Time',
-        rating: 8.6,
-        director: '细田守',
-        cast: '仲里依纱 / 石田卓也 / 板谷光',
-        country: '日本',
-        year: 2006,
-        genres: ['动画', '科幻', '爱情'],
-        releaseDate: '2006-07-15',
-        posterColors: ['#4a8acf', '#e0e8f0', '#f5d4a0'],
-        posterEmoji: '⏰',
-        reason: '豆瓣8.6分细田守青春动画杰作！真琴获得跳跃时空的能力，在一次次"重来"中成长。"Time waits for no one"——青春没有倒带。'
-      },
-      {
-        title: '天国王朝',
-        engTitle: 'Kingdom of Heaven',
-        rating: 8.6,
-        director: '雷德利·斯科特',
-        cast: '奥兰多·布鲁姆 / 伊娃·格林 / 爱德华·诺顿',
-        country: '美国 / 英国',
-        year: 2005,
-        genres: ['剧情', '动作', '战争'],
-        releaseDate: '2005-05-06',
-        posterColors: ['#c4a060', '#d4c8a0', '#3a3a2a'],
-        posterEmoji: '⚔️',
-        reason: '豆瓣8.6分史诗巨制！导演剪辑版194分钟才是完整版。十字军东征中的骑士精神与信仰叩问，伊娃·格林的西贝拉惊艳影史。'
-      },
-      {
-        title: '变脸',
-        engTitle: 'Face/Off',
-        rating: 8.5,
-        director: '吴宇森',
-        cast: '尼古拉斯·凯奇 / 约翰·特拉沃尔塔',
-        country: '美国',
-        year: 1997,
-        genres: ['动作', '犯罪', '科幻'],
-        releaseDate: '1997-06-27',
-        posterColors: ['#2a2a3a', '#c44a4a', '#e0d4c4'],
-        posterEmoji: '🎭',
-        reason: '豆瓣8.5分吴宇森好莱坞巅峰！凯奇与特拉沃尔塔互换面孔，在善恶模糊中暴力美学尽显。双雄对决的极致浪漫。'
-      },
-      {
-        title: '亲爱的',
-        engTitle: 'Dearest',
-        rating: 8.4,
-        director: '陈可辛',
-        cast: '赵薇 / 黄渤 / 佟大为',
-        country: '中国大陆',
-        year: 2014,
-        genres: ['剧情', '家庭'],
-        releaseDate: '2014-09-25',
-        posterColors: ['#4a3a3a', '#8a6a5a', '#e0c4a0'],
-        posterEmoji: '💔',
-        reason: '豆瓣8.4分陈可辛催泪力作！赵薇从喜剧演员到绝望母亲的颠覆演出。结尾赵薇那句"你还记得我吗？"看哭千万观众。'
-      }
-    ],
-    // 近期上映电影（票根展示）
-    nowPlaying: [
-      {
-        title: '神探之痕迹',
-        rating: null,
-        director: '陈思诚',
-        cast: '张译/马丽/陈明昊',
-        country: '中国',
-        genres: ['犯罪', '悬疑'],
-        releaseDate: '2026-10-01',
-        status: 'hot',
-        posterColors: ['#1a2a4a', '#c0392b'],
-        posterEmoji: '🔍'
-      },
-      {
-        title: '什么意思夫妇',
-        rating: null,
-        director: '沈春阳',
-        cast: '小沈阳/沈春阳/贾冰',
-        country: '中国',
-        genres: ['喜剧', '家庭'],
-        releaseDate: '2026-10-01',
-        status: 'hot',
-        posterColors: ['#ff9a9e', '#fad0c4'],
-        posterEmoji: '💑'
-      },
-      {
-        title: '生化危机：爆发夜',
-        rating: null,
-        director: '扎克·克雷格',
-        cast: '奥斯汀·艾布拉姆斯/卡莉·瑞斯/保罗·沃尔特·豪泽',
-        country: '美国',
-        genres: ['惊悚', '科幻'],
-        releaseDate: '2026-10-05',
-        status: 'hot',
-        posterColors: ['#1a4731', '#2d8659'],
-        posterEmoji: '🧟'
-      },
-      {
-        title: '复仇者联盟4：终局之战（加码臻享版）',
-        rating: null,
-        director: '罗素兄弟',
-        cast: '小罗伯特·唐尼/克里斯·埃文斯/马克·鲁法洛',
-        country: '美国',
-        genres: ['动作', '科幻', '奇幻'],
-        releaseDate: '2026-09-25',
-        status: 'hot',
-        posterColors: ['#c0392b', '#f1c40f'],
-        posterEmoji: '🦸'
-      },
-      {
-        title: '小猪佩奇·完美假期',
-        rating: null,
-        director: '刘源',
-        cast: '陈奕雯/张安琪/伊菲',
-        country: '中国/英国',
-        genres: ['动画', '家庭', '冒险'],
-        releaseDate: '2026-10-01',
-        status: 'hot',
-        posterColors: ['#ff9ff3', '#f368e0'],
-        posterEmoji: '🐷'
-      },
-      {
-        title: '欢迎来龙餐馆',
-        rating: null,
-        director: '文牧野',
-        cast: '沈腾/蒋奇明/奥马尔·谢里夫',
-        country: '中国',
-        genres: ['剧情', '战争'],
-        releaseDate: '2026-08-11',
-        status: 'hot',
-        posterColors: ['#3e2723', '#f39c12'],
-        posterEmoji: '🍜'
-      },
-      {
-        title: '活色生香',
-        rating: null,
-        director: '罗冬',
-        cast: '闫妮/叶童/倪虹洁',
-        country: '中国',
-        genres: ['剧情', '喜剧'],
-        releaseDate: '2026-10-01',
-        status: 'hot',
-        posterColors: ['#ff6b9d', '#c44569'],
-        posterEmoji: '🌸'
-      },
-      {
-        title: '野兽之心',
-        rating: null,
-        director: '大卫·阿耶',
-        cast: '布拉德·皮特/J·K·西蒙斯',
-        country: '美国',
-        genres: ['剧情', '动作', '冒险'],
-        releaseDate: '2026-09-30',
-        status: 'hot',
-        posterColors: ['#2c3e50', '#e67e22'],
-        posterEmoji: '🐺'
-      },
-      {
-        title: '奥德赛',
-        rating: null,
-        director: '克里斯托弗·诺兰',
-        cast: '马特·达蒙/汤姆·赫兰德/安妮·海瑟薇',
-        country: '美国',
-        genres: ['动作', '冒险', '史诗'],
-        releaseDate: '2026-08-14',
-        status: 'hot',
-        posterColors: ['#1b3a5c', '#d4af37'],
-        posterEmoji: '⛵'
-      },
-      {
-        title: '侦战',
-        rating: null,
-        director: '孔令政',
-        cast: '古天乐/此沙/任达华',
-        country: '中国香港',
-        genres: ['悬疑', '犯罪'],
-        releaseDate: '2026-10-01',
-        status: 'hot',
-        posterColors: ['#34495e', '#e74c3c'],
-        posterEmoji: '🕵️'
-      },
-      {
-        title: '一个夜晚与三个夏天',
-        rating: null,
-        director: '松太加',
-        cast: '次吉美朵/泽仁顿珠/次仁央金',
-        country: '中国',
-        genres: ['剧情'],
-        releaseDate: '2026-10-13',
-        status: 'soon',
-        posterColors: ['#2980b9', '#6dd5fa'],
-        posterEmoji: '🌊'
-      },
-      {
-        title: '三星堆：未来往事',
-        rating: null,
-        director: '张苗',
-        cast: '数字虚拟演员',
-        country: '中国',
-        genres: ['科幻', '动画'],
-        releaseDate: '2026-10-23',
-        status: 'soon',
-        posterColors: ['#6a1b9a', '#00bcd4'],
-        posterEmoji: '🗿'
-      },
-      {
-        title: '疾速追杀',
-        rating: null,
-        director: '查德·斯塔赫斯基',
-        cast: '基努·里维斯/迈克尔·恩奎斯特/阿尔菲·艾伦',
-        country: '美国',
-        genres: ['动作', '惊悚', '犯罪'],
-        releaseDate: '2026-10-30',
-        status: 'soon',
-        posterColors: ['#0f0f0f', '#3a3a3a'],
-        posterEmoji: '🔫'
-      }
-    ]
-  }
+  trips: []
 };
 
 // 保存失败可见化：localStorage 写入失败（最常见是 5MB 配额被背景图占满）绝不能静默吞掉，
@@ -7384,8 +7014,7 @@ const BG_KEYS = {
   'panel-fitness': 'hami_bg_panel_fitness',
   'panel-period': 'hami_bg_panel_period',
   'panel-toiletmask': 'hami_bg_panel_toiletmask',
-  'panel-reminder': 'hami_bg_panel_reminder',
-  'panel-movie': 'hami_bg_panel_movie'
+  'panel-reminder': 'hami_bg_panel_reminder'
 };
 const BG_ELS = {
   hero: '.desktop-hero',
@@ -7404,8 +7033,7 @@ const BG_ELS = {
   // 注意：panel-fitness 已在上文映射到 #home-weight-cal（主页日历缩略），此处不再重复声明
   'panel-period': '#panel-period',
   'panel-toiletmask': '#panel-toiletmask',
-  'panel-reminder': '#panel-reminder',
-  'panel-movie': '#panel-movie'
+  'panel-reminder': '#panel-reminder'
 };
 
 // 上传后先压缩到合适尺寸再存，避免手机原图（几 MB）撑爆 localStorage
@@ -8860,7 +8488,7 @@ function hamiRenderAllNow() {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
       'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext', 'renderTripPlans', 'renderAccount',
-      'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder', 'renderTodoPanel',
+      'renderReminder', 'renderQuotes', 'renderBackupReminder', 'renderTodoPanel',
       'renderCustomBoard', 'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
@@ -9054,7 +8682,7 @@ function renderAllFromCloud() {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
       'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext',
-      'renderTripPlans', 'renderAccount', 'renderReminder', 'renderMovie', 'renderQuotes', 'renderBackupReminder'];
+      'renderTripPlans', 'renderAccount', 'renderReminder', 'renderQuotes', 'renderBackupReminder'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
     });
@@ -10822,7 +10450,6 @@ function loadData() {
       if (p.importantDates !== undefined) store.importantDates = p.importantDates;
       if (p.travelPlans !== undefined) store.travelPlans = p.travelPlans;
       if (p.trips !== undefined) store.trips = p.trips;
-      if (p.movieData && p.movieData.recommendList !== undefined) store.movieData = p.movieData;
       // 目标体重：必须显式恢复，否则刷新后 renderWeightGoal 读到默认 null 而"消失"
       if (p.weightGoal != null) store.weightGoal = p.weightGoal;
       // 起始体重：同理显式恢复
@@ -12458,10 +12085,6 @@ function switchPanel(name, navEl) {
   if (name === 'toilet' || name === 'mask') {
     try { renderToilet(); } catch (e) {}
     try { renderMask(); } catch (e) {}
-  }
-  // 切到「优质电影 / 院线热映」面板，强制重渲（renderMovie 会同时刷新两块，按 id 落地到各自面板）
-  if (name === 'movie' || name === 'movie-good' || name === 'movie-now') {
-    try { renderMovie(); } catch (e) {}
   }
   // 切到「游玩计划与清单」面板，强制重渲（重要日期/游玩清单/游玩计划三块都会刷新，与所在面板无关）
   if (name === 'trip-travel') {
@@ -19597,78 +19220,6 @@ function closeTomorrowAlmanacModal() {
   document.body.style.overflow = '';
 }
 
-// ==================== 电影推荐 ====================
-function renderMovie() {
-  const md = store.movieData;
-  if (!md || !md.recommendList) return;
-
-  // 根据日期决定推荐索引（每3天更新一次）
-  const today = todayStr();
-  const dayOfYear = Math.floor((new Date(today) - new Date(today.substring(0,4) + '-01-01')) / 86400000);
-  const todayIdx = Math.floor(dayOfYear / 3) % md.recommendList.length;
-  const movie = md.recommendList[todayIdx];
-
-  // 显示"下次更新"日期（3天后）
-  const nextUpdate = new Date(new Date(today).getTime() + 3 * 86400000);
-  const nextUpdateStr = fmtMD(nextUpdate);
-
-  // 更新日期标签
-  const dateEl = document.getElementById('movie-recommend-date');
-  if (dateEl) dateEl.textContent = '每3天更新·下次' + nextUpdateStr;
-
-  // === 左侧：电影推荐（精简版） ===
-  const ratingStr = movie.rating ? '⭐ ' + movie.rating : '⭐ 待开分';
-  const ratingColor = movie.rating ? '#ffd700' : '#c0c0c0';
-  const posterBg = movie.posterColors.join(',');
-  const tagsHtml = movie.genres.map(g => `<span style="font-size:12px;padding:1px 6px;border-radius:6px;background:#fff0f5;color:#d14b73;border:1px solid #ffd6e0;">${g}</span>`).join('');
-
-  document.getElementById('movie-daily-recommend').innerHTML = `
-    <div style="width:100%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;margin-bottom:12px;background:linear-gradient(135deg,${posterBg});display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 4px 16px rgba(180,120,150,0.2);position:relative;">
-      <div style="font-size:60px;opacity:0.85;">${movie.posterEmoji}</div>
-      ${movie.engTitle ? `<div style="color:#fff;font-size:12px;font-weight:700;margin-top:8px;letter-spacing:2px;opacity:0.9;text-shadow:0 1px 4px rgba(0,0,0,0.3);">${movie.engTitle}</div>` : ''}
-      <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.65);color:${ratingColor};font-size:14px;font-weight:700;padding:4px 10px;border-radius:10px;backdrop-filter:blur(4px);">${ratingStr}</div>
-    </div>
-    <div style="font-size:18px;font-weight:700;color:#4a3340;margin-bottom:4px;">${movie.title}</div>
-    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0;">${tagsHtml}</div>
-    <div style="font-size:12px;color:#6a4a5a;line-height:1.7;background:#fff8fa;padding:8px 10px;border-radius:8px;border-left:3px solid #ff9eb5;margin-top:8px;">
-      ${movie.reason}
-    </div>
-  `;
-
-  // === 右侧：近期上映（票根设计） ===
-  const statusMap = {
-    'new':  { text: '新上映', bg: '#34c759' },
-    'hot':  { text: '热映中', bg: '#ff4444' },
-    'soon': { text: '即将上映', bg: '#ff9500' }
-  };
-
-  let ticketsHtml = '';
-  md.nowPlaying.forEach(m => {
-    const st = statusMap[m.status] || statusMap.hot;
-    const mRatingStr = m.rating ? `<span class="score">${m.rating}</span>` : '<span class="score" style="color:#c0c0c0;font-size:12px;">待开分</span>';
-    const mPosterBg = m.posterColors.join(',');
-    const genresStr = m.genres.join('·');
-
-    ticketsHtml += `
-      <div style="display:flex;background:linear-gradient(135deg,#fff5ee,#fff0f5);border-radius:12px;overflow:hidden;margin-bottom:10px;box-shadow:0 2px 8px rgba(180,120,150,0.12);border:1px solid #ffe4ec;position:relative;">
-        <div style="width:70px;min-height:105px;flex-shrink:0;background:linear-gradient(135deg,${mPosterBg});display:flex;align-items:center;justify-content:center;font-size:26px;">${m.posterEmoji}</div>
-        <div style="position:absolute;left:65px;top:0;bottom:0;width:1px;border-left:2px dashed #ffd6e0;"></div>
-        <div style="flex:1;padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#4a3340;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.title}</div>
-            <div style="font-size:12px;color:#8a6270;line-height:1.5;">${m.country} · ${genresStr}<br>导演：${m.director}<br>${m.cast}</div>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:4px;">
-            <span style="font-size:12px;font-weight:700;color:#ff9eb5;">豆瓣 <span style="color:#ffd700;">${mRatingStr}</span></span>
-            <span style="font-size:12px;padding:2px 6px;border-radius:6px;font-weight:600;background:${st.bg};color:#fff;">${st.text}</span>
-          </div>
-        </div>
-      </div>`;
-  });
-
-  document.getElementById('movie-now-playing').innerHTML = ticketsHtml;
-}
-
 // ==================== 体重「没打卡自动沿用前一天」 ====================
 // 规则：某天没记体重，就沿用它之前最近一次真实体重（前值结转），日历/曲线不断档。
 // 只影响显示，不写进真实数据——打卡天数、历史记录仍以主人真实打卡为准。
@@ -19939,72 +19490,6 @@ function jumpToWeightMonth() {
 function closeWeightMonthPicker() {
   const old = document.getElementById('wmp-bg');
   if (old) old.remove();
-}
-
-// ==================== 主面板电影推荐（左右两个面板） ====================
-function renderDesktopMovieTickets() {
-  const md = store.movieData;
-  if (!md || !md.recommendList) return;
-
-  const today = todayStr();
-  const dayOfYear = Math.floor((new Date(today) - new Date(today.substring(0,4) + '-01-01')) / 86400000);
-
-  // === 左面板：每日电影推荐（高分好电影，3天轮换） ===
-  // 按评分排序，选评分最高的几部轮换
-  const sortedByRating = md.recommendList.filter(m => m.rating).sort((a,b) => b.rating - a.rating);
-  const ratingMovies = sortedByRating.length > 0 ? sortedByRating : md.recommendList;
-  const dailyIdx = Math.floor(dayOfYear / 3) % ratingMovies.length;
-  const dailyMovie = ratingMovies[dailyIdx];
-  const dailyRatingStr = dailyMovie.rating ? '⭐ ' + dailyMovie.rating : '⭐ 待开分';
-  const dailyRatingColor = dailyMovie.rating ? '#ffd700' : '#c0c0c0';
-  const dailyPosterBg = dailyMovie.posterColors.join(',');
-  const dailyTagsHtml = dailyMovie.genres.map(g => `<span style="font-size:12px;padding:1px 5px;border-radius:5px;background:#fff0f5;color:#d14b73;border:1px solid #ffd6e0;">${g}</span>`).join('');
-
-  document.getElementById('desktop-movie-daily').innerHTML = `
-    <div style="display:flex;gap:8px;">
-      <!-- 海报 -->
-      <div style="width:70px;flex-shrink:0;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:linear-gradient(135deg,${dailyPosterBg});display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
-        <div style="font-size:32px;opacity:0.9;">${dailyMovie.posterEmoji}</div>
-        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:${dailyRatingColor};font-size:12px;font-weight:700;padding:1px 4px;border-radius:4px;">${dailyMovie.rating || '—'}</div>
-      </div>
-      <!-- 信息 -->
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#4a3340;margin-bottom:3px;">${dailyMovie.title}</div>
-          <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px;">${dailyTagsHtml}</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.5;">导演：${dailyMovie.director}<br>${dailyMovie.country} · ${dailyMovie.year}</div>
-        </div>
-        <div style="font-size:12px;color:${dailyRatingColor};font-weight:700;">豆瓣 ${dailyMovie.rating || '待开分'}</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:#6a4a5a;line-height:1.5;background:#fff8fa;padding:6px 8px;border-radius:6px;border-left:2px solid #ff9eb5;margin-top:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-      ${dailyMovie.reason}
-    </div>
-  `;
-
-  // === 右面板：近期上映电影预览（前3部） ===
-  const statusMap = { 'new':{text:'新',bg:'#34c759'}, 'hot':{text:'热',bg:'#ff4444'}, 'soon':{text:'待',bg:'#ff9500'} };
-  let previewHtml = '';
-  md.nowPlaying.slice(0, 3).forEach(m => {
-    const st = statusMap[m.status] || statusMap.hot;
-    const pBg = m.posterColors.join(',');
-    const ratingStr = m.rating ? m.rating : '—';
-    const ratingColor = m.rating ? '#ffd700' : '#c0c0c0';
-    previewHtml += `
-      <div style="display:flex;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed #ffe4ec;">
-        <div style="width:38px;height:50px;flex-shrink:0;border-radius:5px;overflow:hidden;background:linear-gradient(135deg,${pBg});display:flex;align-items:center;justify-content:center;font-size:16px;">${m.posterEmoji}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:700;color:#4a3340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.title}</div>
-          <div style="font-size:12px;color:var(--c-text-2);line-height:1.4;">${m.genres.join('/')} · ${m.country}</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
-            <span style="font-size:12px;font-weight:700;color:${ratingColor};">⭐ ${ratingStr}</span>
-            <span style="font-size:12px;padding:1px 4px;border-radius:3px;font-weight:600;background:${st.bg};color:#fff;">${st.text}</span>
-          </div>
-        </div>
-      </div>`;
-  });
-  previewHtml += `<div style="text-align:right;font-size:12px;color:#8a6270;">点击查看全部 →</div>`;
-  document.getElementById('desktop-movie-preview').innerHTML = previewHtml;
 }
 
 // ==================== 倒计时组件 ====================
@@ -20569,7 +20054,6 @@ function renderDesktop() {
   safeRender(renderDesktopWeight, 'weight');
   safeRender(renderHomeTodo, 'todo');
   safeRender(renderDesktopInspire, 'inspire');
-  safeRender(renderDesktopMovieTickets, 'movie');
 }
 
 // ==================== 初始化 ====================
@@ -20772,8 +20256,6 @@ try {
 } catch (e) {}
 try { renderAccount(); } catch(e) { console.log('renderAccount error:', e.message); }
 try { renderReminder(); } catch(e) { console.log('renderReminder error:', e.message); }
-try { renderMovie(); } catch(e) { console.log('renderMovie error:', e.message); }
-// 电影收藏功能已删除
 try { renderQuotes(); } catch(e) { console.log('renderQuotes error:', e.message); }
 try { initSettingsPanel(); } catch(e) { console.log('initSettingsPanel error:', e.message); }
 try { checkCheckinAlerts(); } catch(e) { console.log('checkCheckinAlerts error:', e.message); }
