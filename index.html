@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-202">
+<meta name="hami-build" content="2026-10-11-203">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -150,6 +150,42 @@
         localStorage.setItem('hami_assistant_data',JSON.stringify(st)); }
     }
   }catch(e){ try{ console.error('[fix154]',e); }catch(_){} }
+})();
+</script>
+<script>
+/* v202 fix（一次性）：把自媒体更新记录里「被自动补记写错日期」的条目改回图文自己的原定日期。
+   背景：旧逻辑在「已完成的图文计划缺联动记录」时，用"打开网页那天"(todayStr) 当发布日期补一条，
+   于是 8 月发过的老图文被记成了 2026-10-08，混进了 10 月的更新记录。
+   规则（主人 2026-10-11 确认）：只把日期恰好是 2026-10-08 且能对上图文计划的那几条，
+   改回该图文计划的 date（8 月），条数一条不删。幂等：改完就没有 10-08 的记录，再跑自动无操作。 */
+(function(){
+  try{
+    if(localStorage.getItem('hami_media_date_fix_202')==='done') return;
+    var st={};
+    try{ st=JSON.parse(localStorage.getItem('hami_assistant_data')||'{}'); }catch(e){ st={}; }
+    if(!st||typeof st!=='object') st={};
+    var mr=st.mediaRecords, fp=st.futurePosts;
+    if(Array.isArray(mr)&&mr.length&&Array.isArray(fp)&&fp.length){
+      var byId={};
+      fp.forEach(function(p){ if(p&&p.id) byId[p.id]=p; });
+      var changed=0;
+      mr.forEach(function(r){
+        if(!r||!r.futurePostId) return;
+        if(String(r.date||'')!=='2026-10-08') return;          // 只修这一次被自动补记写错的
+        var p=byId[r.futurePostId];
+        if(!p||!p.date) return;
+        if(String(p.date)===String(r.date)) return;
+        r.date=p.date;                                          // 改回图文计划的原定日期
+        changed++;
+      });
+      if(changed){
+        st._lastSavedAt=Date.now();
+        localStorage.setItem('hami_assistant_data',JSON.stringify(st));
+        try{ console.log('[fix202] 已把 '+changed+' 条自媒体记录的日期改回图文原定日期'); }catch(_){}
+      }
+    }
+    localStorage.setItem('hami_media_date_fix_202','done');
+  }catch(e){ try{ console.error('[fix202]',e); }catch(_){} }
 })();
 </script>
 <script>
