@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-200">
+<meta name="hami-build" content="2026-10-11-201">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4819,8 +4819,8 @@
     <!-- 三张打卡卡片 -->
     <div class="checkin-grid" id="desktop-checkin"></div>
 
-    <!-- 体重记录日历（主页日历缩略组件，对应镜像 panel-fitness 板块） -->
-    <div id="home-weight-cal" class="todo-card" style="cursor:pointer;" onclick="switchPanel('fitness', this)">
+    <!-- 体重记录日历（主页日历缩略组件）：v201 起整卡不再跳转 panel-fitness——点日期格子弹出改体重、点标题/箭头切月份，仅此两个功能 -->
+    <div id="home-weight-cal" class="todo-card">
       <h3>⚖️ 体重记录日历</h3>
       <div id="desktop-weight"></div>
     </div>
