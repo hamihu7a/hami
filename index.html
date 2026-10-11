@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-193">
+<meta name="hami-build" content="2026-10-11-194">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1502,30 +1502,36 @@
 
   /* 分类排行榜条（紧凑，避免横向大段空白） */
   .rank-row {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 6px;
     padding: 8px 0;
     border-bottom: 1px dashed var(--c-pink-soft);
   }
   .rank-row:last-child { border-bottom: none; }
   .rank-icon {
-    width: 28px; height: 28px; border-radius: 50%;
+    width: 26px; height: 26px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     color: #fff; flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     background: #f5e8ed;
   }
-  .rank-icon svg { width: 15px; height: 15px; }
-  .rank-name { font-size: 13px; font-weight: 700; color: var(--c-text-2); max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .rank-icon svg { width: 14px; height: 14px; }
+  /* v194 主人要求：分类名超过 3 个字就折行（第 3 字后换行），把右侧金额完整露出来。
+     宽度锁死 3 个字宽 + nowrap：配合 JS 插入的 <br> 保证「恰好两行」，不再挤走金额。 */
+  .rank-name {
+    font-size: 13px; font-weight: 700; color: var(--c-text-2);
+    width: 44px; min-width: 44px; flex-shrink: 0; text-align: left;
+    line-height: 1.12; white-space: nowrap;
+  }
   .rank-pct { font-size:12px; color: #8a6270; min-width: 34px; text-align: right; flex-shrink: 0; }
   .rank-bar {
-    flex: 1; min-width: 36px; height: 6px; border-radius: 3px; background: #fff0f5;
-    overflow: hidden; position: relative; margin: 0 6px;
+    flex: 1; min-width: 16px; height: 6px; border-radius: 3px; background: #fff0f5;
+    overflow: hidden; position: relative; margin: 0 4px;
   }
   .rank-bar-fill {
     position: absolute; left: 0; top: 0; bottom: 0;
     border-radius: 3px; transition: width 0.6s ease;
   }
-  .rank-amount { font-size: 13px; font-weight: 700; color: var(--c-pink-deep); min-width: 72px; text-align: right; flex-shrink: 0; font-family: 'Baloo 2', monospace; }
+  .rank-amount { font-size: 13px; font-weight: 700; color: var(--c-pink-deep); min-width: 54px; text-align: right; flex-shrink: 0; font-family: 'Baloo 2', monospace; }
 
   /* 弹窗遮罩：严格限制在主面板（.main）范围内，绝不覆盖侧栏/顶部指令栏 */
   .modal-mask {
@@ -15606,6 +15612,15 @@ function closeStatsModal() {
   document.body.style.overflow = '';
 }
 
+// v194：分类名超过 3 个字 → 在第 3 字后折行成两行（4 字按 2+2，5~6 字按 3+余），
+// 让右侧「笔数 / 金额」不再被长名字挤出屏幕、保证数字完整可见。
+function catNameLines(name) {
+  const s = String(name == null ? '' : name);
+  if (s.length <= 3) return s;
+  const cut = Math.min(3, Math.ceil(s.length / 2));
+  return s.slice(0, cut) + '<br>' + s.slice(cut);
+}
+
 function renderStatsModal(type) {
   type = type || 'expense';
   document.querySelectorAll('#stats-modal .arm-tab').forEach(b => {
@@ -15675,8 +15690,8 @@ function renderStatsModal(type) {
       h += `
         <div class="rank-row">
           <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
-          <span class="rank-name">${c.name}</span>
-          <span style="font-size:12px;color:#8a6270;min-width:36px;text-align:left;">${pct}%</span>
+          <span class="rank-name">${catNameLines(c.name)}</span>
+          <span style="font-size:12px;color:#8a6270;min-width:32px;text-align:left;flex-shrink:0;">${pct}%</span>
           <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
           <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${mainTxt}</span>
         </div>
@@ -16241,8 +16256,8 @@ function renderInlineStats(type) {
     h += `
       <div class="rank-row">
         <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
-        <span class="rank-name">${c.name}</span>
-        <span style="font-size:12px;color:#8a6270;min-width:36px;text-align:left;">${pct}%</span>
+        <span class="rank-name">${catNameLines(c.name)}</span>
+        <span style="font-size:12px;color:#8a6270;min-width:32px;text-align:left;flex-shrink:0;">${pct}%</span>
         <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
         <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${sign}¥${fmtMoney(c.amount)}</span>
       </div>
