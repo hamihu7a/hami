@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-203">
+<meta name="hami-build" content="2026-10-11-204">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5359,7 +5359,7 @@
     <div class="fin-topbar">
       <div class="fin-month">
         <span style="font-size:14px;">📅</span>
-        <select id="media-month" onchange="renderMedia()">
+        <select id="media-month" onchange="__mediaMonthPinned=true;renderMedia()">
           <option value="2026-07">2026年7月</option>
           <option value="2026-08" selected>2026年8月</option>
           <option value="2026-09">2026年9月</option>
@@ -12130,9 +12130,12 @@ function switchPanel(name, navEl) {
   }
   if (name === 'media') {
     try {
+      try { fixMediaRecordsStampedByBackfill(); } catch (e0) {}
       const sel = document.getElementById('media-month');
       const cur = todayStr().substring(0, 7);
-      if (sel) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
+      // v203：与「收入面板」同款——只在本次打开页面后第一次进面板时自动跳到当月；
+      // 主人手动选过月份后就不再被强行拉回，否则看历史月份时像是"数据被改到了这个月"。
+      if (sel && !__mediaMonthPinned) Array.from(sel.options).forEach(o => o.selected = o.value === cur);
       renderMedia();
       renderPublishCalendar();
     } catch (e) {}
@@ -12225,6 +12228,8 @@ let __beautyPage = 0;    // 美化档明细当前页
 let __incomeRenderedMonth = '';   // 记录上次渲染月份，用于翻页归零
 // v109：收入面板的月份是否被主人手动选过（选过就不再被强行拉回当月）
 var __incomeMonthPinned = false;
+// v203：自媒体更新记录面板同款——主人手动选过月份后，切面板不再被强行拉回当月
+var __mediaMonthPinned = false;
 // v109：刚记了一笔（定制单/美化档）时，把收入面板月份固定到这笔的月份，保证一定看得见
 function hamiPinIncomeMonth(dateStr) {
   try {
@@ -13940,6 +13945,31 @@ function renderFutureDone(doneList, today) {
       + '</div>';
   }
   sec.innerHTML = html;
+}
+
+// v203：把「当天被自动补记写错日期」的自媒体记录改回图文自己的原定日期（幂等，可反复跑、不会重复改）。
+// 只认「日期恰好是补记当天 2026-10-08 且能对上未来图文计划」的那几条，其它记录一律不碰。
+// 放在加载数据之后跑，是为了覆盖「换设备首次打开时本地还没数据、文件头的一次性脚本白跑」的情况。
+function fixMediaRecordsStampedByBackfill() {
+  try {
+    if (!store.mediaRecords || !store.futurePosts) return;
+    const byId = {};
+    store.futurePosts.forEach(function (p) { if (p && p.id) byId[p.id] = p; });
+    let changed = 0;
+    store.mediaRecords.forEach(function (r) {
+      if (!r || !r.futurePostId) return;
+      if (String(r.date || '') !== '2026-10-08') return;
+      const p = byId[r.futurePostId];
+      if (!p || !p.date || String(p.date) === String(r.date)) return;
+      r.date = p.date;
+      changed++;
+    });
+    if (changed) {
+      try { saveData(); } catch (e) {}
+      try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+      try { if (typeof renderMedia === 'function') renderMedia(); } catch (e) {}
+    }
+  } catch (e) {}
 }
 
 // 回填：启动时把"已标记完成但漏写自媒体记录"的历史数据补上（修复换版本前已完成的两条没进自媒体记录）
@@ -20321,6 +20351,7 @@ try { renderPublishCalendar(); } catch(e) { console.log('renderPublishCalendar e
 try { renderCustomBoard(); } catch(e) { console.log('renderCustomBoard error:', e.message); }
 try { renderInspire(); } catch(e) { console.log('renderInspire error:', e.message); }
 try { backfillFutureDoneToMedia(); } catch(e) { console.log('backfillFutureDoneToMedia error:', e.message); }
+try { fixMediaRecordsStampedByBackfill(); } catch(e) { console.log('fixMediaRecordsStampedByBackfill error:', e.message); }
 try { backfillDouyinSyncDefault(); } catch(e) { console.log('backfillDouyinSyncDefault error:', e.message); }
 try { renderFuturePosts(); } catch(e) { console.log('renderFuturePosts error:', e.message); }
 try { renderPeriod(); } catch(e) { console.log('renderPeriod error:', e.message); }
