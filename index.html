@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-09-183">
+<meta name="hami-build" content="2026-10-11-184">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9986,6 +9986,7 @@ const CATEGORY_ALIAS = {
   drink: ['饮料','奶茶','咖啡','饮品','喝水','茶','果汁','啤酒','酒','酸奶','拿铁','果茶','可乐','雪碧','矿泉水','白酒','红酒','气泡水','椰汁'],
   snack: ['零食','薯片','薯','坚果','饼干','辣条','糖果','巧克力','瓜子','膨化','小吃','果冻','蜜饯','锅巴','海苔','奥利奥'],
   media_exp: ['自媒体','小红书','抖音','视频','博主','创作','拍摄','道具','灯光','补光灯','三脚架','相机配件','直播间','投流','推广费','推广','投放','薯条','加热','巨量','抖加','千川','拍摄场地','模特','提词器','运镜','剪辑','后期','自媒体设备','买粉','涨粉','自媒体投放','视频投放','抖音投放','小红书推广','投流费','推广费'],
+  media_ad: ['自媒体广告','广告','广告费','广告投放','投广告','打广告','买广告','广告位','信息流广告','广告推广','投放广告','薯条推广','抖加投放','千川投放'],
   other: [],
   // —— 收入 ——
   salary: ['工资','薪水','月薪','发工资','到账工资','底薪','月入'],
@@ -12524,11 +12525,24 @@ function renderIncome() {
   const todayIncSim = monthOrders.filter(o => o.date === today).reduce((s,o) => s + (parseFloat(o.amount) || 0), 0)
                     + monthBeauty.filter(b => b.date === today).reduce((s,b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
 
+  // v2026-10-11-184 自媒体广告支出（本月口径）：与「收入与支出」账本实时联动
+  // 口径：accountRecords 里 type=expense 且 category=media_ad 的当月支出合计
+  const _adRecs = (store.accountRecords || []).filter(r => r.type === 'expense' && r.category === 'media_ad' && (r.date || '').startsWith(month));
+  const monthAdExpense = _adRecs.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const adCount = _adRecs.length;
+
   document.getElementById('income-stats').innerHTML = `
     <div class="stat-card"><div class="label">月总收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${totalIncome}</div></div>
     <div class="stat-card"><div class="label">🌞 今日收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(todayIncSim)}</div></div>
     <div class="stat-card"><div class="label">定制单收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#b48bf2;">¥${customIncome}</div></div>
     <div class="stat-card"><div class="label">美化档收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#ff9eb5;">¥${modIncome}</div></div>
+    <div class="stat-card" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;">
+      <div style="min-width:0;">
+        <div class="label" style="margin-bottom:2px;">📣 自媒体广告支出</div>
+        <div class="label" style="text-align:left;">本月共 ${adCount} 笔 · 来自【收入与支出】账本自动联动</div>
+      </div>
+      <div class="value red" style="white-space:nowrap;">-¥${fmtMoney(monthAdExpense)}</div>
+    </div>
   `;
 
   // v2026-09-06-28 按"定制完成日期"（deadline）升序：已废弃——v2026-09-20-113 起改为按「记录日期」降序，最新记录在最上面
@@ -15068,6 +15082,7 @@ const EXPENSE_CATEGORIES = [
   { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
   { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' },
   { key: 'media_exp', icon: 'media',    name: '自媒体',   color: '#C77DFF' },
+  { key: 'media_ad',  icon: 'media',    name: '自媒体广告', color: '#FF4D7D' },
   { key: 'other',     icon: 'star',     name: '其他',     color: '#c0c0c0' }
 ];
 
