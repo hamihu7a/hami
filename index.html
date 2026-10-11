@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-192">
+<meta name="hami-build" content="2026-10-11-193">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2412,60 +2412,51 @@
     padding-top: 11px;
   }
 
-  /* v191：模拟人生总收入 · 自媒体广告支出卡（高级感重做，告别小字平铺） */
+  /* v193：模拟人生总收入 · 自媒体广告支出卡（紧凑版：与旁边 stat-card 同风格，标题/副信息一律单行不换行） */
   .ad-expense-card {
     grid-column: 1 / -1;
     display: flex;
-    align-items: stretch;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 18px;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 11px;
+    border-radius: 14px;
     background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,229,239,0.92));
     border: 1px solid rgba(255, 138, 166, 0.45);
-    box-shadow: 0 6px 18px rgba(209, 75, 115, 0.14), inset 0 1px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 3px 10px rgba(209, 75, 115, 0.10), inset 0 1px 0 rgba(255,255,255,0.8);
     position: relative;
     overflow: hidden;
     text-align: left;
   }
-  .ad-expense-card::after {
-    content: "\2212";   /* − 减号水印 */
-    position: absolute;
-    right: -8px; top: -28px;
-    font-size: 130px; font-weight: 800;
-    color: rgba(209, 75, 115, 0.05);
-    line-height: 1;
-    pointer-events: none;
-  }
   .ad-expense-card .ad-icon {
     flex: 0 0 auto;
-    width: 48px; height: 48px;
-    border-radius: 14px;
+    width: 34px; height: 34px;
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #ff6f9c, #ff9eb5);
-    box-shadow: 0 5px 12px rgba(255, 111, 156, 0.35);
+    box-shadow: 0 3px 8px rgba(255, 111, 156, 0.30);
     color: #fff;
   }
-  .ad-expense-card .ad-icon svg { width: 27px; height: 27px; }
-  .ad-expense-card .ad-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-  .ad-expense-card .ad-title { font-size: 15.5px; font-weight: 700; color: var(--c-pink-deep); letter-spacing: .3px; }
-  .ad-expense-card .ad-sub { font-size: 11.5px; color: var(--c-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .ad-expense-card .ad-icon svg { width: 19px; height: 19px; }
+  .ad-expense-card .ad-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; overflow: hidden; }
+  .ad-expense-card .ad-title { font-size: 13.5px; font-weight: 700; color: var(--c-pink-deep); letter-spacing: .2px; white-space: nowrap; line-height: 1.15; }
+  .ad-expense-card .ad-sub { font-size: 10.5px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
   .ad-expense-card .ad-chip {
-    display: inline-flex; align-items: center; gap: 3px;
-    padding: 1px 9px; border-radius: 999px;
-    font-size: 11px; font-weight: 600;
+    display: inline-block;
+    padding: 0 6px; border-radius: 999px;
+    font-size: 10px; font-weight: 600;
     background: rgba(255, 138, 166, 0.16); color: var(--c-pink-deep);
   }
   .ad-expense-card .ad-divider { width: 1px; align-self: stretch; background: linear-gradient(rgba(255,138,166,0), rgba(255,138,166,0.5), rgba(255,138,166,0)); }
-  .ad-expense-card .ad-right { flex: 0 0 auto; text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 3px; }
+  .ad-expense-card .ad-right { flex: 0 0 auto; text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 1px; }
   .ad-expense-card .ad-amt {
-    font-size: 26px; font-weight: 800; line-height: 1;
+    font-size: 21px; font-weight: 800; line-height: 1;
     background: linear-gradient(135deg, #e85f7a, #ff6f9c);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: #e85f7a;
     white-space: nowrap;
   }
-  .ad-expense-card .ad-amt-prefix { font-size: 16px; font-weight: 700; margin-right: 1px; }
-  .ad-expense-card .ad-ratio { font-size: 11px; color: var(--c-muted); white-space: nowrap; }
+  .ad-expense-card .ad-amt-prefix { font-size: 14px; font-weight: 700; margin-right: 1px; }
+  .ad-expense-card .ad-ratio { font-size: 10.5px; color: var(--c-muted); white-space: nowrap; }
 
   table {
     width: 100%;
@@ -11563,19 +11554,21 @@ function requestNotifyPermission() {
 //               ② 多条提醒【合并成 1 条】通知（带 tag，同 tag 只替换不叠加），不再一次糊好几条把屏幕顶部挡住。
 function fireCheckinNotifications(alerts) {
   try {
-    if (!alerts || !alerts.length) return;
+    // 只推「体重打卡」类提醒（运动/如厕/面膜/洗头等不再弹系统通知，避免轰炸）
+    const weightAlerts = (alerts || []).filter(a => a && a.type === 'weight');
+    if (!weightAlerts.length) return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     const today = todayStr();
     const key = 'hami_notify_daily_' + today;   // 按日期存，localStorage 不会随关标签页/关 App 被清空
-    try { if (localStorage.getItem(key)) return; } catch (e) {}
+    try { if (localStorage.getItem(key)) return; } catch (e) {}   // 每天第一次打开网页才推一次
     try { localStorage.setItem(key, '1'); } catch (e) {}
     // 多条合并成一条：第一条为主，其余只报个数，避免同时弹出多个横幅
-    const first = alerts[0];
-    const body = alerts.length > 1
-      ? first.icon + ' ' + first.text + '（另有 ' + (alerts.length - 1) + ' 项待办）'
+    const first = weightAlerts[0];
+    const body = weightAlerts.length > 1
+      ? first.icon + ' ' + first.text + '（另有 ' + (weightAlerts.length - 1) + ' 项待办）'
       : first.icon + ' ' + first.text;
     try {
-      const n = new Notification('Hami小助理 · 打卡提醒', {
+      const n = new Notification('Hami小助理 · 体重打卡提醒', {
         body: body,
         icon: '',
         tag: 'hami-checkin-' + today,   // 同 tag 的通知会互相替换，绝不叠加
@@ -11600,7 +11593,7 @@ function collectCheckinAlerts() {
 
   // 量体重提醒：早上8点起到13点前温柔提醒（每天打开都能看到）
   if (!hasWeight && hour >= 8 && hour < 13) {
-    alerts.push({ icon: '⚖️', text: '该量体重啦！记得记录今天的体重~' });
+    alerts.push({ icon: '⚖️', text: '该量体重啦！记得记录今天的体重~', type: 'weight' });
   }
   // 运动打卡提醒：19:00-20:00 之间
   if (!hasExercise && hour >= 19 && hour < 20) {
@@ -11608,7 +11601,7 @@ function collectCheckinAlerts() {
   }
   // 量体重未完成超时提醒：13:00 以后还没量（持续提醒，直到量了为止）
   if (!hasWeight && hour >= 13) {
-    alerts.push({ icon: '⚖️', text: '今天还没量体重！别忘了~' });
+    alerts.push({ icon: '⚖️', text: '今天还没量体重！别忘了~', type: 'weight' });
   }
   // 运动未完成超时提醒：20:00 以后还没打卡
   if (!hasExercise && hour >= 20) {
@@ -11635,18 +11628,22 @@ function collectCheckinAlerts() {
 
 function checkCheckinAlerts() {
   const alerts = collectCheckinAlerts();
+  const weightAlerts = (alerts || []).filter(a => a && a.type === 'weight');
 
-  // 首次打开弹窗（每个提醒只弹一次）
-  if (!sessionStorage.getItem('checkinAlertShown')) {
-    sessionStorage.setItem('checkinAlertShown', '1');
-    if (alerts.length > 0) {
+  // 页面内浮层：只提示「体重打卡」，且每天第一次打开网页才弹一次（localStorage 按日期去重，关掉重开不重复弹）
+  if (weightAlerts.length > 0) {
+    const tk = 'hami_toast_daily_' + todayStr();
+    let shown = false;
+    try { shown = !!localStorage.getItem(tk); } catch (e) {}
+    if (!shown) {
+      try { localStorage.setItem(tk, '1'); } catch (e) {}
       setTimeout(() => {
-        hamiToast(alerts.map(a => a.icon + ' ' + a.text).join('\n'));
+        hamiToast(weightAlerts.map(a => a.icon + ' ' + a.text).join('\n'));
       }, 800);
     }
   }
 
-  // 系统通知：每天未完成时推送到手机通知栏（需授权）
+  // 系统通知：只推「体重打卡」，每天第一次打开网页推一次（详见 fireCheckinNotifications）
   fireCheckinNotifications(alerts);
 }
 
@@ -12689,7 +12686,7 @@ function renderIncome() {
       <div class="ad-icon">${ICON_SVGS.media || ''}</div>
       <div class="ad-body">
         <div class="ad-title">自媒体广告支出</div>
-        <div class="ad-sub">本月 <span class="ad-chip">${adCount} 笔</span> · 收入与支出账本自动联动</div>
+        <div class="ad-sub">本月 <span class="ad-chip">${adCount} 笔</span> · 账本自动联动</div>
       </div>
       <div class="ad-divider"></div>
       <div class="ad-right">
