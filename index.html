@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-199">
+<meta name="hami-build" content="2026-10-11-200">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -930,7 +930,7 @@
   .panel.has-custom-bg::before,
   #sidebar.has-custom-bg::before,
   .main.has-custom-bg::before,
-  /* 主页"体重记录与变化日历"todo-card 缩略组件：和 .panel 一样的浅蒙版 */
+  /* 主页"体重记录日历"todo-card 缩略组件：和 .panel 一样的浅蒙版 */
   #home-weight-cal.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
@@ -1168,7 +1168,7 @@
     color: var(--c-pink-deep);
     margin-bottom: 10px;                                                  /* 配合 padding 缩，标题与下方内容间距收一下 */
   }
-  /* 「体重记录与变化日历」特殊收紧：缩小卡片上下内边距 + 标题与日历的间距，日期格子本身保持原样 */
+  /* 「体重记录日历」特殊收紧：缩小卡片上下内边距 + 标题与日历的间距，日期格子本身保持原样 */
   #home-weight-cal { padding: 12px 22px; }
   #home-weight-cal h3 { margin-bottom: 6px; }
 
@@ -3368,7 +3368,7 @@
       .account-card .ac-detail { font-size: 11px; flex-wrap: wrap; gap: 2px 4px; justify-content: flex-start; }
       .account-card .ac-detail b { font-weight: 700; }
 
-      /* 体重记录与变化日历：进一步收窄内边距，把宽度让给格子 */
+      /* 体重记录日历：进一步收窄内边距，把宽度让给格子 */
       #home-weight-cal { padding: 8px 0; }
       #home-weight-cal h3 { font-size: 13px; text-align: center; text-wrap: balance; margin-bottom: 4px; }
       .weight-cal-header { gap: 5px; margin-bottom: 4px; }
@@ -4819,9 +4819,9 @@
     <!-- 三张打卡卡片 -->
     <div class="checkin-grid" id="desktop-checkin"></div>
 
-    <!-- 体重记录与变化日历（主页日历缩略组件，对应镜像 panel-fitness 板块） -->
+    <!-- 体重记录日历（主页日历缩略组件，对应镜像 panel-fitness 板块） -->
     <div id="home-weight-cal" class="todo-card" style="cursor:pointer;" onclick="switchPanel('fitness', this)">
-      <h3>⚖️ 体重记录与变化日历</h3>
+      <h3>⚖️ 体重记录日历</h3>
       <div id="desktop-weight"></div>
     </div>
 
@@ -5222,7 +5222,7 @@
   <div id="panel-fitness" class="panel">
 
     <div class="tip-box">
-      💕 <b>使用说明</b>：每天只记一次体重。下方统计与主页「体重记录与变化日历」<b>完全同步同源同月</b>，点日历标题旁的 ❮ ❯ 可切换月份查看历史，「今」按钮回到今天所在月。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。运动打卡请进左侧「有氧运动器械打卡」。
+      💕 <b>使用说明</b>：每天只记一次体重。下方统计与主页「体重记录日历」<b>完全同步同源同月</b>，点日历标题旁的 ❮ ❯ 可切换月份查看历史，「今」按钮回到今天所在月。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。运动打卡请进左侧「有氧运动器械打卡」。
     </div>
 
     <div class="goal-row" id="weight-goal-row">
@@ -6291,8 +6291,8 @@
             <div class="mirror-block mirror-accounts" data-bgkey="accounts" title="点击修改自媒体数据背景">
               <span class="mirror-tag">自媒体数据</span>
             </div>
-            <div class="mirror-block mirror-weight" data-bgkey="panel-fitness" title="点击修改主页「体重记录与变化日历」背景">
-              <span class="mirror-tag">⚖️ 体重记录与变化日历</span>
+            <div class="mirror-block mirror-weight" data-bgkey="panel-fitness" title="点击修改主页「体重记录日历」背景">
+              <span class="mirror-tag">⚖️ 体重记录日历</span>
             </div>
           </div>
         </div>
@@ -7003,7 +7003,7 @@ function mergeByDatePriority(defaultArr, savedArr, hasValue) {
 }
 
 // ==================== 自定义背景（上传图片替换纯色背景）====================
-// 镜像面板（点击板块上传，改对应主页区域）：hero（时间与激励语区域） / weather（今日天气） / fortune（今日运势） / accounts（自媒体数据） / panel-fitness（体重记录与变化日历）。左侧任务栏、整体面板大背景、自媒体更新记录不在镜像内。
+// 镜像面板（点击板块上传，改对应主页区域）：hero（时间与激励语区域） / weather（今日天气） / fortune（今日运势） / accounts（自媒体数据） / panel-fitness（体重记录日历）。左侧任务栏、整体面板大背景、自媒体更新记录不在镜像内。
 // BG_KEYS / BG_ELS 同时保留了 sidebar / main 等其它 key，用于兼容历史 localStorage 与极少数角落入口
 const BG_KEYS = {
   hero: 'hami_bg_hero',
@@ -7027,7 +7027,7 @@ const BG_ELS = {
   weather: '#home-weather',
   fortune: '#home-fortune',
   accounts: '#desktop-accounts-wrap',
-  // 体重记录与变化日历：主页日历缩略组件（todo-card），非 panel-fitness 全页面板
+  // 体重记录日历：主页日历缩略组件（todo-card），非 panel-fitness 全页面板
   'panel-fitness': '#home-weight-cal',
   sidebar: '#sidebar',
   main: '.main',
@@ -12801,7 +12801,7 @@ function bindWeightGoalInput() {
 }
 
 // ==================== 减肥记录 ====================
-// 与主页「体重记录与变化日历」完全同步同源：跟随用户切换的月份（weightCalMonth），
+// 与主页「体重记录日历」完全同步同源：跟随用户切换的月份（weightCalMonth），
 // 不再读 #fitness-month 选择器（删除后）。起始体重 = store.startWeight（默认90，可改）；最新体重取全部记录最新一条。
 function renderFitness() {
   const month = (store.weightCalMonth || todayStr().substring(0, 7));   // 关键：与 renderDesktopWeight 同一份 month 来源
@@ -14372,9 +14372,9 @@ async function deleteExerciseItem(idx) {
 
 // ==================== 体重视图集中同步 ====================
 // 任意一处记录/修改/删除体重后，统一重渲染所有展示体重的界面，
-// 保证「跟小助理说 / 体重记录与变化日历 / 三·健康记录」三处数据永远一致、永不脱节。
+// 保证「跟小助理说 / 体重记录日历 / 三·健康记录」三处数据永远一致、永不脱节。
 function refreshWeightViews() {
-  try { renderDesktopWeight(); }   catch (e) {}  // 首页「体重记录与变化日历」
+  try { renderDesktopWeight(); }   catch (e) {}  // 首页「体重记录日历」
   try { renderFitness(); }         catch (e) {}  // 三·健康记录（面板）
   try { renderDesktopCheckin(); }  catch (e) {}  // 首页「今日任务·量体重」打卡态
   try { renderHomeTodo(); }        catch (e) {}  // 首页「代办事项」里的量体重提醒
@@ -20124,7 +20124,7 @@ setTimeout(function () { try { checkDataRescue(); } catch (e) { console.error(e)
     return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
   }
   var yesterday = ymdAdd(today, -1);
-  // 体重：不再注入任何演示/编造数据——「体重记录与变化日历」与「每日体重」只显示主人真实记录的体重。
+  // 体重：不再注入任何演示/编造数据——「体重记录日历」与「每日体重」只显示主人真实记录的体重。
   // 历史 {before, after} 旧记录统一补 value；不再按数值/备注无差别删除（演示数据由 _seededV2 + weightSeedV1Applied 哨兵保护）。
   (function migrateWeightShape() {
     if (!store.weightRecords || !store.weightRecords.length) return;
