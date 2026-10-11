@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-190">
+<meta name="hami-build" content="2026-10-11-192">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2411,6 +2411,61 @@
   #income-stats .stat-card {
     padding-top: 11px;
   }
+
+  /* v191：模拟人生总收入 · 自媒体广告支出卡（高级感重做，告别小字平铺） */
+  .ad-expense-card {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,229,239,0.92));
+    border: 1px solid rgba(255, 138, 166, 0.45);
+    box-shadow: 0 6px 18px rgba(209, 75, 115, 0.14), inset 0 1px 0 rgba(255,255,255,0.8);
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+  }
+  .ad-expense-card::after {
+    content: "\2212";   /* − 减号水印 */
+    position: absolute;
+    right: -8px; top: -28px;
+    font-size: 130px; font-weight: 800;
+    color: rgba(209, 75, 115, 0.05);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .ad-expense-card .ad-icon {
+    flex: 0 0 auto;
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #ff6f9c, #ff9eb5);
+    box-shadow: 0 5px 12px rgba(255, 111, 156, 0.35);
+    color: #fff;
+  }
+  .ad-expense-card .ad-icon svg { width: 27px; height: 27px; }
+  .ad-expense-card .ad-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .ad-expense-card .ad-title { font-size: 15.5px; font-weight: 700; color: var(--c-pink-deep); letter-spacing: .3px; }
+  .ad-expense-card .ad-sub { font-size: 11.5px; color: var(--c-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .ad-expense-card .ad-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 1px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    background: rgba(255, 138, 166, 0.16); color: var(--c-pink-deep);
+  }
+  .ad-expense-card .ad-divider { width: 1px; align-self: stretch; background: linear-gradient(rgba(255,138,166,0), rgba(255,138,166,0.5), rgba(255,138,166,0)); }
+  .ad-expense-card .ad-right { flex: 0 0 auto; text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 3px; }
+  .ad-expense-card .ad-amt {
+    font-size: 26px; font-weight: 800; line-height: 1;
+    background: linear-gradient(135deg, #e85f7a, #ff6f9c);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: #e85f7a;
+    white-space: nowrap;
+  }
+  .ad-expense-card .ad-amt-prefix { font-size: 16px; font-weight: 700; margin-right: 1px; }
+  .ad-expense-card .ad-ratio { font-size: 11px; color: var(--c-muted); white-space: nowrap; }
 
   table {
     width: 100%;
@@ -11504,22 +11559,30 @@ function requestNotifyPermission() {
   } catch (e) {}
 }
 // 把未完成的打卡提醒推送到手机通知栏（需用户授权）
+// v191 主人要求：①「一天只提醒一次」——改用 localStorage 按【日期】记账，关掉页面/重开 App 都算同一天，不再重复弹；
+//               ② 多条提醒【合并成 1 条】通知（带 tag，同 tag 只替换不叠加），不再一次糊好几条把屏幕顶部挡住。
 function fireCheckinNotifications(alerts) {
   try {
+    if (!alerts || !alerts.length) return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     const today = todayStr();
-    const key = 'notifyShown_' + today;
-    // 同一天对同一批提醒只推一次，避免反复骚扰
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    alerts.forEach(a => {
-      try {
-        new Notification('Hami小助理 · 打卡提醒', {
-          body: a.icon + ' ' + a.text,
-          icon: ''
-        });
-      } catch (e) {}
-    });
+    const key = 'hami_notify_daily_' + today;   // 按日期存，localStorage 不会随关标签页/关 App 被清空
+    try { if (localStorage.getItem(key)) return; } catch (e) {}
+    try { localStorage.setItem(key, '1'); } catch (e) {}
+    // 多条合并成一条：第一条为主，其余只报个数，避免同时弹出多个横幅
+    const first = alerts[0];
+    const body = alerts.length > 1
+      ? first.icon + ' ' + first.text + '（另有 ' + (alerts.length - 1) + ' 项待办）'
+      : first.icon + ' ' + first.text;
+    try {
+      const n = new Notification('Hami小助理 · 打卡提醒', {
+        body: body,
+        icon: '',
+        tag: 'hami-checkin-' + today,   // 同 tag 的通知会互相替换，绝不叠加
+        renotify: false
+      });
+      n.onclick = function () { try { window.focus(); n.close(); } catch (e) {} };
+    } catch (e) {}
   } catch (e) {}
 }
 
@@ -12611,18 +12674,28 @@ function renderIncome() {
   const _adRecs = (store.accountRecords || []).filter(r => r.type === 'expense' && r.category === 'media_ad' && (r.date || '').startsWith(month));
   const monthAdExpense = _adRecs.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const adCount = _adRecs.length;
+  // 高级感小数据：广告支出占「模拟人生口径」本月收入的比例（无收入时给友好提示）
+  const _adRatio = totalIncome > 0 ? Math.round(monthAdExpense / totalIncome * 100) : 0;
+  const adRatioText = totalIncome > 0
+    ? '占本月收入 ' + _adRatio + '%'
+    : (monthAdExpense > 0 ? '本月暂无收入对照' : '本月暂无支出');
 
   document.getElementById('income-stats').innerHTML = `
     <div class="stat-card"><div class="label">月总收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${totalIncome}</div></div>
     <div class="stat-card"><div class="label">🌞 今日收入</div><div class="label">最后更新：${lastMD}</div><div class="value green">¥${fmtMoney(todayIncSim)}</div></div>
     <div class="stat-card"><div class="label">定制单收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#b48bf2;">¥${customIncome}</div></div>
     <div class="stat-card"><div class="label">美化档收入</div><div class="label">最后更新：${lastMD}</div><div class="value" style="color:#ff9eb5;">¥${modIncome}</div></div>
-    <div class="stat-card" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;">
-      <div style="min-width:0;">
-        <div class="label" style="margin-bottom:2px;">📣 自媒体广告支出</div>
-        <div class="label" style="text-align:left;">本月共 ${adCount} 笔 · 来自【收入与支出】账本自动联动</div>
+    <div class="ad-expense-card">
+      <div class="ad-icon">${ICON_SVGS.media || ''}</div>
+      <div class="ad-body">
+        <div class="ad-title">自媒体广告支出</div>
+        <div class="ad-sub">本月 <span class="ad-chip">${adCount} 笔</span> · 收入与支出账本自动联动</div>
       </div>
-      <div class="value red" style="white-space:nowrap;">-¥${fmtMoney(monthAdExpense)}</div>
+      <div class="ad-divider"></div>
+      <div class="ad-right">
+        <div class="ad-amt"><span class="ad-amt-prefix">−</span>¥${fmtMoney(monthAdExpense)}</div>
+        <div class="ad-ratio">${adRatioText}</div>
+      </div>
     </div>
   `;
 
