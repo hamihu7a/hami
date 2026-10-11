@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-185">
+<meta name="hami-build" content="2026-10-11-186">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -804,6 +804,33 @@
     opacity:0;transition:opacity .3s;pointer-events:none;
   }
   .hami-cmd-toast.show { opacity:1; }
+
+  /* 云端同步提醒浮层：紧贴「记一下」栏（高 60px）正下方，绝不遮挡输入框与按钮 */
+  #cloud-sync-toast {
+    position: fixed;
+    top: 68px;                 /* 「记一下」栏下方 8px，不越过、不遮挡 */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9000;
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+    padding: 9px 16px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(90,168,106,0.95);
+    box-shadow: 0 4px 16px rgba(120,60,90,0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #cloud-sync-toast.show { opacity: 1; pointer-events: auto; }
+  #cloud-sync-toast.fail { background: rgba(199,91,134,0.96); }
+  #cloud-sync-toast.ok { background: rgba(90,168,106,0.95); }
 
   /* ===== 自定义背景：上传图片替换纯色背景（所有区域通用） ===== */
   /* 首页 hero：暗色蒙版，保证白字清晰 */
@@ -8849,6 +8876,43 @@ function cloudStatus(text, color) {
   const el = document.getElementById('settings-cloud-status');
   if (el) { el.textContent = text || ''; if (color) el.style.color = color; }
 }
+// 云端同步提醒浮层：成功/失败时在「记一下」栏下方弹出，支持「上滑」或「点击」关闭，几秒后自动消失。
+// 去重：5 秒内相同文本不重复弹（避免每次保存都刷屏）。
+let _cloudToastLastKey = '', _cloudToastLastTs = 0, _cloudToastTimer = null;
+function hideCloudToast() {
+  const el = document.getElementById('cloud-sync-toast');
+  if (el) { el.classList.remove('show'); }
+}
+function showCloudToast(text, type) {
+  try {
+    let el = document.getElementById('cloud-sync-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'cloud-sync-toast';
+      document.body.appendChild(el);
+      let startY = null;
+      el.addEventListener('touchstart', function (e) { startY = (e.touches && e.touches[0]) ? e.touches[0].clientY : null; }, { passive: true });
+      el.addEventListener('touchmove', function (e) {
+        if (startY == null) return;
+        const y = (e.touches && e.touches[0]) ? e.touches[0].clientY : startY;
+        if (y - startY < -40) hideCloudToast();   // 向上滑动超过 40px 即消失
+      }, { passive: true });
+      el.addEventListener('touchend', function () { startY = null; }, { passive: true });
+      el.addEventListener('click', hideCloudToast);
+    }
+    const key = (type || '') + ':' + text;
+    const now = Date.now();
+    if (key === _cloudToastLastKey && now - _cloudToastLastTs < 5000) {
+      if (_cloudToastTimer) { clearTimeout(_cloudToastTimer); _cloudToastTimer = setTimeout(hideCloudToast, type === 'fail' ? 6000 : 3000); }
+      return;
+    }
+    _cloudToastLastKey = key; _cloudToastLastTs = now;
+    el.textContent = text;
+    el.className = 'show ' + (type === 'fail' ? 'fail' : 'ok');
+    if (_cloudToastTimer) clearTimeout(_cloudToastTimer);
+    _cloudToastTimer = setTimeout(hideCloudToast, type === 'fail' ? 6000 : 3000);
+  } catch (e) {}
+}
 // 顶部常驻同步小标：同步中转圈、成功显示时间、失败变红
 function syncBadgeShow(text, fail) {
   const el = document.getElementById('sync-status');
@@ -9016,6 +9080,7 @@ async function pushNow() {
         _lastSyncAt = Date.now(); _persistLastSync();
         cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
         syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
+        showCloudToast('✅ 已同步到云端', 'ok');
         return;
       } catch (e) {
         lastErr = e;
@@ -9034,6 +9099,7 @@ async function pushNow() {
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
     syncBadgeShow('同步失败', true);
+    showCloudToast('⚠️ 同步失败，去「设置→数据备份」可手动重试', 'fail');
     throw e;   // 失败必须向上抛出，否则上层误以为"推送完成"
   } finally { _syncBusy = false; }
 }
