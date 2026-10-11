@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-189">
+<meta name="hami-build" content="2026-10-11-190">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -15763,10 +15763,18 @@ function renderAccount() {
   renderExpenseLedger();
   renderIncomeLedger();
 
-  // v61：补齐收入内联统计联动——之前只渲染了支出统计，删收入记录时收入排行榜/环形图不会刷新。
-  // 收入/支出统计都已和 store.accountRecords 实时联动计算。
-  renderInlineStats('expense');
-  renderInlineStats('income');
+  // v61：补齐收入内联统计联动——删收入记录时收入排行榜/环形图也要刷新。
+  // 内嵌统计只有一个环形图 + 排行榜 DOM，必须与当前高亮的 tab 类型一致，
+  // 否则会出现「tab 写着支出、显示的却是收入」的错位。这里只渲染【当前激活 tab】对应的类型。
+  try {
+    const _iTab = document.getElementById('account-stats-tab');
+    let _curType = 'expense';
+    if (_iTab) {
+      const _at = _iTab.querySelector('.fin-tab.active');
+      if (_at && _at.dataset.stype) _curType = _at.dataset.stype;
+    }
+    renderInlineStats(_curType);
+  } catch (e) {}
 }
 
 // ==================== 消费日期近期记录（v32 恢复）====================
