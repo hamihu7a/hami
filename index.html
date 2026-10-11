@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-213">
+<meta name="hami-build" content="2026-10-11-214">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2334,6 +2334,9 @@
   .fin-flow-row.sims-income-row { border-left: 4px solid #c9b6e4; background: #faf5ff; }
   /* 定制单(紫) 与 美化档(粉) 分色——收入账本 + 模拟人生总收入 通用，一眼区分两类明细 */
   .fin-flow-row.ledger-custom { border-left: 4px solid #b48bf2 !important; background: #faf6ff !important; }
+  /* v214：从「个人支出与收入」账本同步过来的定制单行是只读的（没有 ✏️/🗑 按钮），
+     不该再为按钮留 60px 空白，否则分类名被挤成两行。 */
+  .fin-flow-row.ledger-sync-row { padding-right: 10px; }
   .fin-flow-row.ledger-beauty { border-left: 4px solid #ff9eb5 !important; background: #fff5f8 !important; }
   .sims-income-tag {
     font-size: 10px; font-weight: 700; color: #fff; background: #c9b6e4;
@@ -12616,6 +12619,25 @@ function autoUnlockDepositOnNewRecord() {
   try { hamiToast('已记新账，可支配余额从你手填的数继续增减～'); } catch (e) {}
 }
 
+// ==================== v213：账本「定制单收入」→「模拟人生总收入」面板同步 ====================
+// 主人要求：导入的 26 年 1~3 月收入里那些「定制单收入」（在「个人支出与收入」里已改好分类），
+// 必须每一笔也出现在「模拟人生总收入」面板里（月总收入 / 定制单收入卡 / 定制单列表 / 月度收入明细）。
+// 取数口径：accountRecords 中 type=income 且 category='custom' 的记录。
+// ⚠️ note==='模拟人生定制单收入' 的 NLP 联动项要排除——模拟人生模块里已有对应订单，计入就会翻倍。
+function ledgerCustomIncomeRows(month) {
+  return (store.accountRecords || [])
+    .filter(function (r) {
+      if (!r || r.type !== 'income' || r.category !== 'custom') return false;
+      if (String(r.note || '') === '模拟人生定制单收入') return false;
+      const d = String(r.date || '');
+      if (!d) return false;
+      return (!month || month === 'all') ? true : d.startsWith(month);
+    })
+    .map(function (r) {
+      return { date: String(r.date || ''), amount: parseFloat(r.amount) || 0, note: String(r.note || ''), id: r.id || '' };
+    });
+}
+
 function renderIncome() {
   const monthEl = document.getElementById('income-month');
   const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
@@ -12624,7 +12646,10 @@ function renderIncome() {
   const _incomeMonthChanged = (__incomeRenderedMonth !== month);
   if (_incomeMonthChanged) { __orderPage = 0; __beautyPage = 0; __incomeRenderedMonth = month; }
   const monthOrders = store.customOrders.filter(o => o.date.startsWith(month));
-  const customIncome = monthOrders.filter(o => o.status === 'done').reduce((s,o) => s+o.amount, 0);
+  // v213：账本里「定制单收入」的记录（26 年 1~3 月导入的那 76 笔）也计入模拟人生总收入
+  const ledgerCustomRows = ledgerCustomIncomeRows(month);
+  const ledgerCustomIncome = ledgerCustomRows.reduce((s, r) => s + r.amount, 0);
+  const customIncome = monthOrders.filter(o => o.status === 'done').reduce((s,o) => s+o.amount, 0) + ledgerCustomIncome;
   const pendingCount = monthOrders.filter(o => o.status !== 'done').length;
   const overdueCount = monthOrders.filter(o => o.status !== 'done' && new Date(o.deadline) < new Date(today)).length;
   const monthBeauty = (store.beautyRecords || []).filter(b => b.date.startsWith(month));
@@ -12634,7 +12659,7 @@ function renderIncome() {
 
   // v2026-09-20-113 最后更新日期（与「个人支出与收入」面板同款）：取本月定制单+美化档里最新的一条记录日期
   const lastMD = (function(){
-    const pool = [...monthOrders, ...monthBeauty];
+    const pool = [...monthOrders, ...monthBeauty, ...ledgerCustomRows];
     if (pool.length === 0) return '暂无记录';
     const dates = pool.map(x => x.date).filter(Boolean).sort().reverse();
     return dates[0] || '暂无记录';
@@ -12642,7 +12667,8 @@ function renderIncome() {
 
   // v2026-09-20-114 今日收入（模拟人生口径）：今天这一天的定制单 + 美化档收入
   const todayIncSim = monthOrders.filter(o => o.date === today).reduce((s,o) => s + (parseFloat(o.amount) || 0), 0)
-                    + monthBeauty.filter(b => b.date === today).reduce((s,b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
+                    + monthBeauty.filter(b => b.date === today).reduce((s,b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0)
+                    + ledgerCustomRows.filter(r => r.date === today).reduce((s,r) => s + r.amount, 0);
 
   // v2026-10-11-184 自媒体广告支出（本月口径）：与「收入与支出」账本实时联动
   // 口径：accountRecords 里 type=expense 且 category=media_ad 的当月支出合计
@@ -12691,11 +12717,38 @@ function renderIncome() {
       if (dc !== 0) return dc;
       return (b.idx || 0) - (a.idx || 0);                       // 同日：后记的靠前
     });
-  if (_orderList.length === 0) {
+  // v213：把账本里的「定制单收入」（26 年 1~3 月导入的）逐笔并进本列表
+  const _ledgerOrderList = ledgerCustomRows.map(r => ({ ledger: true, o: { date: r.date, amount: r.amount, note: r.note }, idx: -1 }));
+  const _mergedOrders = _orderList.concat(_ledgerOrderList).sort((a, b) => {
+    const dc = (b.o.date || '').localeCompare(a.o.date || '');
+    if (dc !== 0) return dc;
+    return (b.idx || 0) - (a.idx || 0);
+  });
+  if (_mergedOrders.length === 0) {
     document.getElementById('custom-orders-table').innerHTML = `<div class="empty-state"><div class="big-icon">📝</div><p>本月暂无定制单</p></div>`;
   } else {
     // v2026-09-20-113 改为「折叠」：默认只显示最新 3 条，超过 3 条给「展开全部」按钮
-    document.getElementById('custom-orders-table').innerHTML = foldCollapsible('customOrders', _orderList, function (x) {
+    document.getElementById('custom-orders-table').innerHTML = foldCollapsible('customOrders', _mergedOrders, function (x) {
+      // v213：来自「个人支出与收入」账本的定制单收入（导入的那批），只读展示、不给编辑/删除按钮
+      if (x.ledger) {
+        const r = x.o;
+        const dateStr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+        return `
+        <div class="fin-flow-row ledger-custom ledger-sync-row">
+          <div class="fin-flow-line1">
+            <div class="fin-flow-cat">
+              <span class="rank-icon" style="background:#b48bf2;color:#fff;">${ICON_SVGS.gift || ''}</span>
+              <span class="fin-flow-cat-name">${r.note ? r.note : '定制单'}</span>
+            </div>
+            <span class="fin-flow-amt income">¥${fmtMoney(r.amount)}</span>
+            <span style="flex-shrink:0;white-space:nowrap;margin-left:6px;"><span class="badge done">账本</span></span>
+          </div>
+          <div class="fin-flow-line2">
+            <span class="fin-flow-date">${dateStr}</span>
+            <span class="fin-flow-time">收入账本同步</span>
+          </div>
+        </div>`;
+      }
       const o = x.o, idx = x.idx;
       const overdue = o.status !== 'done' && new Date(o.deadline) < new Date(today);
       const badge = o.status === 'done' ? '<span class="badge done">已交付</span>' : (overdue ? '<span class="badge overdue">已逾期</span>' : '<span class="badge making">制作中</span>');
@@ -12723,10 +12776,17 @@ function renderIncome() {
     });
   }
 
-  const months = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  // v213：月份不再写死（原来固定 2026-07~12，26 年 1~3 月根本看不到），改为从实际数据里收集
+  const _miMonthSet = {};
+  store.customOrders.forEach(o => { if (o.date) _miMonthSet[String(o.date).slice(0, 7)] = 1; });
+  (store.beautyRecords || []).forEach(b => { if (b.date) _miMonthSet[String(b.date).slice(0, 7)] = 1; });
+  ledgerCustomIncomeRows(null).forEach(r => { if (r.date) _miMonthSet[r.date.slice(0, 7)] = 1; });
+  const months = Object.keys(_miMonthSet);
   // v2026-09-20-113 月度收入明细：按月份由近到远排序（最新记录在最上面），超过 3 个月自动折叠
   const miRows = months.map(m => {
-    const mc = store.customOrders.filter(o => o.date.startsWith(m) && o.status === 'done').reduce((s,o)=>s+o.amount, 0);
+    // v213：「定制单」一列含账本里的「定制单收入」记录
+    const mc = store.customOrders.filter(o => o.date.startsWith(m) && o.status === 'done').reduce((s,o)=>s+o.amount, 0)
+             + ledgerCustomIncomeRows(m).reduce((s,r)=>s+r.amount, 0);
     const mm = (store.beautyRecords||[]).filter(b=>b.date.startsWith(m)).reduce((s,b)=>s+(parseInt(b.count)||0),0) * MOD_PRICE;
     return { month: m, mc: mc, mm: mm, total: mc + mm };
   })
