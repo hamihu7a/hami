@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-211">
+<meta name="hami-build" content="2026-10-11-212">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1574,8 +1574,12 @@
     display: flex; align-items: center; gap: 6px;
     padding: 8px 0;
     border-bottom: 1px dashed var(--c-pink-soft);
+    cursor: pointer;              /* v212：整行可点，点开看这一类里具体几笔 */
+    border-radius: 8px;
+    transition: background .18s ease;
   }
   .rank-row:last-child { border-bottom: none; }
+  .rank-row:active { background: #fff0f5; }
   .rank-icon {
     width: 26px; height: 26px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -1601,6 +1605,38 @@
     border-radius: 3px; transition: width 0.6s ease;
   }
   .rank-amount { font-size: 13px; font-weight: 700; color: var(--c-pink-deep); min-width: 54px; text-align: right; flex-shrink: 0; font-family: 'Baloo 2', monospace; }
+
+  /* ====== v212 分类明细弹窗（点统计列表某一行 → 看这一类里具体几笔）====== */
+  .cd-title { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .cd-title > span:last-child { font-size: 15.5px; font-weight: 800; color: var(--c-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cd-dot {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; flex-shrink: 0; background: #f5e8ed;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .cd-dot svg { width: 14px; height: 14px; }
+  .cd-sub { padding: 10px 18px 6px; font-size: 12px; color: #8a6270; }
+  .cd-sub b { color: #d14b73; font-size: 14px; font-family: 'Baloo 2', monospace; }
+  .cd-list {
+    flex: 1 1 auto; min-height: 0; max-height: 48vh;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 2px 16px 8px;
+  }
+  .cd-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 2px; border-bottom: 1px dashed var(--c-pink-soft);
+  }
+  .cd-row:last-child { border-bottom: none; }
+  .cd-date { font-size: 11.5px; color: #8a6270; min-width: 42px; flex-shrink: 0; font-family: 'Baloo 2', monospace; }
+  .cd-note { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--c-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cd-amt { font-size: 13.5px; font-weight: 700; flex-shrink: 0; font-family: 'Baloo 2', monospace; }
+  .cd-foot {
+    padding: 10px 18px 14px; border-top: 1px solid var(--c-pink-soft);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12.5px; color: #8a6270; flex-shrink: 0;
+  }
+  .cd-foot b { font-size: 16px; font-family: 'Baloo 2', monospace; }
 
   /* 弹窗遮罩：严格限制在主面板（.main）范围内，绝不覆盖侧栏/顶部指令栏 */
   .modal-mask {
@@ -2392,6 +2428,9 @@
     #panel-account .rank-row { padding: 8px 0; }
     #custom-order-modal.modal-mask { align-items: flex-end; padding: 0; }
     #custom-order-modal .modal-card { max-width: 100%; max-height: 88vh; border-radius: 22px 22px 0 0; }
+    #cat-detail-modal.modal-mask { align-items: flex-end; padding: 0; }
+    #cat-detail-modal .modal-card { max-width: 100%; max-height: 84vh; border-radius: 22px 22px 0 0; }
+    #cat-detail-modal .cd-list { max-height: 58vh; }
     #future-post-modal.modal-mask { align-items: flex-end; padding: 0; }
     #future-post-modal .modal-card { max-width: 100%; max-height: 88vh; border-radius: 22px 22px 0 0; }
     .co-field input { padding: 9px 10px; font-size: 15px; }
@@ -5870,6 +5909,23 @@
         </div>
       </div>
       <div id="stats-ranking" style="max-height:44vh;overflow:auto;"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 分类明细 弹窗（v212）====================
+       主人要求：点统计列表里任意一行（如「数码 21%」），就弹出这一类这个月里具体包含哪几笔、每笔多少钱 -->
+  <div id="cat-detail-modal" class="modal-mask" style="display:none;z-index:9500;" onclick="if(event.target===this)closeCatDetail()">
+    <div class="modal-card" style="max-width:460px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeCatDetail()" aria-label="关闭">✕</button>
+        <div class="cd-title">
+          <span class="cd-dot" id="cat-detail-dot"></span>
+          <span id="cat-detail-title">分类明细</span>
+        </div>
+      </div>
+      <div class="cd-sub" id="cat-detail-sub"></div>
+      <div class="cd-list" id="cat-detail-list"></div>
+      <div class="cd-foot" id="cat-detail-foot"></div>
     </div>
   </div>
 
@@ -15548,20 +15604,10 @@ function renderStatsModal(type) {
     const t = b.dataset.stype;
     b.classList.toggle('active', t === type);
   });
-  const records = store.accountRecords || [];
-  const monthEl = document.getElementById('account-month');
-  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
-  const filtered = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
-  const catMap = {};
-  filtered.filter(r => r.type === type).forEach(r => {
-    const c = getCategoryInfo(r.category, type);
-    if (!catMap[c.key]) catMap[c.key] = { name: c.name, color: c.color, icon: c.icon, amount: 0, count: 0 };
-    catMap[c.key].amount += r.amount;
-    catMap[c.key].count++;
-  });
-  const cats = Object.values(catMap).sort((a,b) => b.amount - a.amount);
-  const total = cats.reduce((s,c) => s + c.amount, 0);
-  const totalCount = cats.reduce((s,c) => s + (c.count || 0), 0);
+  const month = currentAccountMonth();
+  // v212：与面板内嵌统计共用 buildCatStats，口径完全一致（收入已合并模拟人生定制单/美化档）
+  const _st = buildCatStats(type, month);
+  const cats = _st.cats, total = _st.total, totalCount = _st.totalCount;
   const label = type === 'income' ? '总收入' : '总支出';
   // 显示模式：amount=按金额 / count=按笔数（弹窗右上角「显示笔数 ▾」切换）
   const modeEl = document.getElementById('stats-display-mode');
@@ -15608,21 +15654,147 @@ function renderStatsModal(type) {
       const sign = type === 'income' ? '+' : '-';
       const mainTxt = mode === 'count' ? (c.count + '笔') : (sign + '¥' + fmtMoney(c.amount));
       const subTxt  = mode === 'count' ? (sign + '¥' + fmtMoney(c.amount)) : (c.count + '笔');
+      const _oc = `onclick='openCatDetail(${JSON.stringify(type)}, ${JSON.stringify(String(c.key))})' title="点我看这一类里具体几笔"`;
       h += `
-        <div class="rank-row">
+        <div class="rank-row" ${_oc}>
           <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
           <span class="rank-name">${catNameLines(c.name)}</span>
           <span style="font-size:12px;color:#8a6270;min-width:32px;text-align:left;flex-shrink:0;">${pct}%</span>
           <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
           <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${mainTxt}</span>
         </div>
-        <div style="text-align:right;font-size:12px;color:#8a6270;padding:0 16px 8px;">${subTxt}</div>
+        <div style="text-align:right;font-size:12px;color:#8a6270;padding:0 16px 8px;cursor:pointer;" ${_oc}>${subTxt}</div>
       `;
     });
     return h;
   })();
   const srEl = document.getElementById('stats-ranking');
   if (srEl) srEl.innerHTML = listHtml;
+}
+
+// ==================== v212：分类统计统一口径 ====================
+// 面板内嵌统计 与 「查看完整分类统计」弹窗 共用这一份，避免两边数字打架。
+// type: 'expense' | 'income'；month: 'YYYY-MM' 或 'all'
+function buildCatStats(type, month) {
+  type = type || 'expense';
+  const records = store.accountRecords || [];
+  const isAll = !month || month === 'all';
+  const catMap = {};
+  const put = function (key, amount, count) {
+    const c = getCategoryInfo(key, type);
+    if (!catMap[c.key]) catMap[c.key] = { key: c.key, name: c.name, color: c.color, icon: c.icon, amount: 0, count: 0 };
+    catMap[c.key].amount += amount;
+    catMap[c.key].count += count;
+  };
+  records.forEach(function (r) {
+    if (r.type !== type) return;
+    if (!isAll && !(r.date && r.date.startsWith(month))) return;
+    // 模拟人生定制单收入已由 customOrders 统计，跳过 accountRecords 里的 NLP 联动项，避免重复
+    if (type === 'income' && r.note === '模拟人生定制单收入') return;
+    put(r.category, parseFloat(r.amount) || 0, 1);
+  });
+  if (type === 'income') {
+    const monthOrders = (store.customOrders || []).filter(function (o) { return (isAll || (o.date || '').startsWith(month)) && o.status === 'done'; });
+    const customAmt = monthOrders.reduce(function (s, o) { return s + (parseFloat(o.amount) || 0); }, 0);
+    if (customAmt > 0) put('custom', customAmt, monthOrders.length);
+    const monthBeauty = (store.beautyRecords || []).filter(function (b) { return isAll || (b.date || '').startsWith(month); });
+    const modAmt = monthBeauty.reduce(function (s, b) { return s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE); }, 0);
+    if (modAmt > 0) put('mod', modAmt, monthBeauty.length);
+  }
+  const cats = Object.values(catMap).sort(function (a, b) { return b.amount - a.amount; });
+  const total = cats.reduce(function (s, c) { return s + c.amount; }, 0);
+  const totalCount = cats.reduce(function (s, c) { return s + (c.count || 0); }, 0);
+  return { cats: cats, total: total, totalCount: totalCount };
+}
+
+// 当前面板顶部选中的月份（'YYYY-MM' / 'all'）
+function currentAccountMonth() {
+  const el = document.getElementById('account-month');
+  return el ? el.value : todayStr().substring(0, 7);
+}
+
+// ==================== v212：分类明细弹窗 ====================
+// 主人要求：点统计列表里任意一类（如 2026-01 支出第一行「数码 21%」），
+// 就弹出这一类在这个月里具体包含哪几笔、每笔多少钱（支出、收入都支持）。
+function catDetailRecords(type, catKey, month) {
+  const isAll = !month || month === 'all';
+  const mOk = function (d) { return isAll || (d && d.startsWith(month)); };
+  const out = [];
+  if (type === 'income') {
+    // 复用收入账本口径（已含 定制单 / 美化档，并按月过滤、按时间排好序）
+    getIncomeLedgerItems(month).forEach(function (it) {
+      if (it.source === 'acc' && it.note === '模拟人生定制单收入') return;   // 与统计口径一致，避免重复
+      const c = getCategoryInfo(it.catKey, 'income');
+      if (c.key !== catKey) return;
+      out.push({ date: it.date || '', note: it.note || it.title || c.name, amount: parseFloat(it.amount) || 0 });
+    });
+    return out;
+  }
+  (store.accountRecords || []).forEach(function (r) {
+    if (r.type !== type || !mOk(r.date)) return;
+    const c = getCategoryInfo(r.category, type);
+    if (c.key !== catKey) return;
+    out.push({ date: r.date || '', note: r.note || r.title || c.name, amount: parseFloat(r.amount) || 0, ts: r.ts || 0, time: r.time || '' });
+  });
+  out.sort(function (a, b) {
+    const d = (b.date || '').localeCompare(a.date || '');
+    if (d !== 0) return d;
+    return (b.ts || 0) - (a.ts || 0);
+  });
+  return out;
+}
+
+function openCatDetail(type, catKey) {
+  type = (type === 'income') ? 'income' : 'expense';
+  const c = getCategoryInfo(catKey, type);
+  const month = currentAccountMonth();
+  const recs = catDetailRecords(type, catKey, month);
+  const isIncome = type === 'income';
+  const mainColor = isIncome ? '#34c759' : '#d14b73';
+  const sign = isIncome ? '+' : '-';
+
+  const dot = document.getElementById('cat-detail-dot');
+  if (dot) { dot.style.background = c.color; dot.innerHTML = ICON_SVGS[c.icon] || ''; }
+  const tt = document.getElementById('cat-detail-title');
+  if (tt) tt.textContent = c.name;
+
+  const monthLabel = (month === 'all') ? '全部月份'
+    : (month.slice(0, 4) + ' 年 ' + parseInt(month.slice(5, 7), 10) + ' 月');
+  const sub = document.getElementById('cat-detail-sub');
+  if (sub) sub.innerHTML = monthLabel + ' · ' + (isIncome ? '收入' : '支出') + ' · 共 <b>' + recs.length + '</b> 笔';
+
+  const list = document.getElementById('cat-detail-list');
+  if (list) {
+    if (recs.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:#8a6270;padding:26px 10px;font-size:13px;">' +
+        (month === 'all' ? '还没有' : '这个月还没有') + '「' + escHtml(c.name) + '」的记录</div>';
+    } else {
+      list.innerHTML = recs.map(function (r) {
+        const dstr = (r.date || '').replace(/^\d{4}-/, '').replace(/-/g, '/');
+        return '<div class="cd-row">'
+          + '<span class="cd-date">' + (dstr || '—') + '</span>'
+          + '<span class="cd-note">' + escHtml(r.note || c.name) + '</span>'
+          + '<span class="cd-amt" style="color:' + mainColor + ';">' + sign + '¥' + fmtMoney(r.amount) + '</span>'
+          + '</div>';
+      }).join('');
+    }
+  }
+  const sum = recs.reduce(function (s, r) { return s + r.amount; }, 0);
+  const foot = document.getElementById('cat-detail-foot');
+  if (foot) foot.innerHTML = '<span>合计 ' + recs.length + ' 笔</span>'
+    + '<b style="color:' + mainColor + ';">' + sign + '¥' + fmtMoney(sum) + '</b>';
+
+  const m = document.getElementById('cat-detail-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+
+function closeCatDetail() {
+  const m = document.getElementById('cat-detail-modal');
+  if (m) m.style.display = 'none';
+  // 若「完整分类统计」弹窗还开着，就保持页面锁滚，别把它的遮罩滚动打开
+  const sm = document.getElementById('stats-modal');
+  const smOpen = sm && sm.style.display && sm.style.display !== 'none';
+  if (!smOpen) document.body.style.overflow = '';
 }
 
 function toggleStatsMode() {
@@ -16113,42 +16285,10 @@ function renderIncomeLedger() {
 
 function renderInlineStats(type) {
   type = type || 'expense';
-  const records = store.accountRecords || [];
-  const monthEl = document.getElementById('account-month');
-  const month = monthEl ? monthEl.value : todayStr().substring(0, 7);
-  const filtered = month === 'all' ? records : records.filter(r => r.date && r.date.startsWith(month));
-  const catMap = {};
-  filtered.filter(r => r.type === type).forEach(r => {
-    // 模拟人生定制单收入已由 customOrders 统计，避免 accountRecords 中 NLP 联动项重复
-    if (type === 'income' && r.note === '模拟人生定制单收入') return;
-    const c = getCategoryInfo(r.category, type);
-    if (!catMap[c.key]) catMap[c.key] = { name: c.name, color: c.color, icon: c.icon, amount: 0, count: 0 };
-    catMap[c.key].amount += r.amount;
-    catMap[c.key].count++;
-  });
-
-  // 收入统计：把模拟人生总收入（定制单 + 美化档）合并进来，与个人收入联动
-  if (type === 'income') {
-    const monthOrders = (store.customOrders || []).filter(o => o.date.startsWith(month) && o.status === 'done');
-    const customAmt = monthOrders.reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
-    if (customAmt > 0) {
-      const c = getCategoryInfo('custom', 'income');
-      if (!catMap[c.key]) catMap[c.key] = { name: c.name, color: c.color, icon: c.icon, amount: 0, count: 0 };
-      catMap[c.key].amount += customAmt;
-      catMap[c.key].count += monthOrders.length;
-    }
-    const monthBeauty = (store.beautyRecords || []).filter(b => b.date.startsWith(month));
-    const modAmt = monthBeauty.reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
-    if (modAmt > 0) {
-      const c = getCategoryInfo('mod', 'income');
-      if (!catMap[c.key]) catMap[c.key] = { name: c.name, color: c.color, icon: c.icon, amount: 0, count: 0 };
-      catMap[c.key].amount += modAmt;
-      catMap[c.key].count += monthBeauty.length;
-    }
-  }
-
-  const cats = Object.values(catMap).sort((a,b) => b.amount - a.amount);
-  const total = cats.reduce((s,c) => s + c.amount, 0);
+  const month = currentAccountMonth();
+  // v212：与「查看完整分类统计」弹窗共用 buildCatStats（收入含模拟人生定制单/美化档），两边数字完全一致
+  const _st = buildCatStats(type, month);
+  const cats = _st.cats, total = _st.total;
   const label = type === 'income' ? '总收入' : '总支出';
 
   // 环形图 SVG
@@ -16188,15 +16328,17 @@ function renderInlineStats(type) {
   cats.forEach(c => {
     const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
     const sign = type === 'income' ? '+' : '-';
+    // v212：整行可点 → 弹出这一类在这个月里具体几笔（主人要求）
+    const _oc = `onclick='openCatDetail(${JSON.stringify(type)}, ${JSON.stringify(String(c.key))})' title="点我看这一类里具体几笔"`;
     h += `
-      <div class="rank-row">
+      <div class="rank-row" ${_oc}>
         <div class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</div>
         <span class="rank-name">${catNameLines(c.name)}</span>
         <span style="font-size:12px;color:#8a6270;min-width:32px;text-align:left;flex-shrink:0;">${pct}%</span>
         <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${c.color};"></div></div>
         <span class="rank-amount" style="color:${type==='income' ? '#34c759' : '#d14b73'};">${sign}¥${fmtMoney(c.amount)}</span>
       </div>
-      <div style="text-align:right;font-size:12px;color:#8a6270;padding:0 16px 8px;">${c.count}笔</div>
+      <div style="text-align:right;font-size:12px;color:#8a6270;padding:0 16px 8px;cursor:pointer;" ${_oc}>${c.count}笔</div>
     `;
   });
   srEl.innerHTML = h;
