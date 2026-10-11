@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-207">
+<meta name="hami-build" content="2026-10-11-208">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -841,10 +841,10 @@
   }
   .hami-cmd-toast.show { opacity:1; }
 
-  /* 云端同步提醒浮层（仅成功时）：显示在工作台正中间，绝不遮挡顶部「记一下」栏 */
+  /* 云端同步提醒浮层（仅成功时）：中间靠上（时间与激励语一带），绝不遮挡顶部「记一下」栏 */
   #cloud-sync-toast {
     position: fixed;
-    top: 50%;                  /* 工作台正中间：远离顶部「记一下」栏，不再遮挡 */
+    top: 35%;                  /* v208 中间靠上：约在「时间与激励语」区域，且始终低于顶部「记一下」栏 */
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 9000;
@@ -8897,7 +8897,7 @@ var _hamiBannerLastShowAt = 0;      // 上次显示横幅的时刻：用于去�
 var _hamiBannerFailStreak = 0;       // 连续失败计数：连续失败 3 次才算"真有问题"，前 2 次静默重试不打扰
 var _hamiBannerLastFailKey = '';     // 上次失败的指纹：相同错误不重复计数
 
-// 横幅位置：v187 主人要求改到「工作台正中间」（顶部会挡住「记一下」输入栏），且文字不拦截点击
+// 横幅位置：v208 主人要求改到「中间靠上」（约时间与激励语一带）；顶部仍绝不遮挡「记一下」输入栏，文字不拦截点击
 function hamiPendingBanner(show, msg) {
   let el = document.getElementById('hami-cloud-pending');
   if (_hamiBannerHideTimer) { clearTimeout(_hamiBannerHideTimer); _hamiBannerHideTimer = null; }
@@ -8906,11 +8906,11 @@ function hamiPendingBanner(show, msg) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'hami-cloud-pending';
-    // v187 主人要求：横幅改到「工作台正中间」——顶部会挡住「记一下」输入栏，不再贴顶。
+    // v208 主人要求：横幅改到「中间靠上」（时间与激励语一带）——顶部依旧绝不遮挡「记一下」输入栏。
     // 关键：外层 pointer-events:none —— 文字部分完全不拦截点击，悬在哪个按钮上都不挡操作；
     //       只有「再试一次」按钮单独 pointer-events:auto 可以点。
     // z-index 9999 仍低于所有面板/弹窗/确认框（100290+），弹窗打开时横幅压在其下。
-    el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;' +
+    el.style.cssText = 'position:fixed;left:50%;top:35%;transform:translate(-50%,-50%);z-index:9999;' +
       'background:#fff0f3;border:1px solid #e890a8;color:#b3325c;border-radius:14px;' +
       'padding:7px 14px;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(160,80,110,.22);' +
       'max-width:92vw;text-align:center;pointer-events:none;';
