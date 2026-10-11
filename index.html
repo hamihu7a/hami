@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-208">
+<meta name="hami-build" content="2026-10-11-209">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5816,7 +5816,7 @@
         <button type="button" onclick="saveDepositBalance()" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">💾 保存</button>
         <button type="button" onclick="cancelEditDeposit()" style="border:none;background:#f3e3e8;color:#7d4a5a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;">取消</button>
       </div>
-      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">平时它 = "本金 + 所有账单"自动算。点「✏️ 修改」手填的话，<b style="color:#d14b73;">就以主人填的数为准，记账不会再加进去</b>；等<b style="color:#d14b73;">下一次记新账</b>时会自动恢复联动（也可立刻点「🔓 恢复联动」）。</p>
+      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">平时它 = "本金 + 所有账单"自动算。点「✏️ 修改」手填后，<b style="color:#d14b73;">就以主人填的数为准，已有账目不会再被叠加一次</b>；等<b style="color:#d14b73;">下一次记新账</b>时，会直接从主人填的这个数上加减（也可立刻点「🔓 恢复联动」）。</p>
     </div>
 
   </div>
@@ -12334,12 +12334,17 @@ function monthlyIncomeGo(delta) {
 
 // —— 可支配余额：主人改的就是当前可支配余额（不再分开本金/最终值）
 // 反算：store.depositBalance = 输入值 - 所有账单收支；这样下次算出还是主人想看到的值
+// ⚠️ v209 铁律：本函数的「账单净额」口径必须与面板显示（renderAccount）**完全一致**，
+//    否则主人手填的余额一解锁/一记新账，就会被「再算一次联动」凭空加回某类收入。
+//    （历史 bug：这里漏了「美化档」，解锁瞬间把整个美化档总额加到了主人手改的数上。）
+//    现口径 = 手动收入 + 定制单 + 美化档 − 手动支出，且 renderAccount 也直接调用本函数，双保险。
 function calcAccountNetForDeposit() {
   const ars = store.accountRecords || [];
   const mi = ars.filter(r => r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const oi = (store.customOrders || []).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  const bi = (store.beautyRecords || []).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);   // v209 修复：原来漏了美化档
   const ae = ars.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  return mi + oi - ae;
+  return mi + oi + bi - ae;
 }
 function refreshDisposableDisplay() {
   const dEl = document.getElementById('account-disposable-value');
@@ -12440,7 +12445,7 @@ function autoUnlockDepositOnNewRecord() {
   // 所以这里先按「当前账单净额」反算本金，push 之后渲染时数字自然跟着新账变。
   store.depositBalance = base - calcAccountNetForDeposit();
   try { saveData(); } catch (e) {}
-  try { hamiToast('已记新账，可支配余额恢复自动联动～'); } catch (e) {}
+  try { hamiToast('已记新账，可支配余额从你手填的数继续增减～'); } catch (e) {}
 }
 
 function renderIncome() {
@@ -15616,16 +15621,19 @@ function renderAccount() {
   const balance = totalIncome - totalExpense;
 
   // 可支配余额：本金 + 全部账单净收支（与月份筛选无关，反映手头真实余额）
-  const _allRecs = store.accountRecords || [];
-  const _allManualInc = _allRecs.filter(r => r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const _allOrderInc = (store.customOrders || []).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
-  const _allBeautyInc = (store.beautyRecords || []).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
-  const _allInc = _allManualInc + _allOrderInc + _allBeautyInc;
-  const _allExp = _allRecs.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  // v160 主人要求：手动改过后锁定（以主人填的数为准，不增不减），直到「记了新的账」自动解锁恢复联动
+  // v209：口径收敛到 calcAccountNetForDeposit() 一处——显示、保存、解锁、记新账永远同一个算法，
+  //       从根上杜绝「主人手填的余额被再算一次联动」。
+  // v160 主人要求：手动改过后锁定（以主人填的数为准，不增不减），直到「记了新的账」自动解锁恢复联动。
   const _deposit = parseFloat(store.depositBalance) || 0;
   const _locked = store.depositLocked === true;
-  const disposable = _locked ? (parseFloat(store.depositLockedShown) || 0) : (_deposit + _allInc - _allExp);
+  const _shownV = parseFloat(store.depositLockedShown) || 0;
+  if (_locked) {
+    // 锁定期安全网：把「本金」始终保持为「主人填的数 − 当前账单净额」，
+    // 于是锁定期间账目怎么变都无所谓，解锁瞬间只会按差额（= 期间新增的账）增减，绝不会多算一遍。
+    const _np = Math.round((_shownV - calcAccountNetForDeposit()) * 100) / 100;
+    if (store.depositBalance !== _np) store.depositBalance = _np;
+  }
+  const disposable = _locked ? _shownV : (_deposit + calcAccountNetForDeposit());
   const _depInput = document.getElementById('account-deposit-input');
   const _depEditor = document.getElementById('account-disposable-editor');
   const _isEditing = _depEditor && _depEditor.style.display !== 'none';
