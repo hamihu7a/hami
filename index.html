@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-198">
+<meta name="hami-build" content="2026-10-11-199">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1230,6 +1230,9 @@
     letter-spacing: -.3px; font-variant-numeric: tabular-nums; line-height: 1;
   }
   .weight-cal-main.weight-cal-main-empty { color: #d8c4ce; font-weight: 500; font-size: 12px; }
+  /* v199：单位改斤后数字变长，按位数自适应字号（5 位 11px、6 位 10px） */
+  .weight-cal-main.weight-cal-main-sm { font-size: 11px; letter-spacing: -.5px; }
+  .weight-cal-main.weight-cal-main-xs { font-size: 10px; letter-spacing: -.6px; }
   .weight-cal-main.weight-cal-main-fill { color: #b6a0ac; font-weight: 600; font-size: 12px; }
   /* 底部两行（v93）：体重变化在上、运动圆点在下，格子高度维持原样不改高 */
   .weight-cal-foot {
@@ -3366,7 +3369,7 @@
       .account-card .ac-detail b { font-weight: 700; }
 
       /* 体重记录与变化日历：进一步收窄内边距，把宽度让给格子 */
-      #home-weight-cal { padding: 8px 4px; }
+      #home-weight-cal { padding: 8px 0; }
       #home-weight-cal h3 { font-size: 13px; text-align: center; text-wrap: balance; margin-bottom: 4px; }
       .weight-cal-header { gap: 5px; margin-bottom: 4px; }
       .weight-cal-month { font-size: 13px; }
@@ -3375,10 +3378,13 @@
       .weight-cal-badge-num, .weight-cal-badge-label { font-size: 11px; }
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
-      .weight-cal-grid { gap: 2px; }
-      .weight-cal-cell { height: 50px !important; border-radius: 6px; padding: 2px 1px 1px !important; }
+      .weight-cal-grid { gap: 1px; }
+      .weight-cal-cell { height: 50px !important; border-radius: 6px; padding: 1px 0 1px !important; }
       .weight-cal-day { font-size: 10px !important; }
       .weight-cal-main { font-size: 11px !important; }
+      /* v199：体重单位改斤后数字变 5 位（如 177.8），按位数自动收字号，保证数字完整落在格子里 */
+      .weight-cal-main.weight-cal-main-sm { font-size: 10px !important; letter-spacing: -.5px; }
+      .weight-cal-main.weight-cal-main-xs { font-size: 9px !important; letter-spacing: -.6px; }
       .weight-cal-main.weight-cal-main-empty, .weight-cal-main.weight-cal-main-fill { font-size: 10px !important; }
       .weight-cal-change, .weight-cal-weight { font-size: 8px !important; padding: 0 !important; line-height: 1.15; }
       .weight-cal-ex { gap: 0; transform: scale(0.9); transform-origin: center center; }
@@ -5061,8 +5067,8 @@
           <input type="date" id="we-date">
         </div>
         <div class="co-field">
-          <label>⚖️ 体重 (kg)</label>
-          <input type="number" id="we-value" step="0.1" min="30" max="200" inputmode="decimal" placeholder="如 65.5">
+          <label>⚖️ 体重 (斤)</label>
+          <input type="number" id="we-value" step="0.1" min="60" max="400" inputmode="decimal" placeholder="如 177.8">
         </div>
         <div class="co-field">
           <label>📝 备注</label>
@@ -5224,15 +5230,15 @@
       <div style="flex:1;min-width:180px;">
         <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
           <label for="weight-goal-input">🎯 目标体重</label>
-          <input type="number" id="weight-goal-input" step="0.1" min="30" max="200" placeholder="如 65" inputmode="decimal">
-          <span style="font-size:12px;color:var(--c-muted);">kg</span>
+          <input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal">
+          <span style="font-size:12px;color:var(--c-muted);">斤</span>
           <button id="weight-goal-save" class="goal-save-btn" type="button">✓ 确定</button>
           <button id="weight-goal-clear" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
           <label for="start-weight-input">⚖️ 起始体重</label>
-          <input type="number" id="start-weight-input" step="0.1" min="30" max="300" placeholder="如 90" inputmode="decimal">
-          <span style="font-size:12px;color:var(--c-muted);">kg</span>
+          <input type="number" id="start-weight-input" step="0.1" min="60" max="600" placeholder="如 180" inputmode="decimal">
+          <span style="font-size:12px;color:var(--c-muted);">斤</span>
           <button id="start-weight-save" class="goal-save-btn" type="button">✓ 确定</button>
         </div>
         <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
@@ -6478,13 +6484,13 @@
 const STORAGE_KEY = 'hami_assistant_data';
 const DATA_VERSION = 'v15_20260802e';  // 数据版本号，每次数据结构调整时升级
 const MOD_PRICE = 98;  // 美化档单价（元）
-const START_WEIGHT = 90.0;  // 起始体重（kg）
+const START_WEIGHT = 180.0;  // 起始体重（斤，v199 起单位由 kg 改为斤，1 公斤 = 2 斤）
 const WEEKLY_GOAL = 6;  // 每周健身目标天数
 
 // ==================== 数据 ====================
 let store = {
   _lastSavedAt: 0,    // 本地保存时间戳，用于与 IndexedDB 备份比较新旧
-  weightGoal: null,   // 目标体重（kg），健康模块可设，用于进度环
+  weightGoal: null,   // 目标体重（斤），健康模块可设，用于进度环
   userTodos: [],      // 用户自定义待办 { date, text, done }
   exerciseItems: [],  // 运动详细记录 { id, date, type, name, duration, sets, note }
   customOrders: [
@@ -6494,12 +6500,12 @@ let store = {
   ],
   modSales: {},
   beautyRecords: [],   // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
-  weightRecords: [],   // 仅保存主人真实记录的体重，不再预填演示数据
+  weightRecords: [],   // 仅保存主人真实记录的体重（单位：斤），不再预填演示数据
   bodyRecords: [],     // 身体数据（三围）：{ date, chest, waist, hip, note }
   weightSeedV1Applied: false,  // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
   screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
   tripSeedV1Applied: false,   // 广州三天行程一次性补入标记（true 后不再重复覆盖）
-  startWeight: 90.0,    // 起始体重（kg）基准线，主人可改；减肥累计减重的起点
+  startWeight: 90.0,    // 起始体重基准线（此处仍是公斤口径默认值，v199 迁移时统一 ×2 变成斤）
   exerciseRecords: [
     { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
     { date: "2026-07-31", aerobics: false, cardio: false, weights: false, cardioType: "", weightsContent: "", sets: "", duration: "休息日" },
@@ -8054,6 +8060,9 @@ function deepMergeUnion(a, b) {
 }
 function mergeStoreInto(local, remote) {
   if (!remote || typeof remote !== 'object') return local;
+  // v199：云端若仍是「公斤」口径（没有体重单位哨兵），先 ×2 换算成斤再合并，
+  // 否则「本地已是斤 + 云端还是公斤」会混出 4 倍值 / 减半值。
+  try { if (typeof convertWeightFieldsToJin === 'function') remote = convertWeightFieldsToJin(remote); } catch (e) {}
   // ===== v150 数据恢复自愈：打破「本机墓碑压死云端解禁名单」的死锁 =====
   // v125 规定「远端解禁名单里的键若本机已写墓碑，则墓碑优先」——日常删除是对的，
   // 但当云端送来的是考古恢复出来的记录时，本机墓碑会把它们全挡住，刷新后什么都看不到。
@@ -9997,12 +10006,13 @@ function parseHamiCommand(raw, today) {
           || text.match(/(?:体重|称重|量体重|称了?|上秤)\s*[:：]?\s*(\d+\.?\d*)/i);
   if (wM) wVal = parseFloat(wM[1]);
   else {
-    const onlyNum = text.match(/^(\d+\.?\d*)\s*(kg|斤)?$/i);
+    const onlyNum = text.match(/^(\d+\.?\d*)\s*(kg|公斤|斤)?$/i);
     if (onlyNum && /体重|称|斤|kg|重量/.test(text)) { wVal = parseFloat(onlyNum[1]); }
   }
   if (wVal != null && !/查|多少|几斤|多重|称了没|量了没/.test(text)) {
-    if (/斤/.test(text) && wVal > 100) wVal = +(wVal / 2).toFixed(1);
-    if (wVal >= 30 && wVal <= 200) push({ type: 'weight', value: wVal });
+    // v199：内部单位已统一为「斤」。直接说「斤」按斤记；说「公斤 / 千克 / kg」则 ×2 换算成斤。
+    if (/(公斤|千克|kg)/i.test(text)) wVal = +(wVal * 2).toFixed(1);
+    if (wVal >= 60 && wVal <= 400) push({ type: 'weight', value: wVal });
   }
 
   // 4) 经期
@@ -10143,19 +10153,19 @@ function sendHamiCmd() {
   for (const it of plan.intents) {
     switch (it.type) {
       case 'weightGoal':
-        if (it.value >= 30 && it.value <= 200) {
+        if (it.value >= 60 && it.value <= 400) {
           store.weightGoal = it.value;
           try { renderFitness(); } catch (e) {}
           const allS = [...store.weightRecords].map(w => ({ date: w.date, v: w.value != null ? w.value : w.after })).filter(w => w.v != null).sort((a, b) => b.date.localeCompare(a.date));
           const cur = allS.length ? allS[0].v : null;
-          const tail = cur != null ? ('，当前 ' + cur.toFixed(1) + ' kg，还差 ' + Math.max(0, cur - it.value).toFixed(1) + ' kg 冲鸭～') : '，快去记一条体重看进度吧～';
-          showCmdToast('🎯 目标体重已设为 ' + it.value.toFixed(1) + ' kg' + tail);
+          const tail = cur != null ? ('，当前 ' + cur.toFixed(1) + ' 斤，还差 ' + Math.max(0, cur - it.value).toFixed(1) + ' 斤 冲鸭～') : '，快去记一条体重看进度吧～';
+          showCmdToast('🎯 目标体重已设为 ' + it.value.toFixed(1) + ' 斤' + tail);
           acted = true;
         }
         break;
       case 'weightQuery': {
         const rec = store.weightRecords.find(r => r.date === date);
-        queryMsg = rec ? ('⚖️ ' + dateLabel + '体重：' + (rec.after != null ? rec.after.toFixed(1) : (rec.value != null ? rec.value.toFixed(1) : (rec.before != null ? rec.before.toFixed(1) : '—'))) + ' kg（' + (rec.note || '已称') + '）')
+        queryMsg = rec ? ('⚖️ ' + dateLabel + '体重：' + (rec.after != null ? rec.after.toFixed(1) : (rec.value != null ? rec.value.toFixed(1) : (rec.before != null ? rec.before.toFixed(1) : '—'))) + ' 斤（' + (rec.note || '已称') + '）')
                        : ('🔍 ' + dateLabel + '还没有体重记录哦~');
         acted = true;
         break;
@@ -10166,7 +10176,7 @@ function sendHamiCmd() {
         const rec = Object.assign({}, old, { date: date, value: it.value, after: it.value, note: old.note || '已称' });
         // v109：走统一编辑收尾（保留 id + 旧版本写墓碑），杜绝「改体重变新增一条」
         if (existing >= 0) hamiEditRecord('weightRecords', existing, rec, null); else hamiPushRecord('weightRecords', rec);
-        hints.push('体重 ' + it.value.toFixed(1) + 'kg');
+        hints.push('体重 ' + it.value.toFixed(1) + '斤');
         acted = true;
         break;
       }
@@ -10375,6 +10385,39 @@ function migrateMediaExpToAd() {
     if (changed) { try { saveData(); } catch (e) {} }
   } catch (e) {}
 }
+// ==================== v199：体重单位 kg → 斤 ====================
+// 主人要求：所有体重数据的单位由「公斤(kg)」统一改为「斤」，数值 ×2（1 公斤 = 2 斤）。
+// 只执行一次：靠 store.weightUnitJinV1 哨兵；该标记会随本地保存 + 云端同步一起走，
+// 所以多设备不会重复 ×2（云端合并时也是先按哨兵判断，缺哨兵的旧数据才换算）。
+const WEIGHT_JIN_RATIO = 2;
+function weightKgToJin(v) {
+  if (v == null || v === '' || isNaN(v)) return v;
+  return Math.round(parseFloat(v) * WEIGHT_JIN_RATIO * 100) / 100;
+}
+// 把一份「可能仍是公斤口径」数据里的体重相关字段就地换算成斤；已带哨兵则原样返回
+function convertWeightFieldsToJin(o) {
+  if (!o || typeof o !== 'object' || o.weightUnitJinV1) return o;
+  if (Array.isArray(o.weightRecords)) {
+    o.weightRecords.forEach(function (w) {
+      if (!w || typeof w !== 'object') return;
+      if (w.value != null) w.value = weightKgToJin(w.value);
+      if (w.after != null) w.after = weightKgToJin(w.after);
+      if (w.before != null) w.before = weightKgToJin(w.before);
+    });
+  }
+  if (o.weightGoal != null) o.weightGoal = weightKgToJin(o.weightGoal);
+  if (o.startWeight != null) o.startWeight = weightKgToJin(o.startWeight);
+  o.weightUnitJinV1 = true;
+  return o;
+}
+function migrateWeightUnitToJin() {
+  if (store.weightUnitJinV1) return;
+  const _n = (store.weightRecords || []).length;
+  convertWeightFieldsToJin(store);
+  try { saveData(); } catch (e) {}
+  try { console.log('[Hami] v199 体重单位已由 kg 换算为斤（×2），共处理 ' + _n + ' 条体重记录'); } catch (e) {}
+}
+
 function loadData() {
   try {
     // 版本号检测：仅用于记录日志，绝不在版本不匹配时清空 localStorage（否则主人的真实数据会被删除，例如八月份体重记录）
@@ -10462,6 +10505,9 @@ function loadData() {
       if (p.exerciseItems !== undefined) store.exerciseItems = p.exerciseItems;
       if (p.userTodos !== undefined) store.userTodos = p.userTodos;
     }
+    // v199：体重单位由「公斤」改为「斤」（1 公斤 = 2 斤）——存量数据一次性 ×2，靠哨兵只做一次。
+    // ⚠️ 必须在下面两个体重 seed 之前执行，且 seed 里的数值已同步改成斤。
+    try { migrateWeightUnitToJin(); } catch (e) { console.log('migrateWeightUnitToJin error:', e.message); }
     // 八月份体重种子：仅当本地缺失对应日期时一次性补入（本地优先、绝不覆盖主人真实记录）
     try { applyWeightSeedV1(); } catch (e) {}
     try { applyScreenshotSeedV1(); } catch (e) {}
@@ -10766,13 +10812,13 @@ function showDataRescueBanner(idbCount, curCount, when) {
 function applyWeightSeedV1() {
   if (store.weightSeedV1Applied) return;
   const seed = [
-    { date: '2026-08-01', before: 88.9, after: 88.9, value: 88.9, note: '' },
-    { date: '2026-08-02', before: 88.5, after: 88.5, value: 88.5, note: '' },
-    { date: '2026-08-03', before: 88.2, after: 88.2, value: 88.2, note: '' },
-    { date: '2026-08-04', before: 88.2, after: 88.2, value: 88.2, note: '' },
-    { date: '2026-08-05', before: 88.3, after: 88.3, value: 88.3, note: '' },
-    { date: '2026-08-06', before: 88.3, after: 88.3, value: 88.3, note: '' },
-    { date: '2026-08-07', before: 88.9, after: 88.9, value: 88.9, note: '' }
+    { date: '2026-08-01', before: 177.8, after: 177.8, value: 177.8, note: '' },
+    { date: '2026-08-02', before: 177.0, after: 177.0, value: 177.0, note: '' },
+    { date: '2026-08-03', before: 176.4, after: 176.4, value: 176.4, note: '' },
+    { date: '2026-08-04', before: 176.4, after: 176.4, value: 176.4, note: '' },
+    { date: '2026-08-05', before: 176.6, after: 176.6, value: 176.6, note: '' },
+    { date: '2026-08-06', before: 176.6, after: 176.6, value: 176.6, note: '' },
+    { date: '2026-08-07', before: 177.8, after: 177.8, value: 177.8, note: '' }
   ];
   let added = 0;
   seed.forEach(function (s) {
@@ -10813,18 +10859,18 @@ function applyScreenshotSeedV1() {
   if (store.screenshotSeedV1Applied) return;
   // 体重（覆盖同日期，确保与截图一致）
   const weights = [
-    { date: '2026-08-01', value: 88.9 },
-    { date: '2026-08-02', value: 88.5 },
-    { date: '2026-08-03', value: 88.2 },
-    { date: '2026-08-04', value: 88.2 },
-    { date: '2026-08-05', value: 88.3 },
-    { date: '2026-08-06', value: 88.9 },
-    { date: '2026-08-07', value: 88.9 },
-    { date: '2026-08-08', value: 89.8 },
-    { date: '2026-08-09', value: 89.3 },
-    { date: '2026-08-10', value: 88.5 },
-    { date: '2026-08-11', value: 88.6 },
-    { date: '2026-08-12', value: 89.3 }
+    { date: '2026-08-01', value: 177.8 },
+    { date: '2026-08-02', value: 177.0 },
+    { date: '2026-08-03', value: 176.4 },
+    { date: '2026-08-04', value: 176.4 },
+    { date: '2026-08-05', value: 176.6 },
+    { date: '2026-08-06', value: 177.8 },
+    { date: '2026-08-07', value: 177.8 },
+    { date: '2026-08-08', value: 179.6 },
+    { date: '2026-08-09', value: 178.6 },
+    { date: '2026-08-10', value: 177.0 },
+    { date: '2026-08-11', value: 177.2 },
+    { date: '2026-08-12', value: 178.6 }
   ];
   if (!store.weightRecords) store.weightRecords = [];
   weights.forEach(function (s) {
@@ -11418,7 +11464,7 @@ function renderDesktopCheckin() {
 
   // 事实短句（没有加油/坚持等激励语，只显示真实记录）
   const wFact = hasWeight
-    ? (wToday.map(w => getW(w)).filter(v=>v!=null).map(v=>v.toFixed(1)+'kg').join(' / ') || '已记录')
+    ? (wToday.map(w => getW(w)).filter(v=>v!=null).map(v=>v.toFixed(1)+'斤').join(' / ') || '已记录')
     : '未记录';
   let exFact;
   let exStatus;       // 'done' | 'rest' | 'pending'
@@ -11476,7 +11522,7 @@ function showCheckinDetail(label, rawJson) {
       body += '📒 今天共 ' + ws.length + ' 条体重记录：\n';
       ws.forEach((w, i) => {
         const v = w.value != null ? w.value : (w.after != null ? w.after : w.before);
-        body += '  ' + (i+1) + ') ' + (v != null ? v + 'kg' : '?') + '（' + (w.note||'已称') + '）\n';
+        body += '  ' + (i+1) + ') ' + (v != null ? v + '斤' : '?') + '（' + (w.note||'已称') + '）\n';
       });
       body += '\n注：上次编辑这条记录的时间会显示在编辑弹窗里。';
     }
@@ -12677,7 +12723,7 @@ function renderWeightGoal(startWeight, latestAfter) {
   if (goal == null || latestAfter == null) {
     info.innerHTML = goal == null
       ? '还没设目标呢，填一个小目标吧～'
-      : `目标 <b>${goal.toFixed(1)}</b> kg，本月还没记体重哦～`;
+      : `目标 <b>${goal.toFixed(1)}</b> 斤，本月还没记体重哦～`;
     ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60">
       <circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="7"/>
       <text x="30" y="34" text-anchor="middle" font-size="12" fill="var(--c-muted)">—</text>
@@ -12693,9 +12739,9 @@ function renderWeightGoal(startWeight, latestAfter) {
   const dash = (pct / 100) * C;
 
   if (remain <= 0) {
-    info.innerHTML = `🎉 目标 <b>${goal.toFixed(1)}</b> kg 已达成！当前 <b>${latestAfter.toFixed(1)}</b> kg，超额 <b>${Math.abs(remain).toFixed(1)}</b> kg，太棒啦～`;
+    info.innerHTML = `🎉 目标 <b>${goal.toFixed(1)}</b> 斤 已达成！当前 <b>${latestAfter.toFixed(1)}</b> 斤，超额 <b>${Math.abs(remain).toFixed(1)}</b> 斤，太棒啦～`;
   } else {
-    info.innerHTML = `目标 <b>${goal.toFixed(1)}</b> kg · 当前 <b>${latestAfter.toFixed(1)}</b> kg · 距目标还差 <b>${remain.toFixed(1)}</b> kg（已完成 <b>${pct.toFixed(0)}%</b>）`;
+    info.innerHTML = `目标 <b>${goal.toFixed(1)}</b> 斤 · 当前 <b>${latestAfter.toFixed(1)}</b> 斤 · 距目标还差 <b>${remain.toFixed(1)}</b> 斤（已完成 <b>${pct.toFixed(0)}%</b>）`;
   }
 
   ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60">
@@ -12716,11 +12762,11 @@ function bindWeightGoalInput() {
   // 关键：边输入不立刻保存，必须点「✓ 确定」才生效，避免设错难复位（主人要求）
   const save = () => {
     const v = parseFloat(input.value);
-    if (isNaN(v) || v <= 0) { finToast('请填写有效的目标体重（30-200）'); return; }
+    if (isNaN(v) || v <= 0) { finToast('请填写有效的目标体重（60-400 斤）'); return; }
     store.weightGoal = v;
     saveData();
     try { renderFitness(); } catch(e) {}
-    try { finToast && finToast('🎯 目标体重已设为 ' + v.toFixed(1) + ' kg'); } catch(e) {}
+    try { finToast && finToast('🎯 目标体重已设为 ' + v.toFixed(1) + ' 斤'); } catch(e) {}
   };
   const clear = () => {
     input.value = '';
@@ -12743,11 +12789,11 @@ function bindWeightGoalInput() {
     if (store.startWeight != null) swInput.value = store.startWeight;
     const swSave = () => {
       const v = parseFloat(swInput.value);
-      if (isNaN(v) || v <= 0) { finToast('请填写有效的起始体重（30-300）'); return; }
+      if (isNaN(v) || v <= 0) { finToast('请填写有效的起始体重（60-600 斤）'); return; }
       store.startWeight = v;
       saveData();
       try { renderFitness(); } catch(e) {}
-      try { finToast && finToast('⚖️ 起始体重已设为 ' + v.toFixed(1) + ' kg'); } catch(e) {}
+      try { finToast && finToast('⚖️ 起始体重已设为 ' + v.toFixed(1) + ' 斤'); } catch(e) {}
     };
     if (swSaveBtn) swSaveBtn.addEventListener('click', swSave);
     swInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); swSave(); } });
@@ -12789,9 +12835,9 @@ function renderFitness() {
   const weightsCount = monthExercises.filter(e=>e.weights).length;
 
   document.getElementById('fitness-stats').innerHTML = `
-    <div class="stat-card"><div class="label">起始体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${startWeight.toFixed(1)}</div><div class="unit">kg</div></div>
-    <div class="stat-card"><div class="label">最新体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${latestAfterText}</div><div class="unit">kg</div></div>
-    <div class="stat-card"><div class="label">累计减重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${parseFloat(totalLost) > 0 ? 'green' : (totalLost !== '—' ? 'red' : '')}">${parseFloat(totalLost) > 0 ? '-' : ''}${totalLost}</div><div class="unit">kg</div></div>
+    <div class="stat-card"><div class="label">起始体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${startWeight.toFixed(1)}</div><div class="unit">斤</div></div>
+    <div class="stat-card"><div class="label">最新体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${latestAfterText}</div><div class="unit">斤</div></div>
+    <div class="stat-card"><div class="label">累计减重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${parseFloat(totalLost) > 0 ? 'green' : (totalLost !== '—' ? 'red' : '')}">${parseFloat(totalLost) > 0 ? '-' : ''}${totalLost}</div><div class="unit">斤</div></div>
     <div class="stat-card"><div class="label">健身天数</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${exerciseDays}</div><div class="unit">/ ${activeDays}天</div></div>
   `;
 
@@ -12984,7 +13030,7 @@ function renderWeightChart(data) {
     svg += `<text x="${p.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8a6270">${(maxV - (i/4)*range).toFixed(1)}</text>`;
   }
   svg += `<line x1="${p.left}" y1="${sy}" x2="${width-p.right}" y2="${sy}" stroke="#ff9eb5" stroke-width="1.5" stroke-dasharray="5,5"/>`;
-  svg += `<text x="${width-p.right}" y="${sy-5}" text-anchor="end" font-size="10" fill="#ff7f9e" font-weight="600">起始 ${START_WEIGHT}kg</text>`;
+  svg += `<text x="${width-p.right}" y="${sy-5}" text-anchor="end" font-size="10" fill="#ff7f9e" font-weight="600">起始 ${START_WEIGHT}斤</text>`;
 
   let ap = '';
   data.forEach((d,i) => { const v = d.value != null ? d.value : (d.after != null ? d.after : d.before); if (v != null) ap += (i===0?'M':'L') + xs(i) + ',' + ys(v) + ' '; });
@@ -12997,7 +13043,7 @@ function renderWeightChart(data) {
   });
 
   svg += `<rect x="${p.left}" y="8" width="10" height="10" fill="#e88a4f" rx="2"/>`;
-  svg += `<text x="${p.left+15}" y="17" font-size="11" fill="#8a4a60">体重 (kg)</text>`;
+  svg += `<text x="${p.left+15}" y="17" font-size="11" fill="#8a4a60">体重 (斤)</text>`;
   svg += '</svg>';
   document.getElementById('weight-chart').innerHTML = svg;
 }
@@ -14401,7 +14447,7 @@ function submitWeightEdit() {
     // 否则云端那条「旧日期/旧体重」的记录会被当成另一条重新并回来 → 改了刷新又回退。
     hamiTombSnapshot('weightRecords', _oldW, w);
     try { hamiDeleteSync(); } catch (e) {}
-    finToast('✅ 已更新体重 ' + val.toFixed(1) + ' kg');
+    finToast('✅ 已更新体重 ' + val.toFixed(1) + ' 斤');
   } else {
     // 新增模式：若同日已有记录则拒绝（避免误建重复条），引导主人用「✏️ 修改」去更新
     if (store.weightRecords.some(function (r) { return r && r.date === date; })) {
@@ -14409,7 +14455,7 @@ function submitWeightEdit() {
       return;
     }
     hamiPushRecord('weightRecords', { date: date, value: val, after: val, note: note });
-    finToast('✅ 已记体重 ' + val.toFixed(1) + ' kg（' + date + '）');
+    finToast('✅ 已记体重 ' + val.toFixed(1) + ' 斤（' + date + '）');
   }
   saveData();
   closeWeightEditModal();
@@ -19294,8 +19340,8 @@ function renderDesktopWeight() {
     if (lastW != null && firstW != null) {
       const change = (lastW - firstW).toFixed(1);
       const cn = parseFloat(change);
-      if (cn > 0) { monthChange = '↑' + change + 'kg'; monthChangeColor = '#e84a5f'; }
-      else if (cn < 0) { monthChange = '↓' + Math.abs(cn) + 'kg'; monthChangeColor = '#34c759'; }
+      if (cn > 0) { monthChange = '↑' + change + '斤'; monthChangeColor = '#e84a5f'; }
+      else if (cn < 0) { monthChange = '↓' + Math.abs(cn) + '斤'; monthChangeColor = '#34c759'; }
       else { monthChange = '持平'; }
     }
   }
@@ -19391,7 +19437,9 @@ function renderDesktopWeight() {
     const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1px rgba(240,192,64,.25);' : '';
     // v71 重做 cell：三段固定布局 = 日期(上) + 体重(中) + 变化+运动圆点(下一行)，固定高度不再依赖内容
     const cellTitle = `${dateStr}${weightText ? ' · 体重 ' + weightText : ''}${changeText ? ' · 与前一天 ' + changeText : ''}${isFilled ? '（自动沿用）' : ''} · 点击修改`;
-    const mainCls = 'weight-cal-main' + (weightText ? '' : ' weight-cal-main-empty') + (isFilled ? ' weight-cal-main-fill' : '');
+    const _wlen = (weightText || '').length;
+    const mainCls = 'weight-cal-main' + (weightText ? '' : ' weight-cal-main-empty') + (isFilled ? ' weight-cal-main-fill' : '')
+      + (_wlen >= 6 ? ' weight-cal-main-xs' : (_wlen >= 5 ? ' weight-cal-main-sm' : ''));
     const changeCls = 'weight-cal-change' + (changeText ? '' : ' weight-cal-change-empty');
     html += `<div class="weight-cal-cell${isToday ? ' weight-cal-cell-today' : ''}${isFuture ? ' weight-cal-future' : ''}" style="background:${bg};border-color:${border};${todayShadow}min-width:0;box-sizing:border-box;" title="${cellTitle}" onclick="openWeightEditByDate('${dateStr}')">
       <div class="weight-cal-day" style="color:${isToday ? '#c08020' : '#5a3a48'};">${d}</div>
