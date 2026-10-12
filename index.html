@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-11-215">
+<meta name="hami-build" content="2026-10-12-216">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11841,7 +11841,7 @@ function sortTodos(items) {
     const ra = rank(a), rb = rank(b);
     if (ra !== rb) return ra - rb;
     if (ra === 0 || ra === 2) return (a.ut.deadline || '').localeCompare(b.ut.deadline || ''); // 同档按到期日升序
-    return a.i - b.i; // 其余按添加先后
+    return b.i - a.i; // v216：同档最新的排最前（新→旧）
   });
 }
 
@@ -11856,15 +11856,16 @@ function renderHomeTodo() {
     return { icon: '📝', text: `定制单 ¥${o.amount} · ${o.deadline}前`, urgent: isOverdue, jump: 'income' };
   });
 
-  // 用户自定义待办（未完成），按 category 分两类，附期限
+  // 用户自定义待办（未完成），按 category 分两类，附期限；v216：最新添加的排最前
   const userDaily = [], userWork = [];
-  (store.userTodos || []).forEach((ut, i) => {
-    if (ut.done) return;
+  for (let i = (store.userTodos || []).length - 1; i >= 0; i--) {
+    const ut = store.userTodos[i];
+    if (!ut || ut.done) continue;
     const info = todoDeadlineInfo(ut);
     const dl = info.has ? ' · ' + info.label.replace('⏰ ', '') : '';
     const item = { icon: '📌', text: ut.text + dl, userIdx: i, urgent: info.overdue };
     if ((ut.category || 'daily') === 'work') userWork.push(item); else userDaily.push(item);
-  });
+  }
 
   const daily = userDaily;   // 日常代办只显示用户手动输入的内容，不含系统打卡提醒
   const work = orders.concat(userWork);
@@ -13508,7 +13509,7 @@ function renderMedia() {
   const monthSet = {};
   baseMonths.forEach(m => monthSet[m] = true);
   (store.mediaRecords || []).forEach(function (r) { const m = (r.date || '').substring(0, 7); if (/^\d{4}-\d{2}$/.test(m)) monthSet[m] = true; });
-  const months = Object.keys(monthSet).sort();
+  const months = Object.keys(monthSet).sort().reverse();   // v216：最新月份排最上（新→旧）
   let histHtml = '';
   let totalAll = 0;
   months.forEach(m => {
@@ -13694,7 +13695,7 @@ function renderPublishCalendar() {
       monthMedia.forEach(function (r) {
         combined.push({ kind: 'media', item: r, date: r.date || '', sort: (r.date || '') + (r.time || '00:00') });
       });
-      combined.sort(function (a, b) { return a.sort.localeCompare(b.sort); });
+      combined.sort(function (a, b) { return b.sort.localeCompare(a.sort); });   // v216：最新记录排最前（新→旧）
       // v165：已完成图文列表改为「翻页」——每页 3 条，‹ › 切换，不再「点击展开」一次性铺开
       const PER_PAGE = 3;
       const totalPages = Math.max(1, Math.ceil(combined.length / PER_PAGE));
@@ -14155,7 +14156,7 @@ function renderFuturePosts() {
   if (!box) return;
   const today = todayStr();
   const all = (store.futurePosts || []).slice().sort(function (a, b) {
-    return (a.date || '').localeCompare(b.date || '') || (b.createdAt || 0) - (a.createdAt || 0);
+    return (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0);   // v216：最新记录排最前（新→旧）
   });
   const mainList = all.filter(function (p) { return !p.done; });   // 待发布
   const doneList = all.filter(function (p) { return !!p.done; });  // 已完成
@@ -17136,7 +17137,7 @@ function renderReminder() {
       const info = calcDateInfo(d, today);
       return { ...d, ...info, _idx: __visIdx ? __visIdx[i] : i };   // v180：用 store 原始下标
     });
-    dateList.sort((a, b) => a.sortKey - b.sortKey);
+    dateList.sort((a, b) => b._idx - a._idx);   // v216：最新添加的排最前（新→旧）
 
     let html = '';
     // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
