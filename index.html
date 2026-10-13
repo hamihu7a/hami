@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-13-217">
+<meta name="hami-build" content="2026-10-13-218">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -8963,7 +8963,8 @@ async function cmdRefreshAction() {
   }, 600);
 }
 function scheduleCloudPush() {
-  if (!hamiSyncReady || !hamiCloudEnabled()) return;
+  if (!hamiSyncReady || !hamiCloudEnabled()) { _cloudPushPending = true; return; }
+  _cloudPushPending = false;
   // 关键：云端合并后的全量重渲期间，渲染函数内部会调用 saveData，
   // 若不拦截就会形成「重渲→保存→推送→拉取→重渲」死循环（v2026-09-06-01 页面卡死的元凶）。
   if (_cloudRendering) return;
@@ -8987,6 +8988,7 @@ var _hamiBannerHideTimer = null;   // 横幅自动消失定时器：让"正在�
 var _hamiBannerLastShowAt = 0;      // 上次显示横幅的时刻：用于去抖（短时间内的反复失败不要反复跳出来）
 var _hamiBannerFailStreak = 0;       // 连续失败计数：连续失败 3 次才算"真有问题"，前 2 次静默重试不打扰
 var _hamiBannerLastFailKey = '';     // 上次失败的指纹：相同错误不重复计数
+var _cloudPushPending = false;         // v218：同步就绪前的本地改动记下来，就绪后立刻补推，杜绝"记了没上云"
 
 // 横幅位置：v208 主人要求改到「中间靠上」（约时间与激励语一带）；顶部仍绝不遮挡「记一下」输入栏，文字不拦截点击
 function hamiPendingBanner(show, msg) {
@@ -9022,7 +9024,8 @@ function hamiPendingBanner(show, msg) {
 }
 
 async function commitToCloud() {
-  if (!hamiSyncReady || !hamiCloudEnabled()) return;
+  if (!hamiSyncReady || !hamiCloudEnabled()) { _cloudPushPending = true; return; }
+  _cloudPushPending = false;
   if (_syncBusy) {                       // 上一轮还在传，安静排队，别反复吓主人横幅
     _pendingCommit++;
     setTimeout(function () { commitToCloud(); }, 1500);
@@ -9282,6 +9285,8 @@ async function initCloudSync(statusEl, force) {
       await pullAndMerge();          // 先成功拉取，失败则进入下方 catch 重试
       hamiSyncReady = true;
       _diagStep('拉取云端完成', true, '');
+      // v218：同步刚就绪，把就绪前累积的本地改动立刻补推上云（防"记了没上云"）
+      if (_cloudPushPending) { _cloudPushPending = false; try { commitToCloud(); } catch (e) {} }
       // 关键：云同步刚就绪时，如果启动阶段主人改过背景图（彼时 hamiSyncReady=false 排队了），现在补传
       try { if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); } } catch (e) {}
       try {
@@ -9301,6 +9306,8 @@ async function initCloudSync(statusEl, force) {
         setTimeout(_try, 15000);
       } else {
         hamiSyncReady = true;
+        // v218：即便首次同步最终失败，也把就绪前累积的本地改动补推一次（不依赖先拉到云端）
+        if (_cloudPushPending) { _cloudPushPending = false; try { commitToCloud(); } catch (e) {} }
         // 即使最终失败，也尝试补传一下背景图（store 可能还是空，但背景图值得保留）
         try { if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); } } catch (e) {}
         cloudStatus('☁️ 同步异常：' + (e.message || e) + '（可点「🔄 立即同步到云端」手动重试）', '#c75b86');
@@ -9334,6 +9341,13 @@ try {
         // 关键修复：切回前台时把本地可能没推上去的改动（如手机端刚改的体重）强制补推一次
         try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch (e) {}
       }
+  });
+} catch (e) {}
+
+// v218：关页面/切走（pagehide 在 iOS Safari 比 visibilitychange 更可靠）时立刻补推本机改动，杜绝"记完就关页"漏推
+try {
+  window.addEventListener('pagehide', function () {
+    if (hamiSyncReady && hamiCloudEnabled()) { try { pushNow(); } catch (e) {} }
   });
 } catch (e) {}
 
@@ -20176,6 +20190,7 @@ function logWashForDate() {
   if (!store.washRecords.some(w => w.date === date)) {
     hamiPushRecord('washRecords', { date: date });
     saveData();
+    try { commitToCloud(); } catch (e) {}   // v218：与"今天洗头"按钮对齐，记录即尝试推云（同步未就绪则由 _cloudPushPending 兜底补推）
   }
   renderPeriod();
   renderCountdown();
