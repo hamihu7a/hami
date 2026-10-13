@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-12-216">
+<meta name="hami-build" content="2026-10-13-217">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -8629,7 +8629,7 @@ function hamiRenderAllNow() {
   _hamiRenderingNow = true;
   try {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
-      'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
+      'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext', 'renderTripPlans', 'renderAccount',
       'renderReminder', 'renderQuotes', 'renderBackupReminder', 'renderTodoPanel',
       'renderCustomBoard', 'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo'];
@@ -8823,7 +8823,7 @@ function renderAllFromCloud() {
   _cloudRendering = true;
   try {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
-      'renderFuturePosts', 'renderPeriod', 'renderWash', 'renderToilet', 'renderMask',
+      'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext',
       'renderTripPlans', 'renderAccount', 'renderReminder', 'renderQuotes', 'renderBackupReminder'];
     fns.forEach(function (n) {
@@ -20129,15 +20129,14 @@ function logWash() {
     store.washRecords.splice(idx, 1);
     saveData();
     try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
-    renderWash(); renderPeriod(); renderCountdown();
+    renderPeriod(); renderCountdown();
     hamiToast('🧴 已取消今天的洗头记录~');
     return;
   }
-  hamiPushRecord('washRecords', { date: today });
-  saveData();
-  renderWash();
-  renderPeriod();
-  renderCountdown();
+    hamiPushRecord('washRecords', { date: today });
+    saveData();
+    renderPeriod();
+    renderCountdown();
   try { playSound('task'); } catch (e) {}
   hamiToast('🧴 已记录：今天洗了头~');
 }
@@ -20309,7 +20308,6 @@ async function deleteWashRecord(i) {
   hamiTombAdd('washRecords', w);   // v39 墓碑
   store.washRecords.splice(i, 1);
   hamiDeleteSync();
-  try { renderWash(); } catch(e) {}
   try { renderPeriod(); } catch(e) {}
   try { rerenderSynced(); } catch(e) {}
   finToast('🗑 已删除洗头记录');
