@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-273">
+<meta name="hami-build" content="2026-10-16-274">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3750,6 +3750,8 @@
     .sidebar { top: 0 !important; height: 100vh !important; padding: 56px 0 20px 0 !important; overflow-y: auto !important; }
     .sidebar .nav-text { font-size: 13px; }
     .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
+    /* v274：电脑端（≥769px）贴纸图标高度上限 44px，移动端仍为 38px */
+    .sidebar .nav-group-sticker { max-height: 44px; }
     .nav-header { padding: 10px 12px 14px !important; }
     /* v135：电脑端侧栏够宽，「Hami 小助理」并排一行不转行——
        br 隐藏后靠 br 前的空格分隔两词；手机端窄侧栏（max-width:768px）不受影响仍两行 */
@@ -3918,6 +3920,8 @@
   }
   body.hami-force-desktop .sidebar .nav-text { font-size: 13px; }
   body.hami-force-desktop .sidebar .nav-group-title { font-size: 15px; padding: 14px 18px 6px; }
+  /* v274：强制桌面模式同样 44px */
+  body.hami-force-desktop .sidebar .nav-group-sticker { max-height: 44px; }
   body.hami-force-desktop .nav-header { padding: 10px 12px 14px !important; }
   /* v136：JS 强制桌面兜底——媒体查询误报 ≤768 时手机恢复规则会重新显示 br，
      这里用 body 类规则无视视口强制一行（主人电脑端命中此路径的概率最高） */
