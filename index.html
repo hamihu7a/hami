@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-222">
+<meta name="hami-build" content="2026-10-16-223">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -16124,6 +16124,8 @@ function renderAccount() {
     }
     renderInlineStats(_curType);
   } catch (e) {}
+  // v222/v223：每次渲染账户模块都刷新可支配余额下方两行时间（手动修改/自动联动），确保初次加载即可见
+  try { refreshDisposableDisplay(); } catch (e) {}
 }
 
 // ==================== 消费日期近期记录（v32 恢复）====================
