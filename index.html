@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-223">
+<meta name="hami-build" content="2026-10-16-224">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3140,6 +3140,23 @@
     color: var(--c-pink-deep);
     line-height: 1.5;
     border: 1px dashed #ffb3c6;
+  }
+  .hami-help-toggle {
+    border: none;
+    background: #ffe1ea;
+    color: #d14b73;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .hami-help-body {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--c-pink-deep);
+    line-height: 1.6;
   }
 
   /* ===== 设置工具：开关 ===== */
@@ -12595,6 +12612,36 @@ function refreshDisposableDisplay() {
     _linkEl.style.display = 'block';
   }
 }
+
+// v224：把所有 .tip-box（各版面「使用说明/使用方法」长文字）折叠成「📖 使用说明」按键，平时只留按键、点击才展开原文
+function initHelpToggles() {
+  var boxes = document.querySelectorAll('.tip-box');
+  for (var i = 0; i < boxes.length; i++) {
+    var box = boxes[i];
+    if (box.getAttribute('data-hami-help') === '1') continue;
+    var orig = box.innerHTML;
+    box.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hami-help-toggle';
+    btn.textContent = '📖 使用说明';
+    var body = document.createElement('div');
+    body.className = 'hami-help-body';
+    body.style.display = 'none';
+    body.innerHTML = orig;
+    box.appendChild(btn);
+    box.appendChild(body);
+    (function (b, bd) {
+      b.addEventListener('click', function () {
+        var open = bd.style.display !== 'none';
+        bd.style.display = open ? 'none' : 'block';
+        b.textContent = open ? '📖 使用说明' : '📕 收起说明';
+      });
+    })(btn, body);
+    box.setAttribute('data-hami-help', '1');
+  }
+}
+
 function editDepositBalance() {
   const display = document.getElementById('account-disposable-display');
   const editor = document.getElementById('account-disposable-editor');
@@ -20862,6 +20909,7 @@ try {
   // 模拟人生总收入 / 自媒体更新记录 面板：月份下拉已删除，永远用当月（无需初始化）
 } catch (e) {}
 try { renderAccount(); } catch(e) { console.log('renderAccount error:', e.message); }
+try { initHelpToggles(); } catch(e) { console.log('initHelpToggles error:', e.message); }
 try { renderReminder(); } catch(e) { console.log('renderReminder error:', e.message); }
 try { renderQuotes(); } catch(e) { console.log('renderQuotes error:', e.message); }
 try { initSettingsPanel(); } catch(e) { console.log('initSettingsPanel error:', e.message); }
