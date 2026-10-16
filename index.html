@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-239">
+<meta name="hami-build" content="2026-10-16-240">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3309,15 +3309,16 @@
     transition: all .2s;
   }
   .mirror-tag { pointer-events: none; line-height: 1.3; }
-  /* 各区域尺寸：按真实模块宽高比等比缩小（比例一致·整体略缩图）。
-     以主面板内容区约 360px 宽为准：
-     hero≈360×101 / weather·fortune≈180×100(并排 6 行内容) / accounts≈360×88 / 体重日历主页缩略≈360×380(准方形) */
-  .mirror-hero     { width: 100%; aspect-ratio: 360 / 101; flex: 0 0 auto; }
+  /* 各区域尺寸：与实际背景图对应区域的宽高比【完全一致】（等比缩小，非 1:1）。
+     v240：比例不再写死，由 JS（syncMirrorRatios）实测真实区域宽高后写入 --mirror-ar-*，
+     这样镜像里的构图/占比与主人当前窗口下的真实效果一模一样（背景图 cover 裁切也一致）。
+     括号内默认值为 1440 宽窗口的实测兜底值（JS 未跑起来时使用）。 */
+  .mirror-hero     { width: 100%; aspect-ratio: var(--mirror-ar-hero, 1296 / 212); flex: 0 0 auto; }
   .mirror-weather-row { display: flex; gap: 6px; flex: 0 0 auto; }
-  .mirror-weather  { flex: 1 1 0; min-width: 0; aspect-ratio: 180 / 100; }
-  .mirror-fortune  { flex: 1 1 0; min-width: 0; aspect-ratio: 180 / 100; }
-  .mirror-accounts { width: 100%; aspect-ratio: 360 / 88; flex: 0 0 auto; }
-  .mirror-weight   { width: 100%; aspect-ratio: 360 / 380; flex: 0 0 auto; } /* 主页日历缩略：准方形（标题+月标+6行格+图例） */
+  .mirror-weather  { flex: 1 1 0; min-width: 0; aspect-ratio: var(--mirror-ar-weather, 644 / 141); }
+  .mirror-fortune  { flex: 1 1 0; min-width: 0; aspect-ratio: var(--mirror-ar-weather, 644 / 141); }
+  .mirror-accounts { width: 100%; aspect-ratio: var(--mirror-ar-accounts, 1296 / 239); flex: 0 0 auto; }
+  .mirror-weight   { width: 100%; aspect-ratio: var(--mirror-ar-weight, 1296 / 740); flex: 0 0 auto; } /* 主页日历缩略 */
   .mirror-block::after {
     content: "📷 上传";
     position: absolute;
@@ -9689,6 +9690,63 @@ function playSound(kind) {
 let _settingsActiveKey = null;   // 当前选中的待上传背景板块
 let _settingsInited = false;
 
+// ==================== 镜像板块宽高比：与真实区域 1:1 同比例（等比缩小） ====================
+// v240：主人要求"镜像里每个板块的长宽比例＝实际上传后背景图所覆盖区域的比例，只是整体缩小"，
+// 这样一眼就能看出自己那张图在真实版面上的占比与裁切。比例随窗口宽度变化，故运行时实测后写入 CSS 变量。
+var HAMI_MIRROR_AR_KEY = 'hami_mirror_ar';
+var HAMI_MIRROR_AR = null;
+var HAMI_MIRROR_AR_SEL = {
+  hero: '.desktop-hero',
+  weather: '#home-weather',
+  fortune: '#home-fortune',
+  accounts: '#desktop-accounts-wrap',
+  weight: '#home-weight-cal'
+};
+// 实测真实区域宽高（主面板可见时才测得到；5 个全测到才算有效）
+function measureMirrorRatios() {
+  var res = {}, got = 0;
+  Object.keys(HAMI_MIRROR_AR_SEL).forEach(function (k) {
+    var el = document.querySelector(HAMI_MIRROR_AR_SEL[k]);
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    if (r.width < 40 || r.height < 20) return;   // 隐藏 / 未完成布局 → 跳过
+    res[k] = Math.round(r.width) + ' / ' + Math.round(r.height);
+    got++;
+  });
+  return got === 5 ? res : null;
+}
+function syncMirrorRatios() {
+  try {
+    var measured = measureMirrorRatios();
+    if (measured) {
+      HAMI_MIRROR_AR = measured;
+      try { localStorage.setItem(HAMI_MIRROR_AR_KEY, JSON.stringify(measured)); } catch (e) {}
+    }
+    if (!HAMI_MIRROR_AR) {
+      try { HAMI_MIRROR_AR = JSON.parse(localStorage.getItem(HAMI_MIRROR_AR_KEY) || 'null'); } catch (e) { HAMI_MIRROR_AR = null; }
+    }
+    var ar = HAMI_MIRROR_AR;
+    if (!ar || !ar.hero) return;
+    var s = document.documentElement.style;
+    s.setProperty('--mirror-ar-hero', ar.hero);
+    s.setProperty('--mirror-ar-weather', ar.weather || ar.fortune || '644 / 141');
+    s.setProperty('--mirror-ar-accounts', ar.accounts);
+    s.setProperty('--mirror-ar-weight', ar.weight);
+    return true;
+  } catch (e) { return false; }
+}
+// 页面加载后测一次（此时主面板可见 = 主人当前窗口的真实比例）；窗口尺寸变化时重测
+(function () {
+  function boot() { setTimeout(syncMirrorRatios, 600); }
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
+  var t = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(t);
+    t = setTimeout(syncMirrorRatios, 250);
+  });
+})();
+
 // 镜像板块预览：把已设置的背景图直接显示在该缩略块上，给予即时反馈
 function setMirrorPreview(key, dataUrl) {
   document.querySelectorAll('.mirror-block').forEach(function (b) {
@@ -12782,6 +12840,10 @@ function switchPanel(name, navEl) {
     }
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     target.classList.add('active');
+    // v240：进入「设置工具」时刷新镜像板块宽高比（与真实区域同比例）
+    if (name === 'settings') {
+      try { syncMirrorRatios(); } catch (e) {}
+    }
     // v230：进入「数据备份」面板时刷新 内容清单 / 备份位置 / 上次备份时间
     if (name === 'data-backup') {
       try { renderBackupManifest(); } catch (e) {}
