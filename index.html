@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-252">
+<meta name="hami-build" content="2026-10-16-253">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7593,11 +7593,11 @@ function _promiseTimeout(p, ms, fallback) {
 // 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
 // v56：彻底不弹 toast（v35 铁律：调试提示不上首页），所有状态只在设置面板二级文字显示
 async function syncBgsFromCloudOnBoot() {
-  // v252：本机已经有背景图 / 遮盖 → 这里不再下载（几 MB 太费流量），
-  // 交给云同步就绪后的「版本对账」bgAutoSyncAfterReady 决定是收还是发；本机空着才主动拉一次。
+  // v253：启动一律尝试从云端收一次（云端 = 按板块的共享真源，以电脑端改的为准）。
+  // 旧逻辑「本机有图就不下载」导致手机端（本来就有旧图）永远收不到电脑端的新图 / 新遮盖。
+  // 收不到 / 云端没有 → 静默返回，绝不动本机任何东西。
   try {
     if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
-    if (bgLocalHasAnyDev()) return;
     await bgDownloadFromCloud(true);
   } catch (e) {}
 }
@@ -7720,14 +7720,21 @@ const BG_FILE_PATH = 'sync/hami-bgs.json';
 const BG_REV_KEY = 'hami_bgs_rev';
 let _remoteBgMeta = null;          // 主档案带回来的背景版本信息
 var _bgUploadInFlight = false;   // v252：显式声明（原来靠隐式全局，避免严格模式/打包后失效）
+var _bgDownloadInFlight = false; // v253：同一次开页可能有多个触发点，避免并发重复下载几 MB
+var _bgLastAppliedRemoteAt = 0;   // v253：本会话已套用过的云端版本（同一版本不重复下载，省流量）
+var _bgApplyingRemote = false;   // v253：正在套用云端下发的背景/遮盖 —— 期间不记版本、不触发自动上传
+                                 //       （否则「下载→改遮盖→记版本→自动上传→另一端看到更新→再下载」会两端无限互刷）
 let _bgAutoTimer = null;           // 背景/遮盖改动后的自动上传合并定时器
 let _bgLastUploadAt = 0;           // v252：上次成功上传时间（防两端互相补推形成循环）
 
 function bgMarkRev(ts) { try { localStorage.setItem(BG_REV_KEY, String(ts || Date.now())); } catch (e) {} }
 function bgLocalRev() {
+  // v253：只用显式的「背景版本标记」，绝不拿 IndexedDB 写入时间凑数。
+  // 真凶：IDB 时间戳只代表"这张图什么时候写进本机"，不代表"比云端新"。
+  // 旧逻辑让本来已有旧背景图的设备（手机）自认为"最新"→ 永远不去下载云端新图，
+  // 这正是「电脑端改了全部背景图，手机端刷新还是旧图」的根因。
   let v = 0;
   try { v = Number(localStorage.getItem(BG_REV_KEY) || 0) || 0; } catch (e) {}
-  if (!v) { try { Object.keys(BG_IDB_TS).forEach(function (k) { const t = Number(BG_IDB_TS[k] || 0); if (t > v) v = t; }); } catch (e) {} }
   return v;
 }
 // 汇总本机所有「遮盖」设置（不透明度 / 渐变方向 / 位置 / 放大 / 镜像 / 旋转）
@@ -7780,9 +7787,11 @@ async function _ghPutPath(path, wrappedB64, sha, message) {
     try { const e = await res.json(); apiErr = (e && e.message) || ''; } catch (e2) {}
   } catch (e) { apiErr = (e && e.message) || String(e); }
   // Contents API 顶不住（文件过大 / 内容超限 / 网络层拦截）→ git Data API
-  const b64OfFile = _b64enc(wrappedB64);
-  if (b64OfFile === null) throw new Error('内容编码失败');
-  return await _ghPutViaGitData(path, b64OfFile, message + ' [git-data]' + (apiErr ? ' (' + String(apiErr).slice(0, 60) + ')' : ''));
+  // v253【核心修复】git Data API 的 fileB64 就是"文件内容的 base64"，必须与 Contents API 的 content
+  // 保持同一层编码 —— 这里直接传 wrappedB64。旧代码多包了一层 _b64enc，导致 fallback 写出的文件
+  // 比正常文件多一层 base64，任何设备都解不开（表现就是"上传成功、其它设备永远收不到"）。
+  if (typeof wrappedB64 !== 'string' || !wrappedB64) throw new Error('内容编码失败');
+  return await _ghPutViaGitData(path, wrappedB64, message + ' [git-data]' + (apiErr ? ' (' + String(apiErr).slice(0, 60) + ')' : ''));
 }
 async function _ghPutViaGitData(path, fileB64, message) {
   const base = 'https://api.github.com/repos/' + HAMI_SYNC.repo;
@@ -7870,6 +7879,8 @@ async function bgDownloadFromCloud(silent) {
   const statusEl = document.getElementById('settings-bg-cloud-status');
   const setSt = function (t) { if (statusEl) statusEl.textContent = t; };
   if (!silent) setSt('⏳ 正在从云端拉取背景图…');
+  if (_bgDownloadInFlight) return true;          // v253：已经在下载了，别并发再来一遍
+  _bgDownloadInFlight = true;
   try {
     const got = await _ghGet(BG_FILE_PATH);
     if (!got) {
@@ -7883,6 +7894,8 @@ async function bgDownloadFromCloud(silent) {
       if (!silent) setSt('⚠️ 云端背景文件读不出来（格式不符）。请在电脑端点一次「📤 上传到云端」重新生成。');
       return false;
     }
+    // v253：自动触发时，若已是本会话套用过的同一版本 → 直接跳过，不重复下载几 MB
+    if (silent && remote.updatedAt && remote.updatedAt === _bgLastAppliedRemoteAt) return true;
     const bgs = remote.bgBackups || {};
     const masks = remote.bgMasks || {};
     const bkeys = Object.keys(bgs).filter(function (k) { return !!bgs[k]; });
@@ -7896,11 +7909,16 @@ async function bgDownloadFromCloud(silent) {
     try { _bgAllWrite(); } catch (e) {}                       // 同步写 localStorage 主存：下次开页立刻有图
     try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
     let mApplied = 0;
-    Object.keys(masks).forEach(function (k) {
-      try { hamiBgMaskSet(k, masks[k]); mApplied++; } catch (e) {}
-    });
-    try { applyAllBgs(); } catch (e) {}
+    try {
+      _bgApplyingRemote = true;                   // v253：套用云端期间关掉"记版本 + 自动上传"，避免两端互刷
+      Object.keys(masks).forEach(function (k) {
+        try { hamiBgMaskSet(k, masks[k]); mApplied++; } catch (e) {}
+      });
+      try { applyAllBgs(); } catch (e) {}
+    } catch (e) { } finally { _bgApplyingRemote = false; }
     if (remote.updatedAt) bgMarkRev(remote.updatedAt);
+    // v253：把内存里的"云端背景版本"同步更新，避免同一会话内反复下载 / 下一轮误判成"本机更新"而重复上传
+    try { if (remote.updatedAt) { _remoteBgMeta = { at: remote.updatedAt }; _bgLastAppliedRemoteAt = remote.updatedAt; } } catch (e) {}
     // v252：本机还有云端没有的背景图 → 稍后把并集推回去（另一端也能拿到全部；60s 内不重复，避免两端循环补推）
     try {
       const missing = Object.keys(BG_CACHE).filter(function (k) { return !!BG_CACHE[k] && !bgs[k]; });
@@ -7913,6 +7931,8 @@ async function bgDownloadFromCloud(silent) {
   } catch (e) {
     if (!silent) setSt('❌ 拉取失败：' + ((e && e.message) || String(e)));
     return false;
+  } finally {
+    _bgDownloadInFlight = false;   // v253：释放"在途"标记，允许后续版本变化时再下载
   }
 }
 // 云同步就绪后自动「对账」：谁新听谁的——云端新就收下来，本机新就自动推上去
@@ -8189,6 +8209,11 @@ async function _ghGet(pathOverride) {
     inner = viaBlob ? atob(String(rawB64).replace(/\s+/g, '')) : _b64dec(rawB64);
   } catch (e) { inner = null; }
   if (inner === null || !inner) { _diagStep('拉取云端档案', false, '档案外层 Base64 解码失败（文件可能已损坏）'); throw new Error('云端档案解码失败'); }
+  // v253 兼容：历史上有文件被多包了一层 base64（旧版 git-data fallback 的 bug），
+  // 特征是解密前找不到 "iv:ct" 的冒号 → 这里再解一层，让旧文件立刻可读，无需主人重新上传。
+  if (inner.indexOf(':') < 0) {
+    try { const _again = _b64dec(inner); if (_again && _again.indexOf(':') >= 0) inner = _again; } catch (e) {}
+  }
   _diagStep('拉取云端档案', true, 'HTTP 200，已解包' + (viaBlob ? '（大档案：走 git Blobs API）' : ''));
   return { sha: sha, content: inner };
 }
@@ -9282,7 +9307,7 @@ async function pushNow() {
         // 现改为【业务数据单独同步】：背景图不再写入同步档案（背景图以各设备本地 localStorage/IDB 为准，
         // 本就不会丢失；跨设备背景恢复属锦上添花，绝不该拖垮核心数据同步）。
         // 去掉背景图后主档案回到 ~400KB，GitHub Contents API 读写都可正常返回，手机端也能稳定同步。
-        const payload = { v: 1, updatedAt: Date.now(), store: store, bgMeta: { at: bgLocalRev() } };
+        const payload = { v: 1, updatedAt: Date.now(), store: store, bgMeta: { at: Math.max(bgLocalRev() || 0, (_remoteBgMeta && _remoteBgMeta.at) || 0) } };
         const ct = await encryptStore(payload, '');
         // v181：复用刚才 pull 拿到的 sha（同一轮内必然是最新值），不再额外下载一遍拿 sha
         let upSha = pulledSha || ((Date.now() - _lastPullAt < 60000) ? _lastPullSha : null);
@@ -9922,6 +9947,7 @@ function mirrorBgLayer(block) {
 }
 function hamiBgMaskSet(key, cfg) {
   try { localStorage.setItem(HAMI_BG_MASK_KEY + key, JSON.stringify(cfg)); } catch (e) {}
+  if (_bgApplyingRemote) return;                // v253：正在套用云端下发的内容 → 不记版本、不自动上传（防两端互刷）
   bgMarkRev();                                  // v252：遮盖一改就记版本
   try { bgScheduleAutoSync(6000); } catch (e) {}  // v252：几秒后自动推上云（手机端自动收到）
 }
