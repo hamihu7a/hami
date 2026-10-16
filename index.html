@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-246">
+<meta name="hami-build" content="2026-10-16-247">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -676,14 +676,7 @@
     line-height: 1.1;
     flex-shrink: 0;
   }
-  /* 右侧信息小组：已同步 / 版本号 上下紧挨，靠右 */
-  .hero-meta-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    flex-shrink: 0;
-  }
+  /* v247：原「已同步 / 版本号」信息小组已从 hero 移到顶部指令栏（.cmd-meta） */
   /* 激励语 + 刷新按钮：激励语占满左边，刷新按钮在右边 */
   .hero-quote-row {
     display: flex;
@@ -839,6 +832,18 @@
   }
   .hami-cmd-bar .cmd-send:hover { transform:scale(1.04); box-shadow:0 2px 8px rgba(209,75,115,0.25); }
   .hami-cmd-bar .cmd-send:active { transform:scale(0.97); }
+  /* v247：同步状态 + 版本号（上下并排），位于「记一下」右侧固定宽度区，让「记一下 / 语音」整体左移 */
+  .hami-cmd-bar .cmd-meta {
+    display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
+    gap:2px;flex-shrink:0;min-width:86px;
+    padding-left:12px;border-left:1px dashed #f7d7e4;
+    text-align:right;white-space:nowrap;
+  }
+  .hami-cmd-bar .cmd-meta .sync-status { font-size:11px; gap:4px; }
+  .hami-cmd-bar .cmd-meta .sync-status .dot { width:6px; height:6px; }
+  .hami-cmd-bar .cmd-meta .hami-version-tag {
+    font-size:11px; padding:0 8px; background:#fdf0f5; border-radius:8px; line-height:1.5;
+  }
   /* 语音按钮：按住说话（松手就自动记下）；也可点一下开始，说完再点一下结束 */
   .hami-cmd-bar .cmd-mic {
     flex-shrink:0;border:none;border-radius:50%;
@@ -948,7 +953,6 @@
   .desktop-hero.has-custom-bg::after { display: none; }
   .desktop-hero > * { position: relative; z-index: 1; }
   .desktop-hero.has-custom-bg .hero-top,
-  .desktop-hero.has-custom-bg .hero-meta-wrap,
   .desktop-hero.has-custom-bg .desktop-quote { z-index: 2; }
   /* 上传背景图时，文字统一改回白色（左侧已压暗，白字清晰且醒目） */
   .desktop-hero.has-custom-bg { color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 150px; }
@@ -959,14 +963,6 @@
     text-shadow: -1px -1px 2px rgba(60,40,50,0.25), 1px -1px 2px rgba(60,40,50,0.25),
                  -1px 1px 2px rgba(60,40,50,0.25), 1px 1px 2px rgba(60,40,50,0.25),
                  0 0 4px rgba(60,40,50,0.25);
-  }
-  .desktop-hero.has-custom-bg .sync-status,
-  .desktop-hero.has-custom-bg .hami-version-tag {
-    color: #fff;
-    opacity: 0.92;
-    text-shadow: -1px -1px 2px rgba(60,40,50,0.35), 1px -1px 2px rgba(60,40,50,0.35),
-                 -1px 1px 2px rgba(60,40,50,0.35), 1px 1px 2px rgba(60,40,50,0.35),
-                 0 0 4px rgba(60,40,50,0.35);
   }
   .desktop-hero.has-custom-bg .desktop-quote .quote-line {
     color: #fff;
@@ -3550,16 +3546,16 @@
       .cat-coin { width: 22px; height: 22px; font-size: 13px; }
       .cat-bubble { font-size:12px; padding: 6px 10px; max-width: 180px; }
 
-      /* hero：时间+信息组并排(底对齐)、激励语+刷新 在超小屏缩小 */
+      /* hero：时间列、激励语+刷新 在超小屏缩小 */
       .hero-top { gap: 4px; }
       .hero-main-row { gap: 6px; }
-      .hero-meta-wrap { gap: 1px; }
       .hero-quote-row { gap: 6px; }
       .desktop-time { font-size: 20px; }
       .desktop-date { font-size: 10px; }
-      .hami-version-tag { font-size: 9px; padding: 1px 6px; }
-      .sync-status { font-size: 10px; gap: 3px; }
-      .sync-status .dot { width: 5px; height: 5px; }
+      .hami-cmd-bar .cmd-meta { min-width: 0; padding-left: 7px; gap: 1px; }
+      .hami-cmd-bar .cmd-meta .sync-status { font-size: 9px; gap: 3px; }
+      .hami-cmd-bar .cmd-meta .sync-status .dot { width: 5px; height: 5px; }
+      .hami-cmd-bar .cmd-meta .hami-version-tag { font-size: 9px; padding: 0 5px; }
       .hero-refresh { width: 24px; height: 24px; }
       .hero-refresh svg { width: 13px; height: 13px; }
       .desktop-quote .quote-line { font-size: 11px; margin-bottom: 1px; line-height: 1.3; }
@@ -4294,10 +4290,11 @@
     .hami-cmd-bar .cmd-input { font-size: 16px; padding: 7px 10px; min-height: 38px; }
     .hami-cmd-bar .cmd-mic { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 8px; min-height: 34px; }
-    /* 同步状态 + 版本号在 hero 信息小组里，手机上缩小 */
-    .hero-meta-wrap .sync-status { font-size: 10px; gap: 3px; padding: 0; white-space: nowrap; }
-    .hero-meta-wrap .sync-status .dot { width: 5px; height: 5px; }
-    .hero-meta-wrap .hami-version-tag { font-size: 9px; padding: 1px 6px; border-radius: 6px; }
+    /* v247：同步状态 + 版本号已移到顶部指令栏「记一下」右侧，超小屏再缩一档 */
+    .hami-cmd-bar .cmd-meta { min-width: 0; padding-left: 6px; margin-left: 0; gap: 1px; }
+    .hami-cmd-bar .cmd-meta .sync-status { font-size: 9px; gap: 3px; }
+    .hami-cmd-bar .cmd-meta .sync-status .dot { width: 5px; height: 5px; }
+    .hami-cmd-bar .cmd-meta .hami-version-tag { font-size: 9px; padding: 0 5px; border-radius: 6px; }
     .hero-refresh { width: 30px; height: 30px; }
     .hero-refresh svg { width: 16px; height: 16px; }
   }
@@ -4816,11 +4813,11 @@
     var m=bv.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
     var tag=document.getElementById('hami-version-tag');
     if(tag){
+      // v247：只显示数字（去掉「版本：」前缀），如 10.16-247
       if(m){
-        // 口令=月.日-#序号（序号取 BUILD_VER 最后一段）
-        tag.textContent='版本：'+parseInt(m[2],10)+'.'+parseInt(m[3],10)+'-'+m[4];
+        tag.textContent=parseInt(m[2],10)+'.'+parseInt(m[3],10)+'-'+m[4];
       }else{
-        tag.textContent='版本：'+(bv||'?');
+        tag.textContent=bv||'?';
       }
     }
   }catch(e){}
@@ -4972,6 +4969,11 @@
     </svg>
   </button>
   <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
+  <!-- v247：同步状态 + 版本号，上下并排，放在「记一下」右侧；「记一下 / 语音」因此整体左移 -->
+  <div class="cmd-meta" id="cmd-meta">
+    <span class="sync-status" id="sync-status"><span class="dot"></span><span id="sync-status-text">同步中…</span></span>
+    <span class="hami-version-tag" id="hami-version-tag" title="当前网页版本号，主人核对用">加载中…</span>
+  </div>
 </div>
 <div class="hami-cmd-toast" id="hami-cmd-toast"></div>
 
@@ -5005,10 +5007,6 @@
         <div class="hero-main-row">
           <div class="hero-time-col">
             <span class="desktop-time" id="hero-time">--:--</span>
-          </div>
-          <div class="hero-meta-wrap">
-            <span class="sync-status" id="sync-status"><span class="dot"></span><span id="sync-status-text">同步中…</span></span>
-            <span class="hami-version-tag" id="hami-version-tag" title="当前网页版本号，主人核对用">版本：加载中…</span>
           </div>
         </div>
         <div class="hero-quote-row">
@@ -9060,8 +9058,9 @@ function refreshVersionTag() {
   if (!el) return;
   const v = String(window.BUILD_VER || '');
   const m = v.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
-  if (m) { el.textContent = '版本：' + parseInt(m[2],10) + '.' + parseInt(m[3],10) + '-' + m[4]; return; }
-  el.textContent = '版本：' + v;
+  // v247：只显示数字，不带「版本：」前缀
+  if (m) { el.textContent = parseInt(m[2],10) + '.' + parseInt(m[3],10) + '-' + m[4]; return; }
+  el.textContent = v;
 }
 function _fmtSyncTime(ts) {
   if (!ts) return '';
