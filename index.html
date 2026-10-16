@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-244">
+<meta name="hami-build" content="2026-10-16-245">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -942,6 +942,8 @@
     /* v242：最前面叠加主人可调的「遮盖」层 --bgm（默认 none = 与原来完全一样，调了才生效） */
     background-image: var(--bgm, none), linear-gradient(to bottom, rgba(28,14,24,0) 0%, rgba(28,14,24,0.04) 42%, rgba(28,14,24,0.12) 64%, rgba(28,14,24,0.82) 100%), var(--bg-img);
     background-size: var(--bg-size, cover); background-position: var(--bg-pos, center); background-repeat: no-repeat;
+    /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
+    transform: var(--bg-xform, none); transform-origin: 50% 50%;
   }
   .desktop-hero.has-custom-bg::after { display: none; }
   .desktop-hero > * { position: relative; z-index: 1; }
@@ -985,6 +987,8 @@
     position: absolute; inset: 0; z-index: 0;
     background-image: var(--bgm, none), linear-gradient(rgba(60,30,45,0.28), rgba(60,30,45,0.28)), var(--bg-img);
     background-size: var(--bg-size, cover); background-position: var(--bg-pos, center); background-repeat: no-repeat;
+    /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
+    transform: var(--bg-xform, none); transform-origin: 50% 50%;
   }
   .accounts-wrap.has-custom-bg > * { position: relative; z-index: 1; }
   .accounts-wrap.has-custom-bg .ac-title,
@@ -1010,6 +1014,8 @@
     border-radius: 10px;
     background-image: var(--bgm, none), linear-gradient(rgba(255,238,244,0.30), rgba(255,238,244,0.30)), var(--bg-img);
     background-size: var(--bg-size, cover); background-position: var(--bg-pos, center); background-repeat: no-repeat;
+    /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
+    transform: var(--bg-xform, none); transform-origin: 50% 50%;
   }
   #home-weather.has-custom-bg > *,
   #home-fortune.has-custom-bg > * { position: relative; z-index: 1; }
@@ -1028,6 +1034,8 @@
     position: absolute; inset: 0; z-index: 0;
     background-image: var(--bgm, none), linear-gradient(rgba(255,238,244,0.08), rgba(255,238,244,0.08)), var(--bg-img);
     background-size: var(--bg-size, cover); background-position: var(--bg-pos, center); background-repeat: no-repeat;
+    /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
+    transform: var(--bg-xform, none); transform-origin: 50% 50%;
   }
   .panel.has-custom-bg > *,
   #sidebar.has-custom-bg > *,
@@ -1044,12 +1052,13 @@
   #panel-desktop { background: linear-gradient(160deg, #fff3f8 0%, #ffe9f2 100%); }
   .main { background: linear-gradient(160deg, #fff3f8 0%, #ffe9f2 100%); }
 
-  /* 弱化背景：仅仅模糊那张背景图片（::before 图层），文字与其他内容保持清晰 */
-  .has-custom-bg.weakened::before {
-    filter: blur(6px);
-    opacity: 0.85;
-    transition: filter .3s, opacity .3s;
-  }
+  /* v245：已移除「弱化背景（模糊）」功能——所有背景图外观统一由设置面板的镜像调整，不再有模糊开关 */
+  /* v245：镜像/旋转会让背景图层放大，容器裁掉溢出部分，避免盖到相邻板块 */
+  .desktop-hero.has-custom-bg,
+  #home-weather.has-custom-bg,
+  #home-fortune.has-custom-bg,
+  #desktop-accounts-wrap.has-custom-bg,
+  #home-weight-cal.has-custom-bg { overflow: hidden; }
 
   /* 自定义背景设置按钮（右上角，低调不抢视觉） */
   .bg-set-btn {
@@ -3310,7 +3319,15 @@
     padding: 6px;
     transition: all .2s;
   }
-  .mirror-tag { pointer-events: none; line-height: 1.3; }
+  .mirror-tag { pointer-events: none; line-height: 1.3; position: relative; z-index: 1; }
+  /* v245：镜像块的图片层——独立一层，方便做翻转/旋转（不连文字一起转） */
+  .mirror-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-repeat: no-repeat; background-position: center; background-size: cover;
+    transform-origin: 50% 50%;
+    border-radius: inherit;
+    pointer-events: none;
+  }
   /* 各区域尺寸：与实际背景图对应区域的宽高比【完全一致】（等比缩小，非 1:1）。
      v240：比例不再写死，由 JS（syncMirrorRatios）实测真实区域宽高后写入 --mirror-ar-*，
      这样镜像里的构图/占比与主人当前窗口下的真实效果一模一样（背景图 cover 裁切也一致）。
@@ -3363,7 +3380,6 @@
   .mirror-block.has-bg { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
   .mirror-block.has-bg.dragging { cursor: grabbing; transform: none !important; }
   .mirror-block.dragging::after { opacity: 0 !important; }
-  .mirror-block.ctl-open { overflow: visible; z-index: 20; }
   /* ⚙ 更多调整（仅已上传背景图时出现在右下角，浮在图上、不占版面） */
   .mirror-cog {
     position: absolute; right: 6px; bottom: 6px; z-index: 8;
@@ -3375,20 +3391,21 @@
   }
   .mirror-block.has-bg .mirror-cog { display: flex; }
   .mirror-cog:hover { background: var(--c-pink-deep); }
-  /* 浮层调节面板：绝对定位叠在板块上，完全不占文档流高度 */
+  /* 浮层调节面板：fixed 定位（由 JS 贴着板块摆放），既完全不占版面，也不受板块裁切影响 */
   .mirror-ctl {
-    position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 9;
+    position: fixed; left: 0; top: 0; z-index: 9999;
     display: none; flex-direction: column; gap: 5px;
-    padding: 7px 8px; border-radius: 12px;
-    background: rgba(255,255,255,0.96);
+    width: 238px; max-width: calc(100vw - 16px);
+    padding: 8px 9px; border-radius: 12px;
+    background: rgba(255,255,255,0.97);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
     border: 1px solid #ffd0e0;
-    box-shadow: 0 8px 22px rgba(209,75,115,.22);
+    box-shadow: 0 10px 26px rgba(209,75,115,.25);
     text-align: left;
   }
   .mirror-block.ctl-open .mirror-ctl { display: flex; }
   .mirror-block.ctl-open .mirror-cog { display: none; }
-  .mirror-ctl-row, .mirror-geom-row { display: flex; align-items: center; gap: 6px; }
+  .mirror-ctl-row, .mirror-geom-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .mirror-ctl-label { font-size: 10px; font-weight: 700; color: #8a6270; white-space: nowrap; }
   .mirror-ctl input[type="range"] {
     flex: 1 1 auto; min-width: 50px; height: 14px;
@@ -3444,40 +3461,6 @@
     border-color: transparent;
     box-shadow: 0 2px 8px rgba(209,75,115,0.3);
   }
-
-  /* ===== 弱化背景：每个镜像板块单独的小开关 ===== */
-  .mirror-block.has-weak {
-    box-shadow: inset 0 0 0 2px #ffb3c6;
-  }
-  .mirror-weak {
-    position: absolute;
-    top: 5px; right: 5px;
-    width: 30px; height: 17px;
-    z-index: 5;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-  }
-  .mirror-weak input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .mirror-weak-slider {
-    position: relative;
-    width: 30px; height: 17px;
-    background: #f3c8d3;
-    border-radius: 17px;
-    transition: background .2s;
-  }
-  .mirror-weak-slider::before {
-    content: '';
-    position: absolute;
-    height: 13px; width: 13px;
-    left: 2px; top: 2px;
-    background: #fff;
-    border-radius: 50%;
-    transition: transform .2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,.2);
-  }
-  .mirror-weak input:checked + .mirror-weak-slider { background: linear-gradient(135deg,var(--c-pink),var(--c-pink-deep)); }
-  .mirror-weak input:checked + .mirror-weak-slider::before { transform: translateX(13px); }
 
   /* ===== 每个镜像板块的左下角"删除背景"按钮（仅已设置时显示） ===== */
   .mirror-del {
@@ -6623,7 +6606,7 @@
   <div id="panel-settings" class="panel">
 
     <div class="tip-box">
-      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；<b>上传后按住图片直接拖动</b>即可调整位置（滚轮 / 双指捏合可放大取景），点板块右下角 <b>⚙</b> 可调<b>不透明度</b>与<b>遮盖方向</b>（均匀 / 上→下 / 下→上，越浓的地方图越淡），效果即时预览并同步到真实版面；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
+      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；<b>上传后按住图片直接拖动</b>即可调整位置（滚轮 / 双指捏合可放大取景），点板块右下角 <b>⚙</b> 可调<b>不透明度</b>、<b>水平镜像</b>、<b>旋转</b>与<b>遮盖方向</b>（均匀 / 上→下 / 下→上，越浓的地方图越淡），效果即时预览并同步到真实版面；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
     </div>
 
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
@@ -7806,9 +7789,7 @@ function applyBg(key, dataUrl) {
   if (!el) return;
   el.style.setProperty('--bg-img', 'url("' + dataUrl + '")');
   el.classList.add('has-custom-bg');
-  let weak = false;
-  try { weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
-  el.classList.toggle('weakened', weak);
+  el.classList.remove('weakened');   // v245：模糊（弱化）功能已移除，历史设置一律清掉
 }
 
 // 启动时一次性应用所有已缓存/已内嵌的背景图；避免逐个区域等待或漏加载。
@@ -9832,7 +9813,10 @@ function syncMirrorRatios() {
   var t = null;
   window.addEventListener('resize', function () {
     clearTimeout(t);
-    t = setTimeout(syncMirrorRatios, 250);
+    t = setTimeout(function () {
+      try { syncMirrorRatios(); } catch (e) {}
+      try { applyAllBgMasks(); } catch (e) {}   // v245：窗口尺寸变了，旋转的放大倍数要重算
+    }, 250);
   });
 })();
 
@@ -9849,7 +9833,7 @@ var HAMI_BG_MASK_RGB = {
 };
 var HAMI_BG_MASK_KEY = 'hami_bgm_';
 function hamiBgMaskGet(key) {
-  var d = { vis: 100, mode: 'even', px: 50, py: 50, zoom: 100 };
+  var d = { vis: 100, mode: 'even', px: 50, py: 50, zoom: 100, flip: 0, rot: 0 };
   try {
     var o = JSON.parse(localStorage.getItem(HAMI_BG_MASK_KEY + key) || 'null');
     if (o) {
@@ -9858,6 +9842,8 @@ function hamiBgMaskGet(key) {
       if (typeof o.px === 'number' && isFinite(o.px)) d.px = Math.max(0, Math.min(100, Math.round(o.px)));
       if (typeof o.py === 'number' && isFinite(o.py)) d.py = Math.max(0, Math.min(100, Math.round(o.py)));
       if (typeof o.zoom === 'number' && isFinite(o.zoom)) d.zoom = Math.max(100, Math.min(250, Math.round(o.zoom)));
+      d.flip = o.flip ? 1 : 0;
+      if (typeof o.rot === 'number' && isFinite(o.rot)) d.rot = Math.max(-180, Math.min(180, Math.round(o.rot)));
     }
   } catch (e) {}
   return d;
@@ -9865,7 +9851,29 @@ function hamiBgMaskGet(key) {
 // v243：图片几何 —— 位置(左右/上下) + 放大。zoom=100 时仍用 cover（与原外观完全一致，不留白）
 function hamiBgGeomPos(cfg) { return cfg.px + '% ' + cfg.py + '%'; }
 function hamiBgGeomSize(cfg) { return (cfg.zoom && cfg.zoom > 100) ? (cfg.zoom + '%') : 'cover'; }
-function hamiBgResetGeom(cfg) { cfg.px = 50; cfg.py = 50; cfg.zoom = 100; }
+function hamiBgResetGeom(cfg) { cfg.px = 50; cfg.py = 50; cfg.zoom = 100; cfg.flip = 0; cfg.rot = 0; }
+// v245：镜像(水平翻转) + 旋转。旋转时按容器宽高算最小放大倍数，保证四角不留空。
+function hamiBgXform(cfg, W, H) {
+  var flip = cfg.flip ? -1 : 1;
+  var rot = (typeof cfg.rot === 'number' && isFinite(cfg.rot)) ? cfg.rot : 0;
+  if (flip === 1 && Math.abs(rot) < 0.5) return 'none';
+  var rad = Math.abs(rot) * Math.PI / 180;
+  var c = Math.abs(Math.cos(rad)), s = Math.abs(Math.sin(rad));
+  var sc = 1;
+  if (rot !== 0) {
+    if (W > 0 && H > 0) sc = Math.max((W * c + H * s) / W, (W * s + H * c) / H);
+    else sc = c + s;                 // 容器暂不可见（量不到尺寸）→ 用保守值，切到该面板时会重算
+  }
+  if (!isFinite(sc) || sc < 1) sc = 1;
+  // 先水平翻转 → 再旋转 → 最后统一放大填满
+  return 'scale(' + sc.toFixed(4) + ') rotate(' + rot + 'deg) scaleX(' + flip + ')';
+}
+// 取镜像块的图片层（没有就建一个）
+function mirrorBgLayer(block) {
+  var l = block.querySelector('.mirror-bg');
+  if (!l) { l = document.createElement('div'); l.className = 'mirror-bg'; block.insertBefore(l, block.firstChild); }
+  return l;
+}
 function hamiBgMaskSet(key, cfg) {
   try { localStorage.setItem(HAMI_BG_MASK_KEY + key, JSON.stringify(cfg)); } catch (e) {}
 }
@@ -9891,15 +9899,20 @@ function applyBgMask(key, cfg) {
       else el.style.setProperty('--bgm', g);
       el.style.setProperty('--bg-pos', _pos);
       el.style.setProperty('--bg-size', _size);
+      var xf = hamiBgXform(cfg, el.clientWidth || 0, el.clientHeight || 0);   // v245：镜像/旋转
+      if (xf === 'none') el.style.removeProperty('--bg-xform');
+      else el.style.setProperty('--bg-xform', xf);
     } catch (e) {}
   }
   document.querySelectorAll('.mirror-block').forEach(function (b) {
     if (b.getAttribute('data-bgkey') !== key) return;
-    b.style.backgroundPosition = _pos;      // v243：镜像同步显示位置/放大
-    b.style.backgroundSize = _size;
     var img = b.__bgImgUrl;
     if (!img) return;
-    b.style.backgroundImage = (g === 'none' ? '' : g + ', ') + 'url("' + img + '")';
+    var layer = mirrorBgLayer(b);              // v245：图与文字分层，翻转/旋转只作用于图
+    layer.style.backgroundPosition = _pos;
+    layer.style.backgroundSize = _size;
+    layer.style.backgroundImage = (g === 'none' ? '' : g + ', ') + 'url("' + img + '")';
+    layer.style.transform = hamiBgXform(cfg, b.clientWidth || 0, b.clientHeight || 0);
   });
 }
 // v242：把内嵌/云端配置里带的「遮盖」设置拷回本机 localStorage（换设备打开时效果也一致）
@@ -9914,6 +9927,22 @@ function seedBgMasksFromEmbedded() {
 function applyAllBgMasks() {
   seedBgMasksFromEmbedded();
   Object.keys(HAMI_BG_MASK_RGB).forEach(function (k) { try { applyBgMask(k); } catch (e) {} });
+}
+
+// v245：把 ⚙ 浮层贴到板块下方（fixed 定位；下方空间不够就翻到上方）
+function positionMirrorCtl(block, ctl) {
+  if (!ctl) return;
+  var r = block.getBoundingClientRect();
+  var w = ctl.offsetWidth || 238;
+  var h = ctl.offsetHeight || 150;
+  var left = Math.min(Math.max(8, r.left), Math.max(8, window.innerWidth - w - 8));
+  var top = r.bottom + 6;
+  if (top + h > window.innerHeight - 8) {
+    var up = r.top - h - 6;
+    top = (up >= 8) ? up : Math.max(8, window.innerHeight - h - 8);
+  }
+  ctl.style.left = Math.round(left) + 'px';
+  ctl.style.top = Math.round(top) + 'px';
 }
 
 // v244：为某板块创建「⚙ 更多调整」浮层（不透明度 / 遮盖方向 / 恢复默认），并挂上「按住拖动」手势
@@ -9935,21 +9964,32 @@ function buildMirrorMaskCtl(key, block) {
     cog.textContent = '⚙';
     cog.addEventListener('click', function (e) {
       e.stopPropagation();
-      block.classList.toggle('ctl-open');
+      var opening = !block.classList.contains('ctl-open');
+      document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
+      if (opening) {
+        block.classList.add('ctl-open');
+        try { positionMirrorCtl(block, ctl); } catch (e0) {}
+      }
       try { playSound('click'); } catch (e2) {}
     });
     block.appendChild(cog);
   }
   var cfg = hamiBgMaskGet(key);
-  function row(field, label, val) {
+  function row(field, label, val, min, max) {
     return '<div class="mirror-ctl-row">' +
       '<span class="mirror-ctl-label">' + label + '</span>' +
-      '<input type="range" min="0" max="100" step="1" value="' + val + '" data-f="' + field + '" aria-label="' + label + '">' +
+      '<input type="range" min="' + min + '" max="' + max + '" step="1" value="' + val + '" data-f="' + field + '" aria-label="' + label + '">' +
       '<span class="mirror-ctl-val" data-v="' + field + '">' + val + '%</span>' +
     '</div>';
   }
   ctl.innerHTML =
-    row('vis', '不透明度', cfg.vis) +
+    row('vis', '不透明度', cfg.vis, 0, 100) +
+    '<div class="mirror-ctl-row">' +
+      '<button type="button" class="mirror-dir-btn mirror-flip-btn' + (cfg.flip ? ' active' : '') + '" title="水平镜像（左右翻转）">⇋ 镜像</button>' +
+      '<span class="mirror-ctl-label">旋转</span>' +
+      '<input type="range" min="-180" max="180" step="1" value="' + cfg.rot + '" data-f="rot" aria-label="旋转">' +
+      '<span class="mirror-ctl-val" data-v="rot">' + cfg.rot + '°</span>' +
+    '</div>' +
     '<div class="mirror-dir">' +
       '<span class="mirror-ctl-label">遮盖</span>' +
       '<button type="button" class="mirror-dir-btn" data-mode="even" title="整块均匀遮盖">均匀</button>' +
@@ -9961,20 +10001,21 @@ function buildMirrorMaskCtl(key, block) {
       '<button type="button" class="mirror-ctl-close" title="收起">✕</button>' +
     '</div>';
   function markActive(mode) {
-    ctl.querySelectorAll('.mirror-dir-btn').forEach(function (b) {
+    ctl.querySelectorAll('.mirror-dir-btn[data-mode]').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-mode') === mode);
     });
   }
   markActive(cfg.mode);
-  // 不透明度滑块：拖动实时改（镜像 + 真实主面板同时生效），松手才落内嵌配置 + 推云端
+  // 滑块：拖动实时改（镜像 + 真实主面板同时生效），松手才落内嵌配置 + 推云端
   ctl.querySelectorAll('input[type="range"]').forEach(function (r) {
     var f = r.getAttribute('data-f');
+    var unit = (f === 'rot') ? '°' : '%';
     var vEl = ctl.querySelector('.mirror-ctl-val[data-v="' + f + '"]');
     r.addEventListener('input', function (e) {
       e.stopPropagation();
       var v = parseInt(r.value, 10); if (isNaN(v)) v = 0;
       cfg[f] = v;
-      if (vEl) vEl.textContent = v + '%';
+      if (vEl) vEl.textContent = v + unit;
       hamiBgMaskSet(key, cfg);
       applyBgMask(key, cfg);
     });
@@ -9984,7 +10025,8 @@ function buildMirrorMaskCtl(key, block) {
       try { afterBgChange(); } catch (e2) {}
     });
   });
-  ctl.querySelectorAll('.mirror-dir-btn').forEach(function (btn) {
+  // 遮盖方向
+  ctl.querySelectorAll('.mirror-dir-btn[data-mode]').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       cfg.mode = btn.getAttribute('data-mode');
@@ -9995,16 +10037,34 @@ function buildMirrorMaskCtl(key, block) {
       try { playSound('click'); } catch (e2) {}
     });
   });
+  // v245：水平镜像（开关式）
+  var flipBtn = ctl.querySelector('.mirror-flip-btn');
+  if (flipBtn) {
+    flipBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      cfg.flip = cfg.flip ? 0 : 1;
+      flipBtn.classList.toggle('active', !!cfg.flip);
+      hamiBgMaskSet(key, cfg);
+      applyBgMask(key, cfg);
+      try { afterBgChange(); } catch (e2) {}
+      try { playSound('click'); } catch (e2) {}
+    });
+  }
   var rst = ctl.querySelector('.mirror-reset-btn');
   if (rst) rst.addEventListener('click', function (e) {
     e.stopPropagation();
-    hamiBgResetGeom(cfg);            // px/py/zoom 回默认
+    hamiBgResetGeom(cfg);            // px/py/zoom/flip/rot 回默认
     cfg.vis = 100; cfg.mode = 'even';
     hamiBgMaskSet(key, cfg);
     var r2 = ctl.querySelector('input[data-f="vis"]');
     var v2 = ctl.querySelector('.mirror-ctl-val[data-v="vis"]');
     if (r2) r2.value = 100;
     if (v2) v2.textContent = '100%';
+    var r3 = ctl.querySelector('input[data-f="rot"]');
+    var v3 = ctl.querySelector('.mirror-ctl-val[data-v="rot"]');
+    if (r3) r3.value = 0;
+    if (v3) v3.textContent = '0°';
+    if (flipBtn) flipBtn.classList.remove('active');
     markActive('even');
     applyBgMask(key, cfg);
     try { afterBgChange(); } catch (e2) {}
@@ -10037,7 +10097,7 @@ function initMirrorDrag(block, key) {
   var ptrs = {}, mode = null, st = null;
   block.addEventListener('pointerdown', function (e) {
     if (!block.classList.contains('has-bg')) return;                     // 无图 → 交给点击上传
-    if (e.target.closest('.mirror-ctl, .mirror-cog, .mirror-weak, .mirror-del')) return;
+    if (e.target.closest('.mirror-ctl, .mirror-cog, .mirror-del')) return;
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ids = Object.keys(ptrs);
     if (ids.length === 1) {
@@ -10119,8 +10179,11 @@ function setMirrorPreview(key, dataUrl) {
   document.querySelectorAll('.mirror-block').forEach(function (b) {
     if (b.getAttribute('data-bgkey') === key) {
       b.__bgImgUrl = dataUrl;                 // v242：记住原图，便于叠加「遮盖」层重新拼 background-image
-      b.style.backgroundSize = 'cover';
-      b.style.backgroundPosition = 'center';
+      b.style.backgroundImage = '';           // v245：图片改由独立的 .mirror-bg 层显示（便于翻转/旋转）
+      var layer = mirrorBgLayer(b);
+      layer.style.backgroundSize = 'cover';
+      layer.style.backgroundPosition = 'center';
+      layer.style.backgroundImage = 'url("' + dataUrl + '")';
       b.classList.add('has-bg');
     }
   });
@@ -10147,6 +10210,13 @@ function clearMirrorPreview(key) {
     if (b.getAttribute('data-bgkey') === key) {
       b.__bgImgUrl = null;
       b.style.backgroundImage = '';
+      var layer = b.querySelector('.mirror-bg');
+      if (layer) {
+        layer.style.backgroundImage = '';
+        layer.style.transform = '';
+        layer.style.backgroundSize = 'cover';
+        layer.style.backgroundPosition = 'center';
+      }
       b.classList.remove('has-bg');
     }
   });
@@ -10200,24 +10270,11 @@ async function initSettingsPanel() {
     }
     // v242：本板块的「遮盖」控制条（不透明度滑块 + 方向按键）
     buildMirrorMaskCtl(key, block);
-    let weak = false; try { weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
-    if (weak) block.classList.add('has-weak');
-    // 每个区域单独的弱化小开关（点击开关不触发上传）
-    const sw = document.createElement('label');
-    sw.className = 'mirror-weak';
-    sw.title = '弱化此区域背景（模糊）';
-    sw.innerHTML = '<input type="checkbox"' + (weak ? ' checked' : '') + '><span class="mirror-weak-slider"></span>';
-    sw.addEventListener('click', e => e.stopPropagation());
-    sw.querySelector('input').addEventListener('change', e => {
-      e.stopPropagation();
-      const on = e.target.checked;
-      try { localStorage.setItem('hami_weak_' + key, on ? '1' : '0'); } catch (err) {}
-      const el = document.querySelector(BG_ELS[key]);
-      if (el) el.classList.toggle('weakened', on);
-      block.classList.toggle('has-weak', on);
-      afterBgChange(statusEl);
-    });
-    block.appendChild(sw);
+    // v245：已移除「弱化（模糊）」小开关——背景图外观统一由本板块的 ⚙ 浮层调整
+    try { localStorage.removeItem('hami_weak_' + key); } catch (e) {}
+    block.classList.remove('has-weak');
+    const el0 = document.querySelector(BG_ELS[key]);
+    if (el0) el0.classList.remove('weakened');
     // 每个区域单独的"删除背景"按钮（左下角，仅已设置时显示，点击删除已上传图片）
     const delBtn = document.createElement('button');
     delBtn.className = 'mirror-del';
@@ -10246,6 +10303,13 @@ async function initSettingsPanel() {
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (t && t.closest && (t.closest('.mirror-ctl') || t.closest('.mirror-cog'))) return;
+    document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
+  });
+  // v245：浮层用 fixed 定位，页面滚动/窗口变化时收起（避免飘在错位置）
+  window.addEventListener('scroll', function () {
+    document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
+  }, true);
+  window.addEventListener('resize', function () {
     document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
   });
   if (fileInput) {
@@ -13245,6 +13309,8 @@ function switchPanel(name, navEl) {
     if (name === 'settings') {
       try { syncMirrorRatios(); } catch (e) {}
     }
+    // v245：面板切换后元素才真正有尺寸——重新应用一次背景几何（旋转的放大倍数需要按实际宽高算）
+    try { applyAllBgMasks(); } catch (e) {}
     // v230：进入「数据备份」面板时刷新 内容清单 / 备份位置 / 上次备份时间
     if (name === 'data-backup') {
       try { renderBackupManifest(); } catch (e) {}
