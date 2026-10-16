@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-263">
+<meta name="hami-build" content="2026-10-16-264">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5009,7 +5009,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
   <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
   <!-- v247：同步状态 + 版本号，上下并排，放在「记一下」右侧；「记一下 / 语音」因此整体左移 -->
   <div class="cmd-meta" id="cmd-meta">
-    <span class="sync-status" id="sync-status"><span class="dot"></span><span id="sync-status-text">数据同步中…</span></span>
+    <span class="sync-status" id="sync-status"><span class="dot"></span><span id="sync-status-text">同步中…</span></span>
     <span class="hami-version-tag" id="hami-version-tag" title="当前网页版本号，主人核对用">加载中…</span>
   </div>
 </div>
@@ -7892,8 +7892,8 @@ async function bgUploadAllToCloud(silent) {
         bgMarkRev(at);
         _bgLastUploadAt = Date.now();
         if (!silent) setSt('✅ 已上传 ' + keys.length + ' 张背景图 + ' + Object.keys(masks).length + ' 项遮盖（共 ' + Math.round(total / 1024) + ' KB）。其它设备打开工作台后会自动同步过去。');
-        // v262：顶部小标也要点名"背景图同步成功"，并弹一条浮层说清传了几张
-        if (!silent) { syncSay('背景图', true, Date.now()); showCloudToast('✅ 已同步：背景图 ' + keys.length + ' 张 + 遮盖 ' + Object.keys(masks).length + ' 项', 'ok'); }
+        // v264：小标不再点名；弹出的浮层说清传了几张
+        if (!silent) showCloudToast('✅ 已同步：背景图 ' + keys.length + ' 张 + 遮盖 ' + Object.keys(masks).length + ' 项', 'ok');
         // 顺带把「背景版本号」推进主档案，让手机端一开页就知道有新背景
         try { if (hamiSyncReady) commitToCloud(); } catch (e) {}
         return;
@@ -7902,10 +7902,10 @@ async function bgUploadAllToCloud(silent) {
         await new Promise(r => setTimeout(r, 800));
       }
     }
-    if (!silent) { setSt('❌ 上传失败：' + ((lastErr && lastErr.message) || '未知错误') + '（已自动重试 3 次，可再点一次重试）'); syncSay('背景图', false); }
+    if (!silent) setSt('❌ 上传失败：' + ((lastErr && lastErr.message) || '未知错误') + '（已自动重试 3 次，可再点一次重试）');
     throw lastErr || new Error('上传失败');
   } catch (e) {
-    if (!silent) { setSt('❌ 上传失败：' + ((e && e.message) || String(e))); syncSay('背景图', false); }
+    if (!silent) setSt('❌ 上传失败：' + ((e && e.message) || String(e)));
     if (silent) throw e;
   } finally {
     _bgUploadInFlight = false;
@@ -7963,10 +7963,10 @@ async function bgDownloadFromCloud(silent) {
         setTimeout(function () { try { bgUploadAllToCloud(true); } catch (e) {} }, 3000);
       }
     } catch (e) {}
-    if (!silent) { setSt('✅ 已从云端拉回 ' + done + ' 张背景图 + ' + mApplied + ' 项遮盖设置' + (remote.updatedAt ? '（云端时间 ' + new Date(remote.updatedAt).toLocaleString('zh-CN') + '）' : '') + '。'); syncSay('背景图', true, Date.now()); showCloudToast('✅ 已同步：背景图（云端拉回 ' + done + ' 张 + 遮盖 ' + mApplied + ' 项）', 'ok'); }
+    if (!silent) { setSt('✅ 已从云端拉回 ' + done + ' 张背景图 + ' + mApplied + ' 项遮盖设置' + (remote.updatedAt ? '（云端时间 ' + new Date(remote.updatedAt).toLocaleString('zh-CN') + '）' : '') + '。'); showCloudToast('✅ 已同步：背景图（云端拉回 ' + done + ' 张 + 遮盖 ' + mApplied + ' 项）', 'ok'); }
     return true;
   } catch (e) {
-    if (!silent) { setSt('❌ 拉取失败：' + ((e && e.message) || String(e))); syncSay('背景图（拉取）', false); }
+    if (!silent) setSt('❌ 拉取失败：' + ((e && e.message) || String(e)));
     return false;
   } finally {
     _bgDownloadInFlight = false;   // v253：释放"在途"标记，允许后续版本变化时再下载
@@ -9209,22 +9209,19 @@ function _persistLastSync() {
   try { if (_lastSyncAt) localStorage.setItem('hami_last_sync', String(_lastSyncAt)); } catch (e) {}
 }
 function _initSyncBadge() {
-  if (_lastSyncAt) syncBadgeShow('数据已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
-  else syncBadgeShow('数据未同步', false);
+  if (_lastSyncAt) syncBadgeShow('上次同步 · ' + _fmtSyncTime(_lastSyncAt), false);
+  else syncBadgeShow('未同步', false);
 }
 // 本地数据改动后刷新顶部「同步状态」小标（与业务面板 renderXxx 并列，专管同步 UI）
-// v262：主人操作了什么就说什么——刚改过内容时显示「体重 同步中…」，
-//       推送完成后 syncSay 会把它改成「体重 已同步 · 21:12」或「体重 同步失败」。
+// v264：小标恢复成 v262 之前的简洁文案（已同步 · 时间 / 未同步）；「具体同步了什么」只在弹出的浮层里说
 function rerenderSynced() {
   try {
     if (typeof syncBadgeShow !== 'function') return;
-    var name = (typeof _syncActName === 'function') ? _syncActName() : '';
-    if (name) syncBadgeShow(name + ' 同步中…', false);
-    else syncBadgeShow(_lastSyncAt ? ('数据已同步 · ' + _fmtSyncTime(_lastSyncAt)) : '数据未同步', false);
+    syncBadgeShow(_lastSyncAt ? ('已同步 · ' + _fmtSyncTime(_lastSyncAt)) : '未同步', false);
   } catch (e) {}
 }
 // v262：同步状态小标/浮层的统一出口——一律点名「具体同步了什么 / 什么没同步」
-// act：具体对象名（如 '体重'、'背景图'、'数据'）；ok：成功/失败；ts：成功时带上同步时刻
+// v264：小标不再点名（已恢复旧文案），本函数保留但只被浮层路径间接使用
 function syncSay(act, ok, ts) {
   try {
     var name = act ? String(act).slice(0, 16) : '';
@@ -9332,7 +9329,7 @@ async function pullAndMerge() {
     try { if (hamiSyncReady && _remoteBgMeta && _remoteBgMeta.at > bgLocalRev()) bgDownloadFromCloud(true); } catch (e) {}
     _lastSyncAt = Date.now(); _persistLastSync();
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
-    syncBadgeShow('云端数据已收下 · ' + _fmtSyncTime(_lastSyncAt), false);
+    syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
     return got.sha || null;
   } else {
     // 云端加密与本地密码都不匹配：不致命，保留本机数据，交给 pushNow 用默认密码上传覆盖，
@@ -9371,9 +9368,9 @@ async function pushNow() {
         _lastSyncAt = Date.now(); _persistLastSync();
         cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
         // v227：成功只说"同步了什么内容"；没有具体操作的后台自动同步就不打扰主人
-        // v262：小标必须点名——「体重 已同步 · 21:12」，没有具体操作时说明是「数据」整体同步
+        // v264：小标恢复旧文案；「同步了什么」只由弹出的浮层（showCloudToast）点名
         const _okName = (typeof _syncActName === 'function') ? _syncActName() : '';
-        syncSay(_okName, true, _lastSyncAt);
+        syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
         if (_okName) showCloudToast('✅ 已同步：' + _okName, 'ok');
         return;
       } catch (e) {
@@ -9392,8 +9389,9 @@ async function pushNow() {
     _diagStep('pushNow 推送失败', false, (e && e.message) ? e.message : String(e));
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
-    // v262：失败必须点名——「体重 同步失败」，没有具体操作时说「数据 同步失败」
-    try { syncSay((typeof _syncActName === 'function') ? _syncActName() : '', false); } catch (e2) { syncBadgeShow('数据 同步失败', true); }
+    // v264：小标恢复旧文案「同步失败」；弹出的浮层点名具体什么没同步成功（体重/背景图/数据…）
+    syncBadgeShow('同步失败', true);
+    try { showCloudToast('❌ 同步失败：' + (((typeof _syncActName === 'function') && _syncActName()) || '数据'), 'fail'); } catch (e2) {}
     // 失败提示统一交给 commitToCloud 的「还没同步到云端」横幅（已移到工作台正中间），此处不再弹第二条，避免重复
     throw e;   // 失败必须向上抛出，否则上层误以为"推送完成"
   } finally { _syncBusy = false; }
@@ -9563,10 +9561,9 @@ async function hamiCloudPurgeConfirm() {
     }
     await _ghPut(ct, sha, 'hami purge old cloud ' + new Date().toISOString());
     if (out) out.innerHTML = '<div style="font-size:12.5px;color:#5aa86a;line-height:1.8;">✅ 云端旧档案已用最小占位文件覆盖。现在点「🔄 立即同步到云端」即可用本机数据重建。</div>';
-    try { cloudStatus('☁️ 已清空旧云端档案，准备重建', '#c75b86'); syncBadgeShow('云端旧档案已清空', false); } catch (e) {}
+    try { cloudStatus('☁️ 已清空旧云端档案，准备重建', '#c75b86'); } catch (e) {}
   } catch (e) {
     if (out) out.innerHTML = '<div style="font-size:12.5px;color:#c25f5f;line-height:1.8;">❌ 清空失败：' + ((e && e.message) || String(e)) + '<br><br>小助理可以帮主人用 GitHub 工具直接删除，要的话告诉小助理。</div>';
-    try { syncSay('云端旧档案清理', false); } catch (e2) {}
   }
 }
 
@@ -9698,7 +9695,7 @@ async function hamiSyncSelfCheck() {
 // 强制立刻重新同步：重新初始化（拉云端 → 合并 → 推回），用于卡住时手动救活
 async function hamiForceResync() {
   try { hamiToast('正在重新同步…'); } catch (e) {}
-  try { markSyncAction('数据'); syncBadgeShow('数据同步中…', false); } catch (e) {}
+  try { markSyncAction('数据'); syncBadgeShow('同步中…', false); } catch (e) {}
   try { await initCloudSync(document.getElementById('settings-cloud-status'), true); } catch (e) {}
   try { await pullAndMerge(); } catch (e) {}
   try { await pushNow(); } catch (e) {}
@@ -9720,8 +9717,8 @@ async function initCloudSync(statusEl, force) {
     try {
       hamiSyncEnabled = true;
       hamiSyncPassword = getSyncPassword();
-      syncBadgeShow('数据同步中…', false);
-      if (!_cryptoReady()) { _diagStep('加密环境检查', false, 'crypto.subtle 不可用，浏览器不支持或非 https'); cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('数据未同步（浏览器不支持加密）', true); return; }
+      syncBadgeShow('同步中…', false);
+      if (!_cryptoReady()) { _diagStep('加密环境检查', false, 'crypto.subtle 不可用，浏览器不支持或非 https'); cloudStatus('⚠️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
       _diagStep('加密环境检查', true, 'crypto.subtle 可用');
       await pullAndMerge();          // 先成功拉取，失败则进入下方 catch 重试
       hamiSyncReady = true;
@@ -9745,7 +9742,7 @@ async function initCloudSync(statusEl, force) {
       console.error('[initCloudSync] 第' + attempt + '次失败', e);
       if (attempt < 3) {
         cloudStatus('☁️ 同步暂未成功，15 秒后自动重试（第 ' + attempt + '/3 次）…', '#c75b86');
-        syncBadgeShow('数据同步重试中…', false);
+        syncBadgeShow('重试中…', false);
         setTimeout(_try, 15000);
       } else {
         hamiSyncReady = true;
@@ -9754,7 +9751,7 @@ async function initCloudSync(statusEl, force) {
         // 即使最终失败，也尝试补传一下背景图（store 可能还是空，但背景图值得保留）
         try { if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); } } catch (e) {}
         cloudStatus('☁️ 同步异常：' + (e.message || e) + '（可点「🔄 立即同步到云端」手动重试）', '#c75b86');
-        syncBadgeShow('数据 同步失败', true);
+        syncBadgeShow('同步失败', true);
       }
     }
   }
@@ -10525,10 +10522,10 @@ async function initSettingsPanel() {
       syncAllBtn.disabled = true;
       const oldText = syncAllBtn.textContent;
       syncAllBtn.textContent = '⏳ 同步中…';
-      // v262：手动整档同步——明确点名「数据同步中 / 数据已同步 / 数据同步失败」
-      try { markSyncAction('数据'); syncBadgeShow('数据同步中…', false); } catch (e) {}
+      // v264：小标恢复旧文案，具体点名交给弹出的浮层
+      try { markSyncAction('数据'); syncBadgeShow('同步中…', false); } catch (e) {}
       try { await pullAndMerge(); await pushNow(); if (statusEl) statusEl.textContent = '✅ 已与云端合并并同步'; }
-      catch (err) { if (statusEl) statusEl.textContent = '❌ 同步失败：' + (err && err.message ? err.message : err); try { syncSay('数据', false); } catch (e) {} }
+      catch (err) { if (statusEl) statusEl.textContent = '❌ 同步失败：' + (err && err.message ? err.message : err); try { syncBadgeShow('同步失败', true); } catch (e) {} }
       finally { syncAllBtn.disabled = false; syncAllBtn.textContent = oldText; }
     });
   }
@@ -10595,9 +10592,9 @@ async function initSettingsPanel() {
     upBtn.addEventListener('click', async () => {
       if (!cloudEnabled()) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 加密环境不可用'; return; }
       testStatus.style.color = '#c75b86'; testStatus.textContent = '⏳ 正在合并并上传…';
-      try { markSyncAction('数据'); syncBadgeShow('数据同步中…', false); } catch (e) {}
+      try { markSyncAction('数据'); syncBadgeShow('同步中…', false); } catch (e) {}
       try { await pullAndMerge(); await pushNow(); testStatus.style.color = '#1a9e4b'; testStatus.textContent = '✅ 已把本机数据合并上传到云端'; }
-      catch (e) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 上传失败：' + ((e && e.message) ? e.message : e); try { syncSay('数据', false); } catch (e2) {} }
+      catch (e) { testStatus.style.color = '#d14b73'; testStatus.textContent = '❌ 上传失败：' + ((e && e.message) ? e.message : e); try { syncBadgeShow('同步失败', true); } catch (e2) {} }
     });
   }
 
