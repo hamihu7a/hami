@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-281">
+<meta name="hami-build" content="2026-10-16-282">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1110,7 +1110,7 @@
   .bg-set-btn:hover { background: rgba(255,255,255,0.55); }
 
   /* ===== 主页右面板：时间与激励语卡片顶部 —— 拖拽 ↔ 与锁定 🔒 上下并排、透明玻璃风、置于时间正上方 ===== */
-  .hero-year-ring { position: relative; width: 96px; height: 96px; flex: 0 0 auto; opacity: 1; margin-bottom: 2px; }
+  .hero-year-ring { position: relative; width: auto; height: auto; flex: 0 0 auto; opacity: 1; margin-bottom: 2px; }
   /* 主面板过窄时防止内容横向溢出 */
   .main { overflow-x: hidden; }
 
@@ -4086,6 +4086,15 @@
   .lp-ring-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .lp-ring-num{ font-size:26px; font-weight:800; color:#5e2750; line-height:1; text-shadow:0 1px 2px rgba(255,255,255,0.65); }
   .lp-ring-lab{ font-size:10px; color:#7a3a6b; margin-top:4px; text-shadow:0 1px 2px rgba(255,255,255,0.6); }
+  /* v282：hero 倒计时三小圆环（46px，百分比居中+标签在下，配色沿用 lpGrad 粉紫渐变） */
+  .hero-mini-rings { display:flex; gap:10px; }
+  .hm-ring { display:flex; flex-direction:column; align-items:center; min-width:0; }
+  .hm-ring-wrap { position:relative; width:46px; height:46px; }
+  .hm-ring-wrap svg { width:100%; height:100%; transform:rotate(-90deg); display:block; }
+  .hm-track { fill:none; stroke:rgba(110,55,100,0.28); stroke-width:7; }
+  .hm-fill { fill:none; stroke-width:7; stroke-linecap:round; stroke-dasharray:163.36; stroke-dashoffset:163.36; transition:stroke-dashoffset .8s ease; }
+  .hm-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#5e2750; text-shadow:0 1px 2px rgba(255,255,255,0.65); }
+  .hm-lab { font-size:10px; color:#7a3a6b; margin-top:2px; white-space:nowrap; text-shadow:0 1px 2px rgba(255,255,255,0.6); }
   /* v246：年度环可点击（原招财猫特效入口）——悬停微放大、按下回缩；点击特效由 JS 抛出 */
   .hero-year-ring { cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .18s ease, filter .18s ease; }
   .hero-year-ring:hover { filter: brightness(1.06); transform: scale(1.04); }
@@ -5226,14 +5235,11 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     
       <!-- 年度倒计时环：今年还剩多少天（半透明玻璃风，置于时间与激励语左上角，替代原拖拽/锁定两键） -->
       <div class="hero-year-ring" id="hero-year-ring">
-        <svg class="lp-ring" viewBox="0 0 120 120" width="96" height="96">
-          <defs><linearGradient id="lpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a83c8e" stop-opacity="0.95"/><stop offset="1" stop-color="#d06bb0" stop-opacity="0.92"/></linearGradient></defs>
-          <circle class="lp-ring-track" cx="60" cy="60" r="52"></circle>
-          <circle class="lp-ring-fill" id="hero-year-ring-fill" cx="60" cy="60" r="52"></circle>
-        </svg>
-        <div class="lp-ring-center">
-          <div class="lp-ring-num" id="hero-year-num">--</div>
-          <div class="lp-ring-lab">今年还剩（天）</div>
+        <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="lpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a83c8e" stop-opacity="0.95"/><stop offset="1" stop-color="#d06bb0" stop-opacity="0.92"/></linearGradient></defs></svg>
+        <div class="hero-mini-rings">
+          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-day" cx="32" cy="32" r="26" style="stroke:url(#lpGrad)"></circle></svg><span class="hm-pct" id="hero-rp-day">--%</span></div><div class="hm-lab">今日剩余</div></div>
+          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-month" cx="32" cy="32" r="26" style="stroke:url(#lpGrad)"></circle></svg><span class="hm-pct" id="hero-rp-month">--%</span></div><div class="hm-lab">本月剩余</div></div>
+          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-year" cx="32" cy="32" r="26" style="stroke:url(#lpGrad)"></circle></svg><span class="hm-pct" id="hero-rp-year">--%</span></div><div class="hm-lab">今年剩余</div></div>
         </div>
       </div>
       <div class="hero-top">
@@ -22812,24 +22818,32 @@ setInterval(updateClock, 1000);
 
 /* ===== 年度倒计时环JS 开始（hero 左上角「今年还剩多少天」半透明环，可整段删除，不影响其它任何功能/排版） ===== */
 (function () {
-  var RING_C = 2 * Math.PI * 52;
+  var RING_C = 163.36;
   function heroYearRender() {
-    var ringFill = document.getElementById('hero-year-ring-fill');
-    var ringNum = document.getElementById('hero-year-num');
-    if (!ringFill || !ringNum) return;
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var isLeap = (today.getFullYear() % 4 === 0 && (today.getFullYear() % 100 !== 0 || today.getFullYear() % 400 === 0));
-    var daysInYear = isLeap ? 366 : 365;
-    var yearEnd = new Date(today.getFullYear(), 11, 31);
-    var daysLeftYear = Math.ceil((yearEnd - today) / 86400000);
-    var p = daysLeftYear / daysInYear;
-    ringFill.style.strokeDasharray = (RING_C * p).toFixed(2) + ' ' + RING_C.toFixed(2);
-    ringNum.textContent = daysLeftYear;
+    var fd = document.getElementById('hero-rf-day');
+    if (!fd) return;
+    var now = new Date();
+    function setRing(key, ratio) {
+      ratio = Math.min(1, Math.max(0, ratio));
+      var el = document.getElementById('hero-rf-' + key);
+      if (el) el.style.strokeDashoffset = (RING_C * (1 - ratio)).toFixed(2);
+      var p = document.getElementById('hero-rp-' + key);
+      if (p) p.textContent = Math.round(ratio * 100) + '%';
+    }
+    var dayLeft = 1 - (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+    setRing('day', dayLeft);
+    var dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    setRing('month', (dim - now.getDate() + dayLeft) / dim);
+    var y0 = new Date(now.getFullYear(), 0, 1), y1 = new Date(now.getFullYear() + 1, 0, 1);
+    var yearLen = Math.round((y1 - y0) / 86400000);
+    var doy = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - y0) / 86400000) + 1;
+    setRing('year', (yearLen - doy + dayLeft) / yearLen);
   }
   function heroYearInit() { try { heroYearRender(); } catch (e) {} }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', heroYearInit);
   else heroYearInit();
   setTimeout(heroYearInit, 700);
+  setInterval(heroYearInit, 30000);
 })();
 /* ===== 年度倒计时环JS 结束 ===== */
 </script>
