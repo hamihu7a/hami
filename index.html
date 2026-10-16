@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-257">
+<meta name="hami-build" content="2026-10-16-258">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1170,7 +1170,7 @@
     margin-bottom: 2px;
     white-space: nowrap;
   }
-  .account-card .ac-follower-change .ac-change-label { color: #7d4a5a; }   /* v256：与日历星期同款深玫瑰 */
+  .account-card .ac-follower-change .ac-change-label { color: #8a6270; }   /* v258：与主页笔记推荐标题同款 */
   .account-card .ac-follower-change .ac-change-value.up { color: #e74c3c; }
   .account-card .ac-follower-change .ac-change-value.down { color: #27ae60; }
   .account-card .ac-follower-change .ac-change-value.same { color: #8a6270; }
@@ -1178,10 +1178,10 @@
     display: flex;
     justify-content: space-between;
     font-size:12px;
-    color: #5a3a48;   /* v256：获赞/本周等明细行改深色 */
+    color: #8a6270;   /* v258：获赞/本周等明细行用主页笔记推荐标题同款色 */
     margin-bottom: 3px;
   }
-  .account-card .ac-detail b { color: #4a3340; }   /* v256：数字更深一档 */
+  .account-card .ac-detail b { color: #8a6270; }   /* v258 */
 
   @media (max-width: 768px) {
     .accounts-grid { display: flex; gap: 6px; min-width: 0; }
@@ -5061,9 +5061,9 @@
 
     <!-- 自媒体账号概览 -->
     <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 10px;border-radius:12px;margin-bottom:var(--space-block);">
-      <div class="ac-title" style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px;position:relative;">
+      <div class="ac-title" style="font-size:16px;font-weight:800;color:#d14b73;text-align:center;margin-bottom:6px;position:relative;">
         <span>自媒体数据</span>
-        <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:#fff;background:rgba(255,255,255,0.22);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;" onclick="promptUpdateAllAccounts()">修改</span>
+        <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:#d14b73;background:rgba(255,255,255,0.55);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;" onclick="promptUpdateAllAccounts()">修改</span>
       </div>
       <div id="desktop-accounts"></div>
     </div>
@@ -19980,10 +19980,10 @@ function renderDesktopAccounts() {
     const link = c.data.link || '';
     html += `<div class="account-card">
       <div style="text-align:center;margin-bottom:4px;">
-        <div style="font-size:13px;font-weight:700;color:#d14b73;line-height:1.3;white-space:nowrap;">${c.nameCn}</div>
+        <div style="font-size:13px;font-weight:700;color:#ff7f9e;line-height:1.3;white-space:nowrap;">${c.nameCn}</div>
         <div style="font-size:11px;color:#7d4a5a;margin-top:1px;white-space:nowrap;">${escTodo(c.data.platform)}</div>
       </div>
-      <div class="ac-followers" style="color:#d14b73;text-align:center;margin:4px 0;">${c.data.followers}<span class="ac-unit"> 粉丝</span></div>
+      <div class="ac-followers" style="color:#ff7f9e;text-align:center;margin:4px 0;">${c.data.followers}<span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
       <div class="ac-detail"><span>获赞</span><b>${c.data.likes}</b></div>
       <div class="ac-detail"><span>本周</span><b>${c.data.weekly}</b></div>
@@ -19993,7 +19993,7 @@ function renderDesktopAccounts() {
   // 最后更新日期：仅数据真正刷新时才更新（精确到 年/月/日 时:分）
   const lu = (store.accountsMeta && store.accountsMeta.lastUpdate) || '';
   const luText = lu ? lu : '尚未更新数据';
-  html += `<div style="text-align:center;font-size:12px;color:#fff;margin-top:4px;opacity:0.95;">最后更新日期：${luText}</div>`;
+  html += `<div style="text-align:center;font-size:12px;color:#d14b73;font-weight:600;margin-top:4px;opacity:0.95;">最后更新日期：${luText}</div>`;
   document.getElementById('desktop-accounts').innerHTML = html;
 }
 
