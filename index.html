@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-235">
+<meta name="hami-build" content="2026-10-16-236">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4847,7 +4847,7 @@
     </button>
     <button class="nav-item" type="button" onclick="switchPanel('benchmark', this)">
       <span class="nav-icon">📅</span>
-      <span class="nav-text">未来更新<br>图文记录</span>
+      <span class="nav-text">待完成<br>图文项目</span>
     </button>
   </div>
 
@@ -6358,11 +6358,11 @@
   <!-- ==================== 未来更新图文记录 ==================== -->
   <div id="panel-benchmark" class="panel">
     <div class="tip-box">
-      💡 <b>未来更新图文记录</b>：把接下来要发的小红书/抖音图文提前存好，包括<b>标题、文案、标签、更新日期</b>。准备连更时，用「批量连更」一次导入 7 条，到点直接复制发布。
+      💡 <b>待完成图文项目</b>：把接下来要发的小红书/抖音图文提前存好，包括<b>标题、文案、标签、更新日期</b>。准备连更时，用「批量连更」一次导入 7 条，到点直接复制发布。
     </div>
 
     <div class="fin-topbar" style="flex-wrap:nowrap;gap:10px;">
-      <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);line-height:1.25;text-align:center;">📅 未来更新<br>图文记录</div>
+      <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);line-height:1.25;text-align:center;">📅 待完成<br>图文项目</div>
       <div class="future-post-top-actions" style="display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end;">
         <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostModal()">➕ 添加</button>
         <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostBatch()">📥 批量</button>
@@ -7199,7 +7199,7 @@ function hamiBackupManifest() {
     ['定制单', cnt('customOrders')],
     ['美化档记录', cnt('beautyRecords')],
     ['自媒体图文明细', cnt('mediaRecords')],
-    ['未来更新图文', cnt('futurePosts')],
+    ['待完成图文项目', cnt('futurePosts')],
     ['选题库', cnt('topicLibrary')],
     ['爆款对标库', cnt('benchmarkNotes')],
     ['灵感库', cnt('inspireRecords')],
@@ -8951,7 +8951,7 @@ var _SYNC_LIST_NAME = {
   toiletRecords: '上厕所', maskRecords: '面膜', exerciseRecords: '运动', exerciseItems: '运动项目',
   accountRecords: '记账', customOrders: '定制单', beautyRecords: '美化档', userTodos: '待办',
   inspireRecords: '灵感', topicLibrary: '选题', importantDates: '生日/纪念日',
-  mediaRecords: '自媒体更新', futurePosts: '未来更新图文', travelPlans: '出行计划',
+  mediaRecords: '自媒体更新', futurePosts: '待完成图文', travelPlans: '出行计划',
   trips: '出游记录', publishSchedule: '发布排期', benchmarkNotes: '对标笔记'
 };
 function markSyncAction(label) {
@@ -14567,7 +14567,7 @@ function addLinkedMediaRecord(p, silent, overrideDate) {
     douyin: isDy,
     link: '',
     likes: 0, collects: 0, comments: 0,
-    note: '来自未来图文计划：' + (p.tags || '').split(/\s+/).filter(Boolean).slice(0, 3).join(' '),
+    note: '来自待完成图文项目：' + (p.tags || '').split(/\s+/).filter(Boolean).slice(0, 3).join(' '),
     count: 1,
     createdAt: Date.now()
   });
@@ -14907,7 +14907,7 @@ function checkFuturePostTitle(idOrIdx) {
 // 一键检查全部未来图文：弹窗汇总（标题评分 + 文案违禁词）
 function checkAllFuturePostTitles() {
   const list = (store.futurePosts || []).slice();
-  if (!list.length) { hamiToast('还没有未来图文计划哦~'); return; }
+  if (!list.length) { hamiToast('还没有待完成图文项目哦~'); return; }
   let bodyHtml = '<div style="max-height:55vh;overflow:auto;padding-right:4px;">';
   let hasResult = false;
   list.forEach(function(p, idx){
