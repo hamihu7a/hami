@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-259">
+<meta name="hami-build" content="2026-10-16-260">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4812,6 +4812,26 @@
   .body-stat-item { display:flex; justify-content:space-between; align-items:center; padding:0 8px; }
   .body-stat-value { font-size:14px; }
 }
+
+/* ===================== v260：电脑端「版块上下间距」统一 2px（手机端完全不变） =====================
+   作用范围：只对 body.hami-force-desktop 生效——由 JS 按真实视口宽度打标（≥500px 才加，真手机 ≤499 不加），
+   所以手机端一个字节都不受影响。整段可随时删除，删掉即恢复电脑端原有间距。
+   电脑端 panel 是 grid（`gap:18px !important`，首页 row-gap 6px，narrow 14px）——所以真正的上下间距开关是 row-gap；
+   这里把 row-gap 归零，上下间距改由每个版块自身 margin-bottom:2px 提供（避免 row-gap + margin 叠加），
+   列间距（左右）保持原样不动。!important 是为了压过前面已存在的 18px/14px/6px。 */
+body.hami-force-desktop .panel.active { row-gap: 0 !important; }
+body.hami-force-desktop .panel.active#panel-desktop { row-gap: 0 !important; }
+body.hami-force-desktop .panel > * { margin-bottom: 2px !important; }
+body.hami-force-desktop .panel .card,
+body.hami-force-desktop .panel .todo-card,
+body.hami-force-desktop .panel .stats-grid,
+body.hami-force-desktop .panel .checkin-grid,
+body.hami-force-desktop .panel .accounts-wrap,
+body.hami-force-desktop .panel .desktop-hero,
+body.hami-force-desktop .panel #home-weight-cal,
+body.hami-force-desktop .panel #desktop-countdown,
+body.hami-force-desktop .panel #home-weather-fortune,
+body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 2px !important; }
 </style>
 </head>
 <body>
