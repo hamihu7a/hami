@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-243">
+<meta name="hami-build" content="2026-10-16-244">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3355,37 +3355,46 @@
     background: rgba(209, 75, 115, 0.45);
   }
 
-  /* ===== v242：镜像控制条（背景图不透明度滑块 + 遮盖渐变方向按键） ===== */
+  /* ===== v244：镜像板块 —— 按住图片直接拖动（社交媒体头像式），按键收进右下角 ⚙ 浮层 ===== */
+  .mirror-howto {
+    font-size: 11px; color: #a97f8c; line-height: 1.5;
+    margin: 2px 0 7px; font-weight: 600;
+  }
+  .mirror-block.has-bg { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+  .mirror-block.has-bg.dragging { cursor: grabbing; transform: none !important; }
+  .mirror-block.dragging::after { opacity: 0 !important; }
+  .mirror-block.ctl-open { overflow: visible; z-index: 20; }
+  /* ⚙ 更多调整（仅已上传背景图时出现在右下角，浮在图上、不占版面） */
+  .mirror-cog {
+    position: absolute; right: 6px; bottom: 6px; z-index: 8;
+    width: 24px; height: 24px; border-radius: 50%; border: none;
+    background: rgba(209,75,115,0.86); color: #fff;
+    font-size: 13px; line-height: 1; cursor: pointer;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.18); transition: background .15s;
+  }
+  .mirror-block.has-bg .mirror-cog { display: flex; }
+  .mirror-cog:hover { background: var(--c-pink-deep); }
+  /* 浮层调节面板：绝对定位叠在板块上，完全不占文档流高度 */
   .mirror-ctl {
-    display: flex;              /* v243：常显（无图时显示提示，有图时显示控件） */
-    flex-direction: column;
-    gap: 4px;
-    padding: 6px 7px;
-    border-radius: 10px;
-    background: #fff7fa;
-    border: 1px dashed #ffc9da;
+    position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 9;
+    display: none; flex-direction: column; gap: 5px;
+    padding: 7px 8px; border-radius: 12px;
+    background: rgba(255,255,255,0.96);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid #ffd0e0;
+    box-shadow: 0 8px 22px rgba(209,75,115,.22);
+    text-align: left;
   }
-  .mirror-ctl-hint {
-    font-size: 10px; font-weight: 600; color: #b08a97; line-height: 1.45;
-  }
-  .mirror-ctl-body { display: none; flex-direction: column; gap: 5px; }
-  .mirror-ctl.has-bg .mirror-ctl-body { display: flex; }
-  .mirror-ctl.has-bg .mirror-ctl-hint { display: none; }
-  .mirror-geom-row { display: flex; align-items: center; gap: 6px; }
-  .mirror-reset-btn {
-    margin-top: 2px; align-self: flex-start;
-    border: 1px solid #ffd0e0; background: #fff; color: #d14b73;
-    font-size: 10px; font-weight: 700; padding: 3px 8px;
-    border-radius: 8px; cursor: pointer;
-  }
-  .mirror-reset-btn:hover { background: #fff0f5; }
-  .mirror-ctl-row { display: flex; align-items: center; gap: 6px; }
+  .mirror-block.ctl-open .mirror-ctl { display: flex; }
+  .mirror-block.ctl-open .mirror-cog { display: none; }
+  .mirror-ctl-row, .mirror-geom-row { display: flex; align-items: center; gap: 6px; }
   .mirror-ctl-label { font-size: 10px; font-weight: 700; color: #8a6270; white-space: nowrap; }
   .mirror-ctl input[type="range"] {
-    flex: 1 1 auto; min-width: 56px; height: 14px;
+    flex: 1 1 auto; min-width: 50px; height: 14px;
     accent-color: #d14b73; cursor: pointer;
   }
-  .mirror-ctl-val { font-size: 10px; font-weight: 800; color: #d14b73; min-width: 32px; text-align: right; }
+  .mirror-ctl-val { font-size: 10px; font-weight: 800; color: #d14b73; min-width: 30px; text-align: right; }
   .mirror-dir { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
   .mirror-dir-btn {
     border: 1px solid #ffd0e0; background: #fff; color: #d14b73;
@@ -3399,6 +3408,18 @@
     color: #fff; border-color: transparent;
     box-shadow: 0 2px 6px rgba(209,75,115,.28);
   }
+  .mirror-ctl-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .mirror-reset-btn {
+    border: 1px solid #ffd0e0; background: #fff; color: #d14b73;
+    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    border-radius: 8px; cursor: pointer;
+  }
+  .mirror-reset-btn:hover { background: #fff0f5; }
+  .mirror-ctl-close {
+    border: none; background: transparent; color: #b08a97;
+    font-size: 14px; line-height: 1; cursor: pointer; padding: 0 3px;
+  }
+  .mirror-ctl-close:hover { color: var(--c-pink-deep); }
 
   /* ===== 设置工具：声音选择按钮 ===== */
   .sound-pick {
@@ -6602,7 +6623,7 @@
   <div id="panel-settings" class="panel">
 
     <div class="tip-box">
-      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；<b>上传后板块下方会出现控制条</b>——可调背景图<b>不透明度</b>、<b>上下位置</b>、<b>左右位置</b>、<b>图片放大</b>（等于裁剪取景），还能选遮盖方向（均匀 / 上→下 / 下→上，越浓的地方图越淡），效果即时预览并同步到真实版面，点「↺ 重置图片位置」可一键还原；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
+      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；<b>上传后按住图片直接拖动</b>即可调整位置（滚轮 / 双指捏合可放大取景），点板块右下角 <b>⚙</b> 可调<b>不透明度</b>与<b>遮盖方向</b>（均匀 / 上→下 / 下→上，越浓的地方图越淡），效果即时预览并同步到真实版面；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
     </div>
 
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
@@ -6614,6 +6635,7 @@
         </div>
 
         <!-- 镜像：按真实主面板内容区竖向排布（比例≈真实主面板），点击板块改对应主面板内容背景；侧栏与整体大背景不在镜像内 -->
+        <div class="mirror-howto">✋ 按住图片可直接拖动调位置 · 滚轮 / 双指捏合放大 · 右下角 ⚙ 更多调整</div>
         <div class="mirror-root">
           <!-- 镜像主面板（宽，内部区域竖向排布，比例≈真实主面板内容区） -->
           <div class="mirror-main">
@@ -6621,7 +6643,6 @@
               <div class="mirror-block mirror-hero" data-bgkey="hero" title="点击修改时间与激励语区域背景">
                 <span class="mirror-tag">⏰ 时间与激励语区域</span>
               </div>
-              <div class="mirror-ctl" data-bgkey="hero"></div>
             </div>
             <!-- 今日天气 / 今日运势 并排（与真实首页一致，各自独立可改背景） -->
             <div class="mirror-weather-row">
@@ -6629,26 +6650,22 @@
                 <div class="mirror-block mirror-weather" data-bgkey="weather" title="点击修改今日天气区域背景">
                   <span class="mirror-tag">🌤️ 今日天气</span>
                 </div>
-                <div class="mirror-ctl" data-bgkey="weather"></div>
               </div>
               <div class="mirror-item">
                 <div class="mirror-block mirror-fortune" data-bgkey="fortune" title="点击修改今日运势区域背景">
                   <span class="mirror-tag">🌟 今日运势</span>
                 </div>
-                <div class="mirror-ctl" data-bgkey="fortune"></div>
               </div>
             </div>
             <div class="mirror-item">
               <div class="mirror-block mirror-accounts" data-bgkey="accounts" title="点击修改自媒体数据背景">
                 <span class="mirror-tag">自媒体数据</span>
               </div>
-              <div class="mirror-ctl" data-bgkey="accounts"></div>
             </div>
             <div class="mirror-item">
               <div class="mirror-block mirror-weight" data-bgkey="panel-fitness" title="点击修改主页「体重记录日历」背景">
                 <span class="mirror-tag">⚖️ 体重记录日历</span>
               </div>
-              <div class="mirror-ctl" data-bgkey="panel-fitness"></div>
             </div>
           </div>
         </div>
@@ -9899,32 +9916,49 @@ function applyAllBgMasks() {
   Object.keys(HAMI_BG_MASK_RGB).forEach(function (k) { try { applyBgMask(k); } catch (e) {} });
 }
 
-// v242：为某板块生成「遮盖」控制条 —— 不透明度滑块（左右拖动实时预览）+ 三档遮盖方向按键
+// v244：为某板块创建「⚙ 更多调整」浮层（不透明度 / 遮盖方向 / 恢复默认），并挂上「按住拖动」手势
 function buildMirrorMaskCtl(key, block) {
-  var ctl = document.querySelector('.mirror-ctl[data-bgkey="' + key + '"]');
-  if (!ctl) return;
+  if (!block) block = document.querySelector('.mirror-block[data-bgkey="' + key + '"]');
+  if (!block) return;
+  var ctl = block.querySelector('.mirror-ctl');
+  if (!ctl) {
+    ctl = document.createElement('div');
+    ctl.className = 'mirror-ctl';
+    ctl.setAttribute('data-bgkey', key);
+    ctl.addEventListener('click', function (e) { e.stopPropagation(); });
+    block.appendChild(ctl);
+  }
+  if (!block.querySelector('.mirror-cog')) {
+    var cog = document.createElement('button');
+    cog.type = 'button'; cog.className = 'mirror-cog';
+    cog.title = '更多调整（不透明度 / 遮盖方向）';
+    cog.textContent = '⚙';
+    cog.addEventListener('click', function (e) {
+      e.stopPropagation();
+      block.classList.toggle('ctl-open');
+      try { playSound('click'); } catch (e2) {}
+    });
+    block.appendChild(cog);
+  }
   var cfg = hamiBgMaskGet(key);
-  function row(field, label, min, max, val, extra) {
-    return '<div class="' + (extra || 'mirror-ctl-row') + '">' +
+  function row(field, label, val) {
+    return '<div class="mirror-ctl-row">' +
       '<span class="mirror-ctl-label">' + label + '</span>' +
-      '<input type="range" min="' + min + '" max="' + max + '" step="1" value="' + val + '" data-f="' + field + '" aria-label="' + label + '">' +
+      '<input type="range" min="0" max="100" step="1" value="' + val + '" data-f="' + field + '" aria-label="' + label + '">' +
       '<span class="mirror-ctl-val" data-v="' + field + '">' + val + '%</span>' +
     '</div>';
   }
   ctl.innerHTML =
-    '<div class="mirror-ctl-hint">👆 先点击上方板块上传背景图，上传后可在此调节</div>' +
-    '<div class="mirror-ctl-body">' +
-      row('vis', '背景图不透明度', 0, 100, cfg.vis) +
-      row('py', '上下位置', 0, 100, cfg.py, 'mirror-geom-row') +
-      row('px', '左右位置', 0, 100, cfg.px, 'mirror-geom-row') +
-      row('zoom', '图片放大', 100, 250, cfg.zoom, 'mirror-geom-row') +
-      '<div class="mirror-dir">' +
-        '<span class="mirror-ctl-label">遮盖方向</span>' +
-        '<button type="button" class="mirror-dir-btn" data-mode="even" title="整块均匀遮盖">均匀</button>' +
-        '<button type="button" class="mirror-dir-btn" data-mode="down" title="上面透明，越往下遮盖越浓（图越淡）">上→下</button>' +
-        '<button type="button" class="mirror-dir-btn" data-mode="up" title="下面透明，越往上遮盖越浓（图越淡）">下→上</button>' +
-      '</div>' +
-      '<button type="button" class="mirror-reset-btn">↺ 重置图片位置</button>' +
+    row('vis', '不透明度', cfg.vis) +
+    '<div class="mirror-dir">' +
+      '<span class="mirror-ctl-label">遮盖</span>' +
+      '<button type="button" class="mirror-dir-btn" data-mode="even" title="整块均匀遮盖">均匀</button>' +
+      '<button type="button" class="mirror-dir-btn" data-mode="down" title="上面透明，越往下遮盖越浓（图越淡）">上→下</button>' +
+      '<button type="button" class="mirror-dir-btn" data-mode="up" title="下面透明，越往上遮盖越浓（图越淡）">下→上</button>' +
+    '</div>' +
+    '<div class="mirror-ctl-foot">' +
+      '<button type="button" class="mirror-reset-btn">↺ 恢复默认</button>' +
+      '<button type="button" class="mirror-ctl-close" title="收起">✕</button>' +
     '</div>';
   function markActive(mode) {
     ctl.querySelectorAll('.mirror-dir-btn').forEach(function (b) {
@@ -9932,7 +9966,7 @@ function buildMirrorMaskCtl(key, block) {
     });
   }
   markActive(cfg.mode);
-  // 每个滑块：拖动实时改（镜像 + 真实主面板同时生效），松手才落内嵌配置 + 推云端
+  // 不透明度滑块：拖动实时改（镜像 + 真实主面板同时生效），松手才落内嵌配置 + 推云端
   ctl.querySelectorAll('input[type="range"]').forEach(function (r) {
     var f = r.getAttribute('data-f');
     var vEl = ctl.querySelector('.mirror-ctl-val[data-v="' + f + '"]');
@@ -9950,7 +9984,6 @@ function buildMirrorMaskCtl(key, block) {
       try { afterBgChange(); } catch (e2) {}
     });
   });
-  ctl.addEventListener('click', function (e) { e.stopPropagation(); });
   ctl.querySelectorAll('.mirror-dir-btn').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -9965,22 +9998,120 @@ function buildMirrorMaskCtl(key, block) {
   var rst = ctl.querySelector('.mirror-reset-btn');
   if (rst) rst.addEventListener('click', function (e) {
     e.stopPropagation();
-    hamiBgResetGeom(cfg);
+    hamiBgResetGeom(cfg);            // px/py/zoom 回默认
+    cfg.vis = 100; cfg.mode = 'even';
     hamiBgMaskSet(key, cfg);
-    ['px', 'py', 'zoom'].forEach(function (f) {
-      var dv = (f === 'zoom') ? 100 : 50;
-      cfg[f] = dv;
-      var r2 = ctl.querySelector('input[data-f="' + f + '"]');
-      var v2 = ctl.querySelector('.mirror-ctl-val[data-v="' + f + '"]');
-      if (r2) r2.value = dv;
-      if (v2) v2.textContent = dv + '%';
-    });
+    var r2 = ctl.querySelector('input[data-f="vis"]');
+    var v2 = ctl.querySelector('.mirror-ctl-val[data-v="vis"]');
+    if (r2) r2.value = 100;
+    if (v2) v2.textContent = '100%';
+    markActive('even');
     applyBgMask(key, cfg);
     try { afterBgChange(); } catch (e2) {}
     try { playSound('click'); } catch (e2) {}
   });
+  var cls = ctl.querySelector('.mirror-ctl-close');
+  if (cls) cls.addEventListener('click', function (e) {
+    e.stopPropagation();
+    block.classList.remove('ctl-open');
+  });
   syncMirrorCtlVisibility(key);
+  try { initMirrorDrag(block, key); } catch (e) {}
   try { applyBgMask(key, cfg); } catch (e) {}
+}
+
+// v244：把背景图在缩略块里的实际渲染尺寸算出来（拖多少像素 = 图走多少，1:1 跟手）
+function mirrorRendered(block, ar, zoom) {
+  var W = block.clientWidth, H = block.clientHeight;
+  if (!(W > 0) || !(H > 0) || !(ar > 0)) return null;
+  var w, h;
+  if (zoom && zoom > 100) { w = W * zoom / 100; h = w / ar; }
+  else { w = Math.max(W, H * ar); h = w / ar; }
+  if (h < H) { h = H; w = h * ar; }      // 兜底：至少铺满容器
+  return { w: w, h: h, W: W, H: H };
+}
+// v244：按住图片拖动（Pointer Events，鼠标/触摸同一套）；双指捏合或滚轮缩放
+function initMirrorDrag(block, key) {
+  if (block.__dragInit) return;
+  block.__dragInit = true;
+  var ptrs = {}, mode = null, st = null;
+  block.addEventListener('pointerdown', function (e) {
+    if (!block.classList.contains('has-bg')) return;                     // 无图 → 交给点击上传
+    if (e.target.closest('.mirror-ctl, .mirror-cog, .mirror-weak, .mirror-del')) return;
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(ptrs);
+    if (ids.length === 1) {
+      var c0 = hamiBgMaskGet(key);
+      var r = mirrorRendered(block, block.__bgAR || 1.6, c0.zoom);
+      if (!r) { delete ptrs[e.pointerId]; return; }
+      mode = 'drag';
+      st = { sx: e.clientX, sy: e.clientY, px: c0.px, py: c0.py, r: r, moved: false };
+      block.classList.add('dragging');
+      try { block.setPointerCapture(e.pointerId); } catch (er) {}
+    } else if (ids.length === 2) {
+      mode = 'pinch';
+      var p = ids.map(function (i) { return ptrs[i]; });
+      st = {
+        d0: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y),
+        z0: hamiBgMaskGet(key).zoom || 100
+      };
+      block.classList.remove('dragging');
+    }
+  });
+  block.addEventListener('pointermove', function (e) {
+    if (!ptrs[e.pointerId]) return;
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(ptrs);
+    if (mode === 'drag' && ids.length === 1 && st && st.r) {
+      var dx = e.clientX - st.sx, dy = e.clientY - st.sy;
+      if (!st.moved && Math.abs(dx) + Math.abs(dy) < 3) return;          // 小于阈值当点击（上传）
+      st.moved = true;
+      var c = hamiBgMaskGet(key);
+      if (st.r.w > st.r.W + 0.5) c.px = Math.max(0, Math.min(100, st.px - dx / (st.r.w - st.r.W) * 100));
+      if (st.r.h > st.r.H + 0.5) c.py = Math.max(0, Math.min(100, st.py - dy / (st.r.h - st.r.H) * 100));
+      hamiBgMaskSet(key, c);
+      applyBgMask(key, c);
+    } else if (mode === 'pinch' && ids.length === 2 && st) {
+      var p2 = ids.map(function (i) { return ptrs[i]; });
+      var d = Math.hypot(p2[0].x - p2[1].x, p2[0].y - p2[1].y);
+      if (st.d0 > 0 && d > 0) {
+        var z = Math.max(100, Math.min(250, Math.round(st.z0 * (d / st.d0))));
+        var c2 = hamiBgMaskGet(key);
+        if (c2.zoom !== z) { c2.zoom = z; hamiBgMaskSet(key, c2); applyBgMask(key, c2); }
+      }
+    }
+  });
+  function onUp(e) {
+    if (!ptrs[e.pointerId]) return;
+    var moved = (mode === 'drag' && st && st.moved);
+    delete ptrs[e.pointerId];
+    if (Object.keys(ptrs).length === 0) {
+      block.classList.remove('dragging');
+      if (moved) {
+        block.__suppressClick = true;                                    // 拖动结束别触发「上传」
+        setTimeout(function () { block.__suppressClick = false; }, 120);
+        try { afterBgChange(); } catch (er) {}
+      }
+      mode = null; st = null;
+    } else if (mode === 'pinch' && Object.keys(ptrs).length < 2) {
+      mode = null; st = null;
+      try { afterBgChange(); } catch (er) {}
+    }
+  }
+  block.addEventListener('pointerup', onUp);
+  block.addEventListener('pointercancel', onUp);
+  // 桌面：滚轮缩放
+  block.addEventListener('wheel', function (e) {
+    if (!block.classList.contains('has-bg')) return;
+    e.preventDefault(); e.stopPropagation();
+    var c = hamiBgMaskGet(key);
+    var z = Math.max(100, Math.min(250, (c.zoom || 100) + (e.deltaY < 0 ? 10 : -10)));
+    if (z !== c.zoom) {
+      c.zoom = z; hamiBgMaskSet(key, c); applyBgMask(key, c);
+      clearTimeout(block.__wheelT);
+      block.__wheelT = setTimeout(function () { try { afterBgChange(); } catch (er) {} }, 450);
+    }
+  }, { passive: false });
 }
 
 // 镜像板块预览：把已设置的背景图直接显示在该缩略块上，给予即时反馈
@@ -9993,6 +10124,21 @@ function setMirrorPreview(key, dataUrl) {
       b.classList.add('has-bg');
     }
   });
+  // v244：读出图片原始宽高比，供「按住拖动」做 1:1 位移换算（拖 10px 图就走 10px）
+  try {
+    var im = new Image();
+    im.onload = function () {
+      try {
+        var ar = im.naturalWidth / im.naturalHeight;
+        if (isFinite(ar) && ar > 0) {
+          document.querySelectorAll('.mirror-block').forEach(function (b2) {
+            if (b2.getAttribute('data-bgkey') === key) b2.__bgAR = ar;
+          });
+        }
+      } catch (e) {}
+    };
+    im.src = dataUrl;
+  } catch (e) {}
   try { applyBgMask(key); } catch (e) {}     // v242：图与遮盖一起显示
   syncMirrorCtlVisibility(key);
 }
@@ -10006,13 +10152,14 @@ function clearMirrorPreview(key) {
   });
   syncMirrorCtlVisibility(key);
 }
-// v243：控制条常显（无图显示提示，有图显示控件，由 .has-bg class 切换）
+// v244：把「有没有图」同步到板块本身（决定 ⚙ 按钮、拖动手势是否可用）
 function syncMirrorCtlVisibility(key) {
-  var ctl = document.querySelector('.mirror-ctl[data-bgkey="' + key + '"]');
-  if (!ctl) return;
+  var block = document.querySelector('.mirror-block[data-bgkey="' + key + '"]');
+  if (!block) return;
   var has = false;
   try { has = !!BG_CACHE[key]; } catch (e) {}
-  ctl.classList.toggle('has-bg', has);
+  block.classList.toggle('has-bg', has);
+  if (!has) block.classList.remove('ctl-open');
 }
 
 async function initSettingsPanel() {
@@ -10087,12 +10234,19 @@ async function initSettingsPanel() {
       try { playSound('save'); } catch (e2) {}
     });
     block.appendChild(delBtn);
-    // 点击板块主体 → 选图上传
+    // 点击板块主体 → 选图上传（刚拖动过图片则不触发）
     block.addEventListener('click', () => {
+      if (block.__suppressClick) { block.__suppressClick = false; return; }
       _settingsActiveKey = key;
       if (statusEl) statusEl.textContent = '🎯 已选中「' + block.title + '」,请选择图片…';
       if (fileInput) fileInput.click();
     });
+  });
+  // v244：点空白处收起所有「⚙ 更多调整」浮层
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.closest && (t.closest('.mirror-ctl') || t.closest('.mirror-cog'))) return;
+    document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
   });
   if (fileInput) {
     fileInput.addEventListener('change', () => {
