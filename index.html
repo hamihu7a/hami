@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-241">
+<meta name="hami-build" content="2026-10-16-242">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -939,7 +939,8 @@
     content: "";
     position: absolute; inset: 0; z-index: 0;
     /* 竖直蒙版：顶部透明保留照片明显，底部压暗保证白字清晰（文字已对齐到底部） */
-    background-image: linear-gradient(to bottom, rgba(28,14,24,0) 0%, rgba(28,14,24,0.04) 42%, rgba(28,14,24,0.12) 64%, rgba(28,14,24,0.82) 100%), var(--bg-img);
+    /* v242：最前面叠加主人可调的「遮盖」层 --bgm（默认 none = 与原来完全一样，调了才生效） */
+    background-image: var(--bgm, none), linear-gradient(to bottom, rgba(28,14,24,0) 0%, rgba(28,14,24,0.04) 42%, rgba(28,14,24,0.12) 64%, rgba(28,14,24,0.82) 100%), var(--bg-img);
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .desktop-hero.has-custom-bg::after { display: none; }
@@ -982,7 +983,7 @@
   .accounts-wrap.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
-    background-image: linear-gradient(rgba(60,30,45,0.28), rgba(60,30,45,0.28)), var(--bg-img);
+    background-image: var(--bgm, none), linear-gradient(rgba(60,30,45,0.28), rgba(60,30,45,0.28)), var(--bg-img);
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .accounts-wrap.has-custom-bg > * { position: relative; z-index: 1; }
@@ -1007,7 +1008,7 @@
     content: "";
     position: absolute; inset: 0; z-index: 0;
     border-radius: 10px;
-    background-image: linear-gradient(rgba(255,238,244,0.30), rgba(255,238,244,0.30)), var(--bg-img);
+    background-image: var(--bgm, none), linear-gradient(rgba(255,238,244,0.30), rgba(255,238,244,0.30)), var(--bg-img);
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   #home-weather.has-custom-bg > *,
@@ -1025,7 +1026,7 @@
   #home-weight-cal.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
-    background-image: linear-gradient(rgba(255,238,244,0.08), rgba(255,238,244,0.08)), var(--bg-img);
+    background-image: var(--bgm, none), linear-gradient(rgba(255,238,244,0.08), rgba(255,238,244,0.08)), var(--bg-img);
     background-size: cover; background-position: center; background-repeat: no-repeat;
   }
   .panel.has-custom-bg > *,
@@ -3314,12 +3315,15 @@
      v240：比例不再写死，由 JS（syncMirrorRatios）实测真实区域宽高后写入 --mirror-ar-*，
      这样镜像里的构图/占比与主人当前窗口下的真实效果一模一样（背景图 cover 裁切也一致）。
      括号内默认值为 1440 宽窗口的实测兜底值（JS 未跑起来时使用）。 */
-  .mirror-hero     { width: 100%; aspect-ratio: var(--mirror-ar-hero, 1296 / 212); flex: 0 0 auto; }
+  /* v242：每个镜像板块 = 缩略块 + 它自己的效果控制条（控制条仅在该块已有背景图时显示） */
+  .mirror-item { display: flex; flex-direction: column; gap: 5px; width: 100%; min-width: 0; flex: 0 0 auto; }
+  .mirror-hero     { width: 100%; aspect-ratio: var(--mirror-ar-hero, 1296 / 212); }
   .mirror-weather-row { display: flex; gap: 6px; flex: 0 0 auto; }
-  .mirror-weather  { flex: 1 1 0; min-width: 0; aspect-ratio: var(--mirror-ar-weather, 644 / 141); }
-  .mirror-fortune  { flex: 1 1 0; min-width: 0; aspect-ratio: var(--mirror-ar-weather, 644 / 141); }
-  .mirror-accounts { width: 100%; aspect-ratio: var(--mirror-ar-accounts, 1296 / 239); flex: 0 0 auto; }
-  .mirror-weight   { width: 100%; aspect-ratio: var(--mirror-ar-weight, 1296 / 740); flex: 0 0 auto; } /* 主页日历缩略 */
+  .mirror-weather-row > .mirror-item { flex: 1 1 0; width: auto; }
+  .mirror-weather  { width: 100%; aspect-ratio: var(--mirror-ar-weather, 644 / 141); }
+  .mirror-fortune  { width: 100%; aspect-ratio: var(--mirror-ar-weather, 644 / 141); }
+  .mirror-accounts { width: 100%; aspect-ratio: var(--mirror-ar-accounts, 1296 / 239); }
+  .mirror-weight   { width: 100%; aspect-ratio: var(--mirror-ar-weight, 1296 / 740); } /* 主页日历缩略 */
   .mirror-block::after {
     content: "📷 上传";
     position: absolute;
@@ -3349,6 +3353,37 @@
   .mirror-block.has-bg::after {
     content: "✓ 已设置 · 点击更换";
     background: rgba(209, 75, 115, 0.45);
+  }
+
+  /* ===== v242：镜像控制条（背景图不透明度滑块 + 遮盖渐变方向按键） ===== */
+  .mirror-ctl {
+    display: none;              /* 由 JS 在“该板块已有背景图”时改为 flex */
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 7px;
+    border-radius: 10px;
+    background: #fff7fa;
+    border: 1px dashed #ffc9da;
+  }
+  .mirror-ctl-row { display: flex; align-items: center; gap: 6px; }
+  .mirror-ctl-label { font-size: 10px; font-weight: 700; color: #8a6270; white-space: nowrap; }
+  .mirror-ctl input[type="range"] {
+    flex: 1 1 auto; min-width: 56px; height: 14px;
+    accent-color: #d14b73; cursor: pointer;
+  }
+  .mirror-ctl-val { font-size: 10px; font-weight: 800; color: #d14b73; min-width: 32px; text-align: right; }
+  .mirror-dir { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  .mirror-dir-btn {
+    border: 1px solid #ffd0e0; background: #fff; color: #d14b73;
+    font-size: 10px; font-weight: 700; line-height: 1.1;
+    padding: 3px 6px; border-radius: 8px; cursor: pointer;
+    transition: all .15s;
+  }
+  .mirror-dir-btn:hover { background: #fff0f5; }
+  .mirror-dir-btn.active {
+    background: linear-gradient(135deg, var(--c-pink,#ff8aa6), var(--c-pink-deep,#d14b73));
+    color: #fff; border-color: transparent;
+    box-shadow: 0 2px 6px rgba(209,75,115,.28);
   }
 
   /* ===== 设置工具：声音选择按钮 ===== */
@@ -6553,7 +6588,7 @@
   <div id="panel-settings" class="panel">
 
     <div class="tip-box">
-      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
+      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；<b>上传后板块下方会出现控制条</b>——左右拖动可调背景图<b>不透明度</b>，还能选遮盖方向（均匀 / 上→下 / 下→上，越浓的地方图越淡），效果即时预览并同步到真实版面；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
     </div>
 
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
@@ -6568,23 +6603,38 @@
         <div class="mirror-root">
           <!-- 镜像主面板（宽，内部区域竖向排布，比例≈真实主面板内容区） -->
           <div class="mirror-main">
-            <div class="mirror-block mirror-hero" data-bgkey="hero" title="点击修改时间与激励语区域背景">
-              <span class="mirror-tag">⏰ 时间与激励语区域</span>
+            <div class="mirror-item">
+              <div class="mirror-block mirror-hero" data-bgkey="hero" title="点击修改时间与激励语区域背景">
+                <span class="mirror-tag">⏰ 时间与激励语区域</span>
+              </div>
+              <div class="mirror-ctl" data-bgkey="hero"></div>
             </div>
             <!-- 今日天气 / 今日运势 并排（与真实首页一致，各自独立可改背景） -->
             <div class="mirror-weather-row">
-              <div class="mirror-block mirror-weather" data-bgkey="weather" title="点击修改今日天气区域背景">
-                <span class="mirror-tag">🌤️ 今日天气</span>
+              <div class="mirror-item">
+                <div class="mirror-block mirror-weather" data-bgkey="weather" title="点击修改今日天气区域背景">
+                  <span class="mirror-tag">🌤️ 今日天气</span>
+                </div>
+                <div class="mirror-ctl" data-bgkey="weather"></div>
               </div>
-              <div class="mirror-block mirror-fortune" data-bgkey="fortune" title="点击修改今日运势区域背景">
-                <span class="mirror-tag">🌟 今日运势</span>
+              <div class="mirror-item">
+                <div class="mirror-block mirror-fortune" data-bgkey="fortune" title="点击修改今日运势区域背景">
+                  <span class="mirror-tag">🌟 今日运势</span>
+                </div>
+                <div class="mirror-ctl" data-bgkey="fortune"></div>
               </div>
             </div>
-            <div class="mirror-block mirror-accounts" data-bgkey="accounts" title="点击修改自媒体数据背景">
-              <span class="mirror-tag">自媒体数据</span>
+            <div class="mirror-item">
+              <div class="mirror-block mirror-accounts" data-bgkey="accounts" title="点击修改自媒体数据背景">
+                <span class="mirror-tag">自媒体数据</span>
+              </div>
+              <div class="mirror-ctl" data-bgkey="accounts"></div>
             </div>
-            <div class="mirror-block mirror-weight" data-bgkey="panel-fitness" title="点击修改主页「体重记录日历」背景">
-              <span class="mirror-tag">⚖️ 体重记录日历</span>
+            <div class="mirror-item">
+              <div class="mirror-block mirror-weight" data-bgkey="panel-fitness" title="点击修改主页「体重记录日历」背景">
+                <span class="mirror-tag">⚖️ 体重记录日历</span>
+              </div>
+              <div class="mirror-ctl" data-bgkey="panel-fitness"></div>
             </div>
           </div>
         </div>
@@ -7746,6 +7796,8 @@ function applyAllBgs() {
   // v48：主人明确反馈"不要把图片自动铺到首页背景上"。
   // 背景图只应显示在它自己被设置的区域（hero/天气/运势/自媒体/体重日历等），
   // 不自动继承到 panel-desktop（整个首页）。若主人想要首页整体有图，需单独给"首页整体"上传。
+  // v242：背景图加载完后，把主人调过的「遮盖」（不透明度 / 渐变方向）一并应用回去
+  try { applyAllBgMasks(); } catch (e) {}
 }
 
 function clearBg(key) {
@@ -7865,17 +7917,17 @@ async function openBgPicker(key) {
 function loadEmbeddedBgConfig() {
   try {
     const s = document.getElementById('hami-bg-config');
-    if (!s || !s.textContent) return { bgs: {}, weak: {}, del: [] };
+    if (!s || !s.textContent) return { bgs: {}, weak: {}, del: [], mask: {} };
     const cfg = JSON.parse(s.textContent);
-    return { bgs: cfg.bgs || {}, weak: cfg.weak || {}, del: cfg.del || [] };
-  } catch (e) { return { bgs: {}, weak: {}, del: [] }; }
+    return { bgs: cfg.bgs || {}, weak: cfg.weak || {}, del: cfg.del || [], mask: cfg.mask || {} };
+  } catch (e) { return { bgs: {}, weak: {}, del: [], mask: {} }; }
 }
 
 // 汇总配置：以内嵌（已烘焙、跨源携带）为基础，用当前浏览器 localStorage 覆盖/补全；
 // del 列表记录"本会话已删除"，确保跨源重新烘焙不会把删掉的图又带回来。
 function collectBgConfig() {
   const cfg = loadEmbeddedBgConfig();
-  const bgs = cfg.bgs || {}, weak = cfg.weak || {}, del = cfg.del || [];
+  const bgs = cfg.bgs || {}, weak = cfg.weak || {}, del = cfg.del || [], mask = cfg.mask || {};
   const delSet = {}; del.forEach(k => delSet[k] = 1);
   Object.keys(BG_KEYS).forEach(key => {
     try {
@@ -7888,9 +7940,14 @@ function collectBgConfig() {
       if (w === '1') { weak[key] = 1; delete delSet[key]; }
       else if (w === '0') { delete weak[key]; }
     } catch (e) {}
+    // v242：背景图「遮盖」设置（不透明度 / 渐变方向）也随配置走，手机电脑一致
+    try {
+      const m = localStorage.getItem('hami_bgm_' + key);
+      if (m) { try { mask[key] = JSON.parse(m); } catch (e2) {} }
+    } catch (e) {}
   });
   Object.keys(delSet).forEach(k => { delete bgs[k]; delete weak[k]; });
-  return { bgs: bgs, weak: weak, del: Object.keys(delSet) };
+  return { bgs: bgs, weak: weak, del: Object.keys(delSet), mask: mask };
 }
 
 // 把最新配置写回页面内嵌的 <script id="hami-bg-config">（实时，尚未落盘到文件）
@@ -9748,24 +9805,160 @@ function syncMirrorRatios() {
   });
 })();
 
+// ==================== v242：背景图「遮盖」效果（不透明度 + 渐变方向，实时预览） ====================
+// 主人要的三件事：① 左右拖动能调背景图的不透明度；② 按键选择遮盖由上到下渐浓；③ 或由下到上渐浓。
+// 原理：在每个区域原有的蒙版层【前面】插一层 --bgm 渐变（默认 none → 与原来一模一样，只有主人调过才生效）。
+// 不透明度 100% = 无遮盖、图最清晰（与 CSS opacity 语义一致）；0% = 图被完全盖住看不见。
+var HAMI_BG_MASK_RGB = {
+  hero: '28,14,24',
+  weather: '255,238,244',
+  fortune: '255,238,244',
+  accounts: '60,30,45',
+  'panel-fitness': '255,238,244'
+};
+var HAMI_BG_MASK_KEY = 'hami_bgm_';
+function hamiBgMaskGet(key) {
+  var d = { vis: 100, mode: 'even' };
+  try {
+    var o = JSON.parse(localStorage.getItem(HAMI_BG_MASK_KEY + key) || 'null');
+    if (o) {
+      if (typeof o.vis === 'number' && isFinite(o.vis)) d.vis = Math.max(0, Math.min(100, Math.round(o.vis)));
+      if (o.mode === 'even' || o.mode === 'down' || o.mode === 'up') d.mode = o.mode;
+    }
+  } catch (e) {}
+  return d;
+}
+function hamiBgMaskSet(key, cfg) {
+  try { localStorage.setItem(HAMI_BG_MASK_KEY + key, JSON.stringify(cfg)); } catch (e) {}
+}
+// 生成遮盖渐变；vis=100 → 返回 'none'（保证默认外观与改造前完全一致）
+function hamiBgMaskGradient(key, cfg) {
+  var c = HAMI_BG_MASK_RGB[key] || '28,14,24';
+  var a = Math.round((100 - cfg.vis)) / 100;
+  if (a <= 0.004) return 'none';
+  if (cfg.mode === 'down') return 'linear-gradient(to bottom, rgba(' + c + ',0), rgba(' + c + ',' + a + '))';
+  if (cfg.mode === 'up') return 'linear-gradient(to bottom, rgba(' + c + ',' + a + '), rgba(' + c + ',0))';
+  return 'linear-gradient(rgba(' + c + ',' + a + '), rgba(' + c + ',' + a + '))';
+}
+// 应用：① 真实区域（写 --bgm 变量）② 镜像预览块（把同一遮罩叠在图片前，所见即所得）
+function applyBgMask(key, cfg) {
+  cfg = cfg || hamiBgMaskGet(key);
+  var g = hamiBgMaskGradient(key, cfg);
+  var el = null;
+  try { el = document.querySelector(BG_ELS[key]); } catch (e) {}
+  if (el) {
+    try {
+      if (g === 'none') el.style.removeProperty('--bgm');
+      else el.style.setProperty('--bgm', g);
+    } catch (e) {}
+  }
+  document.querySelectorAll('.mirror-block').forEach(function (b) {
+    if (b.getAttribute('data-bgkey') !== key) return;
+    var img = b.__bgImgUrl;
+    if (!img) return;
+    b.style.backgroundImage = (g === 'none' ? '' : g + ', ') + 'url("' + img + '")';
+  });
+}
+// v242：把内嵌/云端配置里带的「遮盖」设置拷回本机 localStorage（换设备打开时效果也一致）
+function seedBgMasksFromEmbedded() {
+  try {
+    var m = (loadEmbeddedBgConfig() || {}).mask || {};
+    Object.keys(m).forEach(function (k) {
+      try { if (!localStorage.getItem(HAMI_BG_MASK_KEY + k)) localStorage.setItem(HAMI_BG_MASK_KEY + k, JSON.stringify(m[k])); } catch (e) {}
+    });
+  } catch (e) {}
+}
+function applyAllBgMasks() {
+  seedBgMasksFromEmbedded();
+  Object.keys(HAMI_BG_MASK_RGB).forEach(function (k) { try { applyBgMask(k); } catch (e) {} });
+}
+
+// v242：为某板块生成「遮盖」控制条 —— 不透明度滑块（左右拖动实时预览）+ 三档遮盖方向按键
+function buildMirrorMaskCtl(key, block) {
+  var ctl = document.querySelector('.mirror-ctl[data-bgkey="' + key + '"]');
+  if (!ctl) return;
+  var cfg = hamiBgMaskGet(key);
+  ctl.innerHTML =
+    '<div class="mirror-ctl-row">' +
+      '<span class="mirror-ctl-label">背景图不透明度</span>' +
+      '<input type="range" min="0" max="100" step="1" value="' + cfg.vis + '" aria-label="背景图不透明度">' +
+      '<span class="mirror-ctl-val">' + cfg.vis + '%</span>' +
+    '</div>' +
+    '<div class="mirror-dir">' +
+      '<span class="mirror-ctl-label">遮盖方向</span>' +
+      '<button type="button" class="mirror-dir-btn" data-mode="even" title="整块均匀遮盖">均匀</button>' +
+      '<button type="button" class="mirror-dir-btn" data-mode="down" title="上面透明，越往下遮盖越浓（图越淡）">上→下</button>' +
+      '<button type="button" class="mirror-dir-btn" data-mode="up" title="下面透明，越往上遮盖越浓（图越淡）">下→上</button>' +
+    '</div>';
+  var range = ctl.querySelector('input[type="range"]');
+  var valEl = ctl.querySelector('.mirror-ctl-val');
+  function markActive(mode) {
+    ctl.querySelectorAll('.mirror-dir-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+    });
+  }
+  markActive(cfg.mode);
+  // 左右拖动 → 实时改不透明度（镜像缩略图与真实主面板同时生效）
+  range.addEventListener('input', function (e) {
+    e.stopPropagation();
+    var v = parseInt(range.value, 10); if (isNaN(v)) v = 0;
+    valEl.textContent = v + '%';
+    cfg.vis = v;
+    hamiBgMaskSet(key, cfg);
+    applyBgMask(key, cfg);
+  });
+  range.addEventListener('click', function (e) { e.stopPropagation(); });
+  // 松手（change）才落内嵌配置 + 防抖推云端，拖动过程不打扰同步
+  range.addEventListener('change', function (e) {
+    e.stopPropagation();
+    try { afterBgChange(); } catch (e2) {}
+  });
+  ctl.addEventListener('click', function (e) { e.stopPropagation(); });
+  ctl.querySelectorAll('.mirror-dir-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      cfg.mode = btn.getAttribute('data-mode');
+      hamiBgMaskSet(key, cfg);
+      markActive(cfg.mode);
+      applyBgMask(key, cfg);
+      try { afterBgChange(); } catch (e2) {}
+      try { playSound('click'); } catch (e2) {}
+    });
+  });
+  syncMirrorCtlVisibility(key);
+  try { applyBgMask(key, cfg); } catch (e) {}
+}
+
 // 镜像板块预览：把已设置的背景图直接显示在该缩略块上，给予即时反馈
 function setMirrorPreview(key, dataUrl) {
   document.querySelectorAll('.mirror-block').forEach(function (b) {
     if (b.getAttribute('data-bgkey') === key) {
-      b.style.backgroundImage = 'url("' + dataUrl + '")';
+      b.__bgImgUrl = dataUrl;                 // v242：记住原图，便于叠加「遮盖」层重新拼 background-image
       b.style.backgroundSize = 'cover';
       b.style.backgroundPosition = 'center';
       b.classList.add('has-bg');
     }
   });
+  try { applyBgMask(key); } catch (e) {}     // v242：图与遮盖一起显示
+  syncMirrorCtlVisibility(key);
 }
 function clearMirrorPreview(key) {
   document.querySelectorAll('.mirror-block').forEach(function (b) {
     if (b.getAttribute('data-bgkey') === key) {
+      b.__bgImgUrl = null;
       b.style.backgroundImage = '';
       b.classList.remove('has-bg');
     }
   });
+  syncMirrorCtlVisibility(key);
+}
+// v242：控制条只在该板块已有背景图时出现
+function syncMirrorCtlVisibility(key) {
+  var ctl = document.querySelector('.mirror-ctl[data-bgkey="' + key + '"]');
+  if (!ctl) return;
+  var has = false;
+  try { has = !!BG_CACHE[key]; } catch (e) {}
+  ctl.style.display = has ? 'flex' : 'none';
 }
 
 async function initSettingsPanel() {
@@ -9801,12 +9994,11 @@ async function initSettingsPanel() {
     let has = false; try { has = !!BG_CACHE[key]; } catch (e) {}
     if (has) {
       block.classList.add('has-bg');
-      // 已设置背景 → 缩略块直接显示图片预览
-      try {
-        const d = BG_CACHE[key];
-        if (d) { block.style.backgroundImage = 'url("' + d + '")'; block.style.backgroundSize = 'cover'; block.style.backgroundPosition = 'center'; }
-      } catch (e) {}
+      // 已设置背景 → 缩略块直接显示图片预览（v242：统一走 setMirrorPreview，顺带叠上遮盖效果）
+      try { setMirrorPreview(key, BG_CACHE[key]); } catch (e) {}
     }
+    // v242：本板块的「遮盖」控制条（不透明度滑块 + 方向按键）
+    buildMirrorMaskCtl(key, block);
     let weak = false; try { weak = localStorage.getItem('hami_weak_' + key) === '1'; } catch (e) {}
     if (weak) block.classList.add('has-weak');
     // 每个区域单独的弱化小开关（点击开关不触发上传）
