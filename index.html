@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-224">
+<meta name="hami-build" content="2026-10-16-225">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3152,6 +3152,19 @@
     cursor: pointer;
     white-space: nowrap;
   }
+  .hami-help-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+  .hami-help-date {
+    font-size: 11px;
+    color: #b98a9c;
+    font-weight: 600;
+    white-space: nowrap;
+  }
   .hami-help-body {
     margin-top: 8px;
     font-size: 12px;
@@ -5907,7 +5920,7 @@
         <button type="button" onclick="saveDepositBalance()" style="border:none;background:#d14b73;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">💾 保存</button>
         <button type="button" onclick="cancelEditDeposit()" style="border:none;background:#f3e3e8;color:#7d4a5a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;">取消</button>
       </div>
-      <p style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">平时它 = "本金 + 所有账单"自动算。点「✏️ 修改」手填后，<b style="color:#d14b73;">就以主人填的数为准，已有账目不会再被叠加一次</b>；等<b style="color:#d14b73;">下一次记新账</b>时，会直接从主人填的这个数上加减（也可立刻点「🔓 恢复联动」）。</p>
+      <div data-hami-help-auto="1" style="font-size:11px;color:#a8788a;margin-top:8px;line-height:1.6;">平时它 = "本金 + 所有账单"自动算。点「✏️ 修改」手填后，<b style="color:#d14b73;">就以主人填的数为准，已有账目不会再被叠加一次</b>；等<b style="color:#d14b73;">下一次记新账</b>时，会直接从主人填的这个数上加减（也可立刻点「🔓 恢复联动」）。</div>
     </div>
 
   </div>
@@ -12613,23 +12626,58 @@ function refreshDisposableDisplay() {
   }
 }
 
+// v225：各版面「使用说明」的最后修改日期登记表（我改哪块说明，就更新这里对应的一条；key = 板块 panel 的 id）
+var HAMI_HELP_MOD_DATES = {
+  'panel-income': '2026-10-16',
+  'panel-fitness': '2026-10-16',
+  'panel-exercise': '2026-10-16',
+  'panel-media': '2026-10-16',
+  'panel-inspire': '2026-10-16',
+  'panel-period': '2026-10-16',
+  'panel-wash': '2026-10-16',
+  'panel-toilet': '2026-10-16',
+  'panel-mask': '2026-10-16',
+  'panel-account': '2026-10-16',
+  'panel-reminder': '2026-10-16',
+  'panel-benchmark': '2026-10-16',
+  'panel-settings': '2026-10-16'
+};
+var HAMI_HELP_MOD_DEFAULT = '2026-10-16';
+function fmtHelpModDate(iso) {
+  var m = String(iso || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!m) return String(iso || '');
+  return parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
+}
+function hamiHelpModDateFor(box) {
+  var key = '';
+  try { var p = box.closest ? box.closest('.panel') : null; if (p && p.id) key = p.id; } catch (e) {}
+  return HAMI_HELP_MOD_DATES[key] || HAMI_HELP_MOD_DEFAULT;
+}
 // v224：把所有 .tip-box（各版面「使用说明/使用方法」长文字）折叠成「📖 使用说明」按键，平时只留按键、点击才展开原文
+// v225：折叠行右侧补上「最后修改日期：X月X日」；并把带 data-hami-help-auto 的说明文字（如可支配余额那段灰字）一并折叠
 function initHelpToggles() {
-  var boxes = document.querySelectorAll('.tip-box');
+  var boxes = document.querySelectorAll('.tip-box, [data-hami-help-auto]');
   for (var i = 0; i < boxes.length; i++) {
     var box = boxes[i];
     if (box.getAttribute('data-hami-help') === '1') continue;
     var orig = box.innerHTML;
     box.innerHTML = '';
+    var row = document.createElement('div');
+    row.className = 'hami-help-row';
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'hami-help-toggle';
     btn.textContent = '📖 使用说明';
+    var dateEl = document.createElement('span');
+    dateEl.className = 'hami-help-date';
+    dateEl.textContent = '【最后修改日期：' + fmtHelpModDate(hamiHelpModDateFor(box)) + '】';
+    row.appendChild(btn);
+    row.appendChild(dateEl);
     var body = document.createElement('div');
     body.className = 'hami-help-body';
     body.style.display = 'none';
     body.innerHTML = orig;
-    box.appendChild(btn);
+    box.appendChild(row);
     box.appendChild(body);
     (function (b, bd) {
       b.addEventListener('click', function () {
