@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-220">
+<meta name="hami-build" content="2026-10-16-221">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5883,6 +5883,7 @@
         <span id="account-deposit-saved-tip" style="margin-left:auto;font-size:11px;color:#3aaa55;font-weight:700;opacity:0;transition:opacity .25s ease;">✓ 已保存</span>
       </div>
       <div id="account-deposit-modified-at" style="display:none;font-size:11px;color:#a8788a;margin-top:6px;line-height:1.5;"></div>
+      <div id="account-deposit-autolink-at" style="display:none;font-size:11px;color:#a8788a;margin-top:2px;line-height:1.5;"></div>
       <div id="account-disposable-editor" style="display:none;margin-top:8px;padding:10px 12px;background:#fff;border:1.5px solid #ff7fa8;border-radius:14px;align-items:center;gap:8px;">
         <span style="font-size:13px;color:#7d4a5a;font-weight:600;">改成</span>
         <span style="color:#d14b73;font-weight:700;">¥</span>
@@ -6673,6 +6674,7 @@ let store = {
   depositLockedShown: null, // v160 锁定期真正显示给主人的那个数（主人手填值）
   depositLockModifiedAt: null, // v218：手动修改可支配余额的最新时间（本地 ISO，无时区偏移），作为联动基准日——账单日期晚于它才联动
   depositLockNetSnapshot: 0,   // v218：基准日当下门控净额快照，锁定期只按"当前门控净额 − 快照"增量联动
+  depositLastAutoLinkAt: null, // v221：最近一次因记账联动导致余额变动的时间（本地 ISO，无时区偏移）
   weightCalMonth: '',   // 体重日历当前查看月份（YYYY-MM），空字符串表示跟随今天所在月
   accounts: {
     big: {
@@ -12539,6 +12541,8 @@ function _nowLocalISO() {
   const d = new Date(); const p = function (n) { return (n < 10 ? '0' + n : '' + n); };
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
+var _lastDepositShown = undefined;     // v221：上次渲染的可支配余额显示值，用于检测「自动联动」是否真的令余额变动
+var _skipAutoLinkMark = false;         // v221：手动修改路径临时跳过「自动联动时间」记录（那属于手动，不是自动联动）
 function fmtDepositModTime(iso) {
   try { const d = new Date(iso); if (isNaN(d.getTime())) return ''; const p = function (n) { return (n < 10 ? '0' + n : '' + n); }; return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + p(d.getHours()) + ':' + p(d.getMinutes()); } catch (e) { return ''; }
 }
@@ -12564,14 +12568,31 @@ function refreshDisposableDisplay() {
         : (parseFloat(store.depositLockedShown) || 0))
     : (_dep + calcAccountNetForDeposit());
   dEl.textContent = '¥' + fmtMoney(cur);
-  // v218：锁定态显示「最新修改时间」与联动基准提示
+  // v221：自动联动时间——余额因记账联动而「真的变动」时记录（手动修改路径用 _skipAutoLinkMark 排除）
+  try {
+    if (typeof _lastDepositShown !== 'undefined' && Math.abs(cur - _lastDepositShown) > 0.005 && !_skipAutoLinkMark) {
+      store.depositLastAutoLinkAt = _nowLocalISO();
+    }
+  } catch (e) {}
+  _lastDepositShown = cur;
+  _skipAutoLinkMark = false;
+  // v221：显示「最后手动修改时间」与「最后自动联动时间」两行
   const _modEl = document.getElementById('account-deposit-modified-at');
   if (_modEl) {
     if (store.depositLocked === true && store.depositLockModifiedAt) {
-      _modEl.textContent = '最后修改时间：' + fmtDepositModTime(store.depositLockModifiedAt) + '（此后更晚日期的账单才联动）';
+      _modEl.textContent = '最后手动修改时间：' + fmtDepositModTime(store.depositLockModifiedAt) + '（此后更晚日期的账单才联动）';
       _modEl.style.display = 'block';
     } else {
       _modEl.style.display = 'none';
+    }
+  }
+  const _linkEl = document.getElementById('account-deposit-autolink-at');
+  if (_linkEl) {
+    if (store.depositLastAutoLinkAt) {
+      _linkEl.textContent = '最后自动联动时间：' + fmtDepositModTime(store.depositLastAutoLinkAt);
+      _linkEl.style.display = 'block';
+    } else {
+      _linkEl.style.display = 'none';
     }
   }
 }
@@ -12608,6 +12629,7 @@ function cancelEditDeposit() {
   if (_rb) _rb.style.display = 'inline-block';   // 重算按钮始终可用
 }
 function saveDepositBalance() {
+  _skipAutoLinkMark = true;   // v221：本次是手动修改，不代表「自动联动」，刷新渲染时不要记成自动联动时间
   const input = document.getElementById('account-deposit-input');
   const display = document.getElementById('account-disposable-display');
   const editor = document.getElementById('account-disposable-editor');
