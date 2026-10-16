@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-230">
+<meta name="hami-build" content="2026-10-16-231">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9198,11 +9198,13 @@ function scheduleCloudPush() {
 var _pendingCommit = 0;
 var _commitRetryTimer = null;
 var _commitBusy = false;
-var _hamiBannerHideTimer = null;   // 横幅自动消失定时器：让"正在自动重试"几秒后自动退场，不再持续打扰主人
-var _hamiBannerLastShowAt = 0;      // 上次显示横幅的时刻：用于去抖（短时间内的反复失败不要反复跳出来）
-var _hamiBannerFailStreak = 0;       // 连续失败计数：连续失败 3 次才算"真有问题"，前 2 次静默重试不打扰
+var _hamiBannerHideTimer = null;   // 横幅自动消失定时器：让提示几秒后自动退场，不再持续打扰主人
+var _hamiBannerLastShowAt = 0;      // 上次显示横幅的时刻
+var _hamiBannerFailStreak = 0;       // 连续失败计数
 var _hamiBannerLastFailKey = '';     // 上次失败的指纹：相同错误不重复计数
 var _cloudPushPending = false;         // v218：同步就绪前的本地改动记下来，就绪后立刻补推，杜绝"记了没上云"
+var _commitFailNotified = false;      // v231：本轮失败是否已弹过一次横幅（只弹一次，之后静默重试，绝不刷屏）
+var _commitRetryDelay = 5000;         // v231：失败重试退避间隔（5s→10s→20s→30s 封顶），成功后复位
 
 // 横幅位置：v227 主人要求改到「记一下」栏【正下方紧贴】——绝不遮挡顶部操作栏，文字不拦截点击
 function hamiPendingBanner(show, msg) {
@@ -9246,38 +9248,31 @@ async function commitToCloud() {
   _pendingCommit = 0;
   try {
     await pushNow();
+    // 成功：清除失败态、退避复位、收起横幅
+    if (_commitRetryTimer) { clearTimeout(_commitRetryTimer); _commitRetryTimer = null; }
+    _hamiBannerFailStreak = 0;
+    _hamiBannerLastFailKey = '';
+    _commitFailNotified = false;
+    _commitRetryDelay = 5000;
     hamiPendingBanner(false);
   } catch (e) {
-    _pendingCommit = 1;
-    // 把令人恐惧的 sha 杂讯收敛成一句人话（409 = 云端有别处刚改的版本，是 GitHub 正常保护）
+    // v231【绝不刷屏】本轮第一次失败弹一次横幅说清"什么没同步"；之后一律静默，按 5s→10s→20s→30s 退避重试直到成功。
+    // 关键修复：不再把 _pendingCommit 置 1——旧代码让 finally 每 300ms 无限重推，正是"没操作也一直提示同步失败"的元凶。
     const raw = (e && e.message) ? String(e.message) : String(e);
-    let msg = raw;
-    if (raw.indexOf('does not match') >= 0 || raw.indexOf('409') >= 0) {
-      msg = '云端在推的时刻刚好被另一端改了，正在自动重试（不丢数据）';
-    } else if (raw.indexOf('HTTP 5') === 0) {
-      msg = '云端一时连不上（' + raw + '），正在自动重试';
-    } else if (raw.indexOf('Failed to fetch') >= 0 || raw.indexOf('NetworkError') >= 0) {
-      msg = '网络一时连不上，正在自动重试';
-    }
-    // 关键修复：横幅去抖。同一错误指纹短时间内反复失败不要反复跳出来吓主人。
-    // 规则：相同错误连续 ≤2 次 → 完全不弹横幅（安静后台重试）
-    //      第 3 次起才弹一次（这时才是真有问题，主人需要看到）
-    //      不同错误 → 重置计数，立刻弹
-    const key = msg;
-    if (key === _hamiBannerLastFailKey) {
-      _hamiBannerFailStreak++;
-    } else {
+    const key = (raw.indexOf('does not match') >= 0 || raw.indexOf('409') >= 0) ? 'conflict'
+      : (raw.indexOf('HTTP 5') === 0 ? 'server'
+      : ((raw.indexOf('Failed to fetch') >= 0 || raw.indexOf('NetworkError') >= 0) ? 'network' : raw));
+    if (!_commitFailNotified) {
+      _commitFailNotified = true;
       _hamiBannerLastFailKey = key;
-      _hamiBannerFailStreak = 1;
-    }
-    // 每次推送失败都显式弹横幅（去掉原「前 2 次静默」逻辑），相同错误只更新同一元素不会刷屏
-    if (_hamiBannerFailStreak >= 1) {
-      // v227：只说"什么没同步"这一件事，去掉"云端写入失败……"那一大段
       const _failName = (typeof _syncActName === 'function') ? _syncActName() : '';
       hamiPendingBanner(true, _failName ? ('未同步：' + _failName) : '还没同步成功');
     }
+    _hamiBannerFailStreak++;
     if (!_commitRetryTimer) {
-      _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 10000);
+      const delay = _commitRetryDelay;
+      _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, delay);
+      _commitRetryDelay = Math.min(_commitRetryDelay * 2, 30000);
     }
   } finally {
     _commitBusy = false;
@@ -9546,12 +9541,14 @@ try {
       // 切走/锁屏时立刻把本机改动推上云端，别处设备随时能拉到
       if (hamiSyncReady && hamiCloudEnabled()) { try { pushNow(); } catch (e) {} }
       } else if (document.visibilityState === 'visible') {
-        // 切回标签页：先拉云端（拿到别处最新），再补推本地未上云的改动，确保双向都不漏。
+        // v231：切回标签页 = 相当于"重新打开"，先拉一次云端拿别处最新（这是允许的自动检查时机）。
         if (hamiSyncReady && hamiCloudEnabled() && !_periodicPullBusy && !_syncBusy) {
           pullAndMerge().catch(function () {});
         }
-        // 关键修复：切回前台时把本地可能没推上去的改动（如手机端刚改的体重）强制补推一次
-        try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch (e) {}
+        // 仅当确实有「没推成功的本地改动」或「上次推送失败」时才补推，空闲时不推（主人要求：无操作不同步）。
+        if (_cloudPushPending || _pendingCommit > 0 || _commitFailNotified) {
+          try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch (e) {}
+        }
       }
   });
 } catch (e) {}
@@ -9563,18 +9560,13 @@ try {
   });
 } catch (e) {}
 
-// 后台定时拉取：让手机/电脑「在哪记都同步」更实时——其他设备刚记的内容，约 1 分钟内自动出现在本机，无需手动刷新。
-// 保守策略：仅页面可见、未在做输入/开抽屉、无同步进行时才拉；复用已验证的 pullAndMerge（增量合并、不丢数据）。
-setInterval(function () {
-  if (_periodicPullBusy || _syncBusy) return;
-  if (!hamiSyncReady || !hamiCloudEnabled()) return;
-  if (document.visibilityState !== 'visible') return;
-  const ae = document.activeElement;
-  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
-  if (document.querySelector('.account-drawer.open')) return;
-    _periodicPullBusy = true;
-    pullAndMerge().then(function () { _periodicPullBusy = false; }).catch(function () { _periodicPullBusy = false; });
-  }, 20000);   // 原 60s → 20s：GitHub 云端没有 Realtime 推送，只能靠勤快轮询接近「实时」
+// v231【同步策略简化·主人要求】：不再做「后台每 20 秒自动拉取」。
+// 现在的同步时机只有两个：
+//   ① 打开/刷新页面时自动检查一次（initCloudSync：拉云端合并 → 推回一次）；
+//   ② 主人有任何操作（新增/修改/删除记录）时，由 saveData → scheduleCloudPush → commitToCloud 触发；
+//      若第一次没推成功，commitToCloud 内部按 5s→10s→20s→30s 退避静默重试，直到成功，绝不刷屏打扰。
+// 好处：空闲时零网络请求（省流量省电、不再反复弹「未同步」），又保证「改了必上云、失败必续传」。
+// 注：切回标签页（visible）仍会拉一次云端（相当于"重新打开"），保证换设备回来能看到别处的最新数据。
 
 
 
