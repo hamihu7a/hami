@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-253">
+<meta name="hami-build" content="2026-10-16-254">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3379,9 +3379,23 @@
     font-size: 11px; color: #a97f8c; line-height: 1.5;
     margin: 2px 0 7px; font-weight: 600;
   }
-  .mirror-block.has-bg { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+  /* v254：默认【不响应拖动/滚轮】——只有点开「⚙ 调整」进入编辑态的板块才可拖，
+     彻底杜绝"在设置面板里上下滚动时误触到图片、把背景图拖跑/放大"。 */
+  .mirror-block.has-bg.editing {
+    cursor: grab; touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    border-color: var(--c-pink-deep) !important;
+    box-shadow: 0 0 0 2px rgba(209,75,115,.20) inset;
+  }
   .mirror-block.has-bg.dragging { cursor: grabbing; transform: none !important; }
   .mirror-block.dragging::after { opacity: 0 !important; }
+  /* v254：遮罩（不透明度/渐变）独立成一层——调它只改这一层，图片层完全不动，
+     图片不再"重新刷新一遍"、位置也不会跳。 */
+  .mirror-mask {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    border-radius: inherit; background-repeat: no-repeat;
+  }
+  .mirror-edit-hint { font-size: 9.5px; color: #b08a97; line-height: 1.45; font-weight: 600; }
   /* ===== v248：图片下方一行小按钮（很短很小），点「⚙ 调整」才在它下面展开控制面板 ===== */
   .mirror-bar {
     display: none;                 /* 仅在该板块已有背景图时显示（靠 .has-bg 相邻选择器） */
@@ -6587,7 +6601,7 @@
         </div>
 
         <!-- 镜像：按真实主面板内容区竖向排布（比例≈真实主面板），点击板块改对应主面板内容背景；侧栏与整体大背景不在镜像内 -->
-        <div class="mirror-howto">✋ 按住图片可直接拖动调位置 · 滚轮 / 双指捏合放大 · 图片下方「⚙ 调整」可调不透明度 / 镜像 / 旋转 / 遮盖</div>
+        <div class="mirror-howto">✋ 点板块下方「⚙ 调整」进入编辑后，才能按住图片拖动（避免平时滚动误触）· 滚轮/双指放大 · 调完再点「⚙ 调整」或「✕」退出编辑</div>
         <div class="mirror-root">
           <!-- 镜像主面板（宽，内部区域竖向排布，比例≈真实主面板内容区） -->
           <div class="mirror-main">
@@ -9923,19 +9937,24 @@ function hamiBgMaskGet(key) {
 function hamiBgGeomPos(cfg) { return cfg.px + '% ' + cfg.py + '%'; }
 function hamiBgGeomSize(cfg) { return (cfg.zoom && cfg.zoom > 100) ? (cfg.zoom + '%') : 'cover'; }
 function hamiBgResetGeom(cfg) { cfg.px = 50; cfg.py = 50; cfg.zoom = 100; cfg.flip = 0; cfg.rot = 0; }
+// v254：旋转时为保证四角不留空所需的最小放大倍数（拖动位移换算也要用同一个值）
+function hamiBgScale(rot, W, H) {
+  var r = (typeof rot === 'number' && isFinite(rot)) ? rot : 0;
+  if (Math.abs(r) < 0.5) return 1;
+  var rad = Math.abs(r) * Math.PI / 180;
+  var c = Math.abs(Math.cos(rad)), s = Math.abs(Math.sin(rad));
+  var sc = 1;
+  if (W > 0 && H > 0) sc = Math.max((W * c + H * s) / W, (W * s + H * c) / H);
+  else sc = c + s;                   // 容器暂不可见（量不到尺寸）→ 用保守值，切到该面板时会重算
+  if (!isFinite(sc) || sc < 1) sc = 1;
+  return sc;
+}
 // v245：镜像(水平翻转) + 旋转。旋转时按容器宽高算最小放大倍数，保证四角不留空。
 function hamiBgXform(cfg, W, H) {
   var flip = cfg.flip ? -1 : 1;
   var rot = (typeof cfg.rot === 'number' && isFinite(cfg.rot)) ? cfg.rot : 0;
   if (flip === 1 && Math.abs(rot) < 0.5) return 'none';
-  var rad = Math.abs(rot) * Math.PI / 180;
-  var c = Math.abs(Math.cos(rad)), s = Math.abs(Math.sin(rad));
-  var sc = 1;
-  if (rot !== 0) {
-    if (W > 0 && H > 0) sc = Math.max((W * c + H * s) / W, (W * s + H * c) / H);
-    else sc = c + s;                 // 容器暂不可见（量不到尺寸）→ 用保守值，切到该面板时会重算
-  }
-  if (!isFinite(sc) || sc < 1) sc = 1;
+  var sc = hamiBgScale(rot, W, H);
   // 先水平翻转 → 再旋转 → 最后统一放大填满
   return 'scale(' + sc.toFixed(4) + ') rotate(' + rot + 'deg) scaleX(' + flip + ')';
 }
@@ -9944,6 +9963,22 @@ function mirrorBgLayer(block) {
   var l = block.querySelector('.mirror-bg');
   if (!l) { l = document.createElement('div'); l.className = 'mirror-bg'; block.insertBefore(l, block.firstChild); }
   return l;
+}
+// v254：镜像块的遮罩层（渐变/纯色遮盖）——与图片层分开，改遮盖不影响图片
+function mirrorMaskLayer(block) {
+  var l = block.querySelector('.mirror-mask');
+  if (!l) {
+    l = document.createElement('div');
+    l.className = 'mirror-mask';
+    var bg = mirrorBgLayer(block);
+    if (bg.insertAdjacentElement) bg.insertAdjacentElement('afterend', l);
+    else block.insertBefore(l, bg.nextSibling);
+  }
+  return l;
+}
+// v254：只在值真的变了才写 style —— 避免每次改遮盖都重设一遍 background-image 造成整块重绘/闪一下
+function setIf(el, prop, val) {
+  try { if (!el || !el.style) return; if (el.style[prop] !== val) el.style[prop] = val; } catch (e) {}
 }
 function hamiBgMaskSet(key, cfg) {
   try { localStorage.setItem(HAMI_BG_MASK_KEY + key, JSON.stringify(cfg)); } catch (e) {}
@@ -9984,11 +10019,14 @@ function applyBgMask(key, cfg) {
     if (!img) { try { img = BG_CACHE[key]; } catch (e) {} }
     if (!img) return;
     b.__bgImgUrl = img;
+    // v254：图片层只放图；遮罩层只放渐变。调不透明度/渐变时图片层原封不动 → 不重绘、不闪、位置不跳
     var layer = mirrorBgLayer(b);              // v245：图与文字分层，翻转/旋转只作用于图
-    layer.style.backgroundPosition = _pos;
-    layer.style.backgroundSize = _size;
-    layer.style.backgroundImage = (g === 'none' ? '' : g + ', ') + 'url("' + img + '")';
-    layer.style.transform = hamiBgXform(cfg, b.clientWidth || 0, b.clientHeight || 0);
+    setIf(layer, 'backgroundPosition', _pos);
+    setIf(layer, 'backgroundSize', _size);
+    setIf(layer, 'backgroundImage', 'url("' + img + '")');
+    setIf(layer, 'transform', hamiBgXform(cfg, b.clientWidth || 0, b.clientHeight || 0));
+    var maskL = mirrorMaskLayer(b);
+    setIf(maskL, 'backgroundImage', (g === 'none' ? '' : g));
   });
 }
 // v242：把内嵌/云端配置里带的「遮盖」设置拷回本机 localStorage（换设备打开时效果也一致）
@@ -10032,6 +10070,8 @@ function buildMirrorMaskCtl(key, block) {
   function closeAllCtl() {
     document.querySelectorAll('.mirror-ctl.open').forEach(function (c) { c.classList.remove('open'); });
     document.querySelectorAll('.mirror-bar-btn.mb-edit.active').forEach(function (b) { b.classList.remove('active'); });
+    // v254：只要有面板收起 → 所有镜像块退出编辑态，恢复"不可拖"（平时滚动绝不会误触）
+    document.querySelectorAll('.mirror-block.editing').forEach(function (bl) { bl.classList.remove('editing'); });
   }
   var editBtn = bar.querySelector('.mb-edit');
   if (editBtn && !editBtn.__bound) {
@@ -10043,7 +10083,9 @@ function buildMirrorMaskCtl(key, block) {
       if (opening) {
         ctl.classList.add('open');
         editBtn.classList.add('active');
+        block.classList.add('editing');        // v254：进入编辑态（此时才允许按住图片拖动/滚轮缩放）
       }
+      // 关闭时 closeAllCtl 已移除 editing，无需重复
       try { playSound('click'); } catch (e2) {}
     });
   }
@@ -10069,6 +10111,7 @@ function buildMirrorMaskCtl(key, block) {
       clearMirrorPreview(key);
       ctl.classList.remove('open');
       if (editBtn) editBtn.classList.remove('active');
+      block.classList.remove('editing');
       var st = document.getElementById('settings-bg-status');
       if (st) st.textContent = '🗑 已删除「' + (block.title || key) + '」的背景图片';
       afterBgChange(st);
@@ -10097,9 +10140,10 @@ function buildMirrorMaskCtl(key, block) {
       '<button type="button" class="mirror-dir-btn" data-mode="down" title="上面透明，越往下遮盖越浓（图越淡）">上→下</button>' +
       '<button type="button" class="mirror-dir-btn" data-mode="up" title="下面透明，越往上遮盖越浓（图越淡）">下→上</button>' +
     '</div>' +
+    '<div class="mirror-edit-hint">✋ 编辑中：可直接按住图片拖动 · 滚轮 / 双指缩放。点「✕」或「⚙ 调整」退出编辑（退出后不会误触）。</div>' +
     '<div class="mirror-ctl-foot">' +
       '<button type="button" class="mirror-reset-btn">↺ 恢复默认</button>' +
-      '<button type="button" class="mirror-ctl-close" title="收起">✕</button>' +
+      '<button type="button" class="mirror-ctl-close" title="收起并退出编辑">✕</button>' +
     '</div>';
   function markActive(mode) {
     ctl.querySelectorAll('.mirror-dir-btn[data-mode]').forEach(function (b) {
@@ -10115,10 +10159,14 @@ function buildMirrorMaskCtl(key, block) {
     r.addEventListener('input', function (e) {
       e.stopPropagation();
       var v = parseInt(r.value, 10); if (isNaN(v)) v = 0;
-      cfg[f] = v;
+      // v254【真凶修复】不再用面板打开那一刻的旧配置写回——否则会把主人刚拖好的位置/缩放覆盖回旧值。
+      // 每次从存储读最新配置，只改当前这一个字段。
+      var cur = hamiBgMaskGet(key);
+      cur[f] = v;
+      cfg = cur;
       if (vEl) vEl.textContent = v + unit;
-      hamiBgMaskSet(key, cfg);
-      applyBgMask(key, cfg);
+      hamiBgMaskSet(key, cur);
+      applyBgMask(key, cur);
     });
     r.addEventListener('click', function (e) { e.stopPropagation(); });
     r.addEventListener('change', function (e) {
@@ -10130,10 +10178,12 @@ function buildMirrorMaskCtl(key, block) {
   ctl.querySelectorAll('.mirror-dir-btn[data-mode]').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      cfg.mode = btn.getAttribute('data-mode');
-      hamiBgMaskSet(key, cfg);
-      markActive(cfg.mode);
-      applyBgMask(key, cfg);
+      var cur = hamiBgMaskGet(key);          // v254：读最新，别覆盖刚拖好的位置
+      cur.mode = btn.getAttribute('data-mode');
+      cfg = cur;
+      hamiBgMaskSet(key, cur);
+      markActive(cur.mode);
+      applyBgMask(key, cur);
       try { afterBgChange(); } catch (e2) {}
       try { playSound('click'); } catch (e2) {}
     });
@@ -10143,10 +10193,12 @@ function buildMirrorMaskCtl(key, block) {
   if (flipBtn) {
     flipBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      cfg.flip = cfg.flip ? 0 : 1;
-      flipBtn.classList.toggle('active', !!cfg.flip);
-      hamiBgMaskSet(key, cfg);
-      applyBgMask(key, cfg);
+      var cur = hamiBgMaskGet(key);          // v254：读最新，别覆盖刚拖好的位置
+      cur.flip = cur.flip ? 0 : 1;
+      cfg = cur;
+      flipBtn.classList.toggle('active', !!cur.flip);
+      hamiBgMaskSet(key, cur);
+      applyBgMask(key, cur);
       try { afterBgChange(); } catch (e2) {}
       try { playSound('click'); } catch (e2) {}
     });
@@ -10154,9 +10206,11 @@ function buildMirrorMaskCtl(key, block) {
   var rst = ctl.querySelector('.mirror-reset-btn');
   if (rst) rst.addEventListener('click', function (e) {
     e.stopPropagation();
-    hamiBgResetGeom(cfg);            // px/py/zoom/flip/rot 回默认
-    cfg.vis = 100; cfg.mode = 'even';
-    hamiBgMaskSet(key, cfg);
+    var cur = hamiBgMaskGet(key);    // v254：先同步最新，再整体重置
+    hamiBgResetGeom(cur);            // px/py/zoom/flip/rot 回默认
+    cur.vis = 100; cur.mode = 'even';
+    cfg = cur;
+    hamiBgMaskSet(key, cur);
     var r2 = ctl.querySelector('input[data-f="vis"]');
     var v2 = ctl.querySelector('.mirror-ctl-val[data-v="vis"]');
     if (r2) r2.value = 100;
@@ -10167,7 +10221,7 @@ function buildMirrorMaskCtl(key, block) {
     if (v3) v3.textContent = '0°';
     if (flipBtn) flipBtn.classList.remove('active');
     markActive('even');
-    applyBgMask(key, cfg);
+    applyBgMask(key, cur);
     try { afterBgChange(); } catch (e2) {}
     try { playSound('click'); } catch (e2) {}
   });
@@ -10176,6 +10230,7 @@ function buildMirrorMaskCtl(key, block) {
     e.stopPropagation();
     ctl.classList.remove('open');
     if (editBtn) editBtn.classList.remove('active');
+    block.classList.remove('editing');          // v254：退出编辑态
   });
   syncMirrorCtlVisibility(key);
   try { initMirrorDrag(block, key); } catch (e) {}
@@ -10199,6 +10254,8 @@ function initMirrorDrag(block, key) {
   var ptrs = {}, mode = null, st = null;
   block.addEventListener('pointerdown', function (e) {
     if (!block.classList.contains('has-bg')) return;                     // 无图 → 交给点击上传
+    // v254：只有点开「⚙ 调整」进入编辑态才可拖 —— 平时在设置面板滚动/轻划绝不会误触改到图片
+    if (!block.classList.contains('editing')) return;
     if (e.target.closest('.mirror-ctl, .mirror-bar')) return;            // v248：面板/按钮行不参与拖动
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ids = Object.keys(ptrs);
@@ -10207,7 +10264,8 @@ function initMirrorDrag(block, key) {
       var r = mirrorRendered(block, block.__bgAR || 1.6, c0.zoom);
       if (!r) { delete ptrs[e.pointerId]; return; }
       mode = 'drag';
-      st = { sx: e.clientX, sy: e.clientY, px: c0.px, py: c0.py, r: r, moved: false };
+      st = { sx: e.clientX, sy: e.clientY, px: c0.px, py: c0.py, r: r, moved: false,
+             sc: hamiBgScale(c0.rot, r.W, r.H) };   // v254：旋转/镜像后的位移换算要用
       block.classList.add('dragging');
       try { block.setPointerCapture(e.pointerId); } catch (er) {}
     } else if (ids.length === 2) {
@@ -10226,11 +10284,17 @@ function initMirrorDrag(block, key) {
     var ids = Object.keys(ptrs);
     if (mode === 'drag' && ids.length === 1 && st && st.r) {
       var dx = e.clientX - st.sx, dy = e.clientY - st.sy;
-      if (!st.moved && Math.abs(dx) + Math.abs(dy) < 3) return;          // 小于阈值当点击（上传）
+      if (!st.moved && Math.abs(dx) + Math.abs(dy) < 6) return;          // v254：阈值放宽，轻碰/滚动不误触发
       st.moved = true;
       var c = hamiBgMaskGet(key);
-      if (st.r.w > st.r.W + 0.5) c.px = Math.max(0, Math.min(100, st.px - dx / (st.r.w - st.r.W) * 100));
-      if (st.r.h > st.r.H + 0.5) c.py = Math.max(0, Math.min(100, st.py - dy / (st.r.h - st.r.H) * 100));
+      // v254【跟手修复】屏幕位移 → 图片自身坐标：先撤缩放，再撤旋转，最后撤水平镜像。
+      // 旧版直接拿屏幕 dx/dy 当图片位移，所以"镜像/旋转之后拖动方向也跟着反了"。
+      var rad = (c.rot || 0) * Math.PI / 180, cs = Math.cos(rad), sn = Math.sin(rad), sc = st.sc || 1;
+      var lx = (dx * cs + dy * sn) / sc;
+      var ly = (-dx * sn + dy * cs) / sc;
+      if (c.flip) lx = -lx;
+      if (st.r.w > st.r.W + 0.5) c.px = Math.max(0, Math.min(100, st.px - lx / (st.r.w - st.r.W) * 100));
+      if (st.r.h > st.r.H + 0.5) c.py = Math.max(0, Math.min(100, st.py - ly / (st.r.h - st.r.H) * 100));
       hamiBgMaskSet(key, c);
       applyBgMask(key, c);
     } else if (mode === 'pinch' && ids.length === 2 && st) {
@@ -10265,6 +10329,7 @@ function initMirrorDrag(block, key) {
   // 桌面：滚轮缩放
   block.addEventListener('wheel', function (e) {
     if (!block.classList.contains('has-bg')) return;
+    if (!block.classList.contains('editing')) return;   // v254：非编辑态不劫持滚轮，设置面板能正常上下滚
     e.preventDefault(); e.stopPropagation();
     var c = hamiBgMaskGet(key);
     var z = Math.max(100, Math.min(250, (c.zoom || 100) + (e.deltaY < 0 ? 10 : -10)));
@@ -10337,6 +10402,7 @@ function syncMirrorCtlVisibility(key) {
     if (ctl) ctl.classList.remove('open');
     var eb = host.querySelector('.mirror-bar-btn.mb-edit');
     if (eb) eb.classList.remove('active');
+    block.classList.remove('editing');          // v254：没图谈不上编辑
   }
 }
 
@@ -10385,6 +10451,7 @@ async function initSettingsPanel() {
     // 点击板块主体 → 选图上传（刚拖动过图片则不触发）
     block.addEventListener('click', () => {
       if (block.__suppressClick) { block.__suppressClick = false; return; }
+      if (block.classList.contains('editing')) return;   // v254：编辑中点了图片不当成"要换图"
       _settingsActiveKey = key;
       if (statusEl) statusEl.textContent = '🎯 已选中「' + block.title + '」,请选择图片…';
       if (fileInput) fileInput.click();
