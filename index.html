@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-225">
+<meta name="hami-build" content="2026-10-16-226">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1494,6 +1494,30 @@
     padding: 26px 14px; text-align: center; color: #a89a9a; font-size: 13px; font-weight: 600;
     background: rgba(255,255,255,0.5); border: 1px dashed #ffd0dc; border-radius: 12px;
   }
+  /* v226：待办项版面重做（事件 / 记录时间 / 期限 / 操作 更清晰，移动端不再空白） */
+  #todo-list-work .todo-item,
+  #todo-list-daily .todo-item { flex-wrap: wrap; align-items: flex-start; gap: 9px; }
+  #todo-list-work .todo-body,
+  #todo-list-daily .todo-body { flex: 1; min-width: 0; }
+  .todo-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+  .todo-meta-record {
+    font-size: 11px; color: #9a8690; font-weight: 600;
+    background: #f6eef2; border-radius: 7px; padding: 2px 8px; white-space: nowrap;
+  }
+  #todo-list-work .todo-act,
+  #todo-list-daily .todo-act {
+    flex-basis: 100%; flex-direction: row; justify-content: flex-end;
+    gap: 6px; margin-top: 8px; align-items: center;
+  }
+  #todo-list-work .todo-act .todo-btn,
+  #todo-list-daily .todo-act .todo-btn { padding: 4px 11px; font-size: 12px; }
+  /* 添加行：日期带可见文字标签，移动端不再空白 */
+  .todo-date-wrap {
+    display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;
+    border: 1px solid #ffd0dc; border-radius: 9px; padding: 0 8px; background: #fff;
+  }
+  .todo-date-label { font-size: 12px; font-weight: 700; color: #d14b73; white-space: nowrap; }
+  .todo-date-wrap .todo-date-input { border: none; flex: 1; min-width: 0; padding: 7px 2px; background: transparent; }
   /* ============ 已完成待办区块（v85：照已完成图文项目模式） ============ */
   .todo-done-section { margin-top: 10px; }
   .todo-done-head {
@@ -4994,8 +5018,11 @@
       <div class="todo-add-row">
         <textarea id="todo-input-daily" class="todo-text-input" rows="2" placeholder="写点日常要做的事…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('daily')}"></textarea>
         <div class="todo-add-bottom">
-          <input type="date" id="todo-date-daily" class="todo-date-input" title="完成期限（可选，留空=无期限）">
-          <button class="todo-add-btn" onclick="addUserTodo('daily')">添加</button>
+          <div class="todo-date-wrap">
+            <span class="todo-date-label">📅 期限</span>
+            <input type="date" id="todo-date-daily" class="todo-date-input" title="完成期限（可选，留空=无期限）">
+          </div>
+          <button class="todo-add-btn" onclick="addUserTodo('daily')">➕ 添加</button>
         </div>
       </div>
       <div id="todo-list-daily"></div>
@@ -5016,8 +5043,11 @@
       <div class="todo-add-row">
         <textarea id="todo-input-work" class="todo-text-input" rows="2" placeholder="要推进什么事？" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('work')}"></textarea>
         <div class="todo-add-bottom">
-          <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选）">
-          <button class="todo-add-btn" onclick="addUserTodo('work')">添加</button>
+          <div class="todo-date-wrap">
+            <span class="todo-date-label">📅 期限</span>
+            <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选）">
+          </div>
+          <button class="todo-add-btn" onclick="addUserTodo('work')">➕ 添加</button>
         </div>
       </div>
       <div id="todo-list-work"></div>
@@ -12005,16 +12035,15 @@ function renderTodoListForCat(cat) {
       <span class="todo-check" onclick="toggleUserTodo(${o.i})" title="点击打卡完成">${ut.done ? '✓' : ''}</span>
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
-        <div class="todo-deadline ${info.cls}">${info.label}</div>
+        <div class="todo-meta">
+          <span class="todo-meta-record">📝 记录 ${fmtTsMonthDay(ut.createdAt)}</span>
+          ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : ''}
+        </div>
       </div>
       <span class="todo-act">
-        <span class="todo-row">
-          <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">完成</button>
-          <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">改</button>
-        </span>
-        <span class="todo-row">
-          <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
-        </span>
+        <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">✓ 完成</button>
+        <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">✎ 改</button>
+        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">🗑 删</button>
       </span>
     </div>`;
   });
@@ -12055,7 +12084,10 @@ function renderTodoDoneForCat(cat) {
       <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
-        ${doneAt ? '<div class="todo-done-date">完成于 ' + doneAt + '</div>' : ''}
+        <div class="todo-meta">
+          <span class="todo-meta-record">📝 记录 ${fmtTsMonthDay(ut.createdAt)}</span>
+          ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
+        </div>
       </div>
       <span class="todo-act">
         <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
@@ -12077,6 +12109,13 @@ function fmtDoneDate(ts) {
     const d = new Date(ts); const p = n => String(n).padStart(2, '0');
     return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   } catch (e) { return ''; }
+}
+function fmtTsMonthDay(ts) {
+  if (!ts) return '未记录';
+  try {
+    const d = new Date(ts);
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  } catch (e) { return '未记录'; }
 }
 function renderTodoPanel() {
   renderTodoListForCat('daily');
@@ -12667,7 +12706,7 @@ function initHelpToggles() {
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'hami-help-toggle';
-    btn.textContent = '📖 使用说明';
+    btn.textContent = '使用说明';
     var dateEl = document.createElement('span');
     dateEl.className = 'hami-help-date';
     dateEl.textContent = '【最后修改日期：' + fmtHelpModDate(hamiHelpModDateFor(box)) + '】';
@@ -12683,7 +12722,7 @@ function initHelpToggles() {
       b.addEventListener('click', function () {
         var open = bd.style.display !== 'none';
         bd.style.display = open ? 'none' : 'block';
-        b.textContent = open ? '📖 使用说明' : '📕 收起说明';
+        b.textContent = open ? '使用说明' : '收起说明';
       });
     })(btn, body);
     box.setAttribute('data-hami-help', '1');
