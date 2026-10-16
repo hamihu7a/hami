@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-270">
+<meta name="hami-build" content="2026-10-16-271">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -618,7 +618,7 @@
     right: 0;
     bottom: 0;
     width: auto;                           /* 宽度自动 = 视口 - 侧栏 */
-    padding: 18px 22px;
+    padding: 20px 22px 18px;               /* v271：顶部 18→20px，与「跟小助理说」指令栏多留 2px 呼吸（电脑端） */
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -955,7 +955,7 @@
     /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
     transform: var(--bg-xform, none); transform-origin: 50% 50%;
   }
-  .desktop-hero.has-custom-bg::after { display: none; }
+  /* v271：原「has-custom-bg 时隐藏 ::after」规则已删——::after 现在是 v270 棕色渐变描边，上传背景图后也要显示 */
   .desktop-hero > * { position: relative; z-index: 1; }
   .desktop-hero.has-custom-bg .hero-top,
   .desktop-hero.has-custom-bg .desktop-quote { z-index: 2; }
@@ -4990,6 +4990,8 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     pointer-events: none;
     z-index: 5;
   }
+  /* v271：hero 自带老 ::after 装饰圆（100×100 定宽高），会把描环压成左上角小方块——恢复全尺寸 */
+  .desktop-hero::after { width: auto; height: auto; }
   .card { box-shadow: var(--shadow-sm), 0 2px 6px rgba(150,104,64,0.12); }
   .card:hover { box-shadow: var(--shadow-hover), 0 2px 8px rgba(150,104,64,0.16); }
   .stat-card { box-shadow: var(--shadow-sm), 0 2px 5px rgba(150,104,64,0.10); }
