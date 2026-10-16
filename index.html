@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-233">
+<meta name="hami-build" content="2026-10-16-234">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -17201,17 +17201,37 @@ function renderPeriod() {
   if (!pinfo) {
     predictHtml = `<div class="empty-state" style="padding:12px 0;"><p>记录经期开始/结束日期后，<br>小助理会自动预测下次时间~</p></div>`;
   } else if (pinfo.inProgress) {
+    // ===== 状态一：进行时（红色实感卡片）=====
     const startStr = fmtMD(lastPeriod.start);
     const dayN = pinfo.dayN || Math.max(1, Math.round((todayDate - new Date(lastPeriod.start + 'T00:00:00')) / 86400000) + 1);
     const durs = periods.filter(p => p.start && p.end).map(p => Math.round((new Date(p.end + 'T00:00:00') - new Date(p.start + 'T00:00:00')) / 86400000) + 1);
     const avgDur = durs.length ? Math.round(durs.slice(-6).reduce((a,b)=>a+b,0) / Math.min(durs.length,6)) : 0;
     const remain = avgDur ? Math.max(0, avgDur - dayN + 1) : 0;
-    predictHtml = `<div style="padding:14px;background:#ffe4ec;border-radius:12px;border:1px solid #ffb3c6;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🩸 本次经期第 ${dayN} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">开始于 ${startStr}${avgDur ? '，预计还有 ' + remain + ' 天结束' : ''}。</div><div style="margin-top:10px;"><button class="period-close-btn" onclick="closeOpenPeriod()" type="button">✅ 结束本次</button></div></div>`;
+    const remainText = remain > 0 ? ('预计还有 ' + remain + ' 天结束') : '已到预计结束日，结束了就点下面按钮';
+    predictHtml = `<div style="padding:14px;background:#ffe4ec;border-radius:12px;border:1px solid #ffb3c6;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🩸 本次经期第 ${dayN} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">开始于 ${startStr}，${remainText}。</div><div style="margin-top:10px;"><button class="period-close-btn" onclick="closeOpenPeriod()" type="button">✅ 结束本次</button></div></div>`;
   } else {
     const daysUntil = pinfo.daysUntilStart;
     const nextStr = fmtMD(pinfo.date);
     const weekday = ['日','一','二','三','四','五','六'][pinfo.date.getDay()];
-    if (daysUntil > 3) {
+    // ===== 状态二：结束后 · 等待下次（淡雅收起态：报本次结果 + 下次预告）=====
+    if (lastPeriod && lastPeriod.end) {
+      const endD = new Date(lastPeriod.end + 'T00:00:00');
+      const daysSinceEnd = Math.round((todayDate - endD) / 86400000);
+      if (daysSinceEnd >= 0 && daysSinceEnd <= 5) {
+        const dur = Math.round((endD - new Date(lastPeriod.start + 'T00:00:00')) / 86400000) + 1;
+        const durTxt = (dur >= 3 && dur <= 7) ? '✅' : (dur > 7 ? '⚠️偏长' : '偏短');
+        predictHtml = `<div style="padding:14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🌸 本次经期已结束</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">${fmtMD(lastPeriod.start)} — ${fmtMD(lastPeriod.end)}，共 ${dur} 天（${durTxt}）。已记录好，好好休息~</div><div style="font-size:13px;color:#8a6270;margin-top:4px;">下次预计 <b style="color:#d14b73;">${nextStr}（周${weekday}）</b>，还有 ${daysUntil} 天，安心等待~</div></div>`;
+      } else if (daysUntil > 3) {
+        predictHtml = `<div style="padding:14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:600;color:#d14b73;">📅 下次月经预计 ${nextStr}（周${weekday}）</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">还有 ${daysUntil} 天，平均周期 ${pinfo.avgCycle} 天。保持好心情~</div></div>`;
+      } else if (daysUntil >= 1) {
+        // ===== 状态三：快来（黄色预警）=====
+        predictHtml = `<div style="padding:14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:600;color:#856404;">⚠️ 月经快来了</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">预计 ${nextStr}（周${weekday}）来，还有 ${daysUntil} 天，提前备好卫生巾~</div></div>`;
+      } else if (daysUntil === 0) {
+        predictHtml = `<div style="padding:14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:600;color:#856404;">💕 预计今天来月经</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">今天是预测日，注意身体、备好卫生巾~</div></div>`;
+      } else {
+        predictHtml = `<div style="padding:14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:600;color:#d14b73;">🌸 月经推迟了 ${Math.abs(daysUntil)} 天</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">本应在 ${nextStr}（周${weekday}）来，平均周期 ${pinfo.avgCycle} 天。再观察几天，注意身体~</div></div>`;
+      }
+    } else if (daysUntil > 3) {
       predictHtml = `<div style="padding:14px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;"><div style="font-size:14px;font-weight:600;color:#d14b73;">📅 下次月经预计 ${nextStr}（周${weekday}）</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">还有 ${daysUntil} 天，平均周期 ${pinfo.avgCycle} 天。保持好心情~</div></div>`;
     } else if (daysUntil >= 1) {
       predictHtml = `<div style="padding:14px;background:#fff3cd;border-radius:12px;border:1px solid #ffc107;"><div style="font-size:14px;font-weight:600;color:#856404;">⚠️ 月经快来了</div><div style="font-size:13px;color:#8a6270;margin-top:6px;">预计 ${nextStr}（周${weekday}）来，还有 ${daysUntil} 天，提前备好卫生巾~</div></div>`;
@@ -20535,7 +20555,8 @@ function getNextPeriodInfo() {
     const s = new Date(p.start + 'T00:00:00');
     if (p.end) {
       const en = new Date(p.end + 'T00:00:00');
-      if (todayDate >= s && todayDate <= en) {
+      // v234：结束当天（today == end）就算「已结束」，不再算进行中——主人点了「结束本次」，卡片当天就该切到结束态
+      if (todayDate >= s && todayDate < en) {
         const dayN = Math.max(1, Math.round((todayDate - s) / 86400000) + 1);
         return { date: todayDate, inProgress: true, remind: false, daysUntilStart: 0, dayN, avgCycle: 0 };
       }
