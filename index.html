@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-229">
+<meta name="hami-build" content="2026-10-16-230">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6502,10 +6502,25 @@
       <!-- 数据备份：存成文件 -->
       <div class="card">
         <div class="card-title"><span>💾</span> 数据备份</div>
-        <div class="db-desc">把所有数据存成一份备份文件，存到手机/电脑。</div>
+        <div class="db-desc">一键把<b>整个工作台</b>（代码本体 + 全部数据 + 背景图 + 账号）打包成 3 个文件存到你指定的文件夹。<br>重装系统后：打开 <b>Hami工作台.html</b> → 这里点「从备份恢复」选 <b>哈米数据备份.json</b>，就能接着用。</div>
+
+        <div class="db-info">
+          <div style="font-weight:800;color:#d14b73;margin-bottom:5px;">📦 本次会备份这些内容</div>
+          <div id="backup-manifest" style="line-height:1.9;">正在统计…</div>
+        </div>
+
+        <div class="db-info" style="background:#fff8fa;">
+          <div style="font-weight:800;color:#d14b73;margin-bottom:5px;">📍 备份保存位置</div>
+          <div id="backup-dir-path" style="color:#5a3a48;">读取中…</div>
+        </div>
+
         <div class="db-btn-row">
-          <button id="settings-export-data" class="db-btn db-btn-main">下载备份文件</button>
-          <button id="settings-import-data" class="db-btn db-btn-ghost">从备份恢复</button>
+          <button id="settings-full-backup" class="db-btn db-btn-main">💾 立即完整备份</button>
+          <button id="settings-pick-dir" class="db-btn db-btn-ghost">📁 修改备份位置</button>
+        </div>
+        <div class="db-btn-row" style="margin-top:8px;">
+          <button id="settings-export-data" class="db-btn db-btn-ghost">⬇️ 只下载数据文件</button>
+          <button id="settings-import-data" class="db-btn db-btn-ghost">⬆️ 从备份恢复</button>
           <input type="file" id="settings-import-file" accept="application/json,.json" style="display:none;">
         </div>
         <div id="backup-age-hint" class="db-hint"></div>
@@ -7147,15 +7162,115 @@ function hamiRecoverFromSnapshot() {
 }
 
 // 统计本地数据总条数（数组取长度，对象取键数），用于备份提醒阈值判断
+// v230：显示「上次备份：X年X月X日（N 天前）」，超过 15 天红色提醒
+const BACKUP_REMIND_DAYS = 15;
 function updateBackupAge() {
   const el = document.getElementById('backup-age-hint');
   if (!el) return;
   const ts = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10);
-  if (!ts) { el.innerHTML = '⏳ 还没有备份过，建议现在就点一次「下载备份文件」'; el.style.color = '#d14b73'; return; }
+  if (!ts) { el.innerHTML = '⏳ 还没有备份过，建议现在就点一次「💾 立即完整备份」'; el.style.color = '#d14b73'; return; }
+  const d = new Date(ts);
+  const dateStr = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
   const days = Math.floor((Date.now() - ts) / 86400000);
-  if (days <= 0) { el.innerHTML = '✅ 今天已备份'; el.style.color = '#1a9e4b'; }
-  else if (days <= 7) { el.innerHTML = '🟢 上次备份：' + days + ' 天前'; el.style.color = '#5a8a5a'; }
-  else { el.innerHTML = '🔴 上次备份：' + days + ' 天前，超过 7 天了，建议再备一次！'; el.style.color = '#d14b73'; }
+  if (days <= 0) { el.innerHTML = '✅ 上次备份：' + dateStr + '（今天）'; el.style.color = '#1a9e4b'; }
+  else if (days < BACKUP_REMIND_DAYS) { el.innerHTML = '🟢 上次备份：' + dateStr + '（' + days + ' 天前）'; el.style.color = '#5a8a5a'; }
+  else { el.innerHTML = '🔴 上次备份：' + dateStr + '（已 ' + days + ' 天没备份，超过 ' + BACKUP_REMIND_DAYS + ' 天，请点「💾 立即完整备份」！）'; el.style.color = '#d14b73'; }
+}
+
+// v230：备份内容清单——让主人清楚每次备份到底打包了什么、各有多少条
+function hamiBackupManifest() {
+  const s = (typeof store !== 'undefined' && store) ? store : {};
+  const cnt = function (k) {
+    const v = s[k];
+    if (Array.isArray(v)) return v.length;
+    if (v && typeof v === 'object') return Object.keys(v).length;
+    return 0;
+  };
+  let bgN = 0;
+  try { const o = _bgAllRead() || {}; bgN = Object.keys(o).filter(function (k) { return o[k]; }).length; } catch (e) {}
+  return [
+    ['待办事项', cnt('userTodos')],
+    ['体重记录', cnt('weightRecords')],
+    ['身体数据(三围)', cnt('bodyRecords')],
+    ['运动记录', cnt('exerciseRecords') + cnt('exerciseItems')],
+    ['洗头记录', cnt('washRecords')],
+    ['如厕记录', cnt('toiletRecords')],
+    ['敷面膜记录', cnt('maskRecords')],
+    ['经期记录', cnt('periodRecords')],
+    ['记账(支出与收入)', cnt('accountRecords')],
+    ['定制单', cnt('customOrders')],
+    ['美化档记录', cnt('beautyRecords')],
+    ['自媒体图文明细', cnt('mediaRecords')],
+    ['未来更新图文', cnt('futurePosts')],
+    ['选题库', cnt('topicLibrary')],
+    ['爆款对标库', cnt('benchmarkNotes')],
+    ['灵感库', cnt('inspireRecords')],
+    ['重要日期', cnt('importantDates')],
+    ['游玩计划/行程', cnt('travelPlans') + cnt('trips')],
+    ['自媒体账号', Object.keys(s.accounts || {}).length],
+    ['背景图', bgN + ' 张'],
+    ['界面设置(主题/字号/侧栏宽度等)', '全部'],
+    ['工作台代码本体', (typeof BUILD_VER !== 'undefined' ? BUILD_VER : '当前版本')]
+  ];
+}
+function renderBackupManifest() {
+  const el = document.getElementById('backup-manifest');
+  if (!el) return;
+  el.innerHTML = hamiBackupManifest().map(function (r) {
+    return '<span style="display:inline-block;margin-right:10px;white-space:nowrap;">• ' + r[0] + '：<b style="color:#d14b73;">' + r[1] + '</b></span>';
+  }).join('');
+}
+
+// v230：备份位置——显示已授权的文件夹名，并提供「修改备份位置」
+async function renderBackupDir() {
+  const el = document.getElementById('backup-dir-path');
+  if (!el) return;
+  if (!window.showDirectoryPicker) {
+    el.innerHTML = '⚠️ 当前浏览器不支持直接写文件夹（iPhone/iPad 的 Safari 属于此类）：备份会存到「下载 / 文件」App 里，请手动移进你要的文件夹。';
+    return;
+  }
+  let h = null;
+  try { h = await _idbBackupGet(BACKUP_DIR_KEY); } catch (e) {}
+  if (!h) { el.innerHTML = '默认未设置 · 点「📁 修改备份位置」选一个文件夹（例如 F 盘的「Hami工作台」），之后备份会自动写进去。'; return; }
+  let perm = 'unknown';
+  try { perm = await h.queryPermission({ mode: 'readwrite' }); } catch (e) {}
+  const nm = localStorage.getItem('hami_backup_dir_name') || h.name || '（已选文件夹）';
+  const state = (perm === 'granted') ? '<span style="color:#1a9e4b;">已授权 ✅</span>' : '<span style="color:#d14b73;">待重新授权（下次备份会问你一次）</span>';
+  el.innerHTML = '当前目录：<b style="color:#d14b73;">' + nm + '</b> ' + state
+    + '<div style="font-size:11px;color:#9a8690;margin-top:3px;">浏览器出于安全不显示完整盘符路径，只显示文件夹名；换位置点右边「📁 修改备份位置」即可。</div>';
+}
+async function chooseBackupDir() {
+  const st = document.getElementById('settings-backup-status');
+  if (!window.showDirectoryPicker) {
+    if (st) { st.style.color = '#d14b73'; st.textContent = '当前浏览器不支持直接选文件夹，备份将改为下载到「下载 / 文件」App。'; }
+    return;
+  }
+  try {
+    const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    if (!dir) return;
+    await _idbBackupSet(BACKUP_DIR_KEY, dir);
+    try { localStorage.setItem('hami_backup_dir_name', dir.name || ''); } catch (e) {}
+    await renderBackupDir();
+    if (st) { st.style.color = '#1a9e4b'; st.textContent = '✅ 备份位置已改为「' + (dir.name || '所选文件夹') + '」，以后点「💾 立即完整备份」就写到这里。'; }
+  } catch (e) {
+    if (st) { st.style.color = '#d14b73'; st.textContent = '已取消或选择失败：' + ((e && e.message) ? e.message : e); }
+  }
+}
+
+// v230：超过 15 天没备份，打开页面时提醒一次（每天最多一次，不打扰）
+function maybeRemindBackup() {
+  try {
+    const ts = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10);
+    const days = ts ? Math.floor((Date.now() - ts) / 86400000) : 9999;
+    if (days < BACKUP_REMIND_DAYS) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('hami_backup_remind_day') === today) return;
+    try { localStorage.setItem('hami_backup_remind_day', today); } catch (e) {}
+    const msg = ts
+      ? ('⏰ 已 ' + days + ' 天没备份工作台了，去「七·设置工具 → 💾 数据备份」点一次「立即完整备份」吧~')
+      : '⏰ 还没有备份过工作台，去「七·设置工具 → 💾 数据备份」点一次「立即完整备份」吧~';
+    setTimeout(function () { try { hamiToast(msg); } catch (e) {} }, 3000);
+  } catch (e) {}
 }
 
 function totalDataCount() {
@@ -9755,6 +9870,11 @@ async function initSettingsPanel() {
   // 7) 数据备份与恢复（真备份：存成一个文件，云同步 ≠ 备份）
   const expBtn = document.getElementById('settings-export-data');
   if (expBtn) expBtn.addEventListener('click', function () { exportAllData(); });
+  // v230：完整备份（代码本体 + 全部数据 + 背景图 + 账号 → 3 文件）与「修改备份位置」
+  const fullBtn = document.getElementById('settings-full-backup');
+  if (fullBtn) fullBtn.addEventListener('click', function () { exportFullBackup(false); });
+  const dirBtn = document.getElementById('settings-pick-dir');
+  if (dirBtn) dirBtn.addEventListener('click', function () { chooseBackupDir(); });
   const impBtn = document.getElementById('settings-import-data');
   const impFile = document.getElementById('settings-import-file');
   if (impBtn && impFile) {
@@ -9772,31 +9892,43 @@ async function initSettingsPanel() {
 // 这是「真备份」：与云同步互不依赖，云端出问题时仍可原样恢复。
 function exportAllData() {
   const st = document.getElementById('settings-backup-status');
-  try {
-    const bundle = { _type: 'hami-backup', _version: 1, _exportedAt: new Date().toISOString(), data: {} };
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (k === STORAGE_KEY || k.indexOf('hami_') === 0) bundle.data[k] = localStorage.getItem(k);
+  (async function () {
+    try {
+      const bundle = _buildDataBundle();
+      // v230：单文件下载也带上背景图（修复后可在任意设备「从备份恢复」原样还原）
+      let bgN = 0;
+      try {
+        const allBgs = {};
+        try { const o = _bgAllRead() || {}; Object.keys(o).forEach(function (k) { if (o[k]) allBgs[k] = o[k]; }); } catch (e) {}
+        const idbBgs = await bgIdbGetAll();
+        Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k] && !allBgs[k]) allBgs[k] = idbBgs[k]; });
+        bgN = Object.keys(allBgs).length;
+        if (bgN) bundle._backgrounds = allBgs;
+      } catch (e) {}
+      let n = 0;
+      try { n = totalDataCount(); } catch (e) {}
+      const d = new Date();
+      const pad = function (x) { return String(x).padStart(2, '0'); };
+      const name = 'hami备份-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json';
+      const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1000);
+      try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
+      try { updateBackupAge(); } catch (e) {}
+      if (st) {
+        st.style.color = '#1a9e4b';
+        st.textContent = '✅ 已下载「' + name + '」，含 ' + n + ' 条记录'
+          + (bgN ? ' ＋ 背景图 ' + bgN + ' 张' : '')
+          + '（全部数据与设置）。重装后：打开 Hami 工作台 → 数据备份 → 从备份恢复 → 选它即可。';
+      }
+    } catch (e) {
+      console.error('[exportAllData] 导出失败', e);
+      if (st) { st.style.color = '#d14b73'; st.textContent = '导出失败：' + ((e && e.message) ? e.message : e); }
     }
-    let n = 0;
-    try { n = totalDataCount(); } catch (e) {}
-    const d = new Date();
-    const pad = function (x) { return String(x).padStart(2, '0'); };
-    const name = 'hami备份-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json';
-    const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = name;
-    document.body.appendChild(a); a.click();
-    setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1000);
-    try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
-    try { updateBackupAge(); } catch (e) {}
-    if (st) { st.style.color = '#1a9e4b'; st.textContent = '已下载备份文件「' + name + '」，含 ' + n + ' 条记录。请把它保存到相册/文件里~'; }
-  } catch (e) {
-    console.error('[exportAllData] 导出失败', e);
-    if (st) { st.style.color = '#d14b73'; st.textContent = '导出失败：' + ((e && e.message) ? e.message : e); }
-  }
+  })();
 }
 
 // ==================== 🛡️ 完整备份：一键产「代码+数据+账号」3 文件，写进 F 盘 ====================
@@ -9883,7 +10015,19 @@ async function exportFullBackup(silent) {
   const say = function (msg, color) { if (st && !silent) { st.style.color = color || '#c75b86'; st.textContent = msg; } };
   try {
     const htmlText = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const dataText = JSON.stringify(_buildDataBundle(), null, 2);
+    // v230：数据包并入背景图（localStorage 主存 + IndexedDB 冗余），保证换机/重装后背景图也在
+    const bundle = _buildDataBundle();
+    let bgCount = 0;
+    try {
+      const allBgs = {};
+      try { const o = _bgAllRead() || {}; Object.keys(o).forEach(function (k) { if (o[k]) allBgs[k] = o[k]; }); } catch (e) {}
+      const idbBgs = await bgIdbGetAll();
+      Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k] && !allBgs[k]) allBgs[k] = idbBgs[k]; });
+      bgCount = Object.keys(allBgs).length;
+      if (bgCount) bundle._backgrounds = allBgs;
+      bundle._backupDirName = localStorage.getItem('hami_backup_dir_name') || '';
+    } catch (e) { console.warn('[exportFullBackup] 背景图打包失败', e); }
+    const dataText = JSON.stringify(bundle, null, 2);
     const acctText = JSON.stringify(_buildAccountsBundle(), null, 2);
 
     let dirHandle = null;
@@ -9899,26 +10043,41 @@ async function exportFullBackup(silent) {
         try {
           dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
           await _idbBackupSet(BACKUP_DIR_KEY, dirHandle);
+          try { localStorage.setItem('hami_backup_dir_name', dirHandle.name || ''); } catch (e) {}
         } catch (e) { dirHandle = null; }
       }
     }
+
+    // v230：备份完成后明确告诉主人「备份了什么、有多少、存到哪、什么时间」
+    const now = new Date();
+    const when = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 '
+      + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    const manifestText = hamiBackupManifest().map(function (r) { return r[0] + ' ' + r[1]; }).join('、');
 
     if (dirHandle) {
       await _writeFileToDir(dirHandle, BACKUP_HTML_NAME, htmlText);
       await _writeFileToDir(dirHandle, BACKUP_DATA_NAME, dataText);
       await _writeFileToDir(dirHandle, BACKUP_ACCT_NAME, acctText);
       try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
+      try { localStorage.setItem('hami_backup_dir_name', dirHandle.name || ''); } catch (e) {}
       try { updateBackupAge(); } catch (e) {}
-      say('已把 3 个文件写入 F 盘：' + BACKUP_HTML_NAME + '、' + BACKUP_DATA_NAME + '、' + BACKUP_ACCT_NAME, '#1a9e4b');
-      if (typeof finToast === 'function') finToast('✅ 完整备份已存到 F 盘（3 个文件）');
+      try { renderBackupDir(); } catch (e) {}
+      say('✅ ' + when + ' 已备份到「' + (dirHandle.name || '所选文件夹') + '」，3 个文件覆盖式写入（永远只有最新一份）：\n'
+        + '① ' + BACKUP_HTML_NAME + '（工作台本体 ' + (typeof BUILD_VER !== 'undefined' ? BUILD_VER : '') + '）\n'
+        + '② ' + BACKUP_DATA_NAME + '（全部数据' + (bgCount ? ' + 背景图 ' + bgCount + ' 张' : '') + '）\n'
+        + '③ ' + BACKUP_ACCT_NAME + '\n'
+        + '本次包含：' + manifestText, '#1a9e4b');
+      if (typeof finToast === 'function') finToast('✅ 完整备份完成：3 个文件已存入「' + (dirHandle.name || '所选文件夹') + '」');
       return true;
     } else {
-      say('当前浏览器不支持直接写文件夹，已改为下载到「下载」文件夹，请手动移进 F:\\Hami工作台。', '#d14b73');
+      say('⚠️ 当前浏览器不支持直接写文件夹（iPhone/iPad 的 Safari），已改为下载到「下载 / 文件」App：'
+        + BACKUP_DATA_NAME + '、' + BACKUP_ACCT_NAME + '、Hami工作台.完整备份.html。请把它们移到你要的文件夹。', '#d14b73');
       _triggerDownload(BACKUP_DATA_NAME, dataText);
       setTimeout(function () { _triggerDownload(BACKUP_ACCT_NAME, acctText); }, 400);
       setTimeout(function () { _triggerDownload('Hami工作台.完整备份.html', htmlText); }, 800);
       try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
       try { updateBackupAge(); } catch (e) {}
+      if (typeof finToast === 'function') finToast('✅ 备份文件已下载到「下载 / 文件」，请移到你要的文件夹');
       return false;
     }
   } catch (e) {
@@ -9954,23 +10113,55 @@ async function importAllData(file) {
   reader.onload = async function (ev) {
     try {
       const bundle = JSON.parse(String((ev.target && ev.target.result) || ''));
+      const when = bundle && bundle._exportedAt ? String(bundle._exportedAt).replace('T', ' ').substring(0, 16) : '未知时间';
+
+      // A) 账号专用备份：合并进本地账号数据
+      if (bundle && bundle._type === 'hami-accounts-backup' && bundle.data) {
+        if (!await hamiConfirm('这是一份「自媒体账号备份」。\n\n备份时间：' + when + '\n\n确定恢复吗？完成后页面自动刷新。')) return;
+        try {
+          if (bundle.data.accounts) store.accounts = bundle.data.accounts;
+          if (bundle.data.accountsMeta) store.accountsMeta = Object.assign({}, store.accountsMeta, bundle.data.accountsMeta);
+          Object.keys(bundle.data).forEach(function (k) {
+            if (k === 'accounts' || k === 'accountsMeta') return;
+            try { localStorage.setItem(k, bundle.data[k]); } catch (e) {}
+          });
+          saveData();
+        } catch (e) {}
+        if (st) { st.style.color = '#1a9e4b'; st.textContent = '✅ 账号备份已恢复，正在刷新…'; }
+        setTimeout(function () { location.reload(); }, 800);
+        return;
+      }
+
+      // B) 完整/数据备份：覆盖式恢复全部 localStorage 键（含背景图 hami_bg_all）
       if (!bundle || bundle._type !== 'hami-backup' || !bundle.data) {
         if (st) { st.style.color = '#d14b73'; st.textContent = '这个文件不是 Hami 的备份文件，换一个再试~'; }
         return;
       }
       const keys = Object.keys(bundle.data);
-      const when = bundle._exportedAt ? String(bundle._exportedAt).replace('T', ' ').substring(0, 16) : '未知时间';
-      if (!await hamiConfirm('确定用这份备份恢复吗？\n\n备份时间：' + when + '\n包含数据：' + keys.length + ' 项\n\n恢复会覆盖当前数据，完成后页面自动刷新。')) return;
+      const bgN = (bundle._backgrounds && Object.keys(bundle._backgrounds).length) || 0;
+      if (!await hamiConfirm('确定用这份备份恢复吗？\n\n备份时间：' + when + '\n包含：' + keys.length + ' 项设置与数据' + (bgN ? ' ＋ 背景图 ' + bgN + ' 张' : '') + '\n\n恢复会覆盖当前数据，完成后页面自动刷新。')) return;
       let okCount = 0;
       keys.forEach(function (k) {
         try { localStorage.setItem(k, bundle.data[k]); okCount++; }
         catch (e) { console.error('[importAllData] 写入失败', k, e); }
       });
+      // 背景图回写：内存缓存 + IndexedDB 冗余（避免只依赖 localStorage）
+      if (bgN) {
+        try {
+          const bgs = bundle._backgrounds;
+          Object.keys(bgs).forEach(function (k) {
+            try { if (typeof BG_CACHE !== 'undefined') BG_CACHE[k] = bgs[k]; } catch (e) {}
+            try { bgIdbSet(k, bgs[k]); } catch (e) {}
+          });
+          try { if (typeof _bgAllWrite === 'function') _bgAllWrite(); } catch (e) {}
+          try { if (typeof applyAllBgs === 'function') applyAllBgs(); } catch (e) {}
+        } catch (e) { console.warn('[importAllData] 背景图回写失败', e); }
+      }
       if (okCount < keys.length) {
         if (st) { st.style.color = '#d14b73'; st.textContent = '部分恢复失败（' + okCount + '/' + keys.length + '），可能是存储空间不足，请先删掉几张背景图再试。'; }
         return;
       }
-      if (st) { st.style.color = '#1a9e4b'; st.textContent = '恢复完成，正在刷新页面…'; }
+      if (st) { st.style.color = '#1a9e4b'; st.textContent = '✅ 恢复完成（' + okCount + ' 项' + (bgN ? ' + 背景图 ' + bgN + ' 张' : '') + '），正在刷新页面…'; }
       setTimeout(function () { location.reload(); }, 800);
     } catch (e) {
       console.error('[importAllData] 恢复失败', e);
@@ -12445,6 +12636,12 @@ function switchPanel(name, navEl) {
     }
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     target.classList.add('active');
+    // v230：进入「数据备份」面板时刷新 内容清单 / 备份位置 / 上次备份时间
+    if (name === 'data-backup') {
+      try { renderBackupManifest(); } catch (e) {}
+      try { updateBackupAge(); } catch (e) {}
+      try { renderBackupDir(); } catch (e) {}
+    }
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     // 兼容 iPhone 点中子元素导致 navEl 不是 button：向上找 .nav-item
     let activeBtn = navEl;
@@ -20984,6 +21181,10 @@ fillMonthSelect(document.getElementById('income-month'), false);
 fillMonthSelect(document.getElementById('media-month'), false);
 fillMonthSelect(document.getElementById('account-month'), true);
 updateBackupAge();
+// v230：数据备份面板——内容清单 / 备份位置 / 超 15 天提醒（打开页面即刷新，不等进入面板）
+try { renderBackupManifest(); } catch (e) {}
+try { setTimeout(function () { try { renderBackupDir(); } catch (e2) {} }, 1200); } catch (e) {}
+try { setTimeout(function () { try { maybeRemindBackup(); } catch (e2) {} }, 2500); } catch (e) {}
 // 关键顺序：先把背景图从 IndexedDB 载入内存缓存（并把 localStorage 里的旧图迁移走、腾出 5MB 配额），
 // 再初始化背景图显示。若不先迁移，背景图会读不到，而且 localStorage 仍被占满导致业务数据写不进去。
 // 【关键修复 · 云同步不再被背景图拖累】
