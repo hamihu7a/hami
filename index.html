@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-234">
+<meta name="hami-build" content="2026-10-16-235">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1902,7 +1902,6 @@
   .cat-cardio .ex-cat-num { color: #4a7fa6; }
   .cat-weights .ex-cat-num { color: #8a5cb8; }
   .ex-cat-unit { font-size: 11px; color: #8a6270; font-weight: 600; margin-left: 2px; }
-  .ex-cat-sub { font-size: 10px; color: #a89a9a; font-weight: 600; line-height: 1.3; min-height: 26px; }
   .ex-cat-meta { font-size: 10px; color: #8a6270; font-weight: 600; }
   .ex-cat-add {
     margin-top: 4px; border: none; border-radius: 9px; padding: 6px 0; width: 100%;
@@ -1917,7 +1916,6 @@
     .ex-cat-card { padding: 10px 6px; }
     .ex-cat-num { font-size: 18px; }
     .ex-cat-name { font-size: 11px; }
-    .ex-cat-sub { min-height: 24px; font-size: 9px; }
     .ex-cat-add { font-size: 11px; padding: 5px 0; }
   }
   .ex-stat-rate { font-size: 10px; color: #a89a9a; font-weight: 600; }
@@ -13758,20 +13756,19 @@ function renderFitness() {
       const mins = list.reduce((s, it) => s + ((it.duration != null && !isNaN(it.duration)) ? Number(it.duration) : 0), 0);
       return { n: list.length, mins: mins };
     };
-    const ovCard = (cat, label, desc) => {
+    const ovCard = (cat, label) => {
       const st = catStat(cat);
       return `<div class="ex-cat-card cat-${cat}">
         <div class="ex-cat-head"><span class="ex-dot"></span><span class="ex-cat-name">${label}</span></div>
         <div class="ex-cat-num">${st.n}<span class="ex-cat-unit">次</span></div>
-        <div class="ex-cat-sub">${desc}</div>
         <div class="ex-cat-meta">本月累计 ${st.mins} 分钟</div>
         <button class="ex-cat-add" onclick="quickAddExercise('${cat}')">记一项</button>
       </div>`;
     };
     catOverviewEl.innerHTML =
-      ovCard('aerobics', '有氧操', '跳操 / 帕梅拉 / 刘畊宏') +
-      ovCard('cardio', '爬坡 / 椭圆机', '跑步机爬坡 / 椭圆机') +
-      ovCard('weights', '器械', '哑铃 / 器械区');
+      ovCard('aerobics', '有氧操') +
+      ovCard('cardio', '爬坡 / 椭圆机') +
+      ovCard('weights', '器械');
   }
 
   const catRate = n => (exerciseDays>0 ? ((n/exerciseDays)*100).toFixed(0) : 0);
