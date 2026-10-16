@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-251">
+<meta name="hami-build" content="2026-10-16-252">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6628,7 +6628,7 @@
         <!-- v239：背景图备份（从「数据备份」面板挪回主面板镜像下方） -->
         <div class="card" style="margin-top:14px;">
           <div class="card-title"><span>🛟</span> 背景图备份</div>
-          <div class="db-desc">换设备或清缓存后，点「从云端拉回」一键还原。</div>
+          <div class="db-desc">平时改了背景图 / 不透明度会自动同步到其它设备（无需点击）；换设备或清缓存后，点「从云端拉回」一键还原。</div>
           <div class="db-btn-row">
             <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" class="db-btn db-btn-main">📤 上传到云端</button>
             <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" class="db-btn db-btn-ghost">📥 从云端拉回</button>
@@ -7526,6 +7526,7 @@ function setBgStored(key, dataUrl) {
   BG_CACHE[key] = dataUrl;
   _bgAllWrite();   // v34：同步写入 localStorage 聚合键（主存），避免依赖不可靠的 IndexedDB
   BG_IDB_TS[key] = Date.now();
+  bgMarkRev();                 // v252：背景图变了 → 记版本，供版本对账判断谁新
   try { bgIdbSet(key, dataUrl); } catch (e) {}
   try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
   // v2026-09-07-30: 主人 N+1 次抱怨"背景图又消失"。改 30s 延迟为 3s，最大化"自动同步"体感
@@ -7550,6 +7551,7 @@ function delBgStored(key) {
   delete BG_CACHE[key];
   _bgAllDel(key);   // v34：同步从 localStorage 主存删除，保证推送时不会把已删的图重新带上云
   delete BG_IDB_TS[key];
+  bgMarkRev();                 // v252：删图同样记版本（确保删除能同步到其它设备）
   try { bgIdbDel(key); } catch (e) {}
   try { localStorage.removeItem(BG_KEYS[key]); } catch (e) {}
   try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
@@ -7591,109 +7593,13 @@ function _promiseTimeout(p, ms, fallback) {
 // 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
 // v56：彻底不弹 toast（v35 铁律：调试提示不上首页），所有状态只在设置面板二级文字显示
 async function syncBgsFromCloudOnBoot() {
+  // v252：本机已经有背景图 / 遮盖 → 这里不再下载（几 MB 太费流量），
+  // 交给云同步就绪后的「版本对账」bgAutoSyncAfterReady 决定是收还是发；本机空着才主动拉一次。
   try {
     if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
-    const got = await _ghGet();
-    if (!got) {
-        // 云端空：本地也没图才在设置面板温和提示一次
-        const hasLocalBg = Object.keys(BG_CACHE).some(function (k) { return !!BG_CACHE[k]; });
-        if (!hasLocalBg) {
-          try {
-            const statusEl = document.getElementById('settings-bg-cloud-status');
-            if (statusEl) statusEl.textContent = '☁️ 还没连上云端，先等等或在设置面板点「立即同步」';
-          } catch (e) {}
-        }
-        return;
-      }
-    let remote = null;
-    try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
-    catch (e1) {
-      try { remote = await decryptStore(got.content.replace(/\s+/g, ''), (typeof hamiSyncPassword === 'string' ? hamiSyncPassword : '')); }
-      catch (e2) {
-        // 解密失败：仅在设置面板提示，不弹首页
-        try {
-          const statusEl = document.getElementById('settings-bg-cloud-status');
-          if (statusEl) statusEl.textContent = '⚠️ 云端备份存在但解密失败，可能改了密码？去设置面板检查';
-        } catch (e) {}
-        return;
-      }
-    }
-    if (!remote || !remote.bgBackups || typeof remote.bgBackups !== 'object') {
-        const hasLocalBg = Object.keys(BG_CACHE).some(function (k) { return !!BG_CACHE[k]; });
-        if (!hasLocalBg) {
-          try {
-            const statusEl = document.getElementById('settings-bg-cloud-status');
-            if (statusEl) statusEl.textContent = '☁️ 云端还没存过背景图（请在背景图面板上传一次）';
-          } catch (e) {}
-        } else {
-          try { applyAllBgs(); } catch (e) {}
-          try {
-            const statusEl = document.getElementById('settings-bg-cloud-status');
-            if (statusEl) statusEl.textContent = '☁️ 本地有背景图，但云端还没备份。换设备前请点「📤 上传背景到云端」一次。';
-          } catch (e) {}
-        }
-        return;
-      }
-    const keys = Object.keys(remote.bgBackups);
-    if (!keys.length) {
-        try {
-          const statusEl = document.getElementById('settings-bg-cloud-status');
-          if (statusEl) statusEl.textContent = '☁️ 云端背景图备份为空';
-        } catch (e) {}
-        return;
-      }
-    let localMissing = 0;
-    keys.forEach(function (k) {
-      const data = remote.bgBackups[k];
-      const localData = BG_CACHE[k];
-      const localTs = (function(){ try { return BG_IDB_TS[k] || 0; } catch(e) { return 0; } })();
-      const remoteTs = (typeof remote.bgBackupsAt === 'number' ? remote.bgBackupsAt : 0);
-      const need = data && (!localData || remoteTs >= localTs);
-      if (need) localMissing++;
-    });
-    if (localMissing === 0) {
-      try { applyAllBgs(); } catch (e) {}
-      return;
-    }
-    let pending = keys.length, applied = 0, failed = 0;
-    keys.forEach(function (k) {
-      const data = remote.bgBackups[k];
-      if (!data) { if (--pending <= 0) finish(); return; }
-      const localData = BG_CACHE[k];
-      const localTs = (function(){ try { return BG_IDB_TS[k] || 0; } catch(e) { return 0; } })();
-      const remoteTs = (typeof remote.bgBackupsAt === 'number' ? remote.bgBackupsAt : 0);
-      const shouldApply = !localData || remoteTs >= localTs;
-      if (!shouldApply) { if (--pending <= 0) finish(); return; }
-      try { BG_CACHE[k] = data; applied++; } catch (e) { failed++; }
-      bgIdbSet(k, data).then(function(){
-        try { BG_IDB_TS[k] = remoteTs; } catch (e) {}
-        if (--pending <= 0) finish();
-      }).catch(function(){ failed++; if (--pending <= 0) finish(); });
-    });
-    function finish() {
-      try {
-        if (applied > 0) {
-          try { applyAllBgs(); } catch (e) {}
-          try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
-          // v56：不弹首页 toast。状态写设置面板二级文字，主人主动去看才看得到
-          try {
-            const statusEl = document.getElementById('settings-bg-cloud-status');
-            if (statusEl) statusEl.textContent = '☁️ 已从云端恢复 ' + applied + ' 张背景图（' + new Date(remote.bgBackupsAt || Date.now()).toLocaleString('zh-CN') + '）' + (failed ? '，失败 ' + failed + ' 张' : '');
-          } catch (e) {}
-        } else if (failed > 0) {
-          try {
-            const statusEl = document.getElementById('settings-bg-cloud-status');
-            if (statusEl) statusEl.textContent = '⚠️ 背景图恢复失败 ' + failed + ' 张，请去设置面板手动重试';
-          } catch (e) {}
-        }
-      } catch (e) {}
-    }
-  } catch (e) {
-    try {
-      const statusEl = document.getElementById('settings-bg-cloud-status');
-      if (statusEl) statusEl.textContent = '⚠️ 背景图云端恢复异常：' + (e && e.message ? e.message : e);
-    } catch (e2) {}
-  }
+    if (bgLocalHasAnyDev()) return;
+    await bgDownloadFromCloud(true);
+  } catch (e) {}
 }
 
 // v56：彻底废弃首页"背景图云端恢复"toast（v35 铁律：调试提示不上首页）
@@ -7800,74 +7706,236 @@ function clearBg(key) {
 // ========== 背景图云端备份/恢复 ==========
 // 主人核心痛点：背景图只存本地浏览器 IndexedDB，换设备/清缓存就全没。
 // 这里让背景图跟着 store 一起走云端（加密）+ 设置面板两个手动按钮兜底。
-async function bgUploadAllToCloud() {
+// ==================== v252：背景图 + 遮盖「跨设备同步」专用通道 ====================
+// 真凶：v182 为保住主同步档案 <1MB（GitHub Contents API 对 >1MB 文件只返回元数据、content 为空），
+// 把背景图从主档案里剔除了；结果只剩「手动上传」这一条路，而它又把几 MB 背景图塞回同一个主档案，
+// 必然超限失败 → 表现为「点上传到云端一直失败 / 手机端永远收不到电脑端改的背景图」。
+// 遮盖（不透明度 / 渐变方向 / 镜像 / 旋转）此前更是从未参与同步。
+// v252 方案：背景图与遮盖走【独立文件 sync/hami-bgs.json】：
+//   · 读：Contents API 拿不到 content 时自动回退 git Blobs API（几 MB 也能读全）
+//   · 写：先试 Contents API；失败（超大 / 超限 / 被拦）自动改用 git Data API（建 blob→tree→commit→改 ref）
+//   · 主档案只放一个几十字节的 bgMeta（版本时间戳）——两端一比就知道谁新，
+//     避免每次开页都去下载几 MB 的背景文件（省流量）。
+const BG_FILE_PATH = 'sync/hami-bgs.json';
+const BG_REV_KEY = 'hami_bgs_rev';
+let _remoteBgMeta = null;          // 主档案带回来的背景版本信息
+var _bgUploadInFlight = false;   // v252：显式声明（原来靠隐式全局，避免严格模式/打包后失效）
+let _bgAutoTimer = null;           // 背景/遮盖改动后的自动上传合并定时器
+let _bgLastUploadAt = 0;           // v252：上次成功上传时间（防两端互相补推形成循环）
+
+function bgMarkRev(ts) { try { localStorage.setItem(BG_REV_KEY, String(ts || Date.now())); } catch (e) {} }
+function bgLocalRev() {
+  let v = 0;
+  try { v = Number(localStorage.getItem(BG_REV_KEY) || 0) || 0; } catch (e) {}
+  if (!v) { try { Object.keys(BG_IDB_TS).forEach(function (k) { const t = Number(BG_IDB_TS[k] || 0); if (t > v) v = t; }); } catch (e) {} }
+  return v;
+}
+// 汇总本机所有「遮盖」设置（不透明度 / 渐变方向 / 位置 / 放大 / 镜像 / 旋转）
+function bgCollectMasks() {
+  const out = {};
+  const keys = {};
+  try { Object.keys(HAMI_BG_MASK_RGB).forEach(function (k) { keys[k] = 1; }); } catch (e) {}
+  try { Object.keys(BG_KEYS).forEach(function (k) { keys[k] = 1; }); } catch (e) {}
+  Object.keys(keys).forEach(function (k) {
+    try {
+      const raw = localStorage.getItem(HAMI_BG_MASK_KEY + k);
+      if (raw) out[k] = JSON.parse(raw);
+    } catch (e) {}
+  });
+  return out;
+}
+// 本机有没有「值得上传」的背景/遮盖（默认值不算）
+function bgLocalHasAnyDev() {
+  try { if (Object.keys(BG_CACHE).some(function (k) { return !!BG_CACHE[k]; })) return true; } catch (e) {}
+  try {
+    const m = bgCollectMasks();
+    return Object.keys(m).some(function (k) {
+      const c = m[k] || {};
+      return c.vis !== 100 || c.mode !== 'even' || c.px !== 50 || c.py !== 50 || c.zoom !== 100 || c.flip || c.rot;
+    });
+  } catch (e) { return false; }
+}
+// 背景/遮盖变化后自动推一次（合并抖动；主人不需要点任何按钮）
+function bgScheduleAutoSync(delayMs) {
+  try {
+    if (!hamiCloudEnabled || !hamiCloudEnabled()) return;
+    if (!hamiSyncReady) { _hamiBgAutoUploadPending = true; return; }
+    if (_bgAutoTimer) clearTimeout(_bgAutoTimer);
+    _bgAutoTimer = setTimeout(function () {
+      _bgAutoTimer = null;
+      try { bgUploadAllToCloud(true); } catch (e) {}
+    }, delayMs || 6000);
+  } catch (e) {}
+}
+// 任意路径写文件：先 Contents API，失败自动改走 git Data API（大文件可靠通道）
+async function _ghPutPath(path, wrappedB64, sha, message) {
+  const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + path;
+  const body = { message: message, content: wrappedB64, branch: HAMI_SYNC.branch };
+  if (sha) body.sha = sha;
+  const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'hami-sync' };
+  let apiErr = '';
+  try {
+    const res = await fetch(url, { method: 'PUT', headers: hd, body: JSON.stringify(body) });
+    if (res.ok) { const jj = await res.json(); return (jj.content && jj.content.sha) || 'ok'; }
+    try { const e = await res.json(); apiErr = (e && e.message) || ''; } catch (e2) {}
+  } catch (e) { apiErr = (e && e.message) || String(e); }
+  // Contents API 顶不住（文件过大 / 内容超限 / 网络层拦截）→ git Data API
+  const b64OfFile = _b64enc(wrappedB64);
+  if (b64OfFile === null) throw new Error('内容编码失败');
+  return await _ghPutViaGitData(path, b64OfFile, message + ' [git-data]' + (apiErr ? ' (' + String(apiErr).slice(0, 60) + ')' : ''));
+}
+async function _ghPutViaGitData(path, fileB64, message) {
+  const base = 'https://api.github.com/repos/' + HAMI_SYNC.repo;
+  const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'hami-sync' };
+  const j = async function (u, method, body) {
+    const r = await fetch(u, { method: method || 'GET', headers: hd, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
+    if (!r.ok) {
+      let t = '';
+      try { const e = await r.json(); t = (e && e.message) ? e.message : ''; } catch (e2) {}
+      throw new Error('HTTP ' + r.status + (t ? ' ' + t : ''));
+    }
+    return await r.json();
+  };
+  let lastErr = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const ref = await j(base + '/git/refs/heads/' + HAMI_SYNC.branch);
+      const oldSha = ref.object.sha;
+      const cm = await j(base + '/git/commits/' + oldSha);
+      const blob = await j(base + '/git/blobs', 'POST', { content: fileB64, encoding: 'base64' });
+      const tree = await j(base + '/git/trees', 'POST', { base_tree: cm.tree.sha, tree: [{ path: path, mode: '100644', type: 'blob', sha: blob.sha }] });
+      const nc = await j(base + '/git/commits', 'POST', { message: message, tree: tree.sha, parents: [oldSha] });
+      await j(base + '/git/refs/heads/' + HAMI_SYNC.branch, 'PATCH', { sha: nc.sha });
+      return nc.sha;
+    } catch (e) {
+      lastErr = e;
+      await new Promise(function (r) { setTimeout(r, 900); });   // 分支被别的流程推进 → 重新取 ref 再试
+    }
+  }
+  throw lastErr || new Error('git data api 失败');
+}
+// 上传本机全部背景图 + 遮盖到云端独立文件
+async function bgUploadAllToCloud(silent) {
   const statusEl = document.getElementById('settings-bg-cloud-status');
-  if (statusEl) statusEl.textContent = '⏳ 正在把背景图打包加密上传到云端…';
-  // 标记：本流程自己负责把 bgBackups 写上云，期间 scheduleCloudPush 要让位（避免并发抢 sha 报 409）
+  const setSt = function (t) { if (statusEl) statusEl.textContent = t; };
+  if (!silent) setSt('⏳ 正在把背景图打包加密上传到云端…');
   _bgUploadInFlight = true;
   try {
-    // 关键：等当前推送链路释放（最坏 10s），再开始背景图上传，避免与并发 commitToCloud 撞车
     for (let i = 0; i < 40; i++) {
       if (!_syncBusy && !_commitBusy) break;
       await new Promise(r => setTimeout(r, 250));
     }
-    // v34：优先用 BG_CACHE（已由 localStorage 主存保证可靠），再以 IndexedDB 兜底补全
     const bgs = Object.assign({}, BG_CACHE);
     try { const idbBgs = await bgIdbGetAll(); Object.keys(idbBgs || {}).forEach(function (k) { if (idbBgs[k] && !bgs[k]) bgs[k] = idbBgs[k]; }); } catch (e) {}
     const keys = Object.keys(bgs || {}).filter(k => bgs[k]);
-    if (!keys.length) { if (statusEl) statusEl.textContent = '⚠️ 本地浏览器里没有背景图，无须上传。请先在「主面板镜像 · 点击板块改背景」上传几张图。'; return; }
+    const masks = bgCollectMasks();
+    if (!keys.length && !Object.keys(masks).length) {
+      if (!silent) setSt('⚠️ 本机还没有背景图 / 遮盖设置，无须上传。请先在「主面板镜像 · 点击板块改背景」里改一改。');
+      return;
+    }
     let total = 0; keys.forEach(k => total += (bgs[k] || '').length);
-    if (statusEl) statusEl.textContent = '⏳ 找到 ' + keys.length + ' 张背景图（共 ' + Math.round(total / 1024) + ' KB），上传中…';
-    // 直接走 _ghGet + _ghPut，但带 sha 冲突重试（和 pushNow 同款逻辑）：拉最新 → 再推；连 5 次真冲突才放弃
+    if (!silent) setSt('⏳ 找到 ' + keys.length + ' 张背景图（' + Math.round(total / 1024) + ' KB）+ ' + Object.keys(masks).length + ' 项遮盖，上传中…');
+    const at = Date.now();
+    const payload = { v: 2, updatedAt: at, bgBackups: bgs, bgMasks: masks, bgBackupsAt: at };
+    const ct = await encryptStore(payload, '');
+    const wrapped = _b64enc(ct);
+    if (wrapped === null) throw new Error('内容编码失败');
     let lastErr = null;
-    for (let attempt = 0; attempt < 5; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const payload = { v: 1, updatedAt: Date.now(), store: store, bgBackups: bgs, bgBackupsAt: Date.now() };
-        const ct = await encryptStore(payload, '');
-        const got = await _ghGet();
-        await _ghPut(ct, got ? got.sha : null, 'hami bg-backup ' + new Date().toISOString());
-        if (statusEl) statusEl.textContent = '✅ 已上传 ' + keys.length + ' 张背景图到云端（共 ' + Math.round(total / 1024) + ' KB）。换设备后或丢失时，可点「从云端拉回背景」一键恢复。';
+        const got = await _ghGet(BG_FILE_PATH);
+        await _ghPutPath(BG_FILE_PATH, wrapped, got ? got.sha : null, 'hami bg-backup ' + new Date().toISOString());
+        bgMarkRev(at);
+        _bgLastUploadAt = Date.now();
+        if (!silent) setSt('✅ 已上传 ' + keys.length + ' 张背景图 + ' + Object.keys(masks).length + ' 项遮盖（共 ' + Math.round(total / 1024) + ' KB）。其它设备打开工作台后会自动同步过去。');
+        // 顺带把「背景版本号」推进主档案，让手机端一开页就知道有新背景
+        try { if (hamiSyncReady) commitToCloud(); } catch (e) {}
         return;
       } catch (e) {
         lastErr = e;
-        const msg = (e && e.message) ? String(e.message) : String(e);
-        // 409 是 sha 冲突，GitHub 保护机制 → 拉新 sha 重试；其他错（5xx/网络）也重试
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 800));
       }
     }
-    if (statusEl) statusEl.textContent = '❌ 上传失败：' + ((lastErr && lastErr.message) || '未知错误') + '（已自动重试 5 次仍冲突，可再点一次重试）';
+    if (!silent) setSt('❌ 上传失败：' + ((lastErr && lastErr.message) || '未知错误') + '（已自动重试 3 次，可再点一次重试）');
+    throw lastErr || new Error('上传失败');
   } catch (e) {
-    if (statusEl) statusEl.textContent = '❌ 上传失败：' + ((e && e.message) || String(e));
+    if (!silent) setSt('❌ 上传失败：' + ((e && e.message) || String(e)));
+    if (silent) throw e;
   } finally {
     _bgUploadInFlight = false;
   }
 }
-async function bgDownloadFromCloud() {
+// 从云端拉回本机全部背景图 + 遮盖（写回内存 / localStorage 主存 / IndexedDB，并立即应用）
+async function bgDownloadFromCloud(silent) {
   const statusEl = document.getElementById('settings-bg-cloud-status');
-  if (statusEl) statusEl.textContent = '⏳ 正在从云端拉取背景图…';
+  const setSt = function (t) { if (statusEl) statusEl.textContent = t; };
+  if (!silent) setSt('⏳ 正在从云端拉取背景图…');
   try {
-    const got = await _ghGet();
-    if (!got) { if (statusEl) statusEl.textContent = '☁️ 云端暂无数据。请先在主菜单某台设备上传几张背景图，或点这里上传：' + '📤 上传背景到云端'; return; }
+    const got = await _ghGet(BG_FILE_PATH);
+    if (!got) {
+      if (!silent) setSt('☁️ 云端还没有背景图备份。请在改过背景图的那台设备上打开一次工作台（会自动上传），或在那台设备点「📤 上传到云端」。');
+      return false;
+    }
     let remote = null;
     try { remote = await decryptStore(got.content.replace(/\s+/g, ''), ''); }
-    catch (e1) {
-      try { remote = await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword); }
-      catch (e2) { remote = null; }
+    catch (e1) { try { remote = await decryptStore(got.content.replace(/\s+/g, ''), hamiSyncPassword); } catch (e2) { remote = null; } }
+    if (!remote || !remote.bgBackups) {
+      if (!silent) setSt('⚠️ 云端背景文件读不出来（格式不符）。请在电脑端点一次「📤 上传到云端」重新生成。');
+      return false;
     }
-    const bgs = remote && remote.bgBackups;
-    if (!bgs || !Object.keys(bgs).length) { if (statusEl) statusEl.textContent = '☁️ 云端有数据但没背景图。先点「📤 上传背景到云端」一次。'; return; }
-    const keys = Object.keys(bgs).filter(k => bgs[k]);
+    const bgs = remote.bgBackups || {};
+    const masks = remote.bgMasks || {};
+    const bkeys = Object.keys(bgs).filter(function (k) { return !!bgs[k]; });
     let done = 0;
-    await Promise.all(keys.map(function (k) {
+    await Promise.all(bkeys.map(function (k) {
       const data = bgs[k];
       try { BG_CACHE[k] = data; } catch (e) {}
-      return bgIdbSet(k, data).then(function () { done++; });
+      try { BG_IDB_TS[k] = remote.updatedAt || Date.now(); } catch (e) {}
+      return bgIdbSet(k, data).then(function () { done++; }).catch(function () { done++; });
     }));
-    if (typeof applyAllBgs === 'function') applyAllBgs();
-    if (statusEl) statusEl.textContent = '✅ 已从云端拉回 ' + done + ' 张背景图（已写回本机 + 应用到页面）。' + (remote.bgBackupsAt ? '云端备份时间：' + new Date(remote.bgBackupsAt).toLocaleString('zh-CN') : '');
+    try { _bgAllWrite(); } catch (e) {}                       // 同步写 localStorage 主存：下次开页立刻有图
+    try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
+    let mApplied = 0;
+    Object.keys(masks).forEach(function (k) {
+      try { hamiBgMaskSet(k, masks[k]); mApplied++; } catch (e) {}
+    });
+    try { applyAllBgs(); } catch (e) {}
+    if (remote.updatedAt) bgMarkRev(remote.updatedAt);
+    // v252：本机还有云端没有的背景图 → 稍后把并集推回去（另一端也能拿到全部；60s 内不重复，避免两端循环补推）
+    try {
+      const missing = Object.keys(BG_CACHE).filter(function (k) { return !!BG_CACHE[k] && !bgs[k]; });
+      if (missing.length && (Date.now() - _bgLastUploadAt) > 60000) {
+        setTimeout(function () { try { bgUploadAllToCloud(true); } catch (e) {} }, 3000);
+      }
+    } catch (e) {}
+    if (!silent) setSt('✅ 已从云端拉回 ' + done + ' 张背景图 + ' + mApplied + ' 项遮盖设置' + (remote.updatedAt ? '（云端时间 ' + new Date(remote.updatedAt).toLocaleString('zh-CN') + '）' : '') + '。');
+    return true;
   } catch (e) {
-    if (statusEl) statusEl.textContent = '❌ 拉取失败：' + ((e && e.message) || String(e));
+    if (!silent) setSt('❌ 拉取失败：' + ((e && e.message) || String(e)));
+    return false;
   }
+}
+// 云同步就绪后自动「对账」：谁新听谁的——云端新就收下来，本机新就自动推上去
+// 自愈：若云端只是版本号更新、但背景文件缺失/读不出来（清过仓库、上传中断等），
+//       本机有内容就直接推上去补回，绝不让两端互相干等。
+async function bgAutoSyncAfterReady() {
+  try {
+    if (!hamiCloudEnabled || !hamiCloudEnabled() || !hamiSyncReady) return;
+    const localRev = bgLocalRev();
+    const remoteAt = (_remoteBgMeta && _remoteBgMeta.at) ? _remoteBgMeta.at : 0;
+    const hasLocal = bgLocalHasAnyDev();
+    if (remoteAt > localRev) {
+      const ok = await bgDownloadFromCloud(true);
+      if (ok) return;                       // 收到了，结束
+      if (!hasLocal) return;                // 云端更新但拉不到、本机也没有 → 什么都不做
+      setTimeout(function () { try { bgUploadAllToCloud(true); } catch (e) {} }, 1500);   // 补回
+      return;
+    }
+    if (!hasLocal) return;                  // 本机没有任何背景图 / 遮盖改动 → 不推
+    if (remoteAt === 0 || localRev > remoteAt) {
+      setTimeout(function () { try { bgUploadAllToCloud(true); } catch (e) {} }, 1500);
+    }
+  } catch (e) {}
 }
 
 function onBgFile(key, input) {
@@ -8056,7 +8124,8 @@ let _lastPullAt = 0;
 // 修法：改用 **git Blobs API** 读文件全文（不受 1MB 限制，实测可读到 1063129 字节）：
 //   refs/heads/<branch> → commit → tree(?recursive=1) → 定位目标路径的 blob sha → GET /git/blobs/<sha>
 // 小档案仍走原 Contents API（更快），content 为空时自动回退，两种情况都稳。
-async function _ghGetBlobB64() {
+async function _ghGetBlobB64(pathOverride) {
+  const HAMI_PATH = pathOverride || HAMI_SYNC.path;
   const base = 'https://api.github.com/repos/' + HAMI_SYNC.repo;
   const hd = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' };
   const gj = async function (u) {
@@ -8071,14 +8140,15 @@ async function _ghGetBlobB64() {
   if (!commit || !commit.tree) return null;
   const tree = await gj(base + '/git/trees/' + commit.tree.sha + '?recursive=1');
   if (!tree || !Array.isArray(tree.tree)) return null;
-  const hit = tree.tree.filter(function (x) { return x && x.path === HAMI_SYNC.path; })[0];
+  const hit = tree.tree.filter(function (x) { return x && x.path === HAMI_PATH; })[0];
   if (!hit) return null;                       // 云端还没有档案
   const blob = await gj(base + '/git/blobs/' + hit.sha);
   if (!blob || !blob.content) return null;
   return { b64: blob.content, sha: hit.sha };
 }
-async function _ghGet() {
-  const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_SYNC.path + '?ref=' + HAMI_SYNC.branch;
+async function _ghGet(pathOverride) {
+  const HAMI_PATH = pathOverride || HAMI_SYNC.path;
+  const url = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/' + HAMI_PATH + '?ref=' + HAMI_SYNC.branch;
   let res;
   try {
     res = await fetch(url, {
@@ -8102,7 +8172,7 @@ async function _ghGet() {
   // v181：大文件（>1MB）时 GitHub 只给元数据、content 为空 → 必须回退到 git Blobs API 取全文
   if (!rawB64) {
     try {
-      const got = await _ghGetBlobB64();
+      const got = await _ghGetBlobB64(HAMI_PATH);
       if (got && got.b64) { rawB64 = got.b64; if (got.sha) sha = got.sha; viaBlob = true; }
     } catch (e) {
       _diagStep('拉取云端档案', false, '大档案 Blobs 回退失败：' + ((e && e.message) ? e.message : e));
@@ -9179,6 +9249,10 @@ async function pullAndMerge() {
       }
     } catch (e) {}
     try { if (remote.bgBackups && Object.keys(remote.bgBackups).length) _lastPullBg = remote.bgBackups; } catch (e) {}
+    // v252：顺手记下云端背景版本号——比本机新就自动去拉背景文件（背景图不在主档案里，故只带版本号）
+    try { if (remote && remote.bgMeta) _remoteBgMeta = remote.bgMeta; } catch (e) {}
+    // v252：页面已就绪时（后台定时拉取）发现云端背景更新 → 自动收下来，不用主人手动点
+    try { if (hamiSyncReady && _remoteBgMeta && _remoteBgMeta.at > bgLocalRev()) bgDownloadFromCloud(true); } catch (e) {}
     _lastSyncAt = Date.now(); _persistLastSync();
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
     syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
@@ -9208,7 +9282,7 @@ async function pushNow() {
         // 现改为【业务数据单独同步】：背景图不再写入同步档案（背景图以各设备本地 localStorage/IDB 为准，
         // 本就不会丢失；跨设备背景恢复属锦上添花，绝不该拖垮核心数据同步）。
         // 去掉背景图后主档案回到 ~400KB，GitHub Contents API 读写都可正常返回，手机端也能稳定同步。
-        const payload = { v: 1, updatedAt: Date.now(), store: store };
+        const payload = { v: 1, updatedAt: Date.now(), store: store, bgMeta: { at: bgLocalRev() } };
         const ct = await encryptStore(payload, '');
         // v181：复用刚才 pull 拿到的 sha（同一轮内必然是最新值），不再额外下载一遍拿 sha
         let upSha = pulledSha || ((Date.now() - _lastPullAt < 60000) ? _lastPullSha : null);
@@ -9582,6 +9656,8 @@ async function initCloudSync(statusEl, force) {
         _diagStep('推送云端失败', false, (e && e.message) ? e.message : String(e));
         console.error('[initCloudSync] 首次推送失败', e);
       }
+      // v252：云同步就绪 + 首次推送完成 → 背景图/遮盖对账（电脑端改的自动上传，手机端自动收下）
+      try { bgAutoSyncAfterReady(); } catch (e) {}
       cloudStatus('☁️ 云同步已开启（零登录自动同步）', '#5aa86a');
     } catch (e) {
       _diagStep('第' + attempt + '次同步尝试失败', false, (e && e.message) ? e.message : String(e));
@@ -9846,6 +9922,8 @@ function mirrorBgLayer(block) {
 }
 function hamiBgMaskSet(key, cfg) {
   try { localStorage.setItem(HAMI_BG_MASK_KEY + key, JSON.stringify(cfg)); } catch (e) {}
+  bgMarkRev();                                  // v252：遮盖一改就记版本
+  try { bgScheduleAutoSync(6000); } catch (e) {}  // v252：几秒后自动推上云（手机端自动收到）
 }
 // 生成遮盖渐变；vis=100 → 返回 'none'（保证默认外观与改造前完全一致）
 function hamiBgMaskGradient(key, cfg) {
