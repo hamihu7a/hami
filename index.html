@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-250">
+<meta name="hami-build" content="2026-10-16-251">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4545,27 +4545,6 @@
 
   /* ===================== v249：手账本边框风（只改边框质感，配色/字体/功能不动） ===================== */
   /* 灵感：手账/贴纸——区域块四周「邮票锯齿打孔边」+ 卡片内侧手绘虚线框 */
-  /* —— ① 首页五大区域块：四边邮票锯齿边（CSS mask 打孔；上传的背景图也会一起被裁成锯齿，像贴纸贴在页面上） —— */
-  .desktop-hero,
-  .accounts-wrap,
-  #home-weather,
-  #home-fortune,
-  #home-weight-cal {
-    --jv-hole: 4.2px;   /* 锯齿圆半径 */
-    --jv-gap: 15px;     /* 锯齿间距 */
-    -webkit-mask:
-      radial-gradient(circle var(--jv-hole) at 50% 0, transparent 97%, #000 100%) 0 0 / var(--jv-gap) 100% repeat-x,
-      radial-gradient(circle var(--jv-hole) at 50% 100%, transparent 97%, #000 100%) 0 0 / var(--jv-gap) 100% repeat-x,
-      radial-gradient(circle var(--jv-hole) at 0 50%, transparent 97%, #000 100%) 0 0 / 100% var(--jv-gap) repeat-y,
-      radial-gradient(circle var(--jv-hole) at 100% 50%, transparent 97%, #000 100%) 0 0 / 100% var(--jv-gap) repeat-y;
-    -webkit-mask-composite: destination-in;
-    mask:
-      radial-gradient(circle var(--jv-hole) at 50% 0, transparent 97%, #000 100%) 0 0 / var(--jv-gap) 100% repeat-x,
-      radial-gradient(circle var(--jv-hole) at 50% 100%, transparent 97%, #000 100%) 0 0 / var(--jv-gap) 100% repeat-x,
-      radial-gradient(circle var(--jv-hole) at 0 50%, transparent 97%, #000 100%) 0 0 / 100% var(--jv-gap) repeat-y,
-      radial-gradient(circle var(--jv-hole) at 100% 50%, transparent 97%, #000 100%) 0 0 / 100% var(--jv-gap) repeat-y;
-    mask-composite: intersect;
-  }
   /* —— ② 所有卡片：内侧一圈淡粉虚线细框（手账纸的"描边框"，outline 不占布局零风险） —— */
   .card, .todo-card {
     outline: 2px dashed rgba(209, 75, 115, 0.20);
@@ -4575,8 +4554,6 @@
     outline: 2px dashed rgba(209, 75, 115, 0.20);
     outline-offset: -5px;
   }
-  /* 体重日历缩略块已整体打锯齿孔，不再叠虚线框（避免双重花边太闹） */
-  #home-weight-cal { outline: none; }
 </style>
 <style>
     /* ===== v246：招财猫图片（#lucky-cat）已整块移除；点击特效改由年度倒计时环触发 ===== */
