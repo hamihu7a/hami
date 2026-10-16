@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-277">
+<meta name="hami-build" content="2026-10-16-278">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5315,16 +5315,16 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
       transition:box-shadow var(--t), transform var(--t); }
     .hcp-card:hover { box-shadow:var(--shadow-hover); transform:translateY(-2px); }
     .hcp-life  { background:linear-gradient(145deg,#fff6f9,#ffe2ed); border-color:#ffc7d8; }
-    .hcp-today { background:linear-gradient(145deg,#f7f2ff,#ead9fd); border-color:#dcc8f7; }
+    .hcp-today { background:linear-gradient(145deg,#fff1f6,#ffdbe9); border-color:#ffbdd3; }
     .hcp-title { font-size:12.5px; font-weight:800; letter-spacing:.5px; margin-bottom:2px; }
     .hcp-life  .hcp-title { color:#d14b73; }
-    .hcp-today .hcp-title { color:#7a55d8; }
+    .hcp-today .hcp-title { color:#d14b73; }
     .hcp-big { font-size:clamp(24px,4.2vw,32px); font-weight:900; line-height:1.15; font-variant-numeric:tabular-nums; }
     .hcp-life  .hcp-big { color:#d14b73; }
-    .hcp-today .hcp-big { color:#7a55d8; }
+    .hcp-today .hcp-big { color:#d14b73; }
     .hcp-unit { font-size:13px; font-weight:800; margin-left:3px; }
     .hcp-sub { font-size:11.5px; font-weight:700; color:#b06884; margin:1px 0 8px; }
-    .hcp-lunar { color:#8f6adf; margin:1px 0 6px; }
+    .hcp-lunar { color:#c26a8a; margin:1px 0 6px; }
     .hcp-bar { position:relative; height:16px; border-radius:9px; background:rgba(255,255,255,.78); overflow:hidden; margin-top:auto; box-shadow:inset 0 1px 3px rgba(209,75,115,.10); }
     .hcp-bar-fill { position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:9px; background:linear-gradient(90deg,#ff9eb5,#ff7fa0,#c58ae6); transition:width .8s ease; }
     .hcp-bar-pct { position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:10.5px; font-weight:800; color:#b0587a; }
@@ -5332,10 +5332,10 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     .hcp-ring { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .hcp-ring-wrap { position:relative; width:clamp(44px,6.6vw,54px); height:clamp(44px,6.6vw,54px); }
     .hcp-ring-wrap svg { width:100%; height:100%; transform:rotate(-90deg); display:block; }
-    .hcp-track { fill:none; stroke:rgba(122,85,216,.14); stroke-width:7; }
+    .hcp-track { fill:none; stroke:rgba(255,127,160,.16); stroke-width:7; }
     .hcp-fill { fill:none; stroke-width:7; stroke-linecap:round; stroke-dasharray:163.36; stroke-dashoffset:163.36; transition:stroke-dashoffset .8s ease; }
-    .hcp-ring-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#7a55d8; }
-    .hcp-ring-lab { font-size:10px; font-weight:700; color:#9b7ecf; margin-top:2px; white-space:nowrap; }
+    .hcp-ring-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#d14b73; }
+    .hcp-ring-lab { font-size:10px; font-weight:700; color:#c47a96; margin-top:2px; white-space:nowrap; }
     </style>
     <div id="hami-countdown-pair">
       <div class="hcp-card hcp-life">
@@ -5350,8 +5350,8 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         <div class="hcp-sub hcp-lunar" id="hcp-lunar">--</div>
         <div class="hcp-rings">
           <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-day" cx="32" cy="32" r="26" style="stroke:#ff7fa0"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-day">--%</span></div><div class="hcp-ring-lab">今日剩余</div></div>
-          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-month" cx="32" cy="32" r="26" style="stroke:#c58ae6"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-month">--%</span></div><div class="hcp-ring-lab">本月剩余</div></div>
-          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-year" cx="32" cy="32" r="26" style="stroke:#7fb8ff"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-year">--%</span></div><div class="hcp-ring-lab">今年剩余</div></div>
+          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-month" cx="32" cy="32" r="26" style="stroke:#ef6a9e"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-month">--%</span></div><div class="hcp-ring-lab">本月剩余</div></div>
+          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-year" cx="32" cy="32" r="26" style="stroke:#ffb0c8"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-year">--%</span></div><div class="hcp-ring-lab">今年剩余</div></div>
         </div>
       </div>
     </div>
@@ -5376,7 +5376,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         try {
           var now = new Date();
           // 右卡：今日时光
-          document.getElementById('hcp-day-num').textContent = now.getDate();
+          document.getElementById('hcp-day-num').textContent = (now.getMonth()+1) + '.' + now.getDate();
           var hl = getHuangLi(now.getFullYear(), now.getMonth()+1, now.getDate());
           document.getElementById('hcp-lunar').textContent = '农历' + hl.lunar + ' · 周' + '日一二三四五六'.charAt(now.getDay());
           var dayLeft = 1 - (now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/86400;
