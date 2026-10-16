@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-267">
+<meta name="hami-build" content="2026-10-16-268">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1849,10 +1849,7 @@
   }
   .media-progress-num { font-size: 12px; color: #8a6270; font-weight: 600; white-space: nowrap; }
   .media-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-  #media-history-wrap { overflow-x: auto; }
-  #media-history-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
-  #media-history-wrap th, #media-history-wrap td { white-space: nowrap; text-align: center; font-size: 11px; padding: 5px 3px; }
-  #media-history-wrap th:first-child, #media-history-wrap td:first-child { text-align: left; }
+  /* v268：历史统计已改 .mh-item 月份卡，旧表格规则删除 */
   /* 每日体重表：内容不多，撑满整宽，不再左右滑动 */
   #weight-table-wrap { overflow-x: auto; }
   #weight-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
@@ -1881,14 +1878,7 @@
     transition: all .12s ease;
   }
   .exercise-filter-tab.active { background: linear-gradient(90deg, #ff9eb5, #ff7f9e); color: #fff; border-color: transparent; }
-  #exercise-items-table-wrap { overflow-x: auto; }
-  #exercise-items-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
-  #exercise-items-table-wrap th, #exercise-items-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
-  #exercise-items-table-wrap th:nth-child(1), #exercise-items-table-wrap td:nth-child(1) { width: 22%; }
-  #exercise-items-table-wrap th:nth-child(2), #exercise-items-table-wrap td:nth-child(2) { width: 22%; }
-  #exercise-items-table-wrap th:nth-child(3), #exercise-items-table-wrap td:nth-child(3) { width: 34%; white-space: normal; }
-  #exercise-items-table-wrap th:nth-child(4), #exercise-items-table-wrap td:nth-child(4) { width: 12%; }
-  #exercise-items-table-wrap th:nth-child(5), #exercise-items-table-wrap td:nth-child(5) { width: 10%; text-align: center; }
+  #exercise-items-table-wrap { overflow-x: visible; }   /* v268：明细已改 .ex-row 行卡片，不再需要横滚 */
   .ex-type-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
   .ex-type-badge.cat-aerobics { background: #ffe4ec; color: #d14b73; }
   .ex-type-badge.cat-cardio { background: #eaf6fc; color: #5a85a6; }
@@ -4888,6 +4878,101 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     .ih-item { padding: 7px 9px; }
     .ih-title { font-size: 12px; }
   }
+
+  /* ==================== v268：三个"贫瘠白表格"板块重设计（紧凑 + 有颜色 + 内容完善） ====================
+     ① 自媒体·历史统计：白表格 → 月份统计卡（三色账号徽章 + 占比条 + 合计渐变条）
+     ② 灵感·今日推荐：纯文字行 → 彩色图标分区卡（图标块 + 灰标签 + 正文，标签拆粉徽章）
+     ③ 运动·详细记录：挤压表格 → 记录行卡片（日期+类型徽章+时长+操作一行、项目名独立行） */
+
+  /* —— ① 历史统计 mh-* —— */
+  .mh-item {
+    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 8px 10px; margin-bottom: 6px;
+  }
+  .mh-item.mh-empty { opacity: .68; }
+  .mh-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 5px; }
+  .mh-month {
+    font-size: 10.5px; font-weight: 800; color: #fff; white-space: nowrap;
+    background: linear-gradient(135deg, #ff9eb5, #ff7f9e);
+    padding: 2px 9px; border-radius: 9px;
+  }
+  .mh-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 700; color: #5a3a48; white-space: nowrap;
+    background: #fff; border: 1px solid #ffd0dc; border-radius: 8px; padding: 1px 7px;
+  }
+  .mh-chip.mh-zero { color: #c0a8b2; background: transparent; border-style: dashed; }
+  .mh-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .mh-total { margin-left: auto; font-size: 12px; font-weight: 800; color: #d14b73; white-space: nowrap; }
+  .mh-bar { margin-top: 6px; height: 6px; border-radius: 3px; background: #ffeef2; overflow: hidden; display: flex; }
+  .mh-item.mh-empty .mh-bar { background: repeating-linear-gradient(45deg, #ffeef2, #ffeef2 4px, #fff6f9 4px, #fff6f9 8px); }
+  .mh-seg { height: 100%; }
+  .mh-seg:first-child { border-radius: 3px 0 0 3px; }
+  .mh-seg:last-child { border-radius: 0 3px 3px 0; }
+  .mh-sum {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px; padding: 8px 12px; border-radius: 12px;
+    background: linear-gradient(135deg, #ffe9f0, #ffdce8);
+    font-size: 12px; font-weight: 800; color: #b83557;
+  }
+
+  /* —— ② 今日推荐 ins-* —— */
+  .ins-card {
+    padding: 14px; border-radius: 16px;
+    background: linear-gradient(150deg, #fff5f8 0%, #ffeef5 60%, #ffe9f2 100%);
+    border: 1.5px solid #ffc9da;
+    box-shadow: 0 4px 14px rgba(209, 75, 115, 0.10);
+  }
+  .ins-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .ins-type {
+    font-size: 10.5px; font-weight: 800; color: #fff; white-space: nowrap;
+    padding: 3px 10px; border-radius: 10px;
+  }
+  .ins-type.ai  { background: linear-gradient(135deg, #ff9eb5, #ff6b9e); }
+  .ins-type.web { background: linear-gradient(135deg, #b39ddb, #9b7fd4); }
+  .ins-date { font-size: 11px; font-weight: 700; color: #a08492; white-space: nowrap; }
+  .ins-title { font-size: 15px; font-weight: 800; color: #4a3340; line-height: 1.5; margin-bottom: 8px; }
+  .ins-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ins-chip {
+    font-size: 10.5px; font-weight: 700; color: #7d4a5a; white-space: nowrap;
+    background: rgba(255, 255, 255, 0.85); border: 1px solid #ffd0dc;
+    border-radius: 9px; padding: 2px 9px;
+  }
+  .ins-chip.hot { color: #e8821e; border-color: #ffd9b0; background: #fff8ec; }
+  .ins-divider { height: 1px; background: linear-gradient(90deg, transparent, #ffd6e0, transparent); margin: 11px 0 2px; }
+  .ins-d-row { display: flex; align-items: flex-start; gap: 9px; padding: 8px 0; }
+  .ins-d-row + .ins-d-row { border-top: 1px dashed rgba(209, 75, 115, 0.16); }
+  .ins-d-ico {
+    width: 27px; height: 27px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .ins-d-body { flex: 1; min-width: 0; }
+  .ins-d-label { font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px; color: #c493a4; margin-bottom: 2px; }
+  .ins-d-text { font-size: 12.5px; line-height: 1.65; color: #4a3340; word-break: break-word; }
+  .ins-tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700; color: #d14b73;
+    background: #ffe1ea; border-radius: 8px; padding: 1px 8px; margin: 0 4px 4px 0;
+  }
+  .ins-link { font-size: 12px; font-weight: 700; color: #ff7f9e; text-decoration: none; border-bottom: 1px dashed #ff9eb5; }
+
+  /* —— ③ 运动·详细记录 ex-row —— */
+  .ex-row {
+    display: flex; align-items: center; gap: 7px;
+    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 7px 10px; margin-bottom: 5px;
+    transition: box-shadow .15s ease;
+  }
+  .ex-row:hover { box-shadow: 0 3px 10px rgba(209, 75, 115, 0.10); }
+  .ex-row-date { font-size: 11px; font-weight: 700; color: #a08492; white-space: nowrap; }
+  .ex-row-dur { font-size: 11px; font-weight: 800; color: #e8821e; white-space: nowrap; }
+  .ex-row-act { margin-left: auto; white-space: nowrap; }
+  .ex-row-name { flex: 1 1 100%; order: 10; min-width: 0; font-size: 12.5px; font-weight: 700; color: #4a3340; line-height: 1.45; word-break: break-word; }
+  .ex-row .ex-item-extra { display: inline; margin-left: 6px; font-weight: 500; }
+  @media (min-width: 500px) {
+    /* 电脑端一行排下：项目名回到中间、超长省略 */
+    .ex-row-name { flex: 1 1 auto; order: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ex-row-act { margin-left: 0; }
+  }
 </style>
 </head>
 <body>
@@ -5646,10 +5731,8 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
           </div>
         </div>
         <div id="exercise-items-table-wrap">
-          <table>
-            <thead><tr><th>日期</th><th>类型</th><th>项目</th><th>时长</th><th>操作</th></tr></thead>
-            <tbody id="exercise-items-table"></tbody>
-          </table>
+          <!-- v268：明细表格改为紧凑记录行卡片（日期+类型徽章+项目+时长+操作） -->
+          <div id="exercise-items-table"></div>
         </div>
       </div>
     </div>
@@ -5711,12 +5794,8 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
 
     <div class="card">
       <div class="card-title">历史统计</div>
-      <div id="media-history-wrap">
-        <table>
-          <thead><tr><th>月份</th><th>美化档大号</th><th>定制人物小号</th><th>抖音</th><th>合计</th></tr></thead>
-          <tbody id="media-history"></tbody>
-        </table>
-      </div>
+      <!-- v268：白表格改为月份统计卡（三色占比条一眼看分布），紧凑不贫瘠 -->
+      <div id="media-history" class="mh-list"></div>
     </div>
 
   </div>
@@ -14619,16 +14698,23 @@ function renderFitness() {
     const filter = window.__exFilter || 'all';
     const items = filter === 'all' ? allItems : allItems.filter(it => exItemCategory(it) === filter);
     if (items.length === 0) {
-      itemsEl.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>本月暂无${filter === 'all' ? '' : exCatName(filter)}记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div></td></tr>`;
+      itemsEl.innerHTML = `<div class="empty-state"><p>本月暂无${filter === 'all' ? '' : exCatName(filter)}记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div>`;
     } else {
+      // v268：明细改记录行卡片（不再压表格），一行放不下时项目名整行换行
       let ih = '';
       items.forEach(it => {
         const idx = store.exerciseItems.indexOf(it);  // 真实 store 索引
         const cat = exItemCategory(it);
         const typeName = exCatName(cat);
-        const dur = (it.duration != null && !isNaN(it.duration)) ? (it.duration + '分') : '—';
+        const dur = (it.duration != null && !isNaN(it.duration)) ? (it.duration + '分钟') : '—';
         const extra = [it.sets, it.note].filter(Boolean).join(' · ');
-        ih += `<tr><td>${it.date}</td><td><span class="ex-type-badge cat-${cat}">${typeName}</span></td><td>${it.name||'—'}${extra ? '<span class="ex-item-extra">'+escTodo(extra)+'</span>' : ''}</td><td>${dur}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openExerciseItemModal(${idx})" aria-label="修改">改</button> <button class="row-del-btn" onclick="deleteExerciseItem(${idx})" aria-label="删除">删</button></td></tr>`;
+        ih += `<div class="ex-row">`
+          + `<span class="ex-row-date">${it.date}</span>`
+          + `<span class="ex-type-badge cat-${cat}">${typeName}</span>`
+          + `<span class="ex-row-dur">⏱ ${dur}</span>`
+          + `<span class="ex-row-act"><button class="row-edit-btn" onclick="openExerciseItemModal(${idx})" aria-label="修改">改</button> <button class="row-del-btn" onclick="deleteExerciseItem(${idx})" aria-label="删除">删</button></span>`
+          + `<span class="ex-row-name">${escTodo(it.name||'—')}${extra ? '<span class="ex-item-extra">'+escTodo(extra)+'</span>' : ''}</span>`
+          + `</div>`;
       });
       itemsEl.innerHTML = ih;
     }
@@ -14874,15 +14960,31 @@ function renderMedia() {
   const months = Object.keys(monthSet).sort().reverse();   // v216：最新月份排最上（新→旧）
   let histHtml = '';
   let totalAll = 0;
+  // v268：历史统计改月份卡片——账号三色（粉=大号 / 蓝=小号 / 紫=抖音）+ 占比条
+  const MH_ACC = [
+    { key: 'big',    color: '#ff8aa6' },
+    { key: 'small',  color: '#7fb3d5' },
+    { key: 'douyin', color: '#b39ddb' }
+  ];
   months.forEach(m => {
     const recs = store.mediaRecords.filter(r => r.date.startsWith(m));
     const bc = recs.filter(r => r.account === 'big').reduce((s,r)=>s+(r.count||1),0);
     const sc = recs.filter(r => r.account === 'small').reduce((s,r)=>s+(r.count||1),0);
     const dc = recs.filter(r => r.account === 'douyin' || r.douyin).reduce((s,r)=>s+(r.count||1),0);
     const tot = bc+sc+dc; totalAll += tot;
-    histHtml += `<tr><td>${m}</td><td>${bc} 条</td><td>${sc} 条</td><td>${dc} 条</td><td><b>${tot} 条</b></td></tr>`;
+    const counts = { big: bc, small: sc, douyin: dc };
+    const chips = MH_ACC.map(a =>
+      `<span class="mh-chip${counts[a.key] ? '' : ' mh-zero'}"><span class="mh-dot" style="background:${a.color};"></span>${counts[a.key]} 条</span>`
+    ).join('');
+    const segs = tot > 0
+      ? MH_ACC.map(a => counts[a.key] > 0 ? `<span class="mh-seg" style="width:${(counts[a.key]/tot*100).toFixed(1)}%;background:${a.color};"></span>` : '').join('')
+      : '';
+    histHtml += `<div class="mh-item${tot === 0 ? ' mh-empty' : ''}">`
+      + `<div class="mh-head"><span class="mh-month">${m}</span>${chips}<span class="mh-total">${tot} 条</span></div>`
+      + `<div class="mh-bar">${segs}</div>`
+      + `</div>`;
   });
-  histHtml += `<tr style="background:rgba(255,158,181,0.12);"><td>合计</td><td colspan="3"></td><td><b>${totalAll} 条</b></td></tr>`;
+  histHtml += `<div class="mh-sum"><span>📚 六个月全部合计</span><b>${totalAll} 条</b></div>`;
   document.getElementById('media-history').innerHTML = histHtml;
 
 }
@@ -16535,31 +16637,49 @@ function renderInspire() {
       </div>`;
   } else {
     const latest = sorted[0];
-    const typeLabel = latest.type === 'web' ? '🌐 互联网搜集' : '💡 AI原创推荐';
-    const detailHtml = latest.detail ? `
-      <div style="margin-top:16px;padding:16px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;">
-        <div style="font-size:13px;line-height:1.8;">
-          <b>📝 标题：</b>${escTodo(latest.title)}<br>
-          <b>✍️ 文案：</b>${escTodo(latest.detail.copy) || '—'}<br>
-          <b>🏷️ 标签：</b>${escTodo(latest.detail.tags) || '—'}<br>
-          <b>📊 数据：</b>${escTodo(latest.detail.stats) || '—'}<br>
-          <b>💡 借鉴建议：</b>${escTodo(latest.detail.advice) || '—'}<br>
-          ${(() => { const _lk = String(latest.detail.link || ''); const _safe = /^(https?:|mailto:)/i.test(_lk) ? _lk : ''; return _safe ? `<b>🔗 链接：</b><a href="${escTodo(_safe)}" target="_blank" rel="noopener noreferrer" style="color:#ff7f9e;">点击查看</a><br>` : ''; })()}
-        </div>
-      </div>` : '';
+    const typeLabel = latest.type === 'web' ? '🌐 互联网搜集' : '💡 AI原创';
+    // v268：详情从"纯文字行"改成彩色图标分区（每区小图标 + 灰标签 + 正文），标签拆成粉色小徽章
+    const detailHtml = latest.detail ? (() => {
+      const row = (ico, bg, label, text) => {
+        const v = (text == null ? '' : String(text)).trim();
+        if (!v) return '';
+        return `<div class="ins-d-row"><span class="ins-d-ico" style="background:${bg};">${ico}</span>`
+          + `<div class="ins-d-body"><div class="ins-d-label">${label}</div><div class="ins-d-text">${escTodo(v)}</div></div></div>`;
+      };
+      let h = '';
+      h += row('📝', '#ffe1ea', '标题 TITLE', latest.title);
+      h += row('✍️', '#efe8f8', '文案 COPY', latest.detail.copy);
+      const tags = String(latest.detail.tags || '').trim();
+      if (tags) {
+        const tagChips = tags.split(/[\s,，#、]+/).filter(Boolean)
+          .map(t => `<span class="ins-tag">#${escTodo(t)}</span>`).join('');
+        h += `<div class="ins-d-row"><span class="ins-d-ico" style="background:#fff0d6;">🏷️</span>`
+          + `<div class="ins-d-body"><div class="ins-d-label">标签 TAGS</div><div class="ins-d-text">${tagChips}</div></div></div>`;
+      }
+      h += row('📊', '#e3f2fd', '数据 DATA', latest.detail.stats);
+      h += row('💡', '#fff6d9', '借鉴 TIPS', latest.detail.advice);
+      const _lk = String(latest.detail.link || '');
+      const _safe = /^(https?:|mailto:)/i.test(_lk) ? _lk : '';
+      if (_safe) h += `<div class="ins-d-row"><span class="ins-d-ico" style="background:#e8f7ec;">🔗</span>`
+        + `<div class="ins-d-body"><div class="ins-d-label">原文 LINK</div>`
+        + `<div class="ins-d-text"><a class="ins-link" href="${escTodo(_safe)}" target="_blank" rel="noopener noreferrer">点开看原文 ›</a></div></div></div>`;
+      return h;
+    })() : '';
 
     document.getElementById('inspire-today').innerHTML = `
-      <div style="padding:16px;background:linear-gradient(135deg,#fff5f8,#ffeef2);border-radius:14px;border:1px dashed #ffb3c6;">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-          <span class="badge done">${typeLabel}</span>
-          <span class="badge rest">${escTodo(latest.platform) || '—'}</span>
-          <span class="badge pending">${escTodo(latest.topic) || '—'}</span>
-          <span class="badge pending">🔥 ${escTodo(latest.traffic) || '—'}</span>
+      <div class="ins-card">
+        <div class="ins-head">
+          <span class="ins-type ${latest.type === 'web' ? 'web' : 'ai'}">${typeLabel}</span>
+          <span class="ins-date">📅 ${latest.date}</span>
         </div>
-        <div style="font-size:15px;font-weight:600;color:#d14b73;margin-bottom:8px;">${escTodo(latest.title)}</div>
-        <div style="font-size:12px;color:#7d4a5a;">📅 ${latest.date}</div>
-      </div>
-      ${detailHtml}`;
+        <div class="ins-title">${escTodo(latest.title)}</div>
+        <div class="ins-meta">
+          <span class="ins-chip">📱 ${escTodo(latest.platform) || '—'}</span>
+          <span class="ins-chip">🏷️ ${escTodo(latest.topic) || '—'}</span>
+          <span class="ins-chip hot">🔥 ${escTodo(latest.traffic) || '—'}</span>
+        </div>
+        ${detailHtml ? '<div class="ins-divider"></div>' + detailHtml : ''}
+      </div>`;
   }
 
   // 历史推荐（v267：紧凑卡片列表，不再横向滚动；翻页沿用 foldRecords，每页 3 条）
