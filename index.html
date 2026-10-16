@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-269">
+<meta name="hami-build" content="2026-10-16-270">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4973,6 +4973,28 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     .ex-row-name { flex: 1 1 auto; order: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ex-row-act { margin-left: 0; }
   }
+  /* ==================== v270：版块边缘 1px 棕色渐变描边 + 柔和棕影 ==================== */
+  /* 用 ::after + mask 挖空画 1px 渐变棕描边（不占布局、不影响圆角/背景图），再叠一层淡棕投影 */
+  .card, .todo-card, .stat-card, .desktop-hero, .accounts-wrap { position: relative; }
+  .card::after, .todo-card::after, .stat-card::after, .desktop-hero::after, .accounts-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(197,152,110,0.60), rgba(163,116,78,0.30) 50%, rgba(197,152,110,0.50));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .card { box-shadow: var(--shadow-sm), 0 2px 6px rgba(150,104,64,0.12); }
+  .card:hover { box-shadow: var(--shadow-hover), 0 2px 8px rgba(150,104,64,0.16); }
+  .stat-card { box-shadow: var(--shadow-sm), 0 2px 5px rgba(150,104,64,0.10); }
+  .todo-card { box-shadow: 0 4px 16px rgba(255,158,181,0.18), inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(150,104,64,0.12); }
+  .todo-card:hover { box-shadow: var(--shadow-hover), 0 2px 8px rgba(150,104,64,0.16); }
 </style>
 </head>
 <body>
