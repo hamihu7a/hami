@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-278">
+<meta name="hami-build" content="2026-10-16-279">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5341,7 +5341,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
       <div class="hcp-card hcp-life">
         <div class="hcp-title">💗 人生剩余天数</div>
         <div class="hcp-big"><span id="hcp-life-days">--</span><span class="hcp-unit">天</span></div>
-        <div class="hcp-sub" id="hcp-life-sub">距 90 岁目标</div>
+        <div class="hcp-sub" id="hcp-life-sub">距 85 岁目标</div>
         <div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div>
       </div>
       <div class="hcp-card hcp-today">
@@ -5361,7 +5361,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
       function lifeDates(){
         if (_lifeCache) return _lifeCache;
         var birth = findSolarForLunar(5,29,false,1998);   // 我：农历 1998-05-29 → 公历出生日
-        var target = findSolarForLunar(5,29,false,2088);  // 90 岁生日（农历 2088-05-29）
+        var target = findSolarForLunar(5,29,false,2083);  // 85 岁生日（农历 2083-05-29）
         if (birth && target) _lifeCache = { birth:birth, target:target };
         return _lifeCache;
       }
@@ -5395,7 +5395,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
             var lived = Math.round((today - L.birth)/86400000);
             var pct = lived/total*100;
             document.getElementById('hcp-life-days').textContent = Math.max(0, total - lived);
-            document.getElementById('hcp-life-sub').textContent = '距 90 岁目标 · 已走过 ' + pct.toFixed(0) + '%';
+            document.getElementById('hcp-life-sub').textContent = '距 85 岁目标 · 已走过 ' + pct.toFixed(0) + '%';
             document.getElementById('hcp-life-fill').style.width = Math.min(100, Math.max(0, pct)) + '%';
             document.getElementById('hcp-life-pct').textContent = pct.toFixed(0) + '%';
           }
