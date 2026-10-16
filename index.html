@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-231">
+<meta name="hami-build" content="2026-10-16-232">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6505,7 +6505,7 @@
         <div class="db-desc">一键把<b>整个工作台</b>（代码本体 + 全部数据 + 背景图 + 账号）打包成 3 个文件存到你指定的文件夹。<br>重装系统后：打开 <b>Hami工作台.html</b> → 这里点「从备份恢复」选 <b>哈米数据备份.json</b>，就能接着用。</div>
 
         <div class="db-info">
-          <div style="font-weight:800;color:#d14b73;margin-bottom:5px;">📦 本次会备份这些内容</div>
+          <div id="backup-manifest-title" style="font-weight:800;color:#d14b73;margin-bottom:5px;">📦 本次会备份这些内容</div>
           <div id="backup-manifest" style="line-height:1.9;">正在统计…</div>
         </div>
 
@@ -7213,12 +7213,48 @@ function hamiBackupManifest() {
     ['工作台代码本体', (typeof BUILD_VER !== 'undefined' ? BUILD_VER : '当前版本')]
   ];
 }
+// v232：备份成功时记录当时的内容快照；之后清单只在「内容有变化」时才展开，平时收成一句话
+function _saveBackupManifestSnapshot() {
+  try { localStorage.setItem('hami_backup_manifest', JSON.stringify(hamiBackupManifest())); } catch (e) {}
+}
 function renderBackupManifest() {
   const el = document.getElementById('backup-manifest');
   if (!el) return;
-  el.innerHTML = hamiBackupManifest().map(function (r) {
+  const titleEl = document.getElementById('backup-manifest-title');
+  const cur = hamiBackupManifest();
+  const row = function (r) {
     return '<span style="display:inline-block;margin-right:10px;white-space:nowrap;">• ' + r[0] + '：<b style="color:#d14b73;">' + r[1] + '</b></span>';
-  }).join('');
+  };
+  let snap = null;
+  try { snap = JSON.parse(localStorage.getItem('hami_backup_manifest') || 'null'); } catch (e) {}
+  if (Array.isArray(snap) && snap.length) {
+    const changed = [];
+    for (let i = 0; i < cur.length; i++) {
+      const s = snap[i];
+      if (!s || String(s[1]) !== String(cur[i][1])) changed.push(cur[i][0]);
+    }
+    if (!changed.length) {
+      // 已备份且内容没变化：详细清单收起，只留一句状态（主人要求：备完就别再铺一大片"过去式"）
+      const ts = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10);
+      let when = '';
+      if (ts) {
+        const d = new Date(ts);
+        when = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+      if (titleEl) titleEl.textContent = '📦 备份内容';
+      el.innerHTML = '<span style="color:#1a9e4b;font-weight:700;">✅ 已备份，暂无新内容</span>'
+        + (when ? '<span style="color:#9a8690;font-size:11px;margin-left:8px;">（备份时间：' + when + '）</span>' : '');
+      return;
+    }
+    // 备份后又有新增/删除/修改：点名变化项 + 展开完整清单
+    if (titleEl) titleEl.textContent = '🆕 上次备份后内容有变化（建议再备一次）';
+    el.innerHTML = '<div style="color:#d14b73;font-weight:700;margin-bottom:4px;">变化项：' + changed.join('、') + '</div>'
+      + cur.map(row).join('');
+    return;
+  }
+  // 从未备份过：展开完整清单
+  if (titleEl) titleEl.textContent = '📦 本次会备份这些内容';
+  el.innerHTML = cur.map(row).join('');
 }
 
 // v230：备份位置——显示已授权的文件夹名，并提供「修改备份位置」
@@ -9909,6 +9945,7 @@ function exportAllData() {
       document.body.appendChild(a); a.click();
       setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1000);
       try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
+      try { _saveBackupManifestSnapshot(); } catch (e) {}
       try { updateBackupAge(); } catch (e) {}
       if (st) {
         st.style.color = '#1a9e4b';
@@ -10052,6 +10089,7 @@ async function exportFullBackup(silent) {
       await _writeFileToDir(dirHandle, BACKUP_ACCT_NAME, acctText);
       try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
       try { localStorage.setItem('hami_backup_dir_name', dirHandle.name || ''); } catch (e) {}
+      try { _saveBackupManifestSnapshot(); } catch (e) {}
       try { updateBackupAge(); } catch (e) {}
       try { renderBackupDir(); } catch (e) {}
       say('✅ ' + when + ' 已备份到「' + (dirHandle.name || '所选文件夹') + '」，3 个文件覆盖式写入（永远只有最新一份）：\n'
@@ -10068,6 +10106,7 @@ async function exportFullBackup(silent) {
       setTimeout(function () { _triggerDownload(BACKUP_ACCT_NAME, acctText); }, 400);
       setTimeout(function () { _triggerDownload('Hami工作台.完整备份.html', htmlText); }, 800);
       try { localStorage.setItem('hami_last_backup_ts', String(Date.now())); } catch (e) {}
+      try { _saveBackupManifestSnapshot(); } catch (e) {}
       try { updateBackupAge(); } catch (e) {}
       if (typeof finToast === 'function') finToast('✅ 备份文件已下载到「下载 / 文件」，请移到你要的文件夹');
       return false;
