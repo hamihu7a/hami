@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-282">
+<meta name="hami-build" content="2026-10-16-283">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4087,14 +4087,14 @@
   .lp-ring-num{ font-size:26px; font-weight:800; color:#5e2750; line-height:1; text-shadow:0 1px 2px rgba(255,255,255,0.65); }
   .lp-ring-lab{ font-size:10px; color:#7a3a6b; margin-top:4px; text-shadow:0 1px 2px rgba(255,255,255,0.6); }
   /* v282：hero 倒计时三小圆环（46px，百分比居中+标签在下，配色沿用 lpGrad 粉紫渐变） */
-  .hero-mini-rings { display:flex; gap:10px; }
+  .hero-mini-rings { display:flex; gap:4px; }
   .hm-ring { display:flex; flex-direction:column; align-items:center; min-width:0; }
   .hm-ring-wrap { position:relative; width:46px; height:46px; }
   .hm-ring-wrap svg { width:100%; height:100%; transform:rotate(-90deg); display:block; }
-  .hm-track { fill:none; stroke:rgba(110,55,100,0.28); stroke-width:7; }
+  .hm-track { fill:none; stroke:rgba(255,255,255,0.55); stroke-width:7; }
   .hm-fill { fill:none; stroke-width:7; stroke-linecap:round; stroke-dasharray:163.36; stroke-dashoffset:163.36; transition:stroke-dashoffset .8s ease; }
-  .hm-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#5e2750; text-shadow:0 1px 2px rgba(255,255,255,0.65); }
-  .hm-lab { font-size:10px; color:#7a3a6b; margin-top:2px; white-space:nowrap; text-shadow:0 1px 2px rgba(255,255,255,0.6); }
+  .hm-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#ffffff; text-shadow:0 1px 3px rgba(190,90,130,0.55); }
+  .hm-lab { font-size:10px; color:#ffffff; margin-top:2px; white-space:nowrap; text-shadow:0 1px 3px rgba(190,90,130,0.55); }
   /* v246：年度环可点击（原招财猫特效入口）——悬停微放大、按下回缩；点击特效由 JS 抛出 */
   .hero-year-ring { cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .18s ease, filter .18s ease; }
   .hero-year-ring:hover { filter: brightness(1.06); transform: scale(1.04); }
@@ -5237,9 +5237,9 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
       <div class="hero-year-ring" id="hero-year-ring">
         <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="lpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a83c8e" stop-opacity="0.95"/><stop offset="1" stop-color="#d06bb0" stop-opacity="0.92"/></linearGradient></defs></svg>
         <div class="hero-mini-rings">
-          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-day" cx="32" cy="32" r="26" style="stroke:url(#lpGrad)"></circle></svg><span class="hm-pct" id="hero-rp-day">--%</span></div><div class="hm-lab">今日剩余</div></div>
-          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-month" cx="32" cy="32" r="26" style="stroke:url(#lpGrad)"></circle></svg><span class="hm-pct" id="hero-rp-month">--%</span></div><div class="hm-lab">本月剩余</div></div>
-          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-year" cx="32" cy="32" r="26" style="stroke:url(#lpGrad)"></circle></svg><span class="hm-pct" id="hero-rp-year">--%</span></div><div class="hm-lab">今年剩余</div></div>
+          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-day" cx="32" cy="32" r="26" style="stroke:#ffb9ce"></circle></svg><span class="hm-pct" id="hero-rp-day">--%</span></div><div class="hm-lab">今日剩余</div></div>
+          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-month" cx="32" cy="32" r="26" style="stroke:#ffb9ce"></circle></svg><span class="hm-pct" id="hero-rp-month">--%</span></div><div class="hm-lab">本月剩余</div></div>
+          <div class="hm-ring"><div class="hm-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hm-track" cx="32" cy="32" r="26"></circle><circle class="hm-fill" id="hero-rf-year" cx="32" cy="32" r="26" style="stroke:#ffb9ce"></circle></svg><span class="hm-pct" id="hero-rp-year">--%</span></div><div class="hm-lab">今年剩余</div></div>
         </div>
       </div>
       <div class="hero-top">
