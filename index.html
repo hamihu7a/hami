@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-249">
+<meta name="hami-build" content="2026-10-16-250">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -981,7 +981,7 @@
   .accounts-wrap.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
-    background-image: var(--bgm, none), linear-gradient(rgba(60,30,45,0.28), rgba(60,30,45,0.28)), var(--bg-img);
+    background-image: var(--bgm, none), var(--bg-img);
     background-size: var(--bg-size, cover); background-position: var(--bg-pos, center); background-repeat: no-repeat;
     /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
     transform: var(--bg-xform, none); transform-origin: 50% 50%;
@@ -1008,7 +1008,7 @@
     content: "";
     position: absolute; inset: 0; z-index: 0;
     border-radius: 10px;
-    background-image: var(--bgm, none), linear-gradient(rgba(255,238,244,0.30), rgba(255,238,244,0.30)), var(--bg-img);
+    background-image: var(--bgm, none), var(--bg-img);
     background-size: var(--bg-size, cover); background-position: var(--bg-pos, center); background-repeat: no-repeat;
     /* v245：镜像（水平翻转）/ 旋转——由设置面板写入 --bg-xform（含自动放大，旋转后不留空） */
     transform: var(--bg-xform, none); transform-origin: 50% 50%;
