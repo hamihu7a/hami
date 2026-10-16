@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-221">
+<meta name="hami-build" content="2026-10-16-222">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5875,7 +5875,6 @@
         <button id="account-deposit-edit-btn" type="button" onclick="editDepositBalance()" title="点我修改可支配余额" style="margin-left:6px;border:none;background:#ffe1ea;color:#d14b73;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;">✏️ 修改</button>
         <button id="account-deposit-save-btn" type="button" onclick="saveDepositBalance()" title="保存" style="border:none;background:#d14b73;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;">💾 保存</button>
         <button id="account-deposit-unlock-btn" type="button" onclick="unlockDepositBalance()" title="解除锁定，恢复「本金 + 账单」自动联动" style="border:none;background:#e8f5ec;color:#2f8f4e;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;display:none;white-space:nowrap;">🔓 恢复联动</button>
-        <button id="account-deposit-recalc-btn" type="button" onclick="recalcDepositByBase()" title="按手动修改日重算：剔除修改前的账单（如1/2/3月），只联动之后的" style="border:none;background:#eef3ff;color:#3a6ea5;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;">🔄 重算</button>
       </div>
       <div id="account-disposable-display" style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:#fff;border:1.5px dashed #ffc2d6;border-radius:14px;">
         <span style="font-size:13px;color:#7d4a5a;font-weight:600;">当前可支配余额</span>
@@ -12576,24 +12575,24 @@ function refreshDisposableDisplay() {
   } catch (e) {}
   _lastDepositShown = cur;
   _skipAutoLinkMark = false;
-  // v221：显示「最后手动修改时间」与「最后自动联动时间」两行
+  // v221/v222：始终显示「最后手动修改时间」与「最后自动联动时间」两行，便于主人核对
   const _modEl = document.getElementById('account-deposit-modified-at');
   if (_modEl) {
     if (store.depositLocked === true && store.depositLockModifiedAt) {
       _modEl.textContent = '最后手动修改时间：' + fmtDepositModTime(store.depositLockModifiedAt) + '（此后更晚日期的账单才联动）';
-      _modEl.style.display = 'block';
     } else {
-      _modEl.style.display = 'none';
+      _modEl.textContent = '最后手动修改时间：尚未手动修改（当前为本金+账单自动联动）';
     }
+    _modEl.style.display = 'block';
   }
   const _linkEl = document.getElementById('account-deposit-autolink-at');
   if (_linkEl) {
     if (store.depositLastAutoLinkAt) {
       _linkEl.textContent = '最后自动联动时间：' + fmtDepositModTime(store.depositLastAutoLinkAt);
-      _linkEl.style.display = 'block';
     } else {
-      _linkEl.style.display = 'none';
+      _linkEl.textContent = '最后自动联动时间：暂无（记新账后自动更新）';
     }
+    _linkEl.style.display = 'block';
   }
 }
 function editDepositBalance() {
@@ -12625,8 +12624,6 @@ function cancelEditDeposit() {
   if (editBtn) editBtn.style.display = 'inline-block';
   const _ub2 = document.getElementById('account-deposit-unlock-btn');
   if (_ub2) _ub2.style.display = (store.depositLocked === true) ? 'inline-block' : 'none';
-  const _rb = document.getElementById('account-deposit-recalc-btn');
-  if (_rb) _rb.style.display = 'inline-block';   // 重算按钮始终可用
 }
 function saveDepositBalance() {
   _skipAutoLinkMark = true;   // v221：本次是手动修改，不代表「自动联动」，刷新渲染时不要记成自动联动时间
@@ -12682,32 +12679,8 @@ function unlockDepositBalance() {
   try { hamiToast('已恢复联动，之后记账会继续增减～'); } catch (e) {}
 }
 
-// v220：按基准日重算可支配余额——剔除「手动修改日之前」的所有账单（默认以 2026-04-01 为界，即 1/2/3 月视为修改前），
-// 把干净余额锁定显示；之后仅"日期晚于基准日"的记账才联动。解决主人"1/2/3 月账单不该算进余额"的诉求。
-function recalcDepositByBase() {
-  let baseISO = store.depositLockModifiedAt;
-  let usedDefault = false;
-  if (!baseISO) { baseISO = '2026-04-01T00:00:00'; usedDefault = true; }  // 无基准日时默认 4 月 1 日为界
-  const modDay = String(baseISO).slice(0, 10);
-  // 全量当前余额（未锁定口径：本金 + 全部账单净额）
-  const dep0 = parseFloat(store.depositBalance) || 0;
-  const fullNet = calcAccountNetForDeposit();
-  const fullBal = dep0 + fullNet;
-  // 基准日前账单净额（仅手动账单参与门控；定制单/美化档始终计入，不在此扣除）
-  const ars = store.accountRecords || [];
-  const beforeNet = ars.filter(function (r) { return !modDay || String(r.date || '') <= modDay; })
-    .reduce(function (s, r) { return s + ((r.type === 'income' ? 1 : -1) * (parseFloat(r.amount) || 0)); }, 0);
-  const newShown = fullBal - beforeNet;   // 剔除基准日前账单后的干净余额
-  store.depositBalance = newShown - fullNet;  // 反算本金，使锁定显示恰为 newShown
-  store.depositLocked = true;
-  store.depositLockedShown = newShown;
-  store.depositLockModifiedAt = baseISO;
-  store.depositLockNetSnapshot = calcAccountNetGated(baseISO);
-  try { saveData(); } catch (e) {}
-  try { refreshDisposableDisplay(); } catch (e) {}
-  try { renderAccount(); } catch (e) {}
-  try { hamiToast('已重算：剔除' + (usedDefault ? '（默认4月1日之前）' : '') + '的账单，余额 ¥' + fmtMoney(newShown)); } catch (e) {}
-}
+// v222：recalcDepositByBase() 已移除——主人只要求一次性重算并显示正确余额，不需要常驻「重算」按钮/函数（对应 UI 按钮也一并删除）。
+
 
 // v218：原 autoUnlockDepositOnNewRecord（记新账即解锁恢复全量联动）已移除——
 // 改为「门控净额增量」：锁定期仅"日期晚于手动修改基准日"的记账才联动（见 calcAccountNetGated / renderAccount / refreshDisposableDisplay）。
