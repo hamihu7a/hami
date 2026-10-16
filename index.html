@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-227">
+<meta name="hami-build" content="2026-10-16-228">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3221,6 +3221,31 @@
     line-height: 1.6;
   }
 
+  /* ===== v228：数据备份面板（从「面板设计」里独立出来）===== */
+  .db-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--gap, 14px);
+    align-items: start;
+  }
+  .db-grid .card { margin-bottom: 0; }
+  .db-desc { font-size: 12px; color: #8a6270; line-height: 1.6; margin: 2px 0 10px; }
+  .db-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .db-btn {
+    padding: 11px 16px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    cursor: pointer; min-height: 44px; border: none; font-family: inherit;
+  }
+  .db-btn-main { background: linear-gradient(135deg, var(--c-pink,#ff8aa6), var(--c-pink-deep,#d14b73)); color: #fff; box-shadow: 0 2px 8px rgba(209,75,115,.3); }
+  .db-btn-ghost { background: #fff; color: var(--c-pink-deep,#d14b73); border: 1.5px solid var(--c-pink-deep,#d14b73); }
+  .db-btn-dark { background: #b3325c; color: #fff; box-shadow: 0 2px 8px rgba(179,50,92,.3); }
+  .db-btn-full { width: 100%; margin-top: 4px; }
+  .db-info {
+    font-size: 12px; color: #5a3a48; line-height: 1.8; background: #fff;
+    border-radius: 10px; padding: 9px 11px; margin-bottom: 10px;
+  }
+  .db-status { font-size: 12px; color: var(--c-pink-deep,#d14b73); line-height: 1.6; }
+  .db-hint { font-size: 12px; margin: 8px 0; }
+
   /* ===== 设置工具：开关 ===== */
   .settings-switch {
     position: relative;
@@ -4895,9 +4920,9 @@
       <span class="nav-icon">⚙️</span>
       <span class="nav-text">面板设计</span>
     </button>
-    <button class="nav-item" type="button" onclick="sidebarFocusWidth()">
-      <span class="nav-icon">↔️</span>
-      <span class="nav-text">左侧宽度</span>
+    <button class="nav-item" type="button" onclick="switchPanel('data-backup', this)">
+      <span class="nav-icon">💾</span>
+      <span class="nav-text">数据备份</span>
     </button>
   </div>
 
@@ -6476,6 +6501,62 @@
     </div>
   </div>
 
+  <!-- v228：数据备份（从「面板设计」独立出来；内容已精简） -->
+  <div id="panel-data-backup" class="panel">
+
+    <div class="tip-box">
+      💾 <b>使用说明</b>：云同步不等于备份。建议每月点一次「下载备份文件」存到手机/电脑；万一记录不见了，先点「🚑 一键找回」。
+    </div>
+
+    <div class="db-grid">
+
+      <!-- 数据备份：存成文件 -->
+      <div class="card">
+        <div class="card-title"><span>💾</span> 数据备份</div>
+        <div class="db-desc">把所有数据存成一份备份文件，存到手机/电脑。</div>
+        <div class="db-btn-row">
+          <button id="settings-export-data" class="db-btn db-btn-main">下载备份文件</button>
+          <button id="settings-import-data" class="db-btn db-btn-ghost">从备份恢复</button>
+          <input type="file" id="settings-import-file" accept="application/json,.json" style="display:none;">
+        </div>
+        <div id="backup-age-hint" class="db-hint"></div>
+        <div id="settings-backup-status" class="db-status"></div>
+      </div>
+
+      <!-- 数据急救：内部备份一键找回 -->
+      <div class="card">
+        <div class="card-title"><span>🚑</span> 数据急救</div>
+        <div class="db-desc">打开页面发现记录空了？点这里从浏览器内部备份找回。</div>
+        <div id="data-rescue-info" class="db-info">正在检查内部备份…</div>
+        <div class="db-btn-row">
+          <button onclick="restoreFromIDBBackup()" class="db-btn db-btn-dark">🚑 一键找回</button>
+        </div>
+      </div>
+
+      <!-- 云端同步 -->
+      <div class="card">
+        <div class="card-title"><span>🔑</span> 云端同步</div>
+        <div id="settings-cloud-status" class="db-status" style="margin-bottom:10px;"></div>
+        <div class="db-btn-row">
+          <button id="settings-sync-all-bg" class="db-btn db-btn-ghost">🔄 立即同步到云端</button>
+        </div>
+      </div>
+
+      <!-- 背景图备份 -->
+      <div class="card">
+        <div class="card-title"><span>🛟</span> 背景图备份</div>
+        <div class="db-desc">换设备或清缓存后，点「拉回背景」一键还原。</div>
+        <div class="db-btn-row">
+          <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" class="db-btn db-btn-main">📤 上传到云端</button>
+          <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" class="db-btn db-btn-ghost">📥 从云端拉回</button>
+        </div>
+        <div id="settings-bg-cloud-status" class="db-status" style="margin-top:10px;"></div>
+      </div>
+
+    </div>
+
+  </div>
+
   <div id="panel-settings" class="panel">
 
     <div class="tip-box">
@@ -6518,100 +6599,6 @@
         <input type="file" id="settings-bg-file" accept="image/*" style="display:none;">
         <div id="settings-bg-status" style="margin-top:10px;font-size:12px;color:#8a6270;"></div>
 
-        <!-- 🛟 背景图备份/恢复（跨设备迁移、丢失找回专用） -->
-        <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,228,236,.55);border:1.5px dashed var(--c-pink-deep,#d14b73);">
-          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;">🛟 背景图备份 · 跨设备同步 · 丢失找回</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.6;margin-bottom:8px;">背景图会自动存到本机并同步云端。换设备或清缓存后，点「📥 从云端拉回背景」即可一键还原。</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">📤 上传背景到云端</button>
-            <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" style="flex:1;padding:9px 12px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:12.5px;font-weight:700;cursor:pointer;">📥 从云端拉回背景</button>
-          </div>
-          <div id="settings-bg-cloud-status" style="margin-top:8px;font-size:12px;color:#8a6270;line-height:1.5;"></div>
-        </div>
-        <div style="margin-top:14px;display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
-          <button id="settings-sync-all-bg" style="flex:1 1 0;min-width:0;padding:10px 14px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            🔄 立即同步到云端
-          </button>
-        </div>
-        <div style="margin-top:14px;padding:12px;border-radius:var(--radius-sm,14px);background:rgba(255,138,166,0.10);border:1.5px solid rgba(209,75,115,0.30);">
-          <div style="font-size:13px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;line-height:1.5;">🔑 云端同步状态</div>
-          <div id="settings-cloud-status" style="font-size:12px;color:var(--c-pink-deep,#d14b73);line-height:1.6;"></div>
-        </div>
-
-        <!-- ===== 数据备份与恢复：云同步 ≠ 备份，这里才是真正存成一份文件 ===== -->
-        <div style="margin-top:16px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,255,255,0.78);border:1.5px solid var(--c-line,#ffe4ec);">
-          <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);margin-bottom:6px;">数据备份（建议每月点一次）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:12px;">云同步不等于备份。点「下载备份文件」存一份到手机/电脑，万一数据出意外可一键找回。</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="settings-export-data" style="padding:11px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--c-pink,#ff8aa6),var(--c-pink-deep,#d14b73));color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(209,75,115,0.3);min-height:44px;">
-              下载备份文件
-            </button>
-            <button id="settings-import-data" style="padding:11px 16px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:13px;font-weight:700;cursor:pointer;min-height:44px;">
-              从备份恢复
-            </button>
-            <input type="file" id="settings-import-file" accept="application/json,.json" style="display:none;">
-          </div>
-          <div id="backup-age-hint" style="font-size:12px;margin-bottom:10px;"></div>
-          <div id="settings-backup-status" style="margin-top:10px;font-size:12px;color:#c75b86;line-height:1.6;"></div>
-        </div>
-
-        <!-- ===== 数据急救：从浏览器内部备份一键找回 ===== -->
-        <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,240,243,0.9);border:1.5px solid #d14b73;">
-          <div style="font-size:14px;font-weight:800;color:#d14b73;margin-bottom:6px;">🚑 数据急救（数据不见了先点这里）</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">打开页面发现记录空了？先点下面按钮，从浏览器内部备份一键找回。</div>
-          <div id="data-rescue-info" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">
-            正在检查内部备份…
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button onclick="restoreFromIDBBackup()" style="padding:11px 16px;border:none;border-radius:10px;background:#d14b73;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
-              🚑 从内部备份找回
-            </button>
-            <button onclick="checkDataRescue()" style="padding:11px 16px;border:1.5px solid #d14b73;border-radius:10px;background:#fff;color:#d14b73;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;">
-              重新检查
-            </button>
-            <button onclick="hamiRecoverFromSnapshot()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);">
-              🛡️ 恢复最近自动备份
-            </button>
-          </div>
-        </div>
-
-        <!-- ===== v58：一键清理「未来图文」幽灵记录 ===== -->
-        <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,248,250,0.95);border:1.5px solid #e890a8;">
-          <div style="font-size:14px;font-weight:800;color:#b3325c;margin-bottom:6px;">🧹 一键清理「未来图文」幽灵记录</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">
-            如果有"删了又出现"的幽灵笔记，点下面按钮：
-            <br>① 先按「当前真实内容」覆盖云端（让云端与本地一致）
-            <br>② 再把本地列表里所有重复内容合并，只保留最新一条
-            <br>③ 把删不掉的旧条目全写进墓碑，下次合并直接过滤
-          </div>
-          <div id="future-ghost-status" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">
-            点下面按钮开始清理…
-          </div>
-          <button onclick="purgeFutureGhost()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);">
-            🧹 立即清理幽灵记录
-          </button>
-        </div>
-
-        <!-- ===== v121：一键清理「重要日期」重复记录 ===== -->
-        <div style="margin-top:14px;padding:14px;border-radius:var(--radius-sm,14px);background:rgba(255,248,250,0.95);border:1.5px solid #e890a8;">
-          <div style="font-size:14px;font-weight:800;color:#b3325c;margin-bottom:6px;">🧹 一键清理「重要日期」重复记录</div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin-bottom:10px;">
-            如果重要日期里冒出了好几条"日期一样、只是名字不同"的重复项，点下面按钮：
-            同一天、同一类型只保留信息最全的那条，其余彻底删除并同步云端。
-            <br><b style="color:#b3325c;">注意：同一天、同一类型若有两条不同的纪念日，也会被合并成一条，必要时请重新添加。</b>
-          </div>
-          <div id="imp-dates-dedupe-status" style="font-size:12px;color:#5a3a48;line-height:1.8;background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:10px;">点下面按钮开始清理…</div>
-          <button onclick="dedupeImportantDates()" style="padding:11px 16px;border:none;border-radius:10px;background:#b3325c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(179,50,92,0.3);">
-            🧹 立即清理重复日期
-          </button>
-          <div style="font-size:12px;color:#8a6270;line-height:1.7;margin:14px 0 10px;">
-            <b style="color:#b3325c;">改生日后旧日期又冒出来？</b>点下面按钮：同一个人（同名同类型）若出现多个不同日期，
-            只保留您<b>最后编辑</b>的那条，其余彻底删除并同步云端。
-          </div>
-          <button onclick="fixImportantDatesByNameV177()" style="padding:11px 16px;border:none;border-radius:10px;background:#d14b73;color:#fff;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;box-shadow:0 2px 8px rgba(209,75,115,0.3);">
-            🛠 修复「同名多个日期」（保留最后编辑的）
-          </button>
-        </div>
       </div>
 
       <!-- ===== 右侧：外观 / 音效 / 弱化 ===== -->
@@ -11037,7 +11024,7 @@ function tryRecoverStoreFromIDB() {
       try { applyTombOnLoad(); } catch (e) {}
       try {
         saveData();
-        hamiToast('✅ 已从浏览器内部备份（含历史快照，共 ' + sources.length + ' 份）并集找回数据');
+        // v228：主人要求去掉「已从浏览器内部备份…并集找回数据」弹条——恢复动作静默完成即可，不再打扰
       } catch (e) {}
       try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e) {}
     }).catch(function (e) { console.error('[tryRecoverStoreFromIDB] 恢复失败', e); });
@@ -12744,7 +12731,8 @@ var HAMI_HELP_MOD_DATES = {
   'panel-account': '2026-10-16',
   'panel-reminder': '2026-10-16',
   'panel-benchmark': '2026-10-16',
-  'panel-settings': '2026-10-16'
+  'panel-settings': '2026-10-16',
+  'panel-data-backup': '2026-10-16'
 };
 var HAMI_HELP_MOD_DEFAULT = '2026-10-16';
 function fmtHelpModDate(iso) {
