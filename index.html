@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-266">
+<meta name="hami-build" content="2026-10-16-267">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -396,7 +396,7 @@
     left: 0;
     bottom: 0;
     width: var(--sidebar-w);
-    background: #fff5ee;
+    background: #fff4f8;   /* v267：与右侧主面板同色相的粉（原奶油橘 #fff5ee），单纯粉色无波点 */
     padding: 56px 0 20px 0;                  /* 顶部留 56px 给固定指令栏，内容紧贴其下沿，零缝隙 */
     box-shadow: 2px 0 12px rgba(255, 158, 181, 0.1);
     z-index: 100;
@@ -408,7 +408,7 @@
     /* v133：头像区钉死在侧栏顶部——侧栏往下滚到「工具/设置」时头像不动：
        sticky 钉在指令栏下沿（电脑端侧栏 padding-top=56px，top 取同值），
        背景与侧栏同色（#fff5ee）不透明，滚过的菜单项不会从头像后面透出来 */
-    .sidebar > .nav-header { margin-top: 0; padding: 10px 12px 14px; position: sticky; top: 56px; z-index: 20; background: #fff5ee; }
+    .sidebar > .nav-header { margin-top: 0; padding: 10px 12px 14px; position: sticky; top: 56px; z-index: 20; background: #fff4f8; }
   /* 侧边栏拖拽手柄：半透明圆形，位于侧边栏底部「左侧宽度」下方，按住左右拖动改变宽度 */
   .nav-header-row {
     position: relative;
@@ -2430,7 +2430,7 @@
   .income-breakdown {
     margin-top: 8px; padding: 9px 11px;
     background: #fff8fa; border-radius: 12px;
-    border: 1px dashed #ffd0dc;
+    border: 1px solid #ffd0dc;   /* v267：虚线改实线（虚线只保留在主面板首页） */
     font-size: 12px; color: var(--c-muted);
     display: flex; flex-direction: column; gap: 3px;
   }
@@ -2589,13 +2589,7 @@
   #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 16px; white-space: nowrap; }
   #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 10.5px; margin-bottom: 2px; white-space: nowrap; }
   #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 10.5px; white-space: nowrap; }
-  /* v2026-09-06-28 历史推荐表：标题列允许换行且不溢出；表头紧凑 */
-  #inspire-history td:first-child,
-  #inspire-history td:nth-child(2),
-  #inspire-history td:nth-child(3),
-  #inspire-history td:nth-child(4),
-  #inspire-history td:nth-child(6) { white-space: nowrap; }
-  #inspire-history td:nth-child(5) { white-space: normal; word-break: break-word; }
+  /* v267：历史推荐已由表格改为 .ih-item 卡片列表，旧表格列宽规则删除 */
   /* 表格整体紧凑 + 在窄屏仍能横滚看标题 */
   .card table { table-layout: auto; min-width: 500px; }
   /* 让"标题"列在历史推荐表里真正宽：列宽用 min-width 而非死宽，剩下宽度按内容自然分配 */
@@ -3214,7 +3208,7 @@
     font-size: 12px;
     color: var(--c-pink-deep);
     line-height: 1.5;
-    border: 1px dashed #ffb3c6;
+    border: 1px solid #ffd0dc;   /* v267：使用说明框由虚线改实线（虚线只保留在主面板首页） */
   }
   .hami-help-toggle {
     border: none;
@@ -4578,14 +4572,15 @@
   .yi-label { color: #b83557; font-weight: 700; }
 
 
-  /* ===================== v249：手账本边框风（只改边框质感，配色/字体/功能不动） ===================== */
+  /* ===================== v249：手账本边框风（v267 收窄：只保留在主面板首页） ===================== */
   /* 灵感：手账/贴纸——区域块四周「邮票锯齿打孔边」+ 卡片内侧手绘虚线框 */
-  /* —— ② 所有卡片：内侧一圈淡粉虚线细框（手账纸的"描边框"，outline 不占布局零风险） —— */
-  .card, .todo-card {
+  /* —— ② 所有卡片：内侧一圈淡粉虚线细框（outline 不占布局零风险）
+          v267：改为仅 #panel-desktop（主面板首页）命中；左侧任务栏点进去的其它面板一律无虚线 —— */
+  #panel-desktop .card, #panel-desktop .todo-card {
     outline: 2px dashed rgba(209, 75, 115, 0.20);
     outline-offset: -7px;
   }
-  .stat-card {
+  #panel-desktop .stat-card {
     outline: 2px dashed rgba(209, 75, 115, 0.20);
     outline-offset: -5px;
   }
@@ -4860,6 +4855,38 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     .tomorrow-badge .wb-tail { display: none; }
     .home-card-flex > .home-card-foot { flex-wrap: wrap; justify-content: center; gap: 4px 6px; }
     .tomorrow-badge { padding: 3px 9px; flex-shrink: 0; }
+  }
+
+  /* ==================== v267：视觉统一四连改（主人 2026-10-16 晚需求） ====================
+     ① 左侧任务栏底色 → 与右侧主面板同色相的粉 #fff4f8（已在 .sidebar / .nav-header 处直改，无波点）
+     ② 手账虚线框只保留主面板首页（已在 v249 规则处收窄为 #panel-desktop）
+     ③ 可上传背景图的模块（时间激励语 hero / 自媒体数据 accounts）补上与其它模块一致的线条边框
+     ④ 历史推荐：横滚表格重做为紧凑卡片列表（样式见下，渲染见 renderInspire） */
+  .desktop-hero, .accounts-wrap { border: 1.5px solid #ffd0dc; }
+
+  /* —— ④ 历史推荐 · 紧凑卡片列表（不再左右滚动） —— */
+  .ih-item {
+    background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px;
+    padding: 8px 10px; margin-bottom: 6px;
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  .ih-item:hover { box-shadow: 0 3px 10px rgba(209,75,115,0.10); transform: translateY(-1px); }
+  .ih-item:last-child { margin-bottom: 0; }
+  .ih-top { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 5px; }
+  .ih-date { font-size: 10.5px; font-weight: 700; color: #a08492; white-space: nowrap; margin-right: 2px; }
+  .ih-chip {
+    display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px;
+    border-radius: 8px; white-space: nowrap; line-height: 1.5;
+  }
+  .ih-chip.type-web { background: #efe8f8; color: #7a5ea8; }   /* 🌐 搜集：淡紫 */
+  .ih-chip.type-ai  { background: #ffe1ea; color: #d14b73; }   /* 💡 原创：粉 */
+  .ih-chip.plat     { background: #fff; border: 1px solid #ffd0dc; color: #7d4a5a; }
+  .ih-chip.topic    { background: #fff0f5; color: #b0557a; }
+  .ih-traffic { margin-left: auto; font-size: 10.5px; font-weight: 800; color: #e8821e; white-space: nowrap; }
+  .ih-title { margin-top: 4px; font-size: 12.5px; font-weight: 700; color: #4a3340; line-height: 1.45; word-break: break-word; }
+  @media (max-width: 420px) {
+    .ih-item { padding: 7px 9px; }
+    .ih-title { font-size: 12px; }
   }
 </style>
 </head>
@@ -5850,12 +5877,8 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
 
     <div class="card">
       <div class="card-title"><span>📜</span> 历史推荐</div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>日期</th><th>类型</th><th>平台</th><th>主题</th><th>标题</th><th>流量</th></tr></thead>
-          <tbody id="inspire-history"></tbody>
-        </table>
-      </div>
+      <!-- v267：横滚表格改为紧凑卡片列表（.ih-item），不用再左右滑动 -->
+      <div id="inspire-history" class="ih-list"></div>
     </div>
 
   </div>
@@ -16539,23 +16562,26 @@ function renderInspire() {
       ${detailHtml}`;
   }
 
-  // 历史推荐（全部 >5 条自动折叠；展开看全部）
+  // 历史推荐（v267：紧凑卡片列表，不再横向滚动；翻页沿用 foldRecords，每页 3 条）
   if (sorted.length === 0) {
-    document.getElementById('inspire-history').innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>暂无历史推荐</p></div></td></tr>`;
+    document.getElementById('inspire-history').innerHTML = `<div class="empty-state"><p>暂无历史推荐</p></div>`;
   } else {
-    const html = foldRecordsTable('inspire', sorted, function (r) {
-      const idx = store.inspireRecords.indexOf(r);
-      const tp = r.type === 'web' ? '🌐 搜集' : '💡 原创';
-      // v2026-09-06-28 历史推荐表：标题列宽 + 允许换行 + 紧凑行高（不再竖排）
-      return `<tr>`
-        + `<td style="white-space:nowrap;font-size:12px;color:#7d4a5a;">${r.date}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;">${tp}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;">${escTodo(r.platform)||'—'}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;">${escTodo(r.topic)||'—'}</td>`
-        + `<td style="min-width:200px;max-width:280px;word-break:break-word;line-height:1.35;font-size:12px;font-weight:600;color:#5a3a48;padding:5px 4px;">${escTodo(r.title)||'—'}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;font-weight:700;color:#d14b73;">${escTodo(r.traffic)||'—'}</td>`
-        + `</tr>`;
-    }, 6);
+    const html = foldRecords('inspire', sorted, function (r) {
+      const tp = r.type === 'web'
+        ? '<span class="ih-chip type-web">🌐 搜集</span>'
+        : '<span class="ih-chip type-ai">💡 原创</span>';
+      const topic = r.topic ? '<span class="ih-chip topic">' + escTodo(r.topic) + '</span>' : '';
+      return '<div class="ih-item">'
+        + '<div class="ih-top">'
+        + '<span class="ih-date">📅 ' + escTodo(r.date) + '</span>'
+        + tp
+        + '<span class="ih-chip plat">' + (escTodo(r.platform) || '—') + '</span>'
+        + topic
+        + '<span class="ih-traffic">🔥 ' + (escTodo(r.traffic) || '—') + '</span>'
+        + '</div>'
+        + '<div class="ih-title">' + (escTodo(r.title) || '—') + '</div>'
+        + '</div>';
+    });
     document.getElementById('inspire-history').innerHTML = html;
   }
 }
