@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-238">
+<meta name="hami-build" content="2026-10-16-239">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6544,17 +6544,6 @@
         </div>
       </div>
 
-      <!-- 背景图备份 -->
-      <div class="card">
-        <div class="card-title"><span>🛟</span> 背景图备份</div>
-        <div class="db-desc">换设备或清缓存后，点「拉回背景」一键还原。</div>
-        <div class="db-btn-row">
-          <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" class="db-btn db-btn-main">📤 上传到云端</button>
-          <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" class="db-btn db-btn-ghost">📥 从云端拉回</button>
-        </div>
-        <div id="settings-bg-cloud-status" class="db-status" style="margin-top:10px;"></div>
-      </div>
-
     </div>
 
   </div>
@@ -6562,7 +6551,7 @@
   <div id="panel-settings" class="panel">
 
     <div class="tip-box">
-      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
+      ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；每个板块右上角的小开关可<b>单独弱化</b>该区域背景（模糊+半透）；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
     </div>
 
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
@@ -6600,6 +6589,17 @@
 
         <input type="file" id="settings-bg-file" accept="image/*" style="display:none;">
         <div id="settings-bg-status" style="margin-top:10px;font-size:12px;color:#8a6270;"></div>
+
+        <!-- v239：背景图备份（从「数据备份」面板挪回主面板镜像下方） -->
+        <div class="card" style="margin-top:14px;">
+          <div class="card-title"><span>🛟</span> 背景图备份</div>
+          <div class="db-desc">换设备或清缓存后，点「从云端拉回」一键还原。</div>
+          <div class="db-btn-row">
+            <button id="settings-bg-upload-cloud" onclick="bgUploadAllToCloud()" class="db-btn db-btn-main">📤 上传到云端</button>
+            <button id="settings-bg-download-cloud" onclick="bgDownloadFromCloud()" class="db-btn db-btn-ghost">📥 从云端拉回</button>
+          </div>
+          <div id="settings-bg-cloud-status" class="db-status" style="margin-top:10px;"></div>
+        </div>
 
       </div>
 
