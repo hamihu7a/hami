@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-236">
+<meta name="hami-build" content="2026-10-16-237">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -17931,7 +17931,10 @@ function renderTripPlans() {
     else if (today > end) { statusClass = 'trip-status-past'; statusText = '已结束'; }
     else if (days.length && today >= days[0].date && today <= days[days.length-1].date) { statusClass = 'trip-status-ongoing'; statusText = '进行中'; }
 
-    const expanded = !!__tripExpanded[realIdx];
+    // v237：已结束的行程一律收起——只显示地点 + 「已结束」标签，日期/天数/备注/展开按钮全部不显示（主人要求）
+    const isEnded = statusText === '已结束';
+
+    const expanded = !isEnded && !!__tripExpanded[realIdx];
 
     const TYPE_MAP = {
       play: ['🎡','游玩'], food: ['🍜','餐饮'], traffic: ['🚇','交通'],
@@ -18002,7 +18005,9 @@ function renderTripPlans() {
         <div class="trip-header" style="cursor:pointer;" onclick="toggleTripExpand(${realIdx})">
           <div style="flex:1;min-width:0;">
             <div class="trip-title">🗺️ ${escapeHtml(trip.city || '未命名行程')}</div>
-            <div class="trip-subtitle"><span class="trip-status-tag ${statusClass}">${statusText}</span><span>📅 ${start}${end && end !== start ? ' ~ ' + end : ''} · ${summary}</span>${trip.remark ? `<span>📝 ${escapeHtml(trip.remark)}</span>` : ''}</div>
+            ${isEnded
+              ? `<div class="trip-subtitle"><span class="trip-status-tag ${statusClass}">${statusText}</span></div>`
+              : `<div class="trip-subtitle"><span class="trip-status-tag ${statusClass}">${statusText}</span><span>📅 ${start}${end && end !== start ? ' ~ ' + end : ''} · ${summary}</span>${trip.remark ? `<span>📝 ${escapeHtml(trip.remark)}</span>` : ''}</div>`}
           </div>
           <div class="card-actions" style="position:static;flex-direction:row;gap:4px;" onclick="event.stopPropagation();">
             <button class="row-edit-btn" onclick="openTripModal(${realIdx})" type="button" aria-label="编辑">✏️</button>
@@ -18010,10 +18015,10 @@ function renderTripPlans() {
             <button class="row-del-btn" onclick="deleteTripRecord(${realIdx})" type="button" aria-label="删除">🗑</button>
           </div>
         </div>
-        <div class="trip-expand-toggle" onclick="toggleTripExpand(${realIdx})">
+        ${isEnded ? '' : `<div class="trip-expand-toggle" onclick="toggleTripExpand(${realIdx})">
           <span>${expanded ? '▲ 收起' : '▼ 展开'}</span>
           <span style="font-size:12px;color:#8a6270;">${expanded ? '点击收起全部安排' : '点击查看全部安排'}</span>
-        </div>
+        </div>`}
         ${dayBlocks}
       </div>`;
   });
