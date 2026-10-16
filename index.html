@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-260">
+<meta name="hami-build" content="2026-10-16-261">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -989,19 +989,8 @@
   .accounts-wrap.has-custom-bg > * { position: relative; z-index: 1; }
   .accounts-wrap.has-custom-bg .ac-title,
   .accounts-wrap.has-custom-bg #desktop-accounts { z-index: 1; }
-  /* v259：自媒体数据「标题 + 修改按键」改回白字，描边换成细深灰渐变描边（左上深 → 右下浅），
-     text-shadow 会被子元素继承，所以标题和里面的「修改」按键共用这一份描边；整段可随时删除 */
-  .ac-title {
-    text-shadow:
-      -0.5px -0.5px 0 #4a4148,
-       0    -0.5px 0 #544a51,
-       0.5px -0.5px 0 #5e5259,
-      -0.5px  0    0 #5e5259,
-       0.5px  0    0 #6d6067,
-      -0.5px  0.5px 0 #6d6067,
-       0     0.5px 0 #82737a,
-       0.5px  0.5px 0 #94858c;
-  }
+  /* v261：自媒体数据标题回归工作台常用棕色 #8a6270（全站用得最多的棕），去掉 v259 的描边 */
+  .ac-title { text-shadow: none; }
 
   /* 天气 / 运势 区域：浅粉蒙版 + 等比例铺满（cover 不变形），各自独立可设背景 */
   #home-weather, #home-fortune { position: relative; overflow: hidden; border-radius: 10px; }
@@ -5089,9 +5078,9 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 2px !impo
 
     <!-- 自媒体账号概览 -->
     <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 10px;border-radius:12px;margin-bottom:var(--space-block);">
-      <div class="ac-title" style="font-size:16px;font-weight:800;color:#ffffff;text-align:center;margin-bottom:6px;position:relative;">
+      <div class="ac-title" style="font-size:16px;font-weight:800;color:#8a6270;text-align:center;margin-bottom:6px;position:relative;">
         <span>自媒体数据</span>
-        <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:#ffffff;background:rgba(255,255,255,0.55);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;" onclick="promptUpdateAllAccounts()">修改</span>
+        <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#ffffff;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(209,75,115,0.22);" onclick="promptUpdateAllAccounts()">修改</span>
       </div>
       <div id="desktop-accounts"></div>
     </div>
