@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-226">
+<meta name="hami-build" content="2026-10-16-227">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -871,12 +871,13 @@
   }
   .hami-cmd-toast.show { opacity:1; }
 
-  /* 云端同步提醒浮层（仅成功时）：中间靠上（时间与激励语一带），绝不遮挡顶部「记一下」栏 */
+  /* v227：同步提醒（成功绿条 / 失败粉条）统一挪到「记一下」栏【正下方紧贴】，
+     既不遮挡顶部操作栏，文字也不拦截点击（pointer-events:none），只报告"同步了什么/什么没同步" */
   #cloud-sync-toast {
     position: fixed;
-    top: 35%;                  /* v208 中间靠上：约在「时间与激励语」区域，且始终低于顶部「记一下」栏 */
+    top: 62px;                 /* 紧贴顶部「记一下」栏（60px）正下方 */
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     z-index: 9000;
     max-width: calc(100vw - 32px);
     box-sizing: border-box;
@@ -897,6 +898,30 @@
   #cloud-sync-toast.show { opacity: 1; pointer-events: auto; }
   #cloud-sync-toast.fail { background: rgba(199,91,134,0.96); }
   #cloud-sync-toast.ok { background: rgba(90,168,106,0.95); }
+  /* v227：失败粉条——与成功绿条同一位置（「记一下」栏正下方紧贴），文案精简为"未同步：XXX" */
+  #hami-cloud-pending {
+    position: fixed;
+    left: 50%;
+    top: 62px;
+    transform: translateX(-50%);
+    z-index: 9999;
+    box-sizing: border-box;
+    background: #fff0f3;
+    border: 1px solid #e890a8;
+    color: #b3325c;
+    border-radius: 14px;
+    padding: 7px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    box-shadow: 0 6px 20px rgba(160,80,110,.22);
+    max-width: 92vw;
+    text-align: center;
+    pointer-events: none;      /* 文字不拦截点击，绝不挡住任何按钮 */
+  }
+  /* 超小屏（≤420px）：「记一下」栏高 56px，提醒条跟着上移，依旧紧贴正下方 */
+  @media (max-width: 420px) {
+    #cloud-sync-toast, #hami-cloud-pending { top: 58px; }
+  }
 
   /* ===== 自定义背景：上传图片替换纯色背景（所有区域通用） ===== */
   /* 首页 hero：暗色蒙版，保证白字清晰 */
@@ -8646,6 +8671,8 @@ function _hamiNewId(listKey) {
   return (P[listKey] || 'rec') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 }
 function hamiPushRecord(listKey, item) {
+  // v227：记下"主人刚刚操作的是什么"，供同步提醒使用（如"体重""洗头"）
+  try { if (typeof markSyncAction === 'function') markSyncAction((typeof _SYNC_LIST_NAME !== 'undefined' && _SYNC_LIST_NAME[listKey]) || ''); } catch (e) {}
   try {
     if (!Array.isArray(store[listKey])) store[listKey] = [];
     // v218：锁定期记新账不再自动解锁——改由「门控净额增量」按账单日期联动（晚于基准日才联动，更早账单不联动）。
@@ -8714,6 +8741,7 @@ function hamiRequestFullRender() {
 // v54：统一删除收尾。把「加墓碑 + 本地 splice + 存档并推云端 + 立刻刷新面板」封装起来，
 // 让所有删除按钮行为一致，避免有的面板删后没反应、有的删了又从云端复活。
 function hamiDeleteRecord(listKey, idx, options) {
+  try { if (typeof markSyncAction === 'function') markSyncAction((typeof _SYNC_LIST_NAME !== 'undefined' && _SYNC_LIST_NAME[listKey] ? _SYNC_LIST_NAME[listKey] + '（删除）' : '')); } catch (e) {}
   options = options || {};
   const arr = store[listKey];
   const item = arr && arr[idx];
@@ -8733,6 +8761,7 @@ function hamiDeleteRecord(listKey, idx, options) {
 // 做法：保存新版本之前，先把旧版本独有的键写进墓碑，云端旧记录从此再也并不回来。
 // 同时对有 id 的记录强制继承原 id（防止编辑时 id 丢失导致身份漂移）。
 function hamiEditRecord(listKey, idx, newItem, renderFn) {
+  try { if (typeof markSyncAction === 'function') markSyncAction((typeof _SYNC_LIST_NAME !== 'undefined' && _SYNC_LIST_NAME[listKey]) || ''); } catch (e) {}
   try {
     const arr = store[listKey];
     if (!Array.isArray(arr) || !(idx >= 0) || !arr[idx]) return false;
@@ -8754,6 +8783,7 @@ function hamiEditRecord(listKey, idx, newItem, renderFn) {
 // 用法：先改完字段，再调 hamiEditInPlace(listKey, idx, renderFn)，
 // 它会自动拿改动前的快照写旧版墓碑，保证云端旧记录不再并回来。
 function hamiEditInPlace(listKey, idx, renderFn) {
+  try { if (typeof markSyncAction === 'function') markSyncAction((typeof _SYNC_LIST_NAME !== 'undefined' && _SYNC_LIST_NAME[listKey]) || ''); } catch (e) {}
   try {
     const arr = store[listKey];
     if (!Array.isArray(arr) || !(idx >= 0) || !arr[idx]) return false;
@@ -8781,6 +8811,34 @@ function hamiTombSnapshot(listKey, snapshot, newItem) {
 function cloudStatus(text, color) {
   const el = document.getElementById('settings-cloud-status');
   if (el) { el.textContent = text || ''; if (color) el.style.color = color; }
+}
+// ===== v227：同步提醒"说人话" =====
+// 主人要求：成功要说清"同步了什么内容"，失败要说清"什么内容没同步"；
+// 不要"云端写入失败……"这类一大段技术话；内容必须简短（如"洗头""体重 100 斤"）。
+var _syncActLabel = '';        // 刚刚操作的内容名（如"洗头"）
+var _syncActAt = 0;            // 记录时刻：超过 5 分钟的旧操作不再当"刚刚"，避免张冠李戴
+var _SYNC_LIST_NAME = {
+  weightRecords: '体重', bodyRecords: '身体数据', periodRecords: '经期', washRecords: '洗头',
+  toiletRecords: '上厕所', maskRecords: '面膜', exerciseRecords: '运动', exerciseItems: '运动项目',
+  accountRecords: '记账', customOrders: '定制单', beautyRecords: '美化档', userTodos: '待办',
+  inspireRecords: '灵感', topicLibrary: '选题', importantDates: '生日/纪念日',
+  mediaRecords: '自媒体更新', futurePosts: '未来更新图文', travelPlans: '出行计划',
+  trips: '出游记录', publishSchedule: '发布排期', benchmarkNotes: '对标笔记'
+};
+function markSyncAction(label) {
+  try {
+    if (!label) return;
+    if (!_hamiBootDone) return;                                            // 启动时的种子/迁移数据不算主人的操作
+    if (typeof _cloudRendering !== 'undefined' && _cloudRendering) return;  // 云端合并后的重渲也不算
+    _syncActLabel = String(label).slice(0, 24);
+    _syncActAt = Date.now();
+  } catch (e) {}
+}
+function _syncActName() {
+  try {
+    if (_syncActLabel && (Date.now() - _syncActAt) < 300000) return _syncActLabel;
+  } catch (e) {}
+  return '';
 }
 // 云端同步提醒浮层：成功/失败时在「记一下」栏下方弹出，支持「上滑」或「点击」关闭，几秒后自动消失。
 // 去重：5 秒内相同文本不重复弹（避免每次保存都刷屏）。
@@ -8992,7 +9050,9 @@ async function pushNow() {
         _lastSyncAt = Date.now(); _persistLastSync();
         cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
         syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
-        showCloudToast('✅ 已同步到云端', 'ok');
+        // v227：成功只说"同步了什么内容"；没有具体操作的后台自动同步就不打扰主人
+        const _okName = (typeof _syncActName === 'function') ? _syncActName() : '';
+        if (_okName) showCloudToast('✅ 已同步：' + _okName, 'ok');
         return;
       } catch (e) {
         lastErr = e;
@@ -9053,7 +9113,7 @@ var _hamiBannerFailStreak = 0;       // 连续失败计数：连续失败 3 次�
 var _hamiBannerLastFailKey = '';     // 上次失败的指纹：相同错误不重复计数
 var _cloudPushPending = false;         // v218：同步就绪前的本地改动记下来，就绪后立刻补推，杜绝"记了没上云"
 
-// 横幅位置：v208 主人要求改到「中间靠上」（约时间与激励语一带）；顶部仍绝不遮挡「记一下」输入栏，文字不拦截点击
+// 横幅位置：v227 主人要求改到「记一下」栏【正下方紧贴】——绝不遮挡顶部操作栏，文字不拦截点击
 function hamiPendingBanner(show, msg) {
   let el = document.getElementById('hami-cloud-pending');
   if (_hamiBannerHideTimer) { clearTimeout(_hamiBannerHideTimer); _hamiBannerHideTimer = null; }
@@ -9062,17 +9122,13 @@ function hamiPendingBanner(show, msg) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'hami-cloud-pending';
-    // v208 主人要求：横幅改到「中间靠上」（时间与激励语一带）——顶部依旧绝不遮挡「记一下」输入栏。
+    // v227：位置/配色/圆角全部交给 CSS（#hami-cloud-pending），这样手机端能随「记一下」栏高度一起微调。
     // 关键：外层 pointer-events:none —— 文字部分完全不拦截点击，悬在哪个按钮上都不挡操作；
     //       只有「再试一次」按钮单独 pointer-events:auto 可以点。
     // z-index 9999 仍低于所有面板/弹窗/确认框（100290+），弹窗打开时横幅压在其下。
-    el.style.cssText = 'position:fixed;left:50%;top:35%;transform:translate(-50%,-50%);z-index:9999;' +
-      'background:#fff0f3;border:1px solid #e890a8;color:#b3325c;border-radius:14px;' +
-      'padding:7px 14px;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(160,80,110,.22);' +
-      'max-width:92vw;text-align:center;pointer-events:none;';
     document.body.appendChild(el);
   }
-  el.innerHTML = '⚠️ <b>还没同步到云端</b>　' + (msg || '正在自动重试，先别关页面')
+  el.innerHTML = '⚠️ <b>' + (msg || '还没同步成功') + '</b>'
     + '　<span id="hami-cloud-retry" style="display:inline-block;padding:2px 9px;' +
       'border-radius:8px;background:#e890a8;color:#fff;cursor:pointer;font-size:11.5px;margin-left:4px;pointer-events:auto;">再试一次</span>';
   const btn = document.getElementById('hami-cloud-retry');
@@ -9125,7 +9181,9 @@ async function commitToCloud() {
     }
     // 每次推送失败都显式弹横幅（去掉原「前 2 次静默」逻辑），相同错误只更新同一元素不会刷屏
     if (_hamiBannerFailStreak >= 1) {
-      hamiPendingBanner(true, '云端写入失败：' + msg);
+      // v227：只说"什么没同步"这一件事，去掉"云端写入失败……"那一大段
+      const _failName = (typeof _syncActName === 'function') ? _syncActName() : '';
+      hamiPendingBanner(true, _failName ? ('未同步：' + _failName) : '还没同步成功');
     }
     if (!_commitRetryTimer) {
       _commitRetryTimer = setTimeout(function () { _commitRetryTimer = null; commitToCloud(); }, 10000);
@@ -10112,6 +10170,8 @@ function buildSpendRe() {
 
 // 共用：如厕记录核心逻辑（顶部指令框"上厕所" + 如厕面板"我今天上了厕所"按钮都调这个，保证两边绝对同步）
 function __recordToiletCore(date) {
+  // v227：供同步提醒显示"上厕所"
+  try { if (typeof markSyncAction === 'function') markSyncAction('上厕所'); } catch (e) {}
   const existing = store.toiletRecords.find(r => r.date === date);
   if (existing) existing.count = (existing.count || 1) + 1;
   else hamiPushRecord('toiletRecords', { date: date, count: 1 });
@@ -10521,6 +10581,11 @@ function sendHamiCmd() {
         acted = true;
         break;
     }
+  }
+
+  // v227：让同步提醒说得清"刚刚记了什么"（如"洗头""支出·餐饮 ¥25"），简短不啰嗦
+  if (acted && hints.length) {
+    try { markSyncAction(hints.join('、').slice(0, 24)); } catch (e) {}
   }
 
   // 保存 + 刷新（关键：必须确认真的写进去了。写失败要明确报警，绝不能"显示已记录、刷新却没了"）
