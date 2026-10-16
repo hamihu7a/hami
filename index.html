@@ -21485,7 +21485,7 @@ function renderDesktopWeight() {
   const filledDays = Object.keys(filledMap).filter(d => d.startsWith(month) && !weightMap[d]).length;
   if (filledDays > 0) {
     // v72：主人要求文字改为"自动沿用最近体重"（去掉"一次"）+ 单行不转行（nowrap+ellipsis）
-    html += `<div class="weight-cal-legend-fine">浅色数字 = 当天没打卡，自动沿用最近体重 · 本月 ${filledDays} 天</div>`;
+    html += `<div class="weight-cal-legend-fine">浅色数字未打卡自动沿用前日体重 · 本月 ${filledDays} 天</div>`;
   }
 
   document.getElementById('desktop-weight').innerHTML = html;
