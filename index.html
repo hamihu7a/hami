@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-276">
+<meta name="hami-build" content="2026-10-16-277">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -12925,16 +12925,22 @@ function updateClock() {
   const now = new Date();
   const hours = now.getHours();
   const mins = now.getMinutes();
-  let period, displayH;
-  if (hours === 0) { period = '凌晨'; displayH = 0; }
-  else if (hours < 12) { period = '上午'; displayH = hours; }
-  else if (hours === 12) { period = '中午'; displayH = 12; }
-  else { period = '下午'; displayH = hours - 12; }
+  // v277：时段细分（凌晨0-5 清晨5-7 早上7-9 上午9-12 中午12-14 下午14-17 傍晚17-19 晚上19-23 深夜23-24）
+  let period;
+  if (hours < 5) period = '凌晨';
+  else if (hours < 7) period = '清晨';
+  else if (hours < 9) period = '早上';
+  else if (hours < 12) period = '上午';
+  else if (hours < 14) period = '中午';
+  else if (hours < 17) period = '下午';
+  else if (hours < 19) period = '傍晚';
+  else if (hours < 23) period = '晚上';
+  else period = '深夜';
   const m = String(mins).padStart(2, '0');
   // 填入顶部 hero 卡片的 时间 / 日期 / 星期
   try {
     const clockEl = document.getElementById('hero-time');
-    if (clockEl) clockEl.textContent = period + displayH + ':' + m;
+    if (clockEl) clockEl.textContent = period + hours + ':' + m;
     const dateEl = document.getElementById('hero-date');
     if (dateEl) dateEl.textContent = String(now.getFullYear()).slice(2) + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
     const weekEl = document.getElementById('hero-week');
