@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-228">
+<meta name="hami-build" content="2026-10-16-229">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1513,29 +1513,27 @@
   #todo-list-work .todo-item.todo-item-overdue,
   #todo-list-daily .todo-item.todo-item-overdue {
     background: rgba(255,224,224,0.7); border-color: #f5c6c6; border-radius: 12px;
-    padding: 11px 12px; margin: 0 0 7px;
+    padding: 8px 10px; margin: 0 0 5px;
   }
   .todo-empty {
     padding: 26px 14px; text-align: center; color: #a89a9a; font-size: 13px; font-weight: 600;
     background: rgba(255,255,255,0.5); border: 1px dashed #ffd0dc; border-radius: 12px;
   }
-  /* v226：待办项版面重做（事件 / 记录时间 / 期限 / 操作 更清晰，移动端不再空白） */
+  /* v229：待办项压紧凑——事件一行、记录时间+期限+操作同一行，不再上下折多行 */
   #todo-list-work .todo-item,
-  #todo-list-daily .todo-item { flex-wrap: wrap; align-items: flex-start; gap: 9px; }
+  #todo-list-daily .todo-item { align-items: flex-start; gap: 8px; padding: 8px 10px; margin-bottom: 5px; }
+  #todo-list-work .todo-item:last-child,
+  #todo-list-daily .todo-item:last-child { margin-bottom: 0; }
   #todo-list-work .todo-body,
   #todo-list-daily .todo-body { flex: 1; min-width: 0; }
-  .todo-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+  .todo-meta { display: flex; align-items: center; gap: 5px; margin-top: 4px; flex-wrap: nowrap; }
   .todo-meta-record {
-    font-size: 11px; color: #9a8690; font-weight: 600;
-    background: #f6eef2; border-radius: 7px; padding: 2px 8px; white-space: nowrap;
+    font-size: 10.5px; color: #9a8690; font-weight: 600;
+    background: #f6eef2; border-radius: 6px; padding: 1px 6px; white-space: nowrap;
   }
-  #todo-list-work .todo-act,
-  #todo-list-daily .todo-act {
-    flex-basis: 100%; flex-direction: row; justify-content: flex-end;
-    gap: 6px; margin-top: 8px; align-items: center;
-  }
-  #todo-list-work .todo-act .todo-btn,
-  #todo-list-daily .todo-act .todo-btn { padding: 4px 11px; font-size: 12px; }
+  .todo-meta-sp { flex: 1; min-width: 4px; }
+  #todo-list-work .todo-meta .todo-btn,
+  #todo-list-daily .todo-meta .todo-btn { padding: 2px 8px; font-size: 11px; border-radius: 7px; white-space: nowrap; }
   /* 添加行：日期带可见文字标签，移动端不再空白 */
   .todo-date-wrap {
     display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;
@@ -1970,6 +1968,8 @@
     background: rgba(255,138,166,0.14); border: 1px solid rgba(209,75,115,0.22);
     padding: 2px 8px; border-radius: 999px;
   }
+  /* v229：标签收进文案里——正文后面的小字标签，不再单独铺一排 */
+  .fp-tags-inline { font-size: 11px; font-weight: 600; color: #b08aa0; letter-spacing: .3px; }
   .future-post-content { font-size: 12px; color: #5a3a48; line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin-bottom: 8px; }
   .future-post-actions {
     display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; margin-top: 4px;
@@ -5822,13 +5822,7 @@
 
     <div class="card">
       <div class="card-title"><span>📋</span> 洗头记录</div>
-      <div style="overflow-x:auto;">
-        <table style="table-layout:fixed;width:100%;min-width:0;">
-          <colgroup><col style="width:35%;"><col style="width:45%;"><col style="width:20%;"></colgroup>
-          <thead><tr><th>日期</th><th>距上次</th><th style="text-align:right;padding-right:4px;">操作</th></tr></thead>
-          <tbody id="wash-table"></tbody>
-        </table>
-      </div>
+      <div id="wash-table"></div>
     </div>
 
   </div>
@@ -5880,12 +5874,7 @@
 
     <div class="card">
       <div class="card-title"><span>📋</span> 敷面膜记录</div>
-      <div id="mask-table-wrap">
-        <table>
-          <thead><tr><th>日期</th><th>星期</th><th>操作</th></tr></thead>
-          <tbody id="mask-table"></tbody>
-        </table>
-      </div>
+      <div id="mask-table"></div>
     </div>
 
   </div>
@@ -12088,15 +12077,14 @@ function renderTodoListForCat(cat) {
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
         <div class="todo-meta">
-          <span class="todo-meta-record">📝 记录 ${fmtTsMonthDay(ut.createdAt)}</span>
+          <span class="todo-meta-record">📝 ${fmtTsMonthDay(ut.createdAt)}</span>
           ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : ''}
+          <span class="todo-meta-sp"></span>
+          <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">完成</button>
+          <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">改</button>
+          <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
         </div>
       </div>
-      <span class="todo-act">
-        <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">✓ 完成</button>
-        <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">✎ 改</button>
-        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">🗑 删</button>
-      </span>
     </div>`;
   });
   if (sorted.length > TODO_PAGE) {
@@ -12137,14 +12125,13 @@ function renderTodoDoneForCat(cat) {
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
         <div class="todo-meta">
-          <span class="todo-meta-record">📝 记录 ${fmtTsMonthDay(ut.createdAt)}</span>
+          <span class="todo-meta-record">📝 ${fmtTsMonthDay(ut.createdAt)}</span>
           ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
+          <span class="todo-meta-sp"></span>
+          <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
+          <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
         </div>
       </div>
-      <span class="todo-act">
-        <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
-        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
-      </span>
     </div>`;
   });
   if (totalPages > 1) {
@@ -14443,10 +14430,10 @@ function fpCardHtml(p, today) {
   const originalIdx = (store.futurePosts || []).indexOf(p);
   const fpRef = p.id ? "'" + p.id.replace(/'/g, "\\'") + "'" : String(originalIdx);
   const isOverdue = p.date && p.date < today && !p.done;
-  const tagsHtml = (p.tags || '').split(/\s+/).filter(Boolean).map(function (t) {
-    return '<span class="future-post-tag">' + crEscapeHtml(t) + '</span>';
-  }).join('');
-  const contentPreview = (p.content || '').length > 55 ? crEscapeHtml(p.content.substring(0, 55)) + '…' : crEscapeHtml(p.content || '');
+  // v229：标签不再单独铺一排（占版面），收进文案里跟在正文后面；点「编辑」可看全部标签
+  const tagsText = (p.tags || '').split(/\s+/).filter(Boolean).join(' ');
+  const contentPreview = ((p.content || '').length > 55 ? crEscapeHtml(p.content.substring(0, 55)) + '…' : crEscapeHtml(p.content || ''))
+    + (tagsText ? ' <span class="fp-tags-inline">' + crEscapeHtml(tagsText) + '</span>' : '');
   const doneLabel = p.done ? '撤销完成' : '标记完成';
   const doneIcon = p.done ? '↩️' : '✓';
   const accMap = { big: '🎨 美化档大号', small: '👤 定制人物小号', douyin: '🎵 抖音' };
@@ -14458,7 +14445,6 @@ function fpCardHtml(p, today) {
     +   '<span class="future-post-tag">' + accName + '</span>'
     +   (p.douyin ? '<span class="future-post-tag" style="background:rgba(25,25,25,0.08);color:#5a3a48;">🎵 同步抖音</span>' : '')
     +   (p.done ? '<span class="future-post-done-badge">已完成</span>' : '')
-    +   (tagsHtml ? tagsHtml : '')
     + '</div>'
     + (contentPreview ? '<div class="future-post-content">' + contentPreview + '</div>' : '')
     + '<div class="future-post-actions">'
@@ -17081,20 +17067,26 @@ function renderPeriod() {
 
   const allWashes = [...store.washRecords].sort((a,b) => b.date.localeCompare(a.date));
   if (allWashes.length === 0) {
-    document.getElementById('wash-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>暂无洗头记录</p></div></td></tr>`;
+    document.getElementById('wash-table').innerHTML = `<div class="empty-state"><p>暂无洗头记录</p></div>`;
   } else {
-    const tbodyHtml = foldRecordsTable('wash', allWashes, function (w) {
+    // v229：照如厕记录的卡片式重做（日期加粗 + 距上次 + 右侧操作），替代原生表格
+    const html = foldRecords('wash', allWashes, function (w) {
       const i = allWashes.indexOf(w);
       let gap = '—';
       if (i >= 0 && i < allWashes.length - 1) gap = Math.round((new Date(w.date) - new Date(allWashes[i+1].date)) / 86400000) + '天';
       const wIdx = store.washRecords.indexOf(w);
-      return `<tr>
-        <td style="white-space:nowrap;color:#5a3a48;font-weight:700;">${w.date}</td>
-        <td style="white-space:nowrap;color:#8a6270;">距上次：${gap}</td>
-        <td style="white-space:nowrap;text-align:right;"><button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" type="button" aria-label="删除">删</button></td>
-      </tr>`;
-    }, 3);
-    document.getElementById('wash-table').innerHTML = tbodyHtml;
+      return `
+        <div class="toilet-card">
+          <div class="card-actions">
+            <button class="row-del-btn" onclick="deleteWashRecord(${wIdx})" aria-label="删除">删</button>
+          </div>
+          <div class="toilet-card-main">
+            <div class="toilet-card-date">${w.date}</div>
+            <div class="toilet-card-meta"><span class="toilet-card-gap">距上次 ${gap}</span></div>
+          </div>
+        </div>`;
+    });
+    document.getElementById('wash-table').innerHTML = '<div class="toilet-card-list">' + html + '</div>';
   }
 }
 
@@ -17181,14 +17173,25 @@ function renderMask() {
 
   const allRecs = [...store.maskRecords].sort((a,b)=>b.date.localeCompare(a.date));
   if (allRecs.length === 0) {
-    document.getElementById('mask-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>暂无敷面膜记录</p></div></td></tr>`;
+    document.getElementById('mask-table').innerHTML = `<div class="empty-state"><p>暂无敷面膜记录</p></div>`;
   } else {
-    const html = foldRecordsTable('mask', allRecs, function (m) {
+    // v229：照如厕记录的卡片式重做（日期加粗 + 星期 + 右侧改/删），替代原生表格
+    const html = foldRecords('mask', allRecs, function (m) {
       const d = new Date(m.date + 'T00:00:00');
       const mIdx = store.maskRecords.indexOf(m);
-      return `<tr><td>${m.date}</td><td>周${wn[d.getDay()]}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openMaskEditModal(${mIdx})">✏️</button> <button class="row-del-btn" onclick="deleteMaskRecord(${mIdx})">🗑</button></td></tr>`;
-    }, 3);
-    document.getElementById('mask-table').innerHTML = html;
+      return `
+        <div class="toilet-card">
+          <div class="card-actions">
+            <button class="row-edit-btn" onclick="openMaskEditModal(${mIdx})" aria-label="修改">改</button>
+            <button class="row-del-btn" onclick="deleteMaskRecord(${mIdx})" aria-label="删除">删</button>
+          </div>
+          <div class="toilet-card-main">
+            <div class="toilet-card-date">${m.date}</div>
+            <div class="toilet-card-meta"><span class="toilet-card-gap">周${wn[d.getDay()]}</span></div>
+          </div>
+        </div>`;
+    });
+    document.getElementById('mask-table').innerHTML = '<div class="toilet-card-list">' + html + '</div>';
   }
 }
 
