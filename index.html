@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-264">
+<meta name="hami-build" content="2026-10-16-265">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -347,9 +347,14 @@
   .hami-cmd-bar .cmd-input:focus-visible { outline: none; }
   body {
     font-family: 'Yuanti SC', 'Hiragino Maru Gothic ProN', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    background: var(--c-bg);
-    background-image: radial-gradient(#ffd6e0 1.5px, transparent 1.5px);
-    background-size: 24px 24px;
+    /* v265：整站底色改主人给的粉色波点参考图（底 #fff4f8、点 #f0d5de、错位半格排布）。
+       只改 body 这一层（模块后面的背景），var(--c-bg) 不动，模块内部一概不受影响。 */
+    background: #fff4f8;
+    background-image:
+      radial-gradient(#f0d5de 2.2px, transparent 2.6px),
+      radial-gradient(#f0d5de 2.2px, transparent 2.6px);
+    background-size: 42px 42px;
+    background-position: 0 0, 21px 21px;
     min-height: 100vh;
     color: var(--c-text);
     margin: 0;
@@ -1041,9 +1046,24 @@
   .panel.has-custom-bg .stat-card { background: rgba(255,255,255,0.55) !important; }
   .panel.has-custom-bg .month-selector select { background: rgba(255,255,255,0.7) !important; }
 
-  /* v34：首页/主面板默认背景改为柔和马卡龙粉渐变——没设背景图时也绝不露刺眼白，模块间隙=粉不是白 */
-  #panel-desktop { background: linear-gradient(160deg, #fff3f8 0%, #ffe9f2 100%); }
-  .main { background: linear-gradient(160deg, #fff3f8 0%, #ffe9f2 100%); }
+  /* v265：模块后面的背景改为主人给的粉色波点（底 #fff4f8、点 #f0d5de、错位半格）。
+     只换这一层容器底色，模块内部不碰；主人上传的面板背景图走 ::before 叠加，照常盖在波点之上。 */
+  #panel-desktop {
+    background: #fff4f8;
+    background-image:
+      radial-gradient(#f0d5de 2.2px, transparent 2.6px),
+      radial-gradient(#f0d5de 2.2px, transparent 2.6px);
+    background-size: 42px 42px;
+    background-position: 0 0, 21px 21px;
+  }
+  .main {
+    background: #fff4f8;
+    background-image:
+      radial-gradient(#f0d5de 2.2px, transparent 2.6px),
+      radial-gradient(#f0d5de 2.2px, transparent 2.6px);
+    background-size: 42px 42px;
+    background-position: 0 0, 21px 21px;
+  }
 
   /* v245：已移除「弱化背景（模糊）」功能——所有背景图外观统一由设置面板的镜像调整，不再有模糊开关 */
   /* v245：镜像/旋转会让背景图层放大，容器裁掉溢出部分，避免盖到相邻板块 */
