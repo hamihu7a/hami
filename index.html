@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-232">
+<meta name="hami-build" content="2026-10-16-233">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -10278,7 +10278,8 @@ function addDaysStr(dstr, n) {
 }
 
 function escHtml(s) {
-  return (s || '').toString().replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  // v233：补上单引号转义（此前只转义 & < > "，主人输入含 ' 时可逃逸单引号属性上下文）
+  return (s || '').toString().replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
 function p2(n){ return String(n).padStart(2,'0'); }
@@ -12168,7 +12169,8 @@ function todoDeadlineInfo(ut) {
   return { has: true, days: dd, label: '⏰ 剩 ' + dd + ' 天', cls: 'ok' };
 }
 function escTodo(s) {
-  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // v233：补上单引号转义
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 // 待办排序：逾期 > 今天 > 有期限未来(就近) > 无期限 > 已完成(沉底)
 function sortTodos(items) {
@@ -12219,7 +12221,7 @@ function renderHomeTodo() {
     let h = '';
     items.forEach(t => {
       const cls = t.urgent ? ' todo-item-urgent' : '';
-      h += `<div class="todo-item${cls}"><span>${t.icon} ${t.text}</span></div>`;
+      h += `<div class="todo-item${cls}"><span>${t.icon} ${escTodo(t.text)}</span></div>`;
     });
     return h;
   };
@@ -13211,7 +13213,7 @@ function renderIncome() {
           <div class="fin-flow-line1">
             <div class="fin-flow-cat">
               <span class="rank-icon" style="background:#b48bf2;color:#fff;">${ICON_SVGS.gift || ''}</span>
-              <span class="fin-flow-cat-name">${r.note ? r.note : '定制单'}</span>
+              <span class="fin-flow-cat-name">${r.note ? escTodo(r.note) : '定制单'}</span>
             </div>
             <span class="fin-flow-amt income">¥${fmtMoney(r.amount)}</span>
             <span style="flex-shrink:0;white-space:nowrap;margin-left:6px;"><span class="badge done">账本</span></span>
@@ -13236,7 +13238,7 @@ function renderIncome() {
           <div class="fin-flow-line1">
             <div class="fin-flow-cat">
               <span class="rank-icon" style="background:#b48bf2;color:#fff;">${ICON_SVGS.gift || ''}</span>
-              <span class="fin-flow-cat-name">${o.desc || '定制单'}</span>
+              <span class="fin-flow-cat-name">${o.desc ? escTodo(o.desc) : '定制单'}</span>
             </div>
             <span class="fin-flow-amt income">¥${fmtMoney(o.amount)}</span>
             <span style="flex-shrink:0;white-space:nowrap;margin-left:6px;">${badge}</span>
@@ -13334,7 +13336,7 @@ function renderIncome() {
             </div>
             <div class="fin-flow-line2">
               <span class="fin-flow-date">${dateStr}</span>
-              <span class="fin-flow-time">${b.note ? '📝 ' + b.note : '单价 ¥' + MOD_PRICE}</span>
+              <span class="fin-flow-time">${b.note ? '📝 ' + escTodo(b.note) : '单价 ¥' + MOD_PRICE}</span>
             </div>
           </div>`;
       });
@@ -15649,12 +15651,12 @@ function renderInspire() {
     const detailHtml = latest.detail ? `
       <div style="margin-top:16px;padding:16px;background:#fff8fa;border-radius:12px;border:1px solid #ffe4ec;">
         <div style="font-size:13px;line-height:1.8;">
-          <b>📝 标题：</b>${latest.title}<br>
-          <b>✍️ 文案：</b>${latest.detail.copy || '—'}<br>
-          <b>🏷️ 标签：</b>${latest.detail.tags || '—'}<br>
-          <b>📊 数据：</b>${latest.detail.stats || '—'}<br>
-          <b>💡 借鉴建议：</b>${latest.detail.advice || '—'}<br>
-          ${latest.detail.link ? `<b>🔗 链接：</b><a href="${latest.detail.link}" target="_blank" style="color:#ff7f9e;">点击查看</a><br>` : ''}
+          <b>📝 标题：</b>${escTodo(latest.title)}<br>
+          <b>✍️ 文案：</b>${escTodo(latest.detail.copy) || '—'}<br>
+          <b>🏷️ 标签：</b>${escTodo(latest.detail.tags) || '—'}<br>
+          <b>📊 数据：</b>${escTodo(latest.detail.stats) || '—'}<br>
+          <b>💡 借鉴建议：</b>${escTodo(latest.detail.advice) || '—'}<br>
+          ${(() => { const _lk = String(latest.detail.link || ''); const _safe = /^(https?:|mailto:)/i.test(_lk) ? _lk : ''; return _safe ? `<b>🔗 链接：</b><a href="${escTodo(_safe)}" target="_blank" rel="noopener noreferrer" style="color:#ff7f9e;">点击查看</a><br>` : ''; })()}
         </div>
       </div>` : '';
 
@@ -15662,11 +15664,11 @@ function renderInspire() {
       <div style="padding:16px;background:linear-gradient(135deg,#fff5f8,#ffeef2);border-radius:14px;border:1px dashed #ffb3c6;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
           <span class="badge done">${typeLabel}</span>
-          <span class="badge rest">${latest.platform || '—'}</span>
-          <span class="badge pending">${latest.topic || '—'}</span>
-          <span class="badge pending">🔥 ${latest.traffic || '—'}</span>
+          <span class="badge rest">${escTodo(latest.platform) || '—'}</span>
+          <span class="badge pending">${escTodo(latest.topic) || '—'}</span>
+          <span class="badge pending">🔥 ${escTodo(latest.traffic) || '—'}</span>
         </div>
-        <div style="font-size:15px;font-weight:600;color:#d14b73;margin-bottom:8px;">${latest.title}</div>
+        <div style="font-size:15px;font-weight:600;color:#d14b73;margin-bottom:8px;">${escTodo(latest.title)}</div>
         <div style="font-size:12px;color:#7d4a5a;">📅 ${latest.date}</div>
       </div>
       ${detailHtml}`;
@@ -15683,10 +15685,10 @@ function renderInspire() {
       return `<tr>`
         + `<td style="white-space:nowrap;font-size:12px;color:#7d4a5a;">${r.date}</td>`
         + `<td style="white-space:nowrap;font-size:12px;">${tp}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;">${r.platform||'—'}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;">${r.topic||'—'}</td>`
-        + `<td style="min-width:200px;max-width:280px;word-break:break-word;line-height:1.35;font-size:12px;font-weight:600;color:#5a3a48;padding:5px 4px;">${r.title||'—'}</td>`
-        + `<td style="white-space:nowrap;font-size:12px;font-weight:700;color:#d14b73;">${r.traffic||'—'}</td>`
+        + `<td style="white-space:nowrap;font-size:12px;">${escTodo(r.platform)||'—'}</td>`
+        + `<td style="white-space:nowrap;font-size:12px;">${escTodo(r.topic)||'—'}</td>`
+        + `<td style="min-width:200px;max-width:280px;word-break:break-word;line-height:1.35;font-size:12px;font-weight:600;color:#5a3a48;padding:5px 4px;">${escTodo(r.title)||'—'}</td>`
+        + `<td style="white-space:nowrap;font-size:12px;font-weight:700;color:#d14b73;">${escTodo(r.traffic)||'—'}</td>`
         + `</tr>`;
     }, 6);
     document.getElementById('inspire-history').innerHTML = html;
@@ -15706,7 +15708,7 @@ function renderDesktopInspire() {
     document.getElementById('desktop-inspire').innerHTML = `
       <div style="padding:12px;background:#fff8fa;border-radius:12px;">
         <div style="font-size:13px;color:#d14b73;font-weight:600;margin-bottom:6px;">${subtitle}</div>
-        <div style="font-size:13px;color:#8a6270;line-height:1.6;">${latest.title}</div>
+        <div style="font-size:13px;color:#8a6270;line-height:1.6;">${escTodo(latest.title)}</div>
       </div>`;
   }
 }
@@ -17680,13 +17682,13 @@ function renderReminder() {
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:2px;">
               <span style="font-size:13px;">${icon}</span>
-              <span style="font-size:14px;font-weight:700;color:#d14b73;">${d.name}</span>
+              <span style="font-size:14px;font-weight:700;color:#d14b73;">${escTodo(d.name)}</span>
               <span style="font-size:11px;padding:1px 5px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
               ${lunarTag}
             </div>
             <div style="font-size:11px;color:#7d4a5a;">📅 ${dateDisplay}</div>
             ${countText ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
-            ${d.remark ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">📝 ${d.remark}</div>` : ''}
+            ${d.remark ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">📝 ${escTodo(d.remark)}</div>` : ''}
           </div>
           <div style="text-align:center;min-width:52px;padding-left:6px;">
             <div style="font-size:17px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
@@ -19167,7 +19169,7 @@ function renderDesktopAccounts() {
     html += `<div class="account-card">
       <div style="text-align:center;margin-bottom:4px;">
         <div style="font-size:13px;font-weight:700;color:#d14b73;line-height:1.3;white-space:nowrap;">${c.nameCn}</div>
-        <div style="font-size:11px;color:#7d4a5a;margin-top:1px;white-space:nowrap;">${c.data.platform}</div>
+        <div style="font-size:11px;color:#7d4a5a;margin-top:1px;white-space:nowrap;">${escTodo(c.data.platform)}</div>
       </div>
       <div class="ac-followers" style="color:#ff7f9e;text-align:center;margin:4px 0;">${c.data.followers}<span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
@@ -20878,7 +20880,7 @@ function renderCountdown() {
     if (days >= 0 && days <= 5 && days !== 1) {
       alerts.push({
         icon: '🎂',
-        label: days === 0 ? `今天是 ${d.name} 生日` : `距离${d.name}生日还有`,
+        label: days === 0 ? `今天是 ${escTodo(d.name)} 生日` : `距离${escTodo(d.name)}生日还有`,
         days: days,
         targetDate: targetDate,
         kind: 'birthday'
