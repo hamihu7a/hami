@@ -7225,27 +7225,31 @@ function renderBackupManifest() {
   const row = function (r) {
     return '<span style="display:inline-block;margin-right:10px;white-space:nowrap;">• ' + r[0] + '：<b style="color:#d14b73;">' + r[1] + '</b></span>';
   };
+  const collapse = function () {
+    // 已备份且内容没变化：详细清单收起，只留一句状态（主人要求：备完就别再铺一大片"过去式"）
+    const ts = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10);
+    let when = '';
+    if (ts) {
+      const d = new Date(ts);
+      when = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    if (titleEl) titleEl.textContent = '📦 备份内容';
+    el.innerHTML = '<span style="color:#1a9e4b;font-weight:700;">✅ 已备份，暂无新内容</span>'
+      + (when ? '<span style="color:#9a8690;font-size:11px;margin-left:8px;">（备份时间：' + when + '）</span>' : '');
+  };
   let snap = null;
   try { snap = JSON.parse(localStorage.getItem('hami_backup_manifest') || 'null'); } catch (e) {}
-  if (Array.isArray(snap) && snap.length) {
+  const snapOk = Array.isArray(snap) && snap.length;
+  const hasTs = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10) > 0;
+  // 兼容：v230/231 时代备份过、还没生成过快照的，同样按"已备份"收起（下次备份会自动补上快照）
+  if (!snapOk && hasTs) { collapse(); return; }
+  if (snapOk) {
     const changed = [];
     for (let i = 0; i < cur.length; i++) {
       const s = snap[i];
       if (!s || String(s[1]) !== String(cur[i][1])) changed.push(cur[i][0]);
     }
-    if (!changed.length) {
-      // 已备份且内容没变化：详细清单收起，只留一句状态（主人要求：备完就别再铺一大片"过去式"）
-      const ts = parseInt(localStorage.getItem('hami_last_backup_ts') || '0', 10);
-      let when = '';
-      if (ts) {
-        const d = new Date(ts);
-        when = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-      }
-      if (titleEl) titleEl.textContent = '📦 备份内容';
-      el.innerHTML = '<span style="color:#1a9e4b;font-weight:700;">✅ 已备份，暂无新内容</span>'
-        + (when ? '<span style="color:#9a8690;font-size:11px;margin-left:8px;">（备份时间：' + when + '）</span>' : '');
-      return;
-    }
+    if (!changed.length) { collapse(); return; }
     // 备份后又有新增/删除/修改：点名变化项 + 展开完整清单
     if (titleEl) titleEl.textContent = '🆕 上次备份后内容有变化（建议再备一次）';
     el.innerHTML = '<div style="color:#d14b73;font-weight:700;margin-bottom:4px;">变化项：' + changed.join('、') + '</div>'
