@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-256">
+<meta name="hami-build" content="2026-10-16-257">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1099,6 +1099,8 @@
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid rgba(255, 158, 181, 0.3);   /* 统一：未完成也用淡粉描边（"量体重"不再"裸奔"），完成态再加深 */
+    outline: 1.5px dashed rgba(209,75,115,0.28);   /* v257：内侧虚线描边（手账卡片段式，与其它卡片一致） */
+    outline-offset: -4px;
   }
 
   /* 打卡卡 ⓘ 按钮：右上角小图标，点击弹出今日真实记录详情 */
@@ -1200,6 +1202,8 @@
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid rgba(255, 158, 181, 0.3);   /* 统一：未完成也用淡粉描边（"量体重"不再"裸奔"），完成态再加深 */
+    outline: 1.5px dashed rgba(209,75,115,0.28);   /* v257：内侧虚线描边（手账卡片段式，与其它卡片一致） */
+    outline-offset: -4px;
   }
   .checkin-card:hover {
     transform: translateY(-2px);
@@ -21817,7 +21821,7 @@ function renderCountdown() {
     // 打卡卡：右侧给轮播小点留出 20px 呼吸位，文字不与小点贴在一起
     const padR = isCheckin ? 20 : 16;
     return `
-      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px ${padR}px 8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);display:flex;align-items:center;gap:10px;overflow:hidden;">
+      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px ${padR}px 8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);outline:1.5px dashed rgba(209,75,115,0.25);outline-offset:-5px;display:flex;align-items:center;gap:10px;overflow:hidden;">
         ${dateCol}
         <div style="flex:1;min-width:0;display:flex;align-items:center;">
           <div style="font-size:14px;color:#5a3a48;font-weight:600;line-height:1.45;word-break:break-word;text-wrap:balance;">${item.icon} ${item.label}</div>
