@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-247">
+<meta name="hami-build" content="2026-10-16-248">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3363,9 +3363,15 @@
     border-style: solid !important;
     border-color: var(--c-pink-deep) !important;
   }
+  /* v248：有图时不再整块压暗（那会让主人误以为"图片消失了"），只在右下角显示一枚小胶囊 */
   .mirror-block.has-bg::after {
-    content: "✓ 已设置 · 点击更换";
-    background: rgba(209, 75, 115, 0.45);
+    content: "点击更换";
+    inset: auto 6px 6px auto;
+    width: auto; height: auto;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-size: 9px;
+    background: rgba(209, 75, 115, 0.78);
   }
 
   /* ===== v244：镜像板块 —— 按住图片直接拖动（社交媒体头像式），按键收进右下角 ⚙ 浮层 ===== */
@@ -3376,31 +3382,38 @@
   .mirror-block.has-bg { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
   .mirror-block.has-bg.dragging { cursor: grabbing; transform: none !important; }
   .mirror-block.dragging::after { opacity: 0 !important; }
-  /* ⚙ 更多调整（仅已上传背景图时出现在右下角，浮在图上、不占版面） */
-  .mirror-cog {
-    position: absolute; right: 6px; bottom: 6px; z-index: 8;
-    width: 24px; height: 24px; border-radius: 50%; border: none;
-    background: rgba(209,75,115,0.86); color: #fff;
-    font-size: 13px; line-height: 1; cursor: pointer;
-    display: none; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,.18); transition: background .15s;
+  /* ===== v248：图片下方一行小按钮（很短很小），点「⚙ 调整」才在它下面展开控制面板 ===== */
+  .mirror-bar {
+    display: none;                 /* 仅在该板块已有背景图时显示（靠 .has-bg 相邻选择器） */
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-height: 16px;
+    margin-top: -2px;              /* 紧贴图片下沿 */
   }
-  .mirror-block.has-bg .mirror-cog { display: flex; }
-  .mirror-cog:hover { background: var(--c-pink-deep); }
-  /* 浮层调节面板：fixed 定位（由 JS 贴着板块摆放），既完全不占版面，也不受板块裁切影响 */
+  .mirror-block.has-bg + .mirror-bar { display: flex; }
+  .mirror-bar-btn {
+    border: 1px solid #ffd7e5; background: #fff; color: #c0537a;
+    font-size: 9px; font-weight: 700; line-height: 1;
+    padding: 3px 7px; border-radius: 7px; cursor: pointer;
+    white-space: nowrap; transition: all .15s;
+  }
+  .mirror-bar-btn:hover { background: #fff0f5; border-color: #ffc0d6; }
+  .mirror-bar-btn.active {
+    background: linear-gradient(135deg, var(--c-pink,#ff8aa6), var(--c-pink-deep,#d14b73));
+    color: #fff; border-color: transparent;
+  }
+  .mirror-bar-btn.danger { color: #b83557; }
+  .mirror-bar-btn.danger:hover { background: #ffe9ef; }
+  /* 控制面板：就在这一行下面【文档流内】展开——不再浮在图上、不依赖定位，彻底杜绝跑偏/闪烁/被裁 */
   .mirror-ctl {
-    position: fixed; left: 0; top: 0; z-index: 9999;
-    display: none; flex-direction: column; gap: 5px;
-    width: 238px; max-width: calc(100vw - 16px);
-    padding: 8px 9px; border-radius: 12px;
-    background: rgba(255,255,255,0.97);
-    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    border: 1px solid #ffd0e0;
-    box-shadow: 0 10px 26px rgba(209,75,115,.25);
+    display: none;
+    flex-direction: column; gap: 5px;
+    padding: 8px 9px; border-radius: 10px;
+    background: #fff8fb; border: 1px solid #ffd7e5;
     text-align: left;
   }
-  .mirror-block.ctl-open .mirror-ctl { display: flex; }
-  .mirror-block.ctl-open .mirror-cog { display: none; }
+  .mirror-ctl.open { display: flex; }
   .mirror-ctl-row, .mirror-geom-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .mirror-ctl-label { font-size: 10px; font-weight: 700; color: #8a6270; white-space: nowrap; }
   .mirror-ctl input[type="range"] {
@@ -3458,29 +3471,7 @@
     box-shadow: 0 2px 8px rgba(209,75,115,0.3);
   }
 
-  /* ===== 每个镜像板块的左下角"删除背景"按钮（仅已设置时显示） ===== */
-  .mirror-del {
-    position: absolute;
-    left: 4px; bottom: 4px;
-    z-index: 6;
-    display: none;
-    align-items: center;
-    gap: 3px;
-    padding: 2px 7px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(209,75,115,0.88);
-    color: #fff;
-    font-size:12px;
-    font-weight: 700;
-    line-height: 1;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(209,75,115,0.4);
-    transition: background .15s, transform .15s;
-  }
-  .mirror-block.has-bg .mirror-del { display: flex; }
-  .mirror-del:hover { background: var(--c-pink-deep); transform: translateY(-1px); }
-  .mirror-del:active { transform: translateY(0); }
+  /* v248：「删除背景」已并入图片下方那一行小按钮（.mirror-bar-btn.danger），不再单独浮在图上 */
 
   .progress-bar-container {
     background: var(--c-pink-soft);
@@ -6584,7 +6575,7 @@
         </div>
 
         <!-- 镜像：按真实主面板内容区竖向排布（比例≈真实主面板），点击板块改对应主面板内容背景；侧栏与整体大背景不在镜像内 -->
-        <div class="mirror-howto">✋ 按住图片可直接拖动调位置 · 滚轮 / 双指捏合放大 · 右下角 ⚙ 更多调整</div>
+        <div class="mirror-howto">✋ 按住图片可直接拖动调位置 · 滚轮 / 双指捏合放大 · 图片下方「⚙ 调整」可调不透明度 / 镜像 / 旋转 / 遮盖</div>
         <div class="mirror-root">
           <!-- 镜像主面板（宽，内部区域竖向排布，比例≈真实主面板内容区） -->
           <div class="mirror-main">
@@ -9873,8 +9864,10 @@ function applyBgMask(key, cfg) {
   }
   document.querySelectorAll('.mirror-block').forEach(function (b) {
     if (b.getAttribute('data-bgkey') !== key) return;
-    var img = b.__bgImgUrl;
+    var img = b.__bgImgUrl;                        // v248：兜底——预览 URL 万一丢了，直接用缓存里的图，避免"图突然不见"
+    if (!img) { try { img = BG_CACHE[key]; } catch (e) {} }
     if (!img) return;
+    b.__bgImgUrl = img;
     var layer = mirrorBgLayer(b);              // v245：图与文字分层，翻转/旋转只作用于图
     layer.style.backgroundPosition = _pos;
     layer.style.backgroundSize = _size;
@@ -9896,50 +9889,75 @@ function applyAllBgMasks() {
   Object.keys(HAMI_BG_MASK_RGB).forEach(function (k) { try { applyBgMask(k); } catch (e) {} });
 }
 
-// v245：把 ⚙ 浮层贴到板块下方（fixed 定位；下方空间不够就翻到上方）
-function positionMirrorCtl(block, ctl) {
-  if (!ctl) return;
-  var r = block.getBoundingClientRect();
-  var w = ctl.offsetWidth || 238;
-  var h = ctl.offsetHeight || 150;
-  var left = Math.min(Math.max(8, r.left), Math.max(8, window.innerWidth - w - 8));
-  var top = r.bottom + 6;
-  if (top + h > window.innerHeight - 8) {
-    var up = r.top - h - 6;
-    top = (up >= 8) ? up : Math.max(8, window.innerHeight - h - 8);
-  }
-  ctl.style.left = Math.round(left) + 'px';
-  ctl.style.top = Math.round(top) + 'px';
-}
-
-// v244：为某板块创建「⚙ 更多调整」浮层（不透明度 / 遮盖方向 / 恢复默认），并挂上「按住拖动」手势
+// v248：把「调整 / 删除」两个极小的按钮放在【图片下方一行】，点「调整」才在它下面展开控制面板
 function buildMirrorMaskCtl(key, block) {
   if (!block) block = document.querySelector('.mirror-block[data-bgkey="' + key + '"]');
   if (!block) return;
-  var ctl = block.querySelector('.mirror-ctl');
+  var host = block.parentNode || block;
+  var bar = host.querySelector('.mirror-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'mirror-bar';
+    bar.setAttribute('data-bgkey', key);
+    bar.innerHTML =
+      '<button type="button" class="mirror-bar-btn mb-edit" title="展开调整：不透明度 / 镜像 / 旋转 / 遮盖">⚙ 调整</button>' +
+      '<button type="button" class="mirror-bar-btn danger mb-del" title="删除该区域已上传的背景图片">🗑 删除</button>';
+    if (block.insertAdjacentElement) block.insertAdjacentElement('afterend', bar);
+    else host.appendChild(bar);
+  }
+  var ctl = host.querySelector('.mirror-ctl');
   if (!ctl) {
     ctl = document.createElement('div');
     ctl.className = 'mirror-ctl';
     ctl.setAttribute('data-bgkey', key);
-    ctl.addEventListener('click', function (e) { e.stopPropagation(); });
-    block.appendChild(ctl);
+    if (bar.insertAdjacentElement) bar.insertAdjacentElement('afterend', ctl);
+    else host.appendChild(ctl);
   }
-  if (!block.querySelector('.mirror-cog')) {
-    var cog = document.createElement('button');
-    cog.type = 'button'; cog.className = 'mirror-cog';
-    cog.title = '更多调整（不透明度 / 遮盖方向）';
-    cog.textContent = '⚙';
-    cog.addEventListener('click', function (e) {
+  function closeAllCtl() {
+    document.querySelectorAll('.mirror-ctl.open').forEach(function (c) { c.classList.remove('open'); });
+    document.querySelectorAll('.mirror-bar-btn.mb-edit.active').forEach(function (b) { b.classList.remove('active'); });
+  }
+  var editBtn = bar.querySelector('.mb-edit');
+  if (editBtn && !editBtn.__bound) {
+    editBtn.__bound = true;
+    editBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      var opening = !block.classList.contains('ctl-open');
-      document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
+      var opening = !ctl.classList.contains('open');
+      closeAllCtl();
       if (opening) {
-        block.classList.add('ctl-open');
-        try { positionMirrorCtl(block, ctl); } catch (e0) {}
+        ctl.classList.add('open');
+        editBtn.classList.add('active');
       }
       try { playSound('click'); } catch (e2) {}
     });
-    block.appendChild(cog);
+  }
+  // v248：删除按钮带一次「确认」，避免误点把图删掉（主人反馈过"图突然没了"）
+  var delBtn = bar.querySelector('.mb-del');
+  if (delBtn && !delBtn.__bound) {
+    delBtn.__bound = true;
+    delBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!delBtn.__armed) {
+        delBtn.__armed = true;
+        delBtn.textContent = '确认删除？';
+        delBtn.classList.add('active');
+        clearTimeout(delBtn.__t);
+        delBtn.__t = setTimeout(function () {
+          delBtn.__armed = false; delBtn.textContent = '🗑 删除'; delBtn.classList.remove('active');
+        }, 3000);
+        return;
+      }
+      clearTimeout(delBtn.__t);
+      delBtn.__armed = false; delBtn.textContent = '🗑 删除'; delBtn.classList.remove('active');
+      clearBg(key);
+      clearMirrorPreview(key);
+      ctl.classList.remove('open');
+      if (editBtn) editBtn.classList.remove('active');
+      var st = document.getElementById('settings-bg-status');
+      if (st) st.textContent = '🗑 已删除「' + (block.title || key) + '」的背景图片';
+      afterBgChange(st);
+      try { playSound('save'); } catch (e2) {}
+    });
   }
   var cfg = hamiBgMaskGet(key);
   function row(field, label, val, min, max) {
@@ -10040,7 +10058,8 @@ function buildMirrorMaskCtl(key, block) {
   var cls = ctl.querySelector('.mirror-ctl-close');
   if (cls) cls.addEventListener('click', function (e) {
     e.stopPropagation();
-    block.classList.remove('ctl-open');
+    ctl.classList.remove('open');
+    if (editBtn) editBtn.classList.remove('active');
   });
   syncMirrorCtlVisibility(key);
   try { initMirrorDrag(block, key); } catch (e) {}
@@ -10064,7 +10083,7 @@ function initMirrorDrag(block, key) {
   var ptrs = {}, mode = null, st = null;
   block.addEventListener('pointerdown', function (e) {
     if (!block.classList.contains('has-bg')) return;                     // 无图 → 交给点击上传
-    if (e.target.closest('.mirror-ctl, .mirror-cog, .mirror-del')) return;
+    if (e.target.closest('.mirror-ctl, .mirror-bar')) return;            // v248：面板/按钮行不参与拖动
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ids = Object.keys(ptrs);
     if (ids.length === 1) {
@@ -10189,14 +10208,20 @@ function clearMirrorPreview(key) {
   });
   syncMirrorCtlVisibility(key);
 }
-// v244：把「有没有图」同步到板块本身（决定 ⚙ 按钮、拖动手势是否可用）
+// v248：把「有没有图」同步到板块本身（决定图片下方那一行小按钮 / 拖动手势是否可用）
 function syncMirrorCtlVisibility(key) {
   var block = document.querySelector('.mirror-block[data-bgkey="' + key + '"]');
   if (!block) return;
   var has = false;
   try { has = !!BG_CACHE[key]; } catch (e) {}
   block.classList.toggle('has-bg', has);
-  if (!has) block.classList.remove('ctl-open');
+  if (!has) {
+    var host = block.parentNode || block;
+    var ctl = host.querySelector('.mirror-ctl');
+    if (ctl) ctl.classList.remove('open');
+    var eb = host.querySelector('.mirror-bar-btn.mb-edit');
+    if (eb) eb.classList.remove('active');
+  }
 }
 
 async function initSettingsPanel() {
@@ -10235,29 +10260,12 @@ async function initSettingsPanel() {
       // 已设置背景 → 缩略块直接显示图片预览（v242：统一走 setMirrorPreview，顺带叠上遮盖效果）
       try { setMirrorPreview(key, BG_CACHE[key]); } catch (e) {}
     }
-    // v242：本板块的「遮盖」控制条（不透明度滑块 + 方向按键）
+    // v248：图片下方那一行小按钮（⚙ 调整 / 🗑 删除）+ 点开后在其下方展开的控制面板
     buildMirrorMaskCtl(key, block);
-    // v245：已移除「弱化（模糊）」小开关——背景图外观统一由本板块的 ⚙ 浮层调整
     try { localStorage.removeItem('hami_weak_' + key); } catch (e) {}
     block.classList.remove('has-weak');
     const el0 = document.querySelector(BG_ELS[key]);
     if (el0) el0.classList.remove('weakened');
-    // 每个区域单独的"删除背景"按钮（左下角，仅已设置时显示，点击删除已上传图片）
-    const delBtn = document.createElement('button');
-    delBtn.className = 'mirror-del';
-    delBtn.type = 'button';
-    delBtn.textContent = '🗑 删除';
-    delBtn.title = '删除此区域已上传的背景图片';
-    delBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      clearBg(key);
-      clearMirrorPreview(key);
-      block.classList.remove('has-bg');
-      if (statusEl) statusEl.textContent = '🗑 已删除「' + (block.title || key) + '」的背景图片';
-      afterBgChange(statusEl);
-      try { playSound('save'); } catch (e2) {}
-    });
-    block.appendChild(delBtn);
     // 点击板块主体 → 选图上传（刚拖动过图片则不触发）
     block.addEventListener('click', () => {
       if (block.__suppressClick) { block.__suppressClick = false; return; }
@@ -10266,19 +10274,7 @@ async function initSettingsPanel() {
       if (fileInput) fileInput.click();
     });
   });
-  // v244：点空白处收起所有「⚙ 更多调整」浮层
-  document.addEventListener('click', function (e) {
-    var t = e.target;
-    if (t && t.closest && (t.closest('.mirror-ctl') || t.closest('.mirror-cog'))) return;
-    document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
-  });
-  // v245：浮层用 fixed 定位，页面滚动/窗口变化时收起（避免飘在错位置）
-  window.addEventListener('scroll', function () {
-    document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
-  }, true);
-  window.addEventListener('resize', function () {
-    document.querySelectorAll('.mirror-block.ctl-open').forEach(function (b) { b.classList.remove('ctl-open'); });
-  });
+  // v248：控制面板改为图片下方【文档流内】展开——不再需要点空白 / 滚动收起浮层
   if (fileInput) {
     fileInput.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
