@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-295">
+<meta name="hami-build" content="2026-10-17-296">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -728,14 +728,18 @@
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 9px; }
   }
   /* 健康·目标体重行 + 进度环 */
-  .goal-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px; }
-  .goal-row .goal-main { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 6px; }
+  .goal-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 10px; }
+  .goal-row .goal-main { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 4px; }
+  .goal-row .goal-toggle-row { display: flex; align-items: center; gap: 8px; }
+  .goal-row .goal-edit-btn { flex: none; border: 1px solid var(--c-line); background: #fff0f6; color: var(--c-pink-deep); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 9px; cursor: pointer; }
+  .goal-row .goal-edit-btn:hover { background: #ffe0ee; }
+  .goal-row .goal-info { font-size: 12px; color: var(--c-muted); line-height: 1.35; }
+  .goal-row .goal-info b { font-size: 14px; color: var(--c-pink-deep); }
+  .goal-row .goal-edit-area { display: none; flex-direction: column; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--c-line, #ffe4ec); }
   .goal-row .goal-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; width: 78px; }
   .goal-row .goal-unit { font-size: 12px; color: var(--c-muted); }
   .goal-row input { width: 70px; padding: 4px 6px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 14px; text-align: center; background: #fff; color: var(--c-text); }
-  .goal-row .goal-info { font-size: 12px; color: var(--c-muted); line-height: 1.4; margin-top: 2px; padding-top: 6px; border-top: 1px dashed var(--c-line, #ffe4ec); }
-  .goal-row .goal-info b { font-size: 14px; }
 
   /* 数据备份温和提醒（满 60 条时显示） */
   .backup-tip {
@@ -5884,20 +5888,23 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     <div class="goal-row" id="weight-goal-row">
       <div class="fitness-ring" id="goal-ring"></div>
       <div class="goal-main">
-        <div class="goal-line">
-          <label for="weight-goal-input">🎯 目标体重</label>
-          <input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal">
-          <span class="goal-unit">斤</span>
-          <button id="weight-goal-save" class="goal-save-btn" type="button">✓ 确定</button>
-          <button id="weight-goal-clear" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
+        <div class="goal-toggle-row">
+          <button id="goal-edit-toggle" class="goal-edit-btn" type="button">✏️ 修改</button>
+          <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
         </div>
-        <div class="goal-line">
-          <label for="start-weight-input">⚖️ 起始体重</label>
-          <input type="number" id="start-weight-input" step="0.1" min="60" max="600" placeholder="如 180" inputmode="decimal">
-          <span class="goal-unit">斤</span>
-          <button id="start-weight-save" class="goal-save-btn" type="button">✓ 确定</button>
+        <div class="goal-edit-area" id="goal-edit-area">
+          <div class="goal-line">
+            <label for="weight-goal-input">🎯 目标体重</label>
+            <input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal">
+            <span class="goal-unit">斤</span>
+          </div>
+          <div class="goal-line">
+            <label for="start-weight-input">⚖️ 起始体重</label>
+            <input type="number" id="start-weight-input" step="0.1" min="60" max="600" placeholder="如 180" inputmode="decimal">
+            <span class="goal-unit">斤</span>
+          </div>
+          <button id="goal-edit-save" class="goal-save-btn" type="button" style="align-self:flex-start;">💾 保存</button>
         </div>
-        <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
       </div>
     </div>
 
@@ -14790,50 +14797,31 @@ function renderWeightGoal(startWeight, latestAfter) {
 }
 
 function bindWeightGoalInput() {
-  const input = document.getElementById('weight-goal-input');
-  const saveBtn = document.getElementById('weight-goal-save');
-  const clearBtn = document.getElementById('weight-goal-clear');
-  if (!input || input.dataset.bound) return;
-  input.dataset.bound = '1';
-  // 关键：边输入不立刻保存，必须点「✓ 确定」才生效，避免设错难复位（主人要求）
-  const save = () => {
-    const v = parseFloat(input.value);
-    if (isNaN(v) || v <= 0) { finToast('请填写有效的目标体重（60-400 斤）'); return; }
-    store.weightGoal = v;
-    saveData();
-    try { renderFitness(); } catch(e) {}
-    try { finToast && finToast('🎯 目标体重已设为 ' + v.toFixed(1) + ' 斤'); } catch(e) {}
+  const toggleBtn = document.getElementById('goal-edit-toggle');
+  const area = document.getElementById('goal-edit-area');
+  const saveBtn = document.getElementById('goal-edit-save');
+  const gInput = document.getElementById('weight-goal-input');
+  const sInput = document.getElementById('start-weight-input');
+  if (!toggleBtn || toggleBtn.dataset.bound) return;
+  toggleBtn.dataset.bound = '1';
+  const openEdit = () => {
+    if (store.weightGoal != null) gInput.value = store.weightGoal;
+    if (store.startWeight != null) sInput.value = store.startWeight;
+    area.style.display = 'flex';
+    toggleBtn.textContent = '✕ 收起';
   };
-  const clear = () => {
-    input.value = '';
-    store.weightGoal = null;
-    saveData();
-    try { renderFitness(); } catch(e) {}
-    try { finToast && finToast('已清除目标体重'); } catch(e) {}
-  };
-  if (saveBtn) saveBtn.addEventListener('click', save);
-  if (clearBtn) clearBtn.addEventListener('click', clear);
-  // 也支持回车直接保存，但失焦/change 不保存（防止误触）
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); save(); }
+  const closeEdit = () => { area.style.display = 'none'; toggleBtn.textContent = '✏️ 修改'; };
+  toggleBtn.addEventListener('click', () => {
+    if (area.style.display === 'flex') closeEdit(); else openEdit();
   });
-  // 起始体重：默认90，主人可改；减肥累计减重从它算
-  const swInput = document.getElementById('start-weight-input');
-  const swSaveBtn = document.getElementById('start-weight-save');
-  if (swInput && !swInput.dataset.bound) {
-    swInput.dataset.bound = '1';
-    if (store.startWeight != null) swInput.value = store.startWeight;
-    const swSave = () => {
-      const v = parseFloat(swInput.value);
-      if (isNaN(v) || v <= 0) { finToast('请填写有效的起始体重（60-600 斤）'); return; }
-      store.startWeight = v;
-      saveData();
-      try { renderFitness(); } catch(e) {}
-      try { finToast && finToast('⚖️ 起始体重已设为 ' + v.toFixed(1) + ' 斤'); } catch(e) {}
-    };
-    if (swSaveBtn) swSaveBtn.addEventListener('click', swSave);
-    swInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); swSave(); } });
-  }
+  saveBtn.addEventListener('click', () => {
+    const gv = parseFloat(gInput.value), sv = parseFloat(sInput.value);
+    if (!isNaN(gv) && gv > 0) { store.weightGoal = gv; finToast && finToast('🎯 目标体重已设为 ' + gv.toFixed(1) + ' 斤'); }
+    if (!isNaN(sv) && sv > 0) { store.startWeight = sv; finToast && finToast('⚖️ 起始体重已设为 ' + sv.toFixed(1) + ' 斤'); }
+    saveData();
+    try { renderFitness(); } catch(e) {}
+    closeEdit();
+  });
 }
 
 // ==================== 减肥记录 ====================
