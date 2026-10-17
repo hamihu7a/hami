@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-293">
+<meta name="hami-build" content="2026-10-17-294">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2868,8 +2868,9 @@
   .period-action-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .period-action-row .date-log-input { flex: 1; min-width: 120px; }
   .period-main-btn, .period-end-btn {
-    flex: 1; min-width: 120px; padding: 13px 10px; border: none; border-radius: 14px;
-    font-size: 15px; font-weight: 800; cursor: pointer; white-space: nowrap;
+    flex: 1; min-width: 0; padding: 13px 6px; border: none; border-radius: 14px;
+    font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
   }
   .period-main-btn {
     background: linear-gradient(135deg, #ff7aa2, #d14b73); color: #fff;
@@ -18445,7 +18446,7 @@ function renderPeriod() {
     <div class="stat-card"><div class="label">上次经期</div><div class="value" style="font-size:16px;">${lastPeriod ? fmtMD(lastPeriod.start) : '—'}</div><div class="unit">${lastPeriod && lastPeriod.end ? '至 ' + fmtMD(lastPeriod.end) : '🔴 进行中'}</div></div>
     <div class="stat-card"><div class="label">经期时长</div><div class="value">${lastDuration > 0 ? lastDuration : '—'}</div><div class="unit">${lastDuration > 0 ? ('天 ' + (lastDuration >= 3 && lastDuration <= 7 ? '✅正常' : (lastDuration > 7 ? '⚠️偏长' : '偏短'))) : '待记录'}</div></div>
     <div class="stat-card"><div class="label">平均周期</div><div class="value">${avgCycle > 0 ? avgCycle : '—'}</div><div class="unit">天 ${avgCycle >= 21 && avgCycle <= 35 ? '✅正常' : (avgCycle > 0 ? '⚠️' : '')}</div></div>
-    <div class="stat-card"><div class="label">本月洗头</div><div class="value">${monthWash.length}</div><div class="unit">次</div></div>
+    <div class="stat-card"><div class="label">下次预计</div><div class="value" style="font-size:16px;">${nextPredict ? fmtMD(nextPredict) : '—'}</div><div class="unit">${nextPredict ? '还有 ' + Math.max(0, Math.round((new Date(nextPredict) - new Date(today)) / 86400000)) + ' 天' : '待记录'}</div></div>
   `;
 
   // 根据是否有进行中经期，禁用/启用顶部「记开始」「记结束」按钮
