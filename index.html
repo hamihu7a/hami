@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-325">
+<meta name="hami-build" content="2026-10-17-326">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3328,6 +3328,18 @@
   .db-btn-ghost { background: #ffeef4; color: var(--c-pink-deep,#d14b73); }
   .db-btn-dark { background: #b3325c; color: #fff; box-shadow: 0 2px 8px rgba(179,50,92,.3); }
   .db-btn-full { width: 100%; margin-top: 4px; }
+  /* ===== v326：夜间护眼模式回归（主人点名）=====
+     智能反色挂在 html 根元素：规范豁免根元素不产生 containing block，
+     吸顶指令栏 / 固定弹层照常工作；明暗对调、色相基本保留。
+     主人自选背景图（.has-custom-bg）与照片/视频单独反滤，避免变负片。 */
+  html.eye-dark { filter: invert(0.90) hue-rotate(180deg); }
+  html.eye-dark img,
+  html.eye-dark video,
+  html.eye-dark .has-custom-bg { filter: invert(1) hue-rotate(180deg); }
+  /* 自定义背景图的板块：卡内内容再反一次回到深色（背景图本身仍保持原色不变负片）；
+     顶栏 hero 的白字是压在图片上设计的，保持整卡原样不反 */
+  html.eye-dark .has-custom-bg > * { filter: invert(1) hue-rotate(180deg); }
+  html.eye-dark .desktop-hero.has-custom-bg > * { filter: none; }
   .db-info {
     font-size: 12px; color: #5a3a48; line-height: 1.8; background: #fff;
     border-radius: 10px; padding: 9px 11px; margin-bottom: 10px;
@@ -7366,14 +7378,14 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
   <!-- ==================== 未来更新图文记录 ==================== -->
   <div id="panel-benchmark" class="panel">
     <div class="tip-box">
-      💡 <b>待完成图文项目</b>：把接下来要发的小红书/抖音图文提前存好，包括<b>标题、文案、标签、更新日期</b>。准备连更时，用「批量连更」一次导入 7 条，到点直接复制发布。
+      💡 <b>待完成图文项目</b>：把接下来要发的小红书/抖音图文提前存好，包括<b>标题、文案、标签、更新日期</b>，到点直接复制发布。
     </div>
 
     <div class="fin-topbar" style="flex-wrap:nowrap;gap:10px;">
       <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);line-height:1.25;text-align:center;">📅 待完成<br>图文项目</div>
       <div class="future-post-top-actions" style="display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end;">
         <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostModal()">➕ 添加</button>
-        <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostBatch()">📥 批量</button>
+        <!-- v326：主人不需要「批量连更」，「📥 批量」按钮已移除 -->
         <!-- v316：主人不需要「一键检查」按钮，已移除；单条卡片上的「🏆 检查」保留 -->
       </div>
     </div>
@@ -7390,10 +7402,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <span style="width:36px;"></span>
       </div>
       <div class="co-body" style="max-height:calc(100vh - 56px - 24px - 70px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
-        <div class="fp-mode-tabs">
-          <button class="fp-mode-btn active" data-fp-mode="single" onclick="setFuturePostMode('single')">单条添加</button>
-          <button class="fp-mode-btn" data-fp-mode="batch" onclick="setFuturePostMode('batch')">批量连更</button>
-        </div>
+        <!-- v326：模式切换条已删——主人不需要批量连更，弹窗恒为单条模式 -->
         <!-- 单条模式 -->
         <div id="fp-single">
           <div class="co-field">
@@ -7437,42 +7446,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
             <input type="date" id="fp-date">
           </div>
         </div>
-        <!-- 批量模式 -->
-        <div id="fp-batch" style="display:none;">
-          <div class="co-field">
-            <label>默认账号</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;min-width:90px;">
-                <input type="radio" name="fp-batch-account" value="big" style="display:none;">
-                <span class="co-status-opt active" data-fp-batch-acc="big" onclick="fpPickBatchAccount('big')">🎨 美化档大号</span>
-              </label>
-              <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;min-width:90px;">
-                <input type="radio" name="fp-batch-account" value="small" style="display:none;">
-                <span class="co-status-opt" data-fp-batch-acc="small" onclick="fpPickBatchAccount('small')">👤 定制人物小号</span>
-              </label>
-              <label class="co-status" style="flex:1;justify-content:center;cursor:pointer;min-width:90px;">
-                <input type="radio" name="fp-batch-account" value="douyin" style="display:none;">
-                <span class="co-status-opt" data-fp-batch-acc="douyin" onclick="fpPickBatchAccount('douyin')">🎵 抖音</span>
-              </label>
-            </div>
-          </div>
-          <div class="co-field">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
-              <input type="checkbox" id="fp-batch-douyin" checked style="width:18px;height:18px;"> 🎵 同步抖音
-            </label>
-          </div>
-          <div class="co-field">
-            <label>起始日期</label>
-            <input type="date" id="fp-batch-start">
-          </div>
-          <div class="co-field">
-            <label>批量内容（每行一条）</label>
-            <textarea id="fp-batch-lines" rows="5" placeholder="标题 | 文案 | 标签 | 日期&#10;捏脸教程 | 清冷系捏脸步骤... | #sims4 | 2026-08-13&#10;EA风对比 | 前后对比图+参数 | #模拟人生 |&#10;..."></textarea>
-          </div>
-          <div style="font-size:12px;color:#8a6270;line-height:1.5;">
-            格式：<b>标题 | 文案 | 标签 | 日期</b>，后三项可省略；日期省略则按起始日期自动顺延。
-          </div>
-        </div>
+        <!-- v326：批量连更表单已删（主人不需要） -->
       </div>
       <div class="co-actions">
         <button class="co-cancel" onclick="closeFuturePostModal()">取消</button>
@@ -7640,7 +7614,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
               <div style="font-size:12px;color:#8a6270;">开启后界面变暗色护眼，不跟随系统</div>
             </div>
             <label class="settings-switch">
-              <input type="checkbox" id="dark-mode-switch" disabled title="v47 已废除：夜间模式不是主人要求的功能，已被彻底移除。如确有需要请跟小助理单独说。">
+              <input type="checkbox" id="dark-mode-switch" onchange="toggleDarkMode(this.checked)" title="夜间护眼模式：开启后界面变暗色护眼（v326 回归）">
               <span class="settings-switch-slider"></span>
             </label>
           </div>
@@ -14697,26 +14671,32 @@ function switchPanel(name, navEl) {
   } catch (e) {}
 }
 function toggleSidebar() { document.body.classList.toggle('sidebar-collapsed'); }
+// ===== v326：夜间护眼模式回归（主人点名要回来）=====
+// 实现：html 根元素挂 .eye-dark 智能反色（CSS 见 .db-btn-full 上方），偏好存 localStorage.hami_eye_dark。
 function toggleDarkMode(on) {
-  // v47 彻底废除：手动夜间模式功能被主人 v17 以后从未要求过、现在 v47 已彻底移除。
-  // 保留空函数是防止设置面板 onchange="toggleDarkMode(this.checked)" 抛 ReferenceError。
-  // 主人真有需要时，跟小助理说，不要让 body.dark-mode 自己浮出来。
-  try { document.body.classList.remove('dark-mode'); } catch (e) {}
-  try { localStorage.removeItem('hami_dark_mode'); } catch (e) {}
+  try {
+    document.documentElement.classList.toggle('eye-dark', !!on);
+    if (on) { localStorage.setItem('hami_eye_dark', '1'); }
+    else { localStorage.removeItem('hami_eye_dark'); }
+  } catch (e) {} // 隐私模式下 localStorage 不可用：本次会话仍生效，刷新后回默认
+  try { var sw = document.getElementById('dark-mode-switch'); if (sw) sw.checked = !!on; } catch (e) {}
 }
 function applyDarkModePref() {
-  // v47 彻底废除：手动夜间模式从来不是主人要求的功能，主人从未主动开过，
-  // 但 v17 时代小助理擅自加了它，导致 localStorage 残留 + body.dark-mode class 触发，
-  // 主人 iPhone 一进暗色系统/任一触发就全页变蓝紫。彻底清残留、彻底不再触发。
+  // v17 时代 body.dark-mode 残留清理（v47 逻辑保留，防老用户复发）
   try {
     localStorage.removeItem('hami_dark_mode');
     localStorage.removeItem('hami_dark_mode_v40_cleared');
     localStorage.removeItem('hami_dark_mode_v47_removed');
     document.body.classList.remove('dark-mode');
-    var sw = document.getElementById('dark-mode-switch');
-    if (sw) sw.checked = false;
   } catch (e) {}
-  // 主人若是哪天真的想要夜间模式，请直接跟小助理说，不要用任何"自动/跟随系统"的入口。
+  // v326：按主人偏好恢复护眼模式
+  try {
+    var on = false;
+    try { on = localStorage.getItem('hami_eye_dark') === '1'; } catch (e) {}
+    document.documentElement.classList.toggle('eye-dark', on);
+    var sw = document.getElementById('dark-mode-switch');
+    if (sw) sw.checked = on;
+  } catch (e) {}
 }
 
 // v275：任务栏分组贴纸图标点击 → 跳转到该分组的第一个分类（等价于点该组第一个 .nav-item）
@@ -16633,7 +16613,7 @@ function renderFuturePosts() {
 
   // ---- 主列表：待发布的（分页 3/页） ----
   if (!mainList.length) {
-    box.innerHTML = '<div class="empty-state"><div class="big-icon">📅</div><p>还没有未来的图文计划</p><p style="font-size:12px;margin-top:6px;">点右上角「添加一条」或「批量连更」，把接下来要发的内容暂存起来~</p></div>';
+    box.innerHTML = '<div class="empty-state"><div class="big-icon">📅</div><p>还没有未来的图文计划</p><p style="font-size:12px;margin-top:6px;">点右上角「➕ 添加」，把接下来要发的内容暂存起来~</p></div>';
   } else {
     const maxPg = Math.max(0, Math.ceil(mainList.length / ACC_PAGE) - 1);
     if ((__futurePage || 0) > maxPg) __futurePage = maxPg;
