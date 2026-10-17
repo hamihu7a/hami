@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-312">
+<meta name="hami-build" content="2026-10-17-313">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1179,20 +1179,7 @@
     font-size: 22px;
     font-weight: 700;
     color: #4a3340;   /* v256：粉丝数主数字用日历体重数字同款深色 */
-    /* v312：主人要求加「渐变的灰色描边阴影」——四周一圈由浓到淡的灰描边 + 向下渐隐投影，
-       让数字从半透明卡片背景里浮出来，小字也看得清（text-shadow 无法用渐变，
-       这里用多层 rgba 灰色叠加模拟由内到外由深到浅的过渡） */
-    text-shadow:
-      1px 0 0 rgba(120, 110, 118, 0.50),
-      -1px 0 0 rgba(120, 110, 118, 0.50),
-      0 1px 0 rgba(120, 110, 118, 0.50),
-      0 -1px 0 rgba(120, 110, 118, 0.50),
-      1px 1px 0 rgba(122, 112, 120, 0.36),
-      -1px -1px 0 rgba(122, 112, 120, 0.36),
-      1px -1px 0 rgba(122, 112, 120, 0.36),
-      -1px 1px 0 rgba(122, 112, 120, 0.36),
-      0 2px 5px rgba(120, 110, 118, 0.28),
-      0 5px 12px rgba(120, 110, 118, 0.14);
+    /* v313：撤销 v312 的灰色描边阴影（主人反馈效果差，已移除） */
     margin-bottom: 8px;
   }
   .account-card .ac-followers .ac-unit { font-size: 12px; color: #7d4a5a; font-weight: 400; }   /* v256 */
