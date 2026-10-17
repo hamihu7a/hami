@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-301">
+<meta name="hami-build" content="2026-10-17-302">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4435,7 +4435,7 @@
 
   /* ============ 明日天气 / 明日黄历 小半透明按钮 + 预览弹窗 ============ */
   .tomorrow-badge {
-    display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; line-height: 1.2;
+    display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 0; line-height: 1.2;
     padding: 4px 12px; border-radius: 10px;
     background: rgba(255,255,255,0.45);
     border: 1px solid rgba(209,75,115,0.25);
@@ -4566,7 +4566,7 @@
     line-height: 1.35;
     margin-bottom: 1px;
   }
-  .home-card-row b { color: #4a3340; font-weight: 700; }
+  .home-card-row b { color: #4a3340; font-weight: 700; flex: 1; min-width: 0; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .home-card-note {
     font-size: 12px;
     color: #7d4a5a;
@@ -4603,7 +4603,7 @@
     padding-top: 4px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 8px;
   }
   /* 宜/忌：默认各显示 1 行，超出用省略号，点击展开查看完整内容 */
