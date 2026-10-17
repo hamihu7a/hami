@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-298">
+<meta name="hami-build" content="2026-10-17-299">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -950,7 +950,7 @@
      ============================================================ */
 
   /* 时间与激励语 */
-  .desktop-hero { position: relative; }
+  .desktop-hero { position: relative; padding-top: 3px; padding-bottom: 3px; }
   .desktop-hero.has-custom-bg::before {
     content: "";
     position: absolute; inset: 0; z-index: 0;
@@ -12952,17 +12952,13 @@ const fitnessQuotes = [
 ];
 
 function getDailyQuote() {
-  // v238：不再按「类内 % 15」轮换，改为 150 条大池 + 三个互质大步长各取一条——
-  // 同一条话约 150 天才重现一次，且每天三句的组合几乎不重样
+  // v299：三句各自从对应分类数组取，不再混成同一个大池——
+  // 上=正能量/乐观(mood·😊)、中=挣钱(money·💰)、下=健身减肥(fitness·💪) 分类永远正确
   const d = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-  const all = moodQuotes.concat(moneyQuotes, fitnessQuotes);
-  const N = all.length;
-  let i1 = (d * 29) % N;
-  let i2 = (d * 61 + 17) % N;
-  let i3 = (d * 107 + 43) % N;
-  if (i2 === i1) i2 = (i2 + 1) % N;
-  if (i3 === i1 || i3 === i2) i3 = (i3 + 2) % N;
-  return { mood: all[i1], money: all[i2], fitness: all[i3] };
+  const i1 = d % moodQuotes.length;
+  const i2 = (d + 13) % moneyQuotes.length;
+  const i3 = (d + 27) % fitnessQuotes.length;
+  return { mood: moodQuotes[i1], money: moneyQuotes[i2], fitness: fitnessQuotes[i3] };
 }
 
 // 三条每日激励语（emoji + 文字，无“心情/搞钱/健身”标签），渲染进顶部 hero 卡片
