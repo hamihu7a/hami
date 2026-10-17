@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-309">
+<meta name="hami-build" content="2026-10-17-310">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -793,10 +793,10 @@
     width: 100%;
   }
   .desktop-quote .quote-line {
-    font-size: 13px;
+    font-size: 16px;
     color: var(--c-text-2);
-    margin-bottom: 3px;
-    line-height: 1.4;
+    margin-bottom: 1px;
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3634,7 +3634,7 @@
       .hami-cmd-bar .cmd-meta .hami-version-tag { font-size: 9px; padding: 0 5px; }
       .hero-refresh { width: 24px; height: 24px; }
       .hero-refresh svg { width: 13px; height: 13px; }
-      .desktop-quote .quote-line { font-size: 12px; margin-bottom: 2px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .desktop-quote .quote-line { font-size: 15px; margin-bottom: 1px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
       /* 头像在超小屏要更精致 */
       .nav-header .avatar { width: 42px; height: 42px; }
@@ -4641,6 +4641,20 @@
   }
   .yi-label { color: #b83557; font-weight: 700; }
 
+  /* ===== v314：天气「建议」折叠 1 行 + 点击气泡展开全文（同宜/忌的省略手感）===== */
+  .home-card-note.weather-advice {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    user-select: none;
+  }
+  /* 建议/紫外线气泡（与节日气泡同一套外观，挂在 body 上避免被裁切） */
+  .wx-pop-item { display: flex; gap: 6px; padding: 4px 2px; border-bottom: 1px dashed rgba(209,75,115,.14); }
+  .wx-pop-item:last-child { border-bottom: none; }
+  .wx-pop-k { flex: 0 0 auto; font-size: 10px; font-weight: 800; color: #fff; background: #ff9eb5; border-radius: 6px; padding: 1px 6px; margin-top: 1px; height: 16px; line-height: 14px; }
+  .wx-pop-v { flex: 1; min-width: 0; font-size: 11.5px; font-weight: 700; color: #7d4a5a; line-height: 1.45; }
+
 
   /* ===================== v249：手账本边框风（v267 收窄：只保留在主面板首页） ===================== */
   /* 灵感：手账/贴纸——区域块四周「邮票锯齿打孔边」+ 卡片内侧手绘虚线框 */
@@ -5214,9 +5228,9 @@ body.theme-vintage .hero-main-row { gap: 10px !important; }
 body.theme-vintage .hero-quote-row { gap: 8px !important; margin-top: 2px !important; }
 body.theme-vintage .desktop-time { font-size: 34px !important; line-height: 1.1 !important; }
 body.theme-vintage .desktop-quote .quote-line {
-  font-size: 12px !important;
-  line-height: 1.55 !important;
-  margin-bottom: 5px !important;
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  margin-bottom: 1px !important;
   white-space: nowrap !important;
   overflow: visible !important;
   text-overflow: clip !important;
@@ -5226,7 +5240,7 @@ body.theme-vintage .desktop-quote .quote-line:last-child { margin-bottom: 0 !imp
   body.theme-vintage .desktop-hero { padding: 12px 12px !important; }
   body.theme-vintage .hero-top { gap: 9px !important; }
   body.theme-vintage .desktop-time { font-size: 26px !important; }
-  body.theme-vintage .desktop-quote .quote-line { font-size: 11.5px !important; line-height: 1.5 !important; margin-bottom: 4px !important; }
+  body.theme-vintage .desktop-quote .quote-line { font-size: 14px !important; line-height: 1.3 !important; margin-bottom: 1px !important; }
 }
 @media (max-width: 420px) {
   body.theme-vintage .desktop-time { font-size: 24px !important; }
@@ -21457,6 +21471,140 @@ function getWeatherAdvice(name) {
   if (name === '阴') return '备薄外套别着凉';
   return '适时增减衣物';
 }
+// v314：完整版天气建议——不再卡 7 个字，按真实数据给出穿衣/防晒/湿度/明日等
+// 返回 { short: 卡片上折叠显示的一句, rows: [[标签, 正文], ...] 供气泡展开查看 }
+function buildWeatherAdvice(d) {
+  d = d || {};
+  const name = String(d.name || '');
+  const t = parseFloat(d.temp);
+  const hi = parseFloat(String(d.hi || '').replace(/[^0-9.\-]/g, ''));
+  const lo = parseFloat(String(d.lo || '').replace(/[^0-9.\-]/g, ''));
+  const hum = parseFloat(d.humidity);
+  const uvMax = parseFloat(d.uvMax);
+  const rows = [];
+  let short = '适时增减衣物，出门前看一眼天气';
+
+  // ① 天气本身
+  if (/暴雨|大雨|雷/.test(name)) {
+    short = '雨势不小，非必要别出门';
+    rows.push(['天气', name + '，短时雨势可能较大，尽量待在室内，出门避开积水路段']);
+  } else if (/雨/.test(name)) {
+    short = '有雨，出门带伞别穿白鞋';
+    rows.push(['天气', name + '，带把伞更稳妥，路面湿滑走路慢一点']);
+  } else if (/雪/.test(name)) {
+    short = '飘雪，穿厚点走路慢一点';
+    rows.push(['天气', name + '，路面可能结冰，穿防滑鞋、戴手套']);
+  } else if (/雾|霾/.test(name)) {
+    short = '能见度低，慢一点走';
+    rows.push(['天气', name + '，能见度差，骑车开车都慢一点、开雾灯']);
+  } else if (name === '晴') {
+    short = '大好晴天，适合出门散散心';
+    rows.push(['天气', '晴，光线好、心情也容易好，适合出门走一走']);
+  } else if (name === '多云') {
+    short = '多云不晒，出门最舒服';
+    rows.push(['天气', '多云，体感舒服，安排外出正合适']);
+  } else if (name === '阴') {
+    short = '阴天偏凉，备件薄外套';
+    rows.push(['天气', '阴天光线弱，体感比温度偏凉，包里放件薄外套']);
+  } else if (name) {
+    rows.push(['天气', name + '，出门前再看一眼窗外']);
+  }
+
+  // ② 穿衣（结合最高温 + 昼夜温差）
+  if (!isNaN(hi) && !isNaN(lo)) {
+    let wear;
+    if (hi >= 33) wear = '很热，穿轻薄透气的短袖短裤，随手带瓶水多补';
+    else if (hi >= 28) wear = '偏热，短袖 + 薄裙/短裤就够，别穿太闷的料子';
+    else if (hi >= 22) wear = '温度正好，长袖薄衫或 T 恤都可以';
+    else if (hi >= 15) wear = '微凉，薄外套 + T 恤最稳，热了能脱';
+    else if (hi >= 8) wear = '偏冷，厚外套或毛衣要上身了';
+    else wear = '很冷，羽绒服、围巾手套都备上';
+    const diff = Math.round(hi - lo);
+    if (diff >= 10) wear += '；昼夜温差 ' + diff + '°，早晚记得加一件';
+    rows.push(['穿衣', wear]);
+  }
+
+  // ③ 紫外线 / 防晒
+  if (!isNaN(uvMax)) {
+    const uvTxt = uvMax.toFixed(1).replace(/\.0$/, '');
+    if (uvMax >= 8) rows.push(['防晒', '今日紫外线峰值 ' + uvTxt + '，很强；10:00-16:00 尽量躲阴凉，SPF50+ 防晒 + 帽子 + 墨镜']);
+    else if (uvMax >= 6) rows.push(['防晒', '今日紫外线峰值 ' + uvTxt + '，偏强；中午出门涂好防晒，最好再撑把遮阳伞']);
+    else if (uvMax >= 3) rows.push(['防晒', '今日紫外线峰值 ' + uvTxt + '，中等；户外待久了建议涂 SPF30 防晒']);
+    else rows.push(['防晒', '今日紫外线峰值 ' + uvTxt + '，很弱；正常出门不用特意防晒']);
+  }
+
+  // ④ 湿度
+  if (!isNaN(hum)) {
+    if (hum >= 85) rows.push(['湿度', Math.round(hum) + '%，很潮，头发容易塌，屋里可以开会儿抽湿']);
+    else if (hum <= 35) rows.push(['湿度', Math.round(hum) + '%，偏干，多喝水、记得涂身体乳']);
+  }
+
+  // ⑤ 明日
+  if (d.tomorrowName && d.tomorrowName !== '未知') {
+    let tm = '明天' + d.tomorrowName;
+    if (d.tomorrowLo && d.tomorrowLo !== '—' && d.tomorrowHi && d.tomorrowHi !== '—') tm += '，' + d.tomorrowLo + '~' + d.tomorrowHi;
+    if (d.tomorrowRain != null && d.tomorrowRain >= 50) tm += '，降雨概率 ' + Math.round(d.tomorrowRain) + '%，记得带伞';
+    rows.push(['明日', tm]);
+  }
+
+  return { short: short, rows: rows };
+}
+
+// v314：通用小气泡——点折叠文字弹出完整内容，点空白处/滚动/Esc 收起
+let _wxPop = null, _wxPopAnchor = null;
+function ensureWxPop() {
+  if (_wxPop && _wxPop.parentNode) return _wxPop;
+  _wxPop = document.createElement('div');
+  _wxPop.className = 'hcp-fest-pop';
+  _wxPop.id = 'wx-info-pop';
+  document.body.appendChild(_wxPop);
+  document.addEventListener('click', function (ev) {
+    if (!_wxPop || !_wxPop.classList.contains('show')) return;
+    if (_wxPop.contains(ev.target)) return;
+    if (_wxPopAnchor && _wxPopAnchor.contains(ev.target)) return;
+    closeWxPop();
+  }, true);
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeWxPop(); });
+  window.addEventListener('resize', closeWxPop);
+  window.addEventListener('scroll', function (ev) {
+    if (_wxPop && _wxPop.contains(ev.target)) return;
+    closeWxPop();
+  }, true);
+  return _wxPop;
+}
+function closeWxPop() {
+  if (!_wxPop) return;
+  _wxPop.classList.remove('show');
+  _wxPop.setAttribute('data-kind', '');
+}
+function openWxPop(anchor, kind, title, rows) {
+  if (!anchor || !rows || !rows.length) return;
+  const p = ensureWxPop();
+  if (p.classList.contains('show') && p.getAttribute('data-kind') === kind && _wxPopAnchor === anchor) { closeWxPop(); return; }
+  _wxPopAnchor = anchor;
+  p.setAttribute('data-kind', kind);
+  p.innerHTML = '<div class="hfp-head"><span>' + title + '</span><span class="hfp-tip">点空白处收起</span></div>'
+    + rows.map(function (r) {
+      return '<div class="wx-pop-item"><span class="wx-pop-k">' + r[0] + '</span><span class="wx-pop-v">' + r[1] + '</span></div>';
+    }).join('');
+  p.style.visibility = 'hidden';
+  p.classList.add('show');
+  const r = anchor.getBoundingClientRect();
+  const w = p.offsetWidth, h = p.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), Math.max(8, vw - w - 8));
+  let top = r.bottom + 8;
+  if (top + h > vh - 8) top = r.top - h - 8;          // 下面放不下就翻到上方
+  if (top < 8) top = Math.max(8, vh - h - 8);
+  p.style.left = left + 'px';
+  p.style.top = top + 'px';
+  p.style.visibility = 'visible';
+}
+function showWeatherAdvicePop(el) {
+  const adv = window._wxAdvice;
+  if (!adv || !adv.rows || !adv.rows.length) return;
+  openWxPop(el, 'advice', '☀️ 今日建议', adv.rows);
+}
 // 紫外线指数 → 等级文案（v312：最弱0~2 / 弱3~4 / 中等5~6 / 强7 / 甚高8~10 / 极高≥11）
 function uvLevelText(uv) {
   const v = parseFloat(uv);
@@ -21636,7 +21784,8 @@ function fetchWeather(onDone) {
     if (raw) {
       const cache = JSON.parse(raw);
       // 新格式要求有明日温度，旧格式缓存今天会失效重新拉取
-      if (cache.date === today && cache.data && cache.data.tomorrowHi != null && cache.data.tomorrowLo != null) {
+      if (cache.date === today && cache.data && cache.data.tomorrowHi != null && cache.data.tomorrowLo != null
+          && cache.data.uv != null && cache.data.uvMax != null) {
         renderWeatherFromApi(cache.data);
         if (onDone) onDone();
         return;
@@ -21717,7 +21866,10 @@ function fetchWeather(onDone) {
               tomorrowHi: (w2 ? Math.round(w2.maxtempC) + '°' : '—'),
               tomorrowLo: (w2 ? Math.round(w2.mintempC) + '°' : '—'),
               tomorrowRain: null,
-              tomorrowWind: null
+              tomorrowWind: null,
+              // v314：wttr 兜底也带紫外线，避免主源失败时卡片显示「—」
+              uv: (c.uvIndex != null && c.uvIndex !== '' ? parseFloat(c.uvIndex) : null),
+              uvMax: (w && w.uvIndex != null && w.uvIndex !== '' ? parseFloat(w.uvIndex) : null)
             });
           })
           .catch(() => {
@@ -21742,15 +21894,21 @@ function renderWeatherFromApi(d) {
   try {
     const tip = getWeatherTip(d.name);
     const feelsLike = getWeatherFeelsLike(d.temp, d.name);
-    const advice = getWeatherAdvice(d.name);
-    // v313：紫外线给出「具体数值 + 等级 + 今日峰值」，不再只显示等级区间
+    // v314：建议不再限字数，卡片上折叠 1 行（超出省略号），点一下弹气泡看全文
+    const adv = buildWeatherAdvice(d);
+    window._wxAdvice = adv;
+    // v314：紫外线必给数值——「紫外线：0.0（最弱）峰值7.1」
     const uvCur = uvNumText(d.uv);
     const uvMax = uvNumText(d.uvMax);
-    const uvText = uvCur ? (uvCur + ' ' + uvShortLevel(d.uv) + (uvMax ? ' · 峰值' + uvMax : '')) : '—';
-    const uvTitle = uvCur
-      ? ('当前紫外线指数 ' + uvCur + '（' + uvShortLevel(d.uv) + '）'
-        + (uvMax ? '｜今日峰值 ' + uvMax + '（' + uvShortLevel(d.uvMax) + '）' : ''))
-      : '暂无紫外线数据';
+    let uvText = '—', uvTitle = '暂无紫外线数据';
+    if (uvCur) {
+      uvText = uvCur + '（' + uvShortLevel(d.uv) + '）';
+      uvTitle = '当前紫外线指数 ' + uvCur + '（' + uvShortLevel(d.uv) + '）'
+        + (uvMax ? '；今日峰值 ' + uvMax + '（' + uvShortLevel(d.uvMax) + '）' : '');
+    } else if (uvMax) {
+      uvText = '峰值' + uvMax + '（' + uvShortLevel(d.uvMax) + '）';
+      uvTitle = '当前紫外线暂无数据；今日峰值 ' + uvMax + '（' + uvShortLevel(d.uvMax) + '）';
+    }
     el.innerHTML = `
       <div class="home-card-flex">
         <div class="home-card-body">
@@ -21761,8 +21919,8 @@ function renderWeatherFromApi(d) {
           <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
           <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
           <div class="wx-extra-wrap">
-            <div class="home-card-note weather-advice"><b>建议：</b>${advice}</div>
-            <div class="home-card-row weather-uv"><span>紫外线</span><b title="${uvTitle}">${uvText}</b></div>
+            <div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div>
+            <div class="home-card-row weather-uv"><span>紫外线：</span><b title="${uvTitle}">${uvText}</b></div>
           </div>
         </div>
         <div class="home-card-foot">
@@ -21784,7 +21942,18 @@ function renderWeatherFallback() {
   else if (month >= 10 && month <= 11) { weather = '晴'; temp = '15° ~ 25°'; icon = '☀️'; weatherDesc = '秋高气爽，早晚温差大记得添衣。'; weatherTomorrow = '阴'; tomorrowIcon = '☁️'; }
   else { weather = '晴'; temp = '8° ~ 18°'; icon = '🌞'; weatherDesc = '天气晴冷干燥，注意保暖保湿。'; weatherTomorrow = '多云转晴'; tomorrowIcon = '⛅'; }
   const feelsLike = getWeatherFeelsLike(temp.split('°')[0], weather);
-  const advice = getWeatherAdvice(weather);
+  // v314：兜底也用同一套完整建议（可点开气泡），紫外线沿用上次真实缓存，没有就显示 —
+  let fbUv = null, fbUvMax = null;
+  try {
+    const raw = localStorage.getItem('hami_weather_cache_v3');
+    if (raw) { const c = JSON.parse(raw); if (c && c.data) { fbUv = c.data.uv; fbUvMax = c.data.uvMax; } }
+  } catch (e) {}
+  const loT = temp.split('~')[0], hiT = temp.split('~')[1];
+  const adv = buildWeatherAdvice({ name: weather, temp: temp.split('°')[0], lo: loT, hi: hiT, uvMax: fbUvMax });
+  window._wxAdvice = adv;
+  const fbUvCur = uvNumText(fbUv), fbUvPeak = uvNumText(fbUvMax);
+  const fbUvText = fbUvCur ? (fbUvCur + '（' + uvShortLevel(fbUv) + '）')
+    : (fbUvPeak ? ('峰值' + fbUvPeak + '（' + uvShortLevel(fbUvMax) + '）') : '—');
   el.innerHTML = `
     <div class="home-card-flex">
       <div class="home-card-body">
@@ -21796,8 +21965,8 @@ function renderWeatherFallback() {
         <div class="home-card-row"><span>体感</span><b>${feelsLike}</b></div>
         <div class="home-card-row"><span>温度</span><b>${temp}</b></div>
         <div class="wx-extra-wrap">
-          <div class="home-card-note weather-advice"><b>建议：</b>${advice}</div>
-          <div class="home-card-row weather-uv"><span>紫外线</span><b>—</b></div>
+          <div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div>
+          <div class="home-card-row weather-uv"><span>紫外线：</span><b>${fbUvText}</b></div>
         </div>
       </div>
       <div class="home-card-foot">
