@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-324">
+<meta name="hami-build" content="2026-10-17-325">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3324,7 +3324,8 @@
     cursor: pointer; min-height: 44px; border: none; font-family: inherit;
   }
   .db-btn-main { background: linear-gradient(135deg, var(--c-pink,#ff8aa6), var(--c-pink-deep,#d14b73)); color: #fff; box-shadow: 0 2px 8px rgba(209,75,115,.3); }
-  .db-btn-ghost { background: #fff; color: var(--c-pink-deep,#d14b73); border: 1.5px solid var(--c-pink-deep,#d14b73); }
+  /* v325：主人说描边没必要——去边框，改淡粉底色保持按钮可辨识 */
+  .db-btn-ghost { background: #ffeef4; color: var(--c-pink-deep,#d14b73); }
   .db-btn-dark { background: #b3325c; color: #fff; box-shadow: 0 2px 8px rgba(179,50,92,.3); }
   .db-btn-full { width: 100%; margin-top: 4px; }
   .db-info {
