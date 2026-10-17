@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-305">
+<meta name="hami-build" content="2026-10-17-306">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1152,7 +1152,7 @@
   /* 自媒体账号概览小框 */
   .accounts-grid {
     display: flex;
-    gap: 6px;
+    gap: 3px;
     margin-bottom: 8px;
   }
   .account-card {
@@ -1263,7 +1263,7 @@
   }
 
   @media (max-width: 768px) {
-    .accounts-grid { display: flex; gap: 6px; min-width: 0; }
+    .accounts-grid { display: flex; gap: 4px; min-width: 0; }
     .account-card { flex: 1; min-width: 0; overflow: hidden; padding: 8px 4px; }
     .account-card .ac-header { font-size:12px; }
     .account-card .ac-followers { font-size: 18px; }
@@ -3703,7 +3703,7 @@
       /* ---------- 第二批补齐：以下模块之前在超小屏没做适配 ---------- */
 
       /* 三个自媒体账号卡：左右并排（恢复主人偏好的原始设计） */
-      .accounts-grid { display: flex; gap: 6px; min-width: 0; }
+      .accounts-grid { display: flex; gap: 4px; min-width: 0; }
       .account-card { flex: 1; min-width: 0; overflow: hidden; padding: 8px 4px; }
       .account-card .ac-header { font-size: 11px; }
       .account-card .ac-followers { font-size: 16px; margin-bottom: 0; }
@@ -3890,7 +3890,7 @@
     .accounts-grid {
       display: grid !important;
       grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-      gap: 6px !important;
+      gap: 3px !important;
     }
     /* 抽屉和弹窗：iPad 不要全屏 */
     .hami-drawer {
@@ -4022,7 +4022,7 @@
   body.hami-force-desktop .accounts-grid {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
+    gap: 3px !important;
   }
   body.hami-force-desktop .account-card {
     flex: 1 1 0 !important;
@@ -4223,7 +4223,7 @@
   body.hami-force-mini .accounts-grid {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
+    gap: 4px !important;
   }
   body.hami-force-mini .modal-card { max-width: 320px !important; border-radius: 16px !important; }
   body.hami-force-mini .hami-drawer { max-width: 320px; }
