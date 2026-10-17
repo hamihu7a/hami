@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-318">
+<meta name="hami-build" content="2026-10-17-319">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3472,23 +3472,29 @@
     border-radius: inherit; background-repeat: no-repeat;
   }
   .mirror-edit-hint { font-size: 9.5px; color: #b08a97; line-height: 1.45; font-weight: 600; }
-  /* ===== v248：图片下方一行小按钮（很短很小），点「⚙ 调整」才在它下面展开控制面板 ===== */
+  /* ===== v248：图片下方一行小按钮，点「⚙ 调整」才在它下面展开控制面板 ===== */
+  /* v319：主人反馈按钮太小 → 三个按钮（⚙ 调整 / ↶ 撤销 / 🗑 删除）整体放大；放不下时允许换行 */
   .mirror-bar {
     display: none;                 /* 仅在该板块已有背景图时显示（靠 .has-bg 相邻选择器） */
     align-items: center;
     justify-content: flex-end;
-    gap: 4px;
+    gap: 6px;
     min-height: 16px;
     margin-top: -2px;              /* 紧贴图片下沿 */
+    flex-wrap: wrap;
   }
   .mirror-block.has-bg + .mirror-bar { display: flex; }
   .mirror-bar-btn {
     border: 1px solid #ffd7e5; background: #fff; color: #c0537a;
-    font-size: 9px; font-weight: 700; line-height: 1;
-    padding: 3px 7px; border-radius: 7px; cursor: pointer;
+    font-size: 11px; font-weight: 700; line-height: 1.2;
+    padding: 5px 10px; border-radius: 8px; cursor: pointer;
     white-space: nowrap; transition: all .15s;
   }
   .mirror-bar-btn:hover { background: #fff0f5; border-color: #ffc0d6; }
+  .mirror-bar-btn:disabled,
+  .mirror-bar-btn:disabled:hover {
+    opacity: .45; cursor: not-allowed; background: #fff; border-color: #ffd7e5; color: #c0537a;
+  }
   .mirror-bar-btn.active {
     background: linear-gradient(135deg, var(--c-pink,#ff8aa6), var(--c-pink-deep,#d14b73));
     color: #fff; border-color: transparent;
@@ -7554,7 +7560,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         </div>
 
         <!-- 镜像：按真实主面板内容区竖向排布（比例≈真实主面板），点击板块改对应主面板内容背景；侧栏与整体大背景不在镜像内 -->
-        <div class="mirror-howto">✋ 点板块下方「⚙ 调整」进入编辑后，才能按住图片拖动（避免平时滚动误触）· 滚轮/双指放大 · 调完再点「⚙ 调整」或「✕」退出编辑</div>
+        <div class="mirror-howto">✋ 点板块下方「⚙ 调整」进入编辑后，才能按住图片拖动（避免平时滚动误触）· 滚轮/双指放大 · 调完再点「⚙ 调整」或「✕」退出编辑 · 改错了点「↶ 撤销」退回上一步（可连续撤销）</div>
         <div class="mirror-root">
           <!-- 镜像主面板（宽，内部区域竖向排布，比例≈真实主面板内容区） -->
           <div class="mirror-main">
@@ -10959,6 +10965,88 @@ function hamiBgMaskSet(key, cfg) {
   bgMarkRev();                                  // v252：遮盖一改就记版本
   try { bgScheduleAutoSync(6000); } catch (e) {}  // v252：几秒后自动推上云（手机端自动收到）
 }
+
+// ==================== v319：背景修改「撤销」（回到上一次修改的版本）====================
+// 主人要求：镜像板块按钮行「⚙ 调整 | ↶ 撤销 | 🗑 删除」——点撤销就回到上一次修改的版本。
+// 实现：每个区域一条内存快照栈（{img, cfg}）。img 是同一份 dataURL 字符串引用，不复制几 MB 图片；
+//       刷新页面后栈清空（届时按钮自动置灰并提示），不影响任何已保存的数据与云端同步。
+var HAMI_BG_UNDO = {};            // { key: [ {img, cfg, ts}, ... ] } 最新在栈尾
+var HAMI_BG_UNDO_MAX = 12;        // 每个区域最多回退 12 步
+var _bgUndoLastAt = {};           // { key: ts } 连续操作合并计时（拖滑块/拖动/滚轮算「一次修改」）
+// 读当前完整状态：图片（BG_CACHE，无图=null）+ 遮盖配置（深拷贝，防止外部改动污染快照）
+function bgSnapshot(key) {
+  var img = null;
+  try { img = BG_CACHE[key] || null; } catch (e) {}
+  var cfg = hamiBgMaskGet(key);
+  try { cfg = JSON.parse(JSON.stringify(cfg)); } catch (e) {}
+  return { img: img, cfg: cfg, ts: Date.now() };
+}
+// 变更【前】调用：把当前状态压入撤销栈；与栈顶完全相同则跳过（防止空 push 堆栈）
+function bgPushUndo(key, force) {
+  try {
+    if (!HAMI_BG_UNDO[key]) HAMI_BG_UNDO[key] = [];
+    var snap = bgSnapshot(key);
+    var st = HAMI_BG_UNDO[key];
+    var top = st[st.length - 1];
+    if (top && top.img === snap.img && JSON.stringify(top.cfg) === JSON.stringify(snap.cfg)) return;
+    st.push(snap);
+    while (st.length > HAMI_BG_UNDO_MAX) st.shift();
+    syncMirrorCtlVisibility(key);
+  } catch (e) {}
+}
+// 连续操作（拖滑块 / 按住拖动 / 滚轮缩放）1.5 秒内的多次变更合并为「一次修改」
+function bgPushUndoThrottled(key) {
+  var now = Date.now();
+  if (_bgUndoLastAt[key] && now - _bgUndoLastAt[key] < 1500) return;
+  _bgUndoLastAt[key] = now;
+  bgPushUndo(key);
+}
+// 撤销：弹出最近一次修改前的快照，原样恢复（图片 + 遮盖配置），并刷新控制面板
+function bgUndo(key) {
+  try {
+    var st = HAMI_BG_UNDO[key] || [];
+    if (!st.length) { try { hamiToast('没有可撤销的修改了~'); } catch (e) {} return; }
+    var snap = st.pop();
+    _bgUndoLastAt[key] = 0;
+    // ① 恢复图片（上一状态没图 → 删除；有图 → 原样写回）
+    if (snap.img) {
+      setBgStored(key, snap.img);
+      applyBg(key, snap.img);
+      setMirrorPreview(key, snap.img);
+    } else {
+      delBgStored(key);
+      try { clearBg(key); } catch (e) {}
+      try { clearMirrorPreview(key); } catch (e) {}
+    }
+    // ② 恢复遮盖配置（不透明度/位置/大小/镜像/旋转/遮盖方向）
+    hamiBgMaskSet(key, snap.cfg);
+    try { applyBgMask(key, snap.cfg); } catch (e) {}
+    // ③ 刷新控制面板 UI（滑块数值/按钮高亮）并保持打开，方便连续撤销
+    var block = document.querySelector('.mirror-block[data-bgkey="' + key + '"]');
+    if (block) {
+      try { buildMirrorMaskCtl(key, block); } catch (e) {}
+      var host = block.parentNode || block;
+      var ctl = host.querySelector('.mirror-ctl');
+      if (ctl) ctl.classList.add('open');
+      block.classList.add('editing');
+    }
+    try { afterBgChange(); } catch (e) {}       // 内嵌配置 + 云端同步，让撤销也跨设备生效
+    syncMirrorCtlVisibility(key);
+    try { hamiToast('↶ 已撤销，回到上一个版本'); } catch (e) {}
+    try { playSound('click'); } catch (e) {}
+  } catch (e) {}
+}
+// v319：撤销按钮的可用态——栈空就置灰（刷新页面后栈会清空，属预期）
+function syncUndoBtnState(key) {
+  var block = document.querySelector('.mirror-block[data-bgkey="' + key + '"]');
+  if (!block) return;
+  var host = block.parentNode || block;
+  var ub = host.querySelector('.mirror-bar-btn.mb-undo');
+  if (!ub) return;
+  var has = !!(HAMI_BG_UNDO[key] && HAMI_BG_UNDO[key].length);
+  ub.disabled = !has;
+  ub.title = has ? '撤销上一步修改，回到上一个版本（可连续撤销）' : '没有可撤销的修改（刷新页面后重置）';
+}
 // 生成遮盖渐变；vis=100 → 返回 'none'（保证默认外观与改造前完全一致）
 function hamiBgMaskGradient(key, cfg) {
   var c = HAMI_BG_MASK_RGB[key] || '28,14,24';
@@ -11028,6 +11116,7 @@ function buildMirrorMaskCtl(key, block) {
     bar.setAttribute('data-bgkey', key);
     bar.innerHTML =
       '<button type="button" class="mirror-bar-btn mb-edit" title="展开调整：不透明度 / 镜像 / 旋转 / 遮盖">⚙ 调整</button>' +
+      '<button type="button" class="mirror-bar-btn mb-undo" title="撤销上一步修改，回到上一个版本（可连续撤销）">↶ 撤销</button>' +
       '<button type="button" class="mirror-bar-btn danger mb-del" title="删除该区域已上传的背景图片">🗑 删除</button>';
     if (block.insertAdjacentElement) block.insertAdjacentElement('afterend', bar);
     else host.appendChild(bar);
@@ -11080,6 +11169,7 @@ function buildMirrorMaskCtl(key, block) {
       }
       clearTimeout(delBtn.__t);
       delBtn.__armed = false; delBtn.textContent = '🗑 删除'; delBtn.classList.remove('active');
+      bgPushUndo(key, true);        // v319：删除前留一个撤销点（删了也能撤回来）
       clearBg(key);
       clearMirrorPreview(key);
       ctl.classList.remove('open');
@@ -11091,6 +11181,16 @@ function buildMirrorMaskCtl(key, block) {
       try { playSound('save'); } catch (e2) {}
     });
   }
+  // v319：「↶ 撤销」——回到上一次修改的版本（可连续点，一步步回退；栈空时按钮置灰）
+  var undoBtn = bar.querySelector('.mb-undo');
+  if (undoBtn && !undoBtn.__bound) {
+    undoBtn.__bound = true;
+    undoBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      bgUndo(key);
+    });
+  }
+  syncUndoBtnState(key);   // v319：初始可用态（刚打开设置时一般为置灰）
   var cfg = hamiBgMaskGet(key);
   function row(field, label, val, min, max) {
     return '<div class="mirror-ctl-row">' +
@@ -11136,6 +11236,7 @@ function buildMirrorMaskCtl(key, block) {
       // v254【真凶修复】不再用面板打开那一刻的旧配置写回——否则会把主人刚拖好的位置/缩放覆盖回旧值。
       // 每次从存储读最新配置，只改当前这一个字段。
       var cur = hamiBgMaskGet(key);
+      bgPushUndoThrottled(key);      // v319：连续拖动滑块合并为「一次修改」
       cur[f] = v;
       cfg = cur;
       if (vEl) vEl.textContent = v + unit;
@@ -11153,6 +11254,7 @@ function buildMirrorMaskCtl(key, block) {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       var cur = hamiBgMaskGet(key);          // v254：读最新，别覆盖刚拖好的位置
+      bgPushUndoThrottled(key);              // v319：变更前留撤销点
       cur.mode = btn.getAttribute('data-mode');
       cfg = cur;
       hamiBgMaskSet(key, cur);
@@ -11168,6 +11270,7 @@ function buildMirrorMaskCtl(key, block) {
     flipBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       var cur = hamiBgMaskGet(key);          // v254：读最新，别覆盖刚拖好的位置
+      bgPushUndoThrottled(key);              // v319：变更前留撤销点
       cur.flip = cur.flip ? 0 : 1;
       cfg = cur;
       flipBtn.classList.toggle('active', !!cur.flip);
@@ -11181,6 +11284,7 @@ function buildMirrorMaskCtl(key, block) {
   if (rst) rst.addEventListener('click', function (e) {
     e.stopPropagation();
     var cur = hamiBgMaskGet(key);    // v254：先同步最新，再整体重置
+    bgPushUndo(key, true);           // v319：恢复默认前强制留一个撤销点
     hamiBgResetGeom(cur);            // px/py/zoom/flip/rot 回默认
     cur.vis = 100; cur.mode = 'even';
     cfg = cur;
@@ -11242,6 +11346,7 @@ function initMirrorDrag(block, key) {
       var r = mirrorRendered(block, block.__bgAR || 1.6, c0.zoom);
       if (!r) { delete ptrs[e.pointerId]; return; }
       mode = 'drag';
+      bgPushUndoThrottled(key);      // v319：一次拖动留一个撤销点（拖动前的位置）
       st = { sx: e.clientX, sy: e.clientY, px: c0.px, py: c0.py, r: r, moved: false,
              sc: hamiBgScale(c0.rot, r.W, r.H) };   // v254：旋转/镜像后的位移换算要用
       block.classList.add('dragging');
@@ -11312,6 +11417,7 @@ function initMirrorDrag(block, key) {
     var c = hamiBgMaskGet(key);
     var z = Math.max(50, Math.min(250, (c.zoom || 100) + (e.deltaY < 0 ? 10 : -10)));
     if (z !== c.zoom) {
+      bgPushUndoThrottled(key);      // v319：连续滚轮缩放合并为「一次修改」
       c.zoom = z; hamiBgMaskSet(key, c); applyBgMask(key, c);
       clearTimeout(block.__wheelT);
       block.__wheelT = setTimeout(function () { try { afterBgChange(); } catch (er) {} }, 450);
@@ -11374,6 +11480,7 @@ function syncMirrorCtlVisibility(key) {
   var has = false;
   try { has = !!BG_CACHE[key]; } catch (e) {}
   block.classList.toggle('has-bg', has);
+  syncUndoBtnState(key);       // v319：撤销按钮可用态跟随快照栈
   if (!has) {
     var host = block.parentNode || block;
     var ctl = host.querySelector('.mirror-ctl');
@@ -11441,6 +11548,7 @@ async function initSettingsPanel() {
       const f = fileInput.files && fileInput.files[0];
       if (!f || !_settingsActiveKey) return;
       compressImage(f, dataUrl => {
+        bgPushUndo(_settingsActiveKey, true);   // v319：换图前强制留撤销点（无图→撤回到无图；旧图→撤回到旧图）
         setBgStored(_settingsActiveKey, dataUrl);   // 改存 IndexedDB，不占 localStorage 配额
         applyBg(_settingsActiveKey, dataUrl);
         setMirrorPreview(_settingsActiveKey, dataUrl);
