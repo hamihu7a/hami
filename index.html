@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-302">
+<meta name="hami-build" content="2026-10-17-303">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -20407,15 +20407,15 @@ function renderFollowerChange(data) {
   const prev = data.prevFollowers;
   const cur = data.followers;
   if (prev == null || isNaN(prev) || cur == null || isNaN(cur)) {
-    return '<div class="ac-detail"><span>增减：</span><b>—</b></div>';
+    return '<div class="ac-detail"><span>粉丝增减：</span><b>—</b></div>';
   }
   const diff = cur - prev;
   if (diff > 0) {
-    return '<div class="ac-detail"><span>增减：</span><b class="ac-up">+' + diff + '</b></div>';
+    return '<div class="ac-detail"><span>粉丝增减：</span><b class="ac-up">+' + diff + '</b></div>';
   } else if (diff < 0) {
-    return '<div class="ac-detail"><span>增减：</span><b class="ac-down">' + diff + '</b></div>';
+    return '<div class="ac-detail"><span>粉丝增减：</span><b class="ac-down">' + diff + '</b></div>';
   }
-  return '<div class="ac-detail"><span>增减：</span><b>0</b></div>';
+  return '<div class="ac-detail"><span>粉丝增减：</span><b>0</b></div>';
 }
 
 // v289 账号头像（base64 内嵌；换头像只需替换这两串）
@@ -20449,7 +20449,7 @@ function renderDesktopAccounts() {
       </div>
       <div class="ac-followers"><span class="acc-num">${c.data.followers}</span><span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
-      <div class="ac-detail"><span>获赞：</span><b>${c.data.likes}</b></div>
+      <div class="ac-detail"><span>总共获赞：</span><b>${c.data.likes}</b></div>
     </div>`;
   });
   html += '</div>';
