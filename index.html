@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-320">
+<meta name="hami-build" content="2026-10-17-321">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6657,6 +6657,12 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <div class="co-field">
           <label>备注（可选）</label>
           <input type="text" id="mr-note" placeholder="如：新人物二套服装">
+        </div>
+        <!-- v321：恢复「是否同步抖音」勾选（v298 曾把整个勾选框删掉，导致新增/编辑都固定记为已同步，主人报障） -->
+        <div class="co-field">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
+            <input type="checkbox" id="mr-douyin" checked style="width:18px;height:18px;"> 🎵 是否同步抖音
+          </label>
         </div>
       </div>
       <div class="co-actions">
@@ -16884,9 +16890,8 @@ function mrPickAccount(acc) {
   document.querySelectorAll('[data-mr-acc]').forEach(function (el) {
     el.classList.toggle('active', el.getAttribute('data-mr-acc') === acc);
   });
-  // v173 主人要求（更新 v157 规则）：不管大号小号，默认一律勾选「已同步抖音」，手动取消才记未同步
-  var dy = document.getElementById('mr-douyin');
-  if (dy) dy.checked = true;
+  // v321：勾选框已恢复（v298 曾整个删掉）——不再强制勾选，否则编辑「未同步」旧记录时
+  // 点一下账号切换就会被偷偷改成已同步。新增默认勾选由 openMediaRecordModal 负责。
 }
 let editingMrIdx = -1;
 let editingMrId = null;
@@ -16962,8 +16967,11 @@ function submitMediaRecord() {
   const note = (document.getElementById('mr-note').value || '').trim();
   const accName = mrAccount === 'big' ? '🎨 美化档大号' : mrAccount === 'small' ? '👤 定制人物小号' : '🎵 抖音';
   if (!store.mediaRecords) store.mediaRecords = [];
-  // v298：弹窗仅保留 日期/标题/备注；条数/同步抖音/链接/赞藏评不再填写——
-  // 编辑旧记录时保留原值，新增时用默认（1 条、已同步抖音、无链接、0 赞藏评）
+  // v298：弹窗仅保留 日期/标题/备注；条数/链接/赞藏评不再填写——
+  // 编辑旧记录时保留原值，新增时用默认（1 条、无链接、0 赞藏评）。
+  // v321：恢复「是否同步抖音」勾选（v298 曾删掉勾选框，新增/编辑都固定已同步）。
+  // 账号选了「抖音」时恒为已同步（与图文侧 isDy 规则一致）；否则以勾选框为准，
+  // 勾选框缺失时（极端降级）回退旧行为：编辑保留原值、新增默认已同步。
   let realEditIdx0 = -1;
   if (editingMrId != null) {
     realEditIdx0 = (typeof editingMrId === 'string' && editingMrId.indexOf('__i') === 0)
@@ -16974,7 +16982,9 @@ function submitMediaRecord() {
   }
   const _origMr = (realEditIdx0 >= 0 && store.mediaRecords[realEditIdx0]) ? store.mediaRecords[realEditIdx0] : null;
   const count = _origMr ? (_origMr.count || 1) : 1;
-  const douyin = _origMr ? (_origMr.douyin !== false) : true;
+  const dyEl2 = document.getElementById('mr-douyin');
+  const douyin = (mrAccount === 'douyin') ? true
+    : (dyEl2 ? dyEl2.checked : (_origMr ? (_origMr.douyin !== false) : true));
   const link = _origMr ? (_origMr.link || '') : '';
   const likes = _origMr ? (_origMr.likes || 0) : 0;
   const collects = _origMr ? (_origMr.collects || 0) : 0;
@@ -17013,7 +17023,7 @@ function submitMediaRecord() {
   closeMediaRecordModal();
   renderMedia();
   try { renderPublishCalendar(); } catch (e) {}
-  hamiToast('✅ 已更新：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : ''));
+  hamiToast('✅ 已更新：' + accName + ' · ' + date + ' 更新 ' + count + ' 条' + (douyin ? '（已同步抖音）' : '（未同步抖音）'));
 }
 async function deleteMediaRecord(idxOrId) {
   let idx = -1;
