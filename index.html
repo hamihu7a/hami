@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-317">
+<meta name="hami-build" content="2026-10-17-318">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2959,11 +2959,16 @@
   .toilet-card-gap { color: #a67d8d; }
 
   /* 外出游玩卡片 */
-  .travel-card { border-radius: 14px; }
+  .travel-card { border-radius: 14px; position: relative; }
   .travel-card-dest {
     font-size: 15px; font-weight: 800; color: var(--c-pink-deep);
     margin-bottom: 8px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    cursor: pointer; user-select: none;   /* v318：整行可点，点击展开/收起完整清单 */
+  }
+  .travel-card-dest:active { opacity: .7; }
+  .travel-check-progress {
+    font-size: 12px; font-weight: 700; color: #d14b73; white-space: nowrap;
   }
   .travel-card-meta {
     display: flex; flex-wrap: wrap; align-items: center;
@@ -19711,8 +19716,16 @@ function applyTravelTemplate(idx, type) {
 let _tripActiveDay = {}; // { tripIndex: dayIndex }
 let __tripPage = 0;      // v26 行程卡分页
 let __tripExpanded = {};
-let __checklistExpanded = false;
+let __checklistExpanded = true;   // v318：出游清单区默认展开（里面每条默认折叠，点项目名才展开完整）
+let __travelExpanded = {};   // v318：出游清单每条记录的展开状态（key=travelPlans 下标），默认全部折叠
 function toggleChecklistExpand(){ __checklistExpanded = !__checklistExpanded; try { renderTripPlans(); } catch(e) {} } // 行程折叠状态：key=realIdx，value=是否展开
+// v318：切换某条出游清单的展开/折叠（点项目名称行触发，展开后才显示日期/酒店/具体清单项）
+function toggleTravelExpand(idx) {
+  try {
+    __travelExpanded[idx] = !__travelExpanded[idx];
+    renderTripPlans();
+  } catch (e) {}
+}
 function toggleTripExpand(realIdx) {
   try {
     __tripExpanded[realIdx] = !__tripExpanded[realIdx];
@@ -19758,10 +19771,11 @@ function renderTripPlans() {
     else if (today > end) { statusClass = 'trip-status-past'; statusText = '已结束'; }
     else if (days.length && today >= days[0].date && today <= days[days.length-1].date) { statusClass = 'trip-status-ongoing'; statusText = '进行中'; }
 
-    // v237：已结束的行程一律收起——只显示地点 + 「已结束」标签，日期/天数/备注/展开按钮全部不显示（主人要求）
+    // v237：已结束的行程默认收起——只显示地点 + 「已结束」标签，日期/天数/备注不显示；
+    // v318：恢复可手动展开——点标题/展开条可查看完整安排（主人要求「折叠起来，除非点击项目名称去查看」）
     const isEnded = statusText === '已结束';
 
-    const expanded = !isEnded && !!__tripExpanded[realIdx];
+    const expanded = !!__tripExpanded[realIdx];
 
     const TYPE_MAP = {
       play: ['🎡','游玩'], food: ['🍜','餐饮'], traffic: ['🚇','交通'],
@@ -19842,7 +19856,7 @@ function renderTripPlans() {
             <button class="row-del-btn" onclick="deleteTripRecord(${realIdx})" type="button" aria-label="删除">🗑</button>
           </div>
         </div>
-        ${isEnded ? '' : `<div class="trip-expand-toggle" onclick="toggleTripExpand(${realIdx})">
+        ${`<div class="trip-expand-toggle" onclick="toggleTripExpand(${realIdx})">
           <span>${expanded ? '▲ 收起' : '▼ 展开'}</span>
           <span style="font-size:12px;color:#8a6270;">${expanded ? '点击收起全部安排' : '点击查看全部安排'}</span>
         </div>`}
@@ -19875,20 +19889,34 @@ function renderTripPlans() {
       else if (daysLeft <= 10) { statusClass='travel-status-soon'; statusText='🔔 '+daysLeft+'天后'; }
       else { statusClass='travel-status-far'; statusText='📅 '+daysLeft+'天后'; }
       const hotelHtml = t.hotel ? '<span class="travel-hotel done">🏨 已订</span>' : '<span class="travel-hotel pending">🏨 未订</span>';
-      let checklistHtml = '';
+      // v318：默认折叠——折叠态只显示「项目名称 + 状态 + 完成进度」，点名称行才展开完整内容
+      const expandedTravel = !!__travelExpanded[idx];
+      let progressHtml, checklistHtml;
       if (t.checklist && t.checklist.length > 0) {
         const done = t.checklist.filter(function(i){return i.done;}).length;
         const total = t.checklist.length;
-        checklistHtml = '<div class="travel-checklist">';
+        progressHtml = '<span class="travel-check-progress">' + (done === total ? '✅ 已完成 ' : '📋 已完成 ') + done + '/' + total + '</span>';
+        let items = '';
         t.checklist.forEach(function(item, ci){
           const toggleFn='toggleChecklist('+idx+','+ci+')';
-          checklistHtml += '<div class="travel-check-item '+(item.done?'done':'')+'" onclick="'+toggleFn+'">'+(item.done?'✅':'⬜')+' '+escapeHtml(item.name)+'</div>';
+          items += '<div class="travel-check-item '+(item.done?'done':'')+'" onclick="'+toggleFn+'">'+(item.done?'✅':'⬜')+' '+escapeHtml(item.name)+'</div>';
         });
-        checklistHtml += '</div><div class="travel-check-summary">已完成 '+done+'/'+total+'</div>';
+        checklistHtml = '<div class="travel-checklist">'+items+'</div><div class="travel-check-summary">已完成 '+done+'/'+total+'</div>';
       } else {
+        progressHtml = '<span class="travel-check-progress">📦 无准备清单</span>';
         checklistHtml = '<div class="travel-check-summary">📦 无准备清单</div>';
       }
-      checkHtml += '<div class="travel-card"><div class="card-actions"><button class="row-edit-btn" onclick="openTravelModal('+idx+')" type="button" aria-label="编辑">✏️</button><button class="row-del-btn" onclick="deleteTravelRecord('+idx+')" type="button" aria-label="删除">🗑</button></div><div class="travel-card-dest">📍 '+escapeHtml(t.destination||'')+'</div><div class="travel-card-meta"><span class="travel-card-status '+statusClass+'">'+statusText+'</span><span>📅 '+t.date+'</span> '+hotelHtml+'</div>'+checklistHtml+'</div>';
+      checkHtml += '<div class="travel-card">'
+        + '<div class="card-actions">'
+        +   '<button class="row-edit-btn" onclick="event.stopPropagation();openTravelModal('+idx+')" type="button" aria-label="编辑">✏️</button>'
+        +   '<button class="row-del-btn" onclick="event.stopPropagation();deleteTravelRecord('+idx+')" type="button" aria-label="删除">🗑</button>'
+        + '</div>'
+        // 折叠行：项目名称（可点）+ 状态 + 完成进度
+        + '<div class="travel-card-dest" onclick="toggleTravelExpand('+idx+')" title="点击查看完整清单">' + (expandedTravel ? '▼ ' : '▶ ') + '📍 ' + escapeHtml(t.destination||'') + '</div>'
+        + '<div class="travel-card-meta"><span class="travel-card-status '+statusClass+'">'+statusText+'</span>' + progressHtml + '</div>'
+        // 展开后才显示：日期 + 酒店 + 具体清单项
+        + (expandedTravel ? '<div class="travel-card-meta"><span>📅 '+t.date+'</span> ' + hotelHtml + '</div>' + checklistHtml : '')
+        + '</div>';
     });
 
     html += '<div class="trip-card" style="margin-top:10px;"><div class="trip-header" style="cursor:pointer;" onclick="toggleChecklistExpand()"><div style="flex:1;min-width:0;"><div class="trip-title">📦 出游清单</div><div class="trip-subtitle"><span>共 '+travelsSorted.length+' 条出游记录</span></div></div></div><div class="trip-expand-toggle" onclick="toggleChecklistExpand()"><span>'+(chkExpanded?'▲ 收起':'▼ 展开')+'</span><span style="font-size:12px;color:#8a6270;">'+(chkExpanded?'点击收起全部清单':'点击查看全部清单')+'</span></div>';
