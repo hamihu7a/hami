@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-306">
+<meta name="hami-build" content="2026-10-17-307">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1263,7 +1263,7 @@
   }
 
   @media (max-width: 768px) {
-    .accounts-grid { display: flex; gap: 4px; min-width: 0; }
+    .accounts-grid { display: flex; gap: 3px; min-width: 0; }
     .account-card { flex: 1; min-width: 0; overflow: hidden; padding: 8px 4px; }
     .account-card .ac-header { font-size:12px; }
     .account-card .ac-followers { font-size: 18px; }
@@ -3703,7 +3703,7 @@
       /* ---------- 第二批补齐：以下模块之前在超小屏没做适配 ---------- */
 
       /* 三个自媒体账号卡：左右并排（恢复主人偏好的原始设计） */
-      .accounts-grid { display: flex; gap: 4px; min-width: 0; }
+      .accounts-grid { display: flex; gap: 3px; min-width: 0; }
       .account-card { flex: 1; min-width: 0; overflow: hidden; padding: 8px 4px; }
       .account-card .ac-header { font-size: 11px; }
       .account-card .ac-followers { font-size: 16px; margin-bottom: 0; }
@@ -4223,7 +4223,7 @@
   body.hami-force-mini .accounts-grid {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
   body.hami-force-mini .modal-card { max-width: 320px !important; border-radius: 16px !important; }
   body.hami-force-mini .hami-drawer { max-width: 320px; }
@@ -20865,21 +20865,48 @@ function hamiWhenCloudReady(cb) {
 function detectLocation(onDone) {
   onDone = onDone || function () {};
   const today = todayStr();
+  const isComputer = (window.innerWidth || document.documentElement.clientWidth || 0) >= 500; // ≥500px 视为电脑/平板（跟随端），<500px 视为手机（定位源）
   hamiWhenCloudReady(function () {
-    // 1) 云端共享位置（手机端授权定位后写入，电脑端直接读取 → 保持一致）
-    try {
-      const shared = (typeof store !== 'undefined' && store) ? store.weatherLocation : null;
-      if (shared && shared.lat != null && shared.lon != null) {
-        WEATHER_LAT = parseFloat(shared.lat);
-        WEATHER_LON = parseFloat(shared.lon);
-        if (shared.city) WEATHER_CITY_CN = shared.city;
-        if (shared.cityEn) WEATHER_CITY = shared.cityEn;
-        onDone();
-        return;
-      }
-    } catch (e) {}
+    // 1) 云端共享位置：仅电脑端优先读取（手机端是定位源，不走这里，避免被云端的旧值反向覆盖）
+    if (isComputer) {
+      try {
+        const shared = (typeof store !== 'undefined' && store) ? store.weatherLocation : null;
+        if (shared && shared.lat != null && shared.lon != null) {
+          WEATHER_LAT = parseFloat(shared.lat);
+          WEATHER_LON = parseFloat(shared.lon);
+          if (shared.city) WEATHER_CITY_CN = shared.city;
+          if (shared.cityEn) WEATHER_CITY = shared.cityEn;
+          onDone();
+          return;
+        }
+      } catch (e) {}
+    }
 
-    // 2) 本地当日缓存（避免每次刷新都弹定位请求）
+    // 2) 电脑端：不自己定位（避免反客为主），只读取云端共享位置；
+    //    云端为空时回退到本地缓存/默认城市兜底显示，绝不上传自己的位置覆盖手机端
+    if (isComputer) {
+      try {
+        const raw = localStorage.getItem('hami_location_cache');
+        if (raw) {
+          const c = JSON.parse(raw);
+          if (c && c.lat != null && c.lon != null) {
+            WEATHER_LAT = parseFloat(c.lat);
+            WEATHER_LON = parseFloat(c.lon);
+            if (c.city) WEATHER_CITY_CN = c.city;
+            if (c.cityEn) WEATHER_CITY = c.cityEn;
+            onDone();
+            return;
+          }
+        }
+      } catch (e) {}
+      // 无缓存则保持默认城市（不定位、不上云）
+      onDone();
+      return;
+    }
+
+    // 手机端：本地当日缓存 → 使用并【无条件广播到云端】
+    // （v307 修复：v304 的缓存分支漏了广播，导致手机带着旧缓存永不共享，电脑端永远对不上；
+    //  手机端每次都重新断言自己的位置，确保覆盖云端任何历史旧值，电脑端稳定跟随手机）
     try {
       const raw = localStorage.getItem('hami_location_cache');
       if (raw) {
@@ -20889,6 +20916,7 @@ function detectLocation(onDone) {
           WEATHER_LON = parseFloat(c.lon);
           if (c.city) WEATHER_CITY_CN = c.city;
           if (c.cityEn) WEATHER_CITY = c.cityEn;
+          try { store.weatherLocation = { lat: c.lat, lon: c.lon, city: c.city, cityEn: c.cityEn, ts: Date.now(), fromCache: true }; saveData(); } catch(e2) {}
           onDone();
           return;
         }
@@ -20916,14 +20944,14 @@ function detectLocation(onDone) {
             WEATHER_CITY = cityEn;
             try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: city, cityEn: cityEn })); } catch(e) {}
             // 广播到云端，供另一端（如电脑端）读取，保持一致
-            try { if (!store.weatherLocation) { store.weatherLocation = { lat: lat, lon: lon, city: city, cityEn: cityEn, ts: Date.now() }; saveData(); } } catch(e2) {}
+            try { store.weatherLocation = { lat: lat, lon: lon, city: city, cityEn: cityEn, ts: Date.now() }; saveData(); } catch(e2) {}
             onDone();
           })
           .catch(function () {
             WEATHER_CITY_CN = '本地';
             WEATHER_CITY = 'Local';
             try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: '本地', cityEn: 'Local' })); } catch(e) {}
-            try { if (!store.weatherLocation) { store.weatherLocation = { lat: lat, lon: lon, city: '本地', cityEn: 'Local', ts: Date.now() }; saveData(); } } catch(e2) {}
+            try { store.weatherLocation = { lat: lat, lon: lon, city: '本地', cityEn: 'Local', ts: Date.now() }; saveData(); } catch(e2) {}
             onDone();
           });
       },
