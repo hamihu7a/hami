@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-322">
+<meta name="hami-build" content="2026-10-17-323">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -842,6 +842,12 @@
   }
   .hami-cmd-bar .cmd-send:hover { transform:scale(1.04); box-shadow:0 2px 8px rgba(209,75,115,0.25); }
   .hami-cmd-bar .cmd-send:active { transform:scale(0.97); }
+  /* v323：点「记一下」=整键深色闪 1 秒（JS 挂 .flash-dark，1 秒后自动摘），确认点击生效 */
+  .hami-cmd-bar .cmd-send.flash-dark {
+    background:linear-gradient(135deg,#4a0f26,#2b0715);
+    color:#fff;
+    box-shadow:0 2px 10px rgba(74,15,38,0.35);
+  }
   /* v247：同步状态 + 版本号（上下并排），位于「记一下」右侧固定宽度区，让「记一下 / 语音」整体左移 */
   .hami-cmd-bar .cmd-meta {
     display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
@@ -868,14 +874,15 @@
   .hami-cmd-bar .cmd-mic svg { display:block; }
   .hami-cmd-bar .cmd-mic:hover { background:#ffe4ec; transform:scale(1.06); }
   .hami-cmd-bar .cmd-mic:active { transform:scale(0.95); }
+  /* v323：录音中=深色底+白图标+同色系脉冲光圈，主人一眼确认"语音开启成功"；松手/出错自动恢复浅粉 */
   .hami-cmd-bar .cmd-mic.recording {
-    background:#ff4d6d;color:#fff;
-    animation:hami-mic-pulse 1.2s infinite;
+    background:#4a0f26;color:#fff;
+    animation:hami-mic-pulse-dark 1.2s infinite;
   }
-  @keyframes hami-mic-pulse {
-    0%   { box-shadow:0 0 0 0 rgba(255,77,109,0.55); }
-    70%  { box-shadow:0 0 0 10px rgba(255,77,109,0); }
-    100% { box-shadow:0 0 0 0 rgba(255,77,109,0); }
+  @keyframes hami-mic-pulse-dark {
+    0%   { box-shadow:0 0 0 0 rgba(74,15,38,0.5); }
+    70%  { box-shadow:0 0 0 10px rgba(74,15,38,0); }
+    100% { box-shadow:0 0 0 0 rgba(74,15,38,0); }
   }
   @keyframes hami-refresh-spin { 100% { transform:rotate(360deg); } }
   .hami-cmd-toast {
@@ -12357,7 +12364,21 @@ function parseHamiCommand(raw, today) {
 }
 
 // ==================== 指令执行：把意图计划落到各模块 ====================
+// v323：点「记一下」的点击反馈——按钮整键深色闪 1 秒，主人一眼确认"点上了"；
+// 1 秒内重复点击会重新计时，保证每次点击都有完整的 1 秒深色反馈。
+function flashCmdSend() {
+  var btn = document.getElementById('hami-cmd-send');
+  if (!btn) return;
+  btn.classList.add('flash-dark');
+  if (btn.__flashTimer) { clearTimeout(btn.__flashTimer); }
+  btn.__flashTimer = setTimeout(function () {
+    btn.classList.remove('flash-dark');
+    btn.__flashTimer = null;
+  }, 1000);
+}
+
 function sendHamiCmd() {
+  flashCmdSend(); // v323：先深色闪 1 秒确认点击生效（语音说完自动记也会走到这）
   const input = document.getElementById('hami-cmd-input');
   if (!input) return;
   const txt = (input.value || '').trim();
