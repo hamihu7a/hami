@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-323">
+<meta name="hami-build" content="2026-10-17-324">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7057,13 +7057,10 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
           <button class="arm-tab active" data-type="expense">支出</button>
           <button class="arm-tab" data-type="income">收入</button>
         </div>
-        <span class="arm-account" id="arm-account-name" onclick="cycleAccount()">默认账本 ▾</span>
+        <!-- v324：主人不需要「默认账本」选择器，账户恒为「默认账本」，旧记录数据不受影响 -->
       </div>
       <div class="arm-grid" id="arm-cat-grid"></div>
-      <!-- v314：主人不需要「选择账户 / 报销 / 优惠 / 图片」，仅保留「标签」 -->
-      <div class="arm-toolbar" id="arm-toolbar">
-        <button class="arm-tool" data-tool="tag">🔖 标签</button>
-      </div>
+      <!-- v324：主人不需要工具行，「标签」也已移除；备注走 arm-meta-row 的「备注 ✏️」入口 -->
       <div class="arm-subinput" id="arm-subinput">
         <div class="arm-subinput-inner">
           <span id="arm-sub-label" style="font-size:12px;color:#d14b73;font-weight:600;"></span>
@@ -19046,7 +19043,8 @@ function bindFinanceEvents() {
         refreshAddModal();
       });
     });
-    armModal.querySelectorAll('.arm-tool').forEach(b => {
+    // v324：只绑带 data-tool 的工具钮，避免误绑子输入框的 ✕（否则点 ✕ 会被重新弹开的隐患）
+    armModal.querySelectorAll('.arm-tool[data-tool]').forEach(b => {
       b.addEventListener('click', () => {
         if (b.dataset.tool === 'account') { cycleAccount(); return; }
         const sub = document.getElementById('arm-subinput');
