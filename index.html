@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-291">
+<meta name="hami-build" content="2026-10-17-292">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -13493,11 +13493,9 @@ function renderTodoListForCat(cat) {
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
         <div class="todo-meta">
-          <span class="todo-meta-record">📝 ${fmtTsMonthDay(ut.createdAt)}</span>
-          ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : ''}
+          ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
           <span class="todo-meta-sp"></span>
-          <button class="todo-btn done-btn" onclick="toggleUserTodo(${o.i})" title="标记完成，自动归入「已完成${cat === 'work' ? '工作' : '日常'}待办」">完成</button>
-          <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">改</button>
+          <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">修改</button>
           <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
         </div>
       </div>
@@ -13541,7 +13539,6 @@ function renderTodoDoneForCat(cat) {
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
         <div class="todo-meta">
-          <span class="todo-meta-record">📝 ${fmtTsMonthDay(ut.createdAt)}</span>
           ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
           <span class="todo-meta-sp"></span>
           <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
