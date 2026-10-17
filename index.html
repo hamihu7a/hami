@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-286">
+<meta name="hami-build" content="2026-10-17-287">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5111,9 +5111,9 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     if(tag){
       // v247：只显示数字（去掉「版本：」前缀），如 10.16-247
       if(m){
-        tag.textContent='版本：'+parseInt(m[2],10)+'.'+parseInt(m[3],10)+'-'+m[4];
+        tag.textContent=parseInt(m[2],10)+'.'+parseInt(m[3],10)+'-'+m[4];
       }else{
-        tag.textContent='版本：'+(bv||'?');
+        tag.textContent=(bv||'?');
       }
     }
   }catch(e){}
@@ -9550,8 +9550,8 @@ function refreshVersionTag() {
   const v = String(window.BUILD_VER || '');
   const m = v.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
   // v247：只显示数字，不带「版本：」前缀
-  if (m) { el.textContent = '版本：' + parseInt(m[2],10) + '.' + parseInt(m[3],10) + '-' + m[4]; return; }
-  el.textContent = '版本：' + v;
+  if (m) { el.textContent = parseInt(m[2],10) + '.' + parseInt(m[3],10) + '-' + m[4]; return; }
+  el.textContent = v;
 }
 function _fmtSyncTime(ts) {
   if (!ts) return '';
