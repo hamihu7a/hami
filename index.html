@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-307">
+<meta name="hami-build" content="2026-10-17-308">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1252,7 +1252,7 @@
   .account-card .ac-detail b.ac-up { color: #e74c3c; }
   .account-card .ac-detail b.ac-down { color: #27ae60; }
   .account-card .ac-detail { background: rgba(255,255,255,.55); border-radius: 8px; padding: 2px 6px; }
-  .acc-updated { text-align: center; font-size: 11.5px; color: #d14b73; font-weight: 700; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .acc-updated { text-align: center; font-size: 11.5px; color: #d14b73; font-weight: 700; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
   .acc-pulse { width: 7px; height: 7px; border-radius: 50%; background: #ff5c8a; display: inline-block; animation: accBlink 1.6s infinite; }
   @media (max-width: 768px) {
     .acc-avatar { width: 32px; height: 32px; font-size: 16px; }
@@ -2048,7 +2048,7 @@
   }
   /* v229：标签收进文案里——正文后面的小字标签，不再单独铺一排 */
   .fp-tags-inline { font-size: 11px; font-weight: 600; color: #b08aa0; letter-spacing: .3px; }
-  .future-post-content { font-size: 12px; color: #5a3a48; line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin-bottom: 8px; }
+  .future-post-content { font-size: 12px; color: #5a3a48; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
   .future-post-actions {
     display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; margin-top: 4px;
   }
@@ -3871,12 +3871,12 @@
       width: auto !important;
       max-width: none !important;
     }
-    /* v71：体重日历 iPad 7 列等分，胶囊格子 */
+    /* v71：体重日历 iPad 7 列等分，胶囊格子（v18：电脑端收紧凑，格子变小、间距变小） */
     .weight-cal-grid {
       grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-      gap: 4px !important;
+      gap: 2px !important;
     }
-    .weight-cal-cell { height: 60px !important; padding: 3px 2px !important; }
+    .weight-cal-cell { height: 46px !important; padding: 2px 2px !important; }
     .weight-cal-day { font-size: 12px !important; }
     .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
@@ -3931,8 +3931,8 @@
     .panel.active .todo-card[id] {
       grid-column: 1 / -1;
     }
-    .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px !important; }
-    .weight-cal-cell { height: 52px !important; }
+    .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 2px !important; }
+    .weight-cal-cell { height: 46px !important; }
     .weight-cal-day { font-size: 11px !important; }
     .weight-cal-main { font-size: 12px !important; }
     th, td { padding: 5px 4px; }
@@ -3994,16 +3994,17 @@
   /* 体重日历：在 iPad 窄宽度场景下，保证每个 cell 至少 44px 宽（能塞下"89.2"+"↑0.8"）。
      用 minmax(44px, 1fr) 而非 1fr，避免被窄列挤压；横向溢出时允许滚动。 */
   /* 体重日历：还原紧凑小字（主人要求，不要被放大成大格子大日期）。
-     日期 11px、重量 10px、格子高度适中，7 列仍能放下"89.2 + ↑0.8"。 */
+     日期 11px、重量 10px、格子高度适中，7 列仍能放下"89.2 + ↑0.8"。
+     v18：电脑端格子高度 56→46、间距 3→2，更紧凑不空旷 */
   body.hami-force-desktop .weight-cal-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 3px !important; overflow-x: auto !important;
+    gap: 2px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    height: 56px !important; padding: 3px 2px !important; min-width: 0;
+    height: 46px !important; padding: 2px 2px !important; min-width: 0;
   }
-  body.hami-force-desktop .weight-cal-day { font-size: 11px !important; }
-  body.hami-force-desktop .weight-cal-main { font-size: 13px !important; }
+  body.hami-force-desktop .weight-cal-day { font-size: 11px !important; line-height: 1.1 !important; }
+  body.hami-force-desktop .weight-cal-main { font-size: 13px !important; line-height: 1.1 !important; }
   body.hami-force-desktop .weight-cal-weight { font-size: 11px !important; padding: 0 2px; }
   body.hami-force-desktop .weight-cal-change { font-size: 9px !important; }
   body.hami-force-desktop .weight-cal-ex-dot { font-size: 8px !important; }
@@ -4113,7 +4114,7 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { height: 56px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 46px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
@@ -5077,8 +5078,431 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
   .todo-card { box-shadow: 0 4px 16px rgba(255,158,181,0.18), inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(150,104,64,0.12); }
   .todo-card:hover { box-shadow: var(--shadow-hover), 0 2px 8px rgba(150,104,64,0.16); }
 </style>
+<style id="vintageTheme">
+/* ============================================================
+   Hami 工作台 · 美式少女漫画手绘主题（预览 v4，未上线）
+   方向：粉白波点纸 · 字体用回正式版原字体 · 全站只留粉+白两层
+   规则：只有大类目外层有框；内部统一淡粉薄纱；按键小淡框
+   ============================================================ */
+body.theme-vintage {
+  --c-bg: #fdf1f5;
+  --c-text: #5a3a48;
+  --c-muted: #a06c80;
+  --c-text-2: #6a4256;
+  --c-line: #ffd9e4;
+  --c-pink: #ff8aa6;
+  --c-pink-main: #ff8aa6;
+  --c-pink-deep: #d14b73;
+  --c-pink-soft: #ffe4ec;
+  --c-pink-tint: rgba(255,138,166,0.12);
+  --shadow-sm: 0 2px 10px rgba(255,138,166,0.10);
+  --shadow-xs: 0 2px 8px rgba(255,138,166,0.08);
+  --shadow-hover: 0 6px 18px rgba(209,75,115,0.14);
+
+  /* 统一波点纸背景（参考图风格）：淡粉底 + 白色小波点，全站只用这一层背景 */
+  background-color: #fbdde8 !important;
+  background-image:
+    radial-gradient(rgba(255,255,255,0.75) 2.2px, transparent 2.2px),
+    radial-gradient(rgba(255,255,255,0.4) 1.6px, transparent 1.6px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+  background-attachment: fixed;
+
+  color: #5a3a48;
+}
+
+/* —— 侧栏：淡粉纸 + 细淡描边 —— */
+body.theme-vintage .sidebar {
+  background: #fff0f5 !important;
+  border-right: 1.5px solid #ffd0de !important;
+  box-shadow: none !important;
+}
+body.theme-vintage .sidebar > .nav-header { background: #fff0f5 !important; }
+
+/* —— 大类目容器：全部恢复白底（不跟粉色背景混）—— */
+body.theme-vintage .card,
+body.theme-vintage .todo-panel,
+body.theme-vintage .desktop-hero,
+body.theme-vintage .accounts-wrap,
+body.theme-vintage .db-grid .card {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(233,120,158,0.10) !important;
+}
+/* 弹窗例外：保留白底保证可读 */
+body.theme-vintage .modal {
+  background: #ffffff !important;
+  border: 1.5px solid #f6bfd0 !important;
+  border-radius: 18px !important;
+}
+
+/* —— 内容小块：白底卡片（全站唯一一层底色）；天气/黄历的 home-card 排除（保持透出背景图）；
+      定制单 kb-card / 如厕·面膜 toilet-card / 运动 ex-card / 经期 period-card / 旅行 travel-card 的子元素
+      与 .card-actions 按钮容器都排除（类名含 "card" 的子元素会被误刷成一行一个小盒子）—— */
+body.theme-vintage [class*="card"]:not(.card):not([class*="title"]):not([class*="head"]):not([class*="icon"]):not([class*="img"]):not([class*="avatar"]):not([class*="thumb"]):not([class*="sticker"]):not(.hcp-card):not([class*="home-card"]):not([class*="kb-card"]):not([class*="toilet-card-"]):not([class*="ex-card-"]):not([class*="period-card-"]):not([class*="travel-card-"]):not(.card-actions) {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(233,120,158,0.12) !important;
+  border-radius: 16px !important;
+}
+/* .panel 本体只是隐藏容器：透明即可，不再通配刷掉 todo-panel 等白卡 */
+body.theme-vintage .panel {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* 提示条 / 月份选择器：不再垫白底、不再加框（解决框里套框） */
+body.theme-vintage .tip-box,
+body.theme-vintage .month-selector {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* —— 内部记录行/小块：一律纯白底（原版的粉白 #fff8fa 系在粉背景上显得粉，主人要白色）—— */
+body.theme-vintage .mh-item,
+body.theme-vintage .media-record-item,
+body.theme-vintage .ex-row,
+body.theme-vintage .fin-flow-row,
+body.theme-vintage .rank-row,
+body.theme-vintage .cr-stat,
+body.theme-vintage .kb-edit,
+body.theme-vintage .goal-row {
+  background: #ffffff !important;
+}
+/* 倒计时提醒条：原为半透明白叠在粉背景上显粉 → 提高不透明度到近白 */
+body.theme-vintage #desktop-countdown > div {
+  background: rgba(255,255,255,0.94) !important;
+}
+
+/* —— 人生剩余天数 / 今日时光：各自不一样的设计（粉 / 淡紫 区分）—— */
+body.theme-vintage .hcp-card {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 3px 12px rgba(233,120,158,0.15) !important;
+  border-radius: 18px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+body.theme-vintage .hcp-life  { border-left: 5px solid #ff8aa6 !important; }
+body.theme-vintage .hcp-today { border-left: 5px solid #cdb9e8 !important; }
+body.theme-vintage .hcp-life  .hcp-title { color: #d14b73 !important; }
+/* 浅紫只做点缀（左边条/圆环线条），文字一律恢复原色，不再用浅紫字体 */
+body.theme-vintage .hcp-life  .hcp-bar { background: rgba(255,222,233,0.8) !important; }
+body.theme-vintage .hcp-today .hcp-fill { stroke: #cdb9e8 !important; }
+
+/* —— 今日天气 / 今日黄历：不加白底、不加任何描边，隐约透出上传的背景图 —— */
+body.theme-vintage #desktop-weather .home-card-flex,
+body.theme-vintage #desktop-fortune .home-card-flex,
+body.theme-vintage #desktop-weather .home-card-body,
+body.theme-vintage #desktop-fortune .home-card-body,
+body.theme-vintage #desktop-weather .home-card-row,
+body.theme-vintage #desktop-fortune .home-card-row,
+body.theme-vintage #desktop-weather .home-card-note,
+body.theme-vintage #desktop-fortune .home-card-note,
+body.theme-vintage #desktop-weather .home-card-foot,
+body.theme-vintage #desktop-fortune .home-card-foot {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* —— 顶部 hero：时间放大、环/时间/激励语三段间距恢复、激励语缩小保证整句显示 —— */
+body.theme-vintage .desktop-hero { padding: 14px 16px !important; }
+body.theme-vintage .hero-year-ring { margin-bottom: 10px !important; }
+body.theme-vintage .hero-top { gap: 12px !important; }
+body.theme-vintage .hero-main-row { gap: 10px !important; }
+body.theme-vintage .hero-quote-row { gap: 8px !important; margin-top: 2px !important; }
+body.theme-vintage .desktop-time { font-size: 34px !important; line-height: 1.1 !important; }
+body.theme-vintage .desktop-quote .quote-line {
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  margin-bottom: 5px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+body.theme-vintage .desktop-quote .quote-line:last-child { margin-bottom: 0 !important; }
+@media (max-width: 768px) {
+  body.theme-vintage .desktop-hero { padding: 12px 12px !important; }
+  body.theme-vintage .hero-top { gap: 9px !important; }
+  body.theme-vintage .desktop-time { font-size: 26px !important; }
+  body.theme-vintage .desktop-quote .quote-line { font-size: 11.5px !important; line-height: 1.5 !important; margin-bottom: 4px !important; }
+}
+@media (max-width: 420px) {
+  body.theme-vintage .desktop-time { font-size: 24px !important; }
+}
+
+/* 天气建议：一行、不转行（文案本身已 ≤7 字） */
+body.theme-vintage .weather-advice {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 11.5px !important;
+  line-height: 1.5 !important;
+  color: #7d4a5a !important;
+  background: transparent !important;
+  padding: 1px 2px !important;
+  margin-top: 2px !important;
+}
+body.theme-vintage .weather-uv { margin-top: 2px !important; }
+body.theme-vintage .weather-uv b { font-weight: 700 !important; }
+/* 天气「建议+紫外线」：微微透明白底小卡（同今日黄历宜/忌的 yi-ji-wrap 设计） */
+body.theme-vintage .wx-extra-wrap {
+  background: rgba(255,255,255,0.55) !important;
+  border-radius: 10px !important;
+  padding: 3px 6px !important;
+  margin-top: 4px !important;
+}
+body.theme-vintage .wx-extra-wrap .weather-advice {
+  background: transparent !important;
+  padding: 2px 2px 1px !important;
+  margin-top: 0 !important;
+}
+body.theme-vintage .wx-extra-wrap .weather-uv {
+  border-top: 1px dashed rgba(209,75,115,0.18) !important;
+  margin-top: 2px !important;
+  padding-top: 3px !important;
+}
+
+/* —— 侧栏：恢复 v5 时期的样子——淡粉纸底 + 每项半透明白胶囊、无边框，组间自然分隔 —— */
+body.theme-vintage .sidebar {
+  background: #fff0f5 !important;
+  border-right: 1.5px solid #ffd0de !important;
+  box-shadow: none !important;
+}
+body.theme-vintage .sidebar > .nav-header { background: #fff0f5 !important; }
+body.theme-vintage .sidebar button,
+body.theme-vintage .sidebar [class*="nav"],
+body.theme-vintage .sidebar [class*="item"] {
+  border: none !important;
+  box-shadow: none !important;
+  background: rgba(255,255,255,0.55) !important;
+  border-radius: 12px !important;
+}
+body.theme-vintage .sidebar button:active { transform: none !important; }
+/* 在此基础上只加一条：选中项变深色（一眼知道停在哪） */
+body.theme-vintage .sidebar .nav-item.active {
+  background: #ffd3df !important;
+  color: #a3124e !important;
+  font-weight: 700 !important;
+  border-left-color: transparent !important;
+}
+
+/* —— 标题统一字体（颜色不再覆盖，恢复原本粉/紫 inline 色）—— */
+body.theme-vintage .card-title,
+body.theme-vintage .todo-panel-title,
+body.theme-vintage .panel-header h2,
+body.theme-vintage .nav-group-title {
+  letter-spacing: 0.5px;
+}
+
+/* —— 按钮：不明显的小淡框 —— */
+body.theme-vintage button,
+body.theme-vintage [class*="btn"]:not([class*="title"]):not([class*="head"]):not([class*="icon"]) {
+  border: 1px solid rgba(255,158,181,0.5) !important;
+  border-radius: 12px !important;
+  background: rgba(255,240,245,0.92) !important;
+  color: #6a4256 !important;
+  box-shadow: 0 1px 4px rgba(255,138,166,0.12) !important;
+  font-weight: 600 !important;
+}
+body.theme-vintage button:active { transform: scale(0.97) !important; }
+/* 刷新按键：保持半透明圆形原样（不套用通用按钮小淡框） */
+body.theme-vintage button.hero-refresh {
+  background: rgba(255,255,255,0.35) !important;
+  border: none !important;
+  box-shadow: 0 1px 4px rgba(90,50,70,0.08) !important;
+  border-radius: 50% !important;
+}
+body.theme-vintage button.hero-refresh:hover { background: rgba(255,255,255,0.48) !important; }
+/* 主按钮：粉紫渐变点缀 */
+body.theme-vintage button.primary,
+body.theme-vintage .primary-btn {
+  background: linear-gradient(135deg,#ffb0c4,#dcc8ee) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(209,75,115,0.35) !important;
+}
+
+/* —— 输入/文本域/下拉：小淡框 —— */
+body.theme-vintage input,
+body.theme-vintage textarea,
+body.theme-vintage select {
+  border: 1px solid rgba(255,158,181,0.45) !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.85) !important;
+  color: #5a3a48 !important;
+}
+/* —— 去框里套框：外层胶囊本身已有框，内部 select/input 不再自带框 —— */
+body.theme-vintage .fin-topbar .fin-month select {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+body.theme-vintage .todo-date-wrap .todo-date-input {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* —— 环形进度恢复粉调（不再覆盖成红）—— */
+body.theme-vintage .hcp-track { stroke: rgba(255,127,160,0.16) !important; }
+body.theme-vintage .hcp-ring-pct,
+body.theme-vintage .hcp-ring-lab { color: #d14b73 !important; }
+
+/* —— 工具条/月份选择：紧凑排版，去框里套框 —— */
+body.theme-vintage .fin-topbar { gap: 6px !important; margin-bottom: 8px !important; }
+body.theme-vintage .fin-topbar .fin-month {
+  background: #ffffff !important;
+  border: 1px solid #ffd0dc !important;
+  padding: 4px 10px !important;
+  gap: 4px !important;
+  border-radius: 12px !important;
+}
+body.theme-vintage .fin-add-btn {
+  padding: 6px 12px !important;
+  background: #ffffff !important;
+  color: #e8447a !important;
+  border: 1px solid #ffd0dc !important;
+  box-shadow: 0 2px 6px rgba(233,120,158,0.12) !important;
+}
+body.theme-vintage .fin-stats-btn { background: #ffffff !important; }
+/* —— 直接浮在粉色波点上的按键：一律白底 —— */
+body.theme-vintage .hami-help-toggle {
+  background: #ffffff !important;
+  color: #d14b73 !important;
+  border: 1px solid #ffd0dc !important;
+  box-shadow: 0 2px 6px rgba(233,120,158,0.12) !important;
+}
+body.theme-vintage .month-selector select,
+body.theme-vintage .month-selector button {
+  background: #ffffff !important;
+  border: 1px solid #ffd0dc !important;
+}
+body.theme-vintage .flow-toggle-btn,
+body.theme-vintage .date-fold-btn,
+body.theme-vintage .kb-page-btn,
+body.theme-vintage .sch-page-btn {
+  background: #ffffff !important;
+  border: 1px solid #ffd0dc !important;
+}
+body.theme-vintage .month-selector { gap: 6px !important; margin-bottom: 8px !important; }
+
+/* —— 分页按钮：一行不转行 —— */
+body.theme-vintage .flow-toggle-btn,
+body.theme-vintage .date-fold-btn,
+body.theme-vintage .kb-page-btn,
+body.theme-vintage .sch-page-btn {
+  white-space: nowrap !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+/* —— 经期关键按钮：恢复原本辨识色（粉/绿），不再被统一成淡粉 —— */
+body.theme-vintage .period-main-btn {
+  background: linear-gradient(135deg, #ff7aa2, #d14b73) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(209,75,115,0.28) !important;
+}
+body.theme-vintage .period-end-btn {
+  background: linear-gradient(135deg, #7fd895, #34c759) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(52,199,89,0.28) !important;
+}
+/* 排版：日期输入独占一行，两键并排显示完整文字 */
+body.theme-vintage .period-action-row { gap: 6px !important; }
+body.theme-vintage .period-action-row .date-log-input { flex: 1 1 100% !important; min-width: 0 !important; }
+body.theme-vintage .period-main-btn,
+body.theme-vintage .period-end-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  font-size: 13px !important;
+  padding: 12px 4px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* —— 底部指令栏：按键间距收紧到很小，空白输入框加大 —— */
+body.theme-vintage .hami-cmd-bar { gap: 3px !important; padding: 8px 10px !important; }
+body.theme-vintage .hami-cmd-bar .cmd-label { padding: 2px 2px !important; }
+body.theme-vintage .hami-cmd-bar .cmd-input {
+  flex: 1 1 auto !important;
+  min-height: 42px !important;
+  padding: 8px 14px !important;
+}
+body.theme-vintage .hami-cmd-bar .cmd-mic { width: 34px !important; height: 34px !important; }
+body.theme-vintage .hami-cmd-bar .cmd-send { padding: 8px 10px !important; }
+body.theme-vintage .hami-cmd-bar .cmd-meta { min-width: 0 !important; padding-left: 6px !important; }
+
+/* —— 全站紧凑：卡片内边距/块间距收紧（板块之间不要隔太远）—— */
+body.theme-vintage .card { padding: 9px 10px !important; margin-bottom: 4px !important; }
+body.theme-vintage .fin-topbar { gap: 4px !important; margin-bottom: 4px !important; }
+body.theme-vintage .month-selector { gap: 4px !important; margin-bottom: 4px !important; }
+body.theme-vintage .media-record-list { gap: 5px !important; }
+body.theme-vintage .mh-item { padding: 6px 9px !important; margin-bottom: 4px !important; }
+body.theme-vintage .ex-row { padding: 6px 9px !important; margin-bottom: 4px !important; }
+body.theme-vintage .todo-card { margin-bottom: 4px !important; }
+/* —— 记录条底色统一纯白（如厕/面膜记录卡、定制单看板两区）—— */
+body.theme-vintage .toilet-card { background: #ffffff !important; }
+body.theme-vintage .kanban-section.making,
+body.theme-vintage .kanban-section.done {
+  background: #ffffff !important;
+  border-color: #f6e0e8 !important;
+}
+body.theme-vintage .kb-card.overdue { background: #ffffff !important; }
+/* —— 使用说明行与工具条之间上下间距收紧 —— */
+body.theme-vintage .tip-box { padding: 4px 10px !important; margin-bottom: 3px !important; }
+body.theme-vintage .hami-help-toggle { padding: 4px 12px !important; }
+body.theme-vintage .hami-help-row { gap: 6px !important; }
+body.theme-vintage .panel > .tip-box + .fin-topbar,
+body.theme-vintage .tip-box + .fin-topbar,
+body.theme-vintage .tip-box + .month-selector { margin-top: 0 !important; }
+
+/* —— 空日期输入：不显示 yyyy/mm/日，统一显示「选择日期」—— */
+body.theme-vintage input[type="date"] { position: relative; }
+body.theme-vintage input[type="date"]:not(.date-filled):not(:focus) { color: transparent !important; }
+body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
+  content: '选择日期';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #b58a98 !important;
+  font-size: 12.5px; font-weight: 600;
+  pointer-events: none; white-space: nowrap;
+}
+</style>
+<script>
+/* 日期输入空值占位：给所有 input[type=date] 打 date-filled 标记（有值隐藏「选择日期」覆盖层）；
+   每 800ms 轻量巡检一次，兼容 JS 程序化填值（如打开弹窗预填今天） */
+(function () {
+  function hamiDateScan() {
+    var list = document.querySelectorAll('input[type="date"]');
+    for (var i = 0; i < list.length; i++) {
+      var inp = list[i];
+      var filled = !!inp.value;
+      if (inp.classList.contains('date-filled') !== filled) inp.classList.toggle('date-filled', filled);
+    }
+  }
+  function hamiDateBind() {
+    document.querySelectorAll('input[type="date"]').forEach(function (inp) {
+      if (inp.getAttribute('data-date-ph') === '1') return;
+      inp.setAttribute('data-date-ph', '1');
+      inp.addEventListener('input', hamiDateScan);
+      inp.addEventListener('change', hamiDateScan);
+    });
+    hamiDateScan();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hamiDateBind);
+  else hamiDateBind();
+  setInterval(hamiDateScan, 800);
+})();
+</script>
 </head>
-<body>
+<body class="theme-vintage">
 
 <!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL -->
 <script>
@@ -5401,6 +5825,13 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     .hcp-ring-pct { font-size: 8px; }
     .hcp-ring-lab { font-size: 8px; margin-top: 1px; }
   }
+  /* ===== v312：近期节日卡（替换原今日时光）===== */
+  .hcp-fest .hcp-big { font-size: clamp(22px,4vw,30px); letter-spacing: .5px; }
+  .hcp-fest-rows { margin-top: auto; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .hcp-fest-row { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; color: #7d4a5a; min-width: 0; }
+  .hcp-fest-tag { flex: 0 0 auto; font-size: 10px; font-weight: 800; color: #fff; background: #ff8aa6; border-radius: 6px; padding: 1px 5px; }
+  .hcp-fest-tag.ab { background: #cdb9e8; }
+  .hcp-fest-txt { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
     <div id="hami-countdown-pair">
       <div class="hcp-card hcp-life">
@@ -5409,14 +5840,13 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         <div class="hcp-sub" id="hcp-life-sub">距 85 岁目标</div>
         <div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div>
       </div>
-      <div class="hcp-card hcp-today">
-        <div class="hcp-title">📅 今日时光</div>
-        <div class="hcp-big"><span id="hcp-day-num">--</span><span class="hcp-unit">日</span></div>
-        <div class="hcp-sub hcp-lunar" id="hcp-lunar">--</div>
-        <div class="hcp-rings">
-          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-day" cx="32" cy="32" r="26" style="stroke:#ff7fa0"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-day">--%</span></div><div class="hcp-ring-lab">今日剩余</div></div>
-          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-month" cx="32" cy="32" r="26" style="stroke:#ef6a9e"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-month">--%</span></div><div class="hcp-ring-lab">本月剩余</div></div>
-          <div class="hcp-ring"><div class="hcp-ring-wrap"><svg viewBox="0 0 64 64"><circle class="hcp-track" cx="32" cy="32" r="26"></circle><circle class="hcp-fill" id="hcp-rf-year" cx="32" cy="32" r="26" style="stroke:#ffb0c8"></circle></svg><span class="hcp-ring-pct" id="hcp-rp-year">--%</span></div><div class="hcp-ring-lab">今年剩余</div></div>
+      <div class="hcp-card hcp-today hcp-fest">
+        <div class="hcp-title">🎉 近期节日</div>
+        <div class="hcp-big"><span id="hcp-fest-name">--</span></div>
+        <div class="hcp-sub" id="hcp-fest-sub">--</div>
+        <div class="hcp-fest-rows">
+          <div class="hcp-fest-row"><span class="hcp-fest-tag">国内</span><span class="hcp-fest-txt" id="hcp-fest-cn">--</span></div>
+          <div class="hcp-fest-row"><span class="hcp-fest-tag ab">国外</span><span class="hcp-fest-txt" id="hcp-fest-ab">--</span></div>
         </div>
       </div>
     </div>
@@ -5437,21 +5867,61 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         var p = document.getElementById('hcp-rp-'+key);
         if (p) p.textContent = Math.round(ratio*100) + '%';
       }
+      // v312：节日表（国内 / 国外）——公历固定 + 农历节日换算 + 按周的第 N 个星期几
+      function weekdayNth(y, m, n, wd) {
+        var first = new Date(y, m - 1, 1);
+        var off = (wd - first.getDay() + 7) % 7;
+        return new Date(y, m - 1, 1 + off + (n - 1) * 7);
+      }
+      var _festCache = null, _festYear = -1, _festDay = '';
+      function buildFestivals() {
+        var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+        var y = t0.getFullYear();
+        var dayKey = t0.toDateString();
+        if (_festCache && _festYear === y && _festDay === dayKey) return _festCache;
+        var out = [];
+        var solar = [
+          ['元旦', 'cn', 1, 1], ['情人节', 'ab', 2, 14], ['妇女节', 'cn', 3, 8], ['植树节', 'cn', 3, 12],
+          ['愚人节', 'ab', 4, 1], ['劳动节', 'cn', 5, 1], ['青年节', 'cn', 5, 4], ['儿童节', 'cn', 6, 1],
+          ['建党节', 'cn', 7, 1], ['建军节', 'cn', 8, 1], ['教师节', 'cn', 9, 10], ['国庆节', 'cn', 10, 1],
+          ['万圣节', 'ab', 10, 31], ['平安夜', 'ab', 12, 24], ['圣诞节', 'ab', 12, 25]
+        ];
+        var lunar = [['春节', 1, 1], ['元宵节', 1, 15], ['端午节', 5, 5], ['七夕', 7, 7], ['中秋节', 8, 15], ['重阳节', 9, 9]];
+        for (var yy = y; yy <= y + 1; yy++) {
+          for (var i = 0; i < solar.length; i++) {
+            out.push({ name: solar[i][0], kind: solar[i][1], date: new Date(yy, solar[i][2] - 1, solar[i][3]) });
+          }
+          out.push({ name: '母亲节', kind: 'cn', date: weekdayNth(yy, 5, 2, 0) });
+          out.push({ name: '父亲节', kind: 'cn', date: weekdayNth(yy, 6, 3, 0) });
+          out.push({ name: '感恩节', kind: 'ab', date: weekdayNth(yy, 11, 4, 4) });
+          if (typeof findSolarForLunar === 'function') {
+            for (var j = 0; j < lunar.length; j++) {
+              var dt = findSolarForLunar(lunar[j][1], lunar[j][2], false, yy);
+              if (dt) out.push({ name: lunar[j][0], kind: 'cn', date: dt });
+            }
+          }
+        }
+        out = out.filter(function (f) { return f.date >= t0; });
+        out.sort(function (a, b) { return a.date - b.date; });
+        _festCache = out; _festYear = y; _festDay = dayKey;
+        return out;
+      }
       function render(){
         try {
           var now = new Date();
-          // 右卡：今日时光
-          document.getElementById('hcp-day-num').textContent = (now.getMonth()+1) + '.' + now.getDate();
-          var hl = getHuangLi(now.getFullYear(), now.getMonth()+1, now.getDate());
-          document.getElementById('hcp-lunar').textContent = '农历' + hl.lunar + ' · 周' + '日一二三四五六'.charAt(now.getDay());
-          var dayLeft = 1 - (now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/86400;
-          setRing('day', dayLeft);
-          var dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-          setRing('month', (dim - now.getDate() + dayLeft)/dim);
-          var y0 = new Date(now.getFullYear(),0,1), y1 = new Date(now.getFullYear()+1,0,1);
-          var yearLen = Math.round((y1-y0)/86400000);
-          var doy = Math.round((new Date(now.getFullYear(),now.getMonth(),now.getDate()) - y0)/86400000) + 1;
-          setRing('year', (yearLen - doy + dayLeft)/yearLen);
+          // 右卡：近期节日（最近一个 + 国内最近 + 国外最近）
+          var t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          var ds = function (f) { return Math.round((f.date - t0) / 86400000); };
+          var fs = buildFestivals();
+          if (fs.length) {
+            var near = fs[0];
+            document.getElementById('hcp-fest-name').textContent = near.name;
+            document.getElementById('hcp-fest-sub').textContent = (near.date.getMonth() + 1) + '月' + near.date.getDate() + '日 · ' + (ds(near) === 0 ? '就是今天！' : '还有 ' + ds(near) + ' 天');
+            var cn = fs.filter(function (f) { return f.kind === 'cn'; })[0];
+            var ab = fs.filter(function (f) { return f.kind === 'ab'; })[0];
+            document.getElementById('hcp-fest-cn').textContent = cn ? (cn.name + ' ' + (cn.date.getMonth() + 1) + '/' + cn.date.getDate() + ' · ' + ds(cn) + '天') : '—';
+            document.getElementById('hcp-fest-ab').textContent = ab ? (ab.name + ' ' + (ab.date.getMonth() + 1) + '/' + ab.date.getDate() + ' · ' + ds(ab) + '天') : '—';
+          }
           // 左卡：人生剩余天数
           var L = lifeDates();
           if (L) {
@@ -5467,7 +5937,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         } catch(e) { console.warn('hcp render fail:', e); }
       }
       function boot(){
-        if (document.getElementById('hcp-day-num') && typeof getHuangLi === 'function' && typeof findSolarForLunar === 'function') {
+        if (document.getElementById('hcp-fest-name') && typeof findSolarForLunar === 'function') {
           render(); setInterval(render, 30000);
         } else { setTimeout(boot, 300); }
       }
@@ -5489,8 +5959,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         <textarea id="todo-input-daily" class="todo-text-input" rows="2" placeholder="写点日常要做的事…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('daily')}"></textarea>
         <div class="todo-add-bottom">
           <div class="todo-date-wrap">
-            <span class="todo-date-label">📅 期限</span>
-            <input type="date" id="todo-date-daily" class="todo-date-input" title="完成期限（可选，留空=无期限）">
+            <input type="date" id="todo-date-daily" class="todo-date-input" title="选择日期（可选，留空=无期限）">
           </div>
           <button class="todo-add-btn" onclick="addUserTodo('daily')">➕ 添加</button>
         </div>
@@ -5514,8 +5983,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         <textarea id="todo-input-work" class="todo-text-input" rows="2" placeholder="要推进什么事？" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('work')}"></textarea>
         <div class="todo-add-bottom">
           <div class="todo-date-wrap">
-            <span class="todo-date-label">📅 期限</span>
-            <input type="date" id="todo-date-work" class="todo-date-input" title="完成期限（可选）">
+            <input type="date" id="todo-date-work" class="todo-date-input" title="选择日期（可选，留空=无期限）">
           </div>
           <button class="todo-add-btn" onclick="addUserTodo('work')">➕ 添加</button>
         </div>
@@ -5673,13 +6141,13 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
           <label>类型</label>
           <div class="co-status" id="ei-type-wrap">
             <span class="co-status-opt active" data-t="有氧操" onclick="setEiType('有氧操')">有氧操</span>
-            <span class="co-status-opt" data-t="爬坡/椭圆机" onclick="setEiType('爬坡/椭圆机')">爬坡/椭圆机</span>
+            <span class="co-status-opt" data-t="爬坡" onclick="setEiType('爬坡')">爬坡</span>
             <span class="co-status-opt" data-t="器械" onclick="setEiType('器械')">器械</span>
           </div>
         </div>
         <div class="co-field">
           <label>项目名</label>
-          <input type="text" id="ei-name" placeholder="如：椭圆机 / 哑铃 / 帕梅拉" />
+          <input type="text" id="ei-name" placeholder="如：爬坡 / 哑铃 / 帕梅拉" />
         </div>
         <div class="co-field">
           <label>时长（分钟）</label>
@@ -5926,7 +6394,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
   <div id="panel-exercise" class="panel">
 
     <div class="tip-box">
-      <b>使用说明</b>：运动分三类打卡 —— ①<b>有氧操</b> ②<b>爬坡 / 椭圆机</b> ③<b>器械</b>。点「记一项」选类型、填项目和时长；下方三张分类卡点一下可只看该类记录。
+      <b>使用说明</b>：运动分三类打卡 —— ①<b>有氧操</b> ②<b>爬坡</b> ③<b>器械</b>。点「记一项」选类型、填项目和时长；下方三张分类卡点一下可只看该类记录。
     </div>
 
     <div class="ex-cat-overview" id="exercise-cat-overview"></div>
@@ -5942,7 +6410,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
           <div class="exercise-filter-tabs">
             <span class="exercise-filter-tab active" data-ex-filter="all" onclick="setExerciseFilter('all')">全部</span>
             <span class="exercise-filter-tab" data-ex-filter="aerobics" onclick="setExerciseFilter('aerobics')">有氧操</span>
-            <span class="exercise-filter-tab" data-ex-filter="cardio" onclick="setExerciseFilter('cardio')">爬坡/椭圆机</span>
+            <span class="exercise-filter-tab" data-ex-filter="cardio" onclick="setExerciseFilter('cardio')">爬坡</span>
             <span class="exercise-filter-tab" data-ex-filter="weights" onclick="setExerciseFilter('weights')">器械</span>
           </div>
         </div>
@@ -13484,9 +13952,9 @@ function renderTodoListForCat(cat) {
   });
   if (sorted.length > TODO_PAGE) {
     html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;padding-top:6px;">
-      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',-1)" ${(__todoPage[cat] || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',-1)" ${(__todoPage[cat] || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
       <span style="font-size:12px;color:#8a6270;">第 ${(__todoPage[cat] || 0) + 1}/${maxPage + 1} 页 · 共 ${sorted.length} 条</span>
-      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',1)" ${(__todoPage[cat] || 0) >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',1)" ${(__todoPage[cat] || 0) >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
     </div>`;
   }
 
@@ -13530,9 +13998,9 @@ function renderTodoDoneForCat(cat) {
   });
   if (totalPages > 1) {
     html += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
-      + '<button class="date-fold-btn" type="button" onclick="todoDoneGo(\'' + cat + '\',-1)"' + (__todoDonePage[cat] === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+      + '<button class="date-fold-btn" type="button" onclick="todoDoneGo(\'' + cat + '\',-1)"' + (__todoDonePage[cat] === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
       + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__todoDonePage[cat] + 1) + '/' + totalPages + ' 页 · 共 ' + items.length + ' 条</span>'
-      + '<button class="date-fold-btn" type="button" onclick="todoDoneGo(\'' + cat + '\',1)"' + (__todoDonePage[cat] >= totalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+      + '<button class="date-fold-btn" type="button" onclick="todoDoneGo(\'' + cat + '\',1)"' + (__todoDonePage[cat] >= totalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
       + '</div>';
   }
   el.innerHTML = html;
@@ -13636,9 +14104,9 @@ function renderCustomBoard() {
       });
       if (total > CUSTOM_PAGE) {
         html += '<div class="kb-pager">'
-          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',-1)"' + (page <= 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',-1)"' + (page <= 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
           + '<span class="kb-page-info">第 ' + (page + 1) + '/' + (maxPg + 1) + ' 页 · 共 ' + total + ' 单</span>'
-          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',1)"' + (page >= maxPg ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',1)"' + (page >= maxPg ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
           + '</div>';
       }
     }
@@ -14477,9 +14945,9 @@ function renderIncome() {
     miHtml = '<div class="monthly-income-list">' + miShow.join('') + '</div>';
     if (miTotalPages > 1) {
       miHtml += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
-        + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(-1)"' + (__miPage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+        + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(-1)"' + (__miPage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
         + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__miPage + 1) + '/' + miTotalPages + ' 页 · 共 ' + miRows.length + ' 个月</span>'
-        + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(1)"' + (__miPage >= miTotalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+        + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(1)"' + (__miPage >= miTotalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
         + '</div>';
     }
   }
@@ -14885,7 +15353,7 @@ function renderFitness() {
       const statusBadge = `<span class="badge ${statusClass}">${statusText}</span>`;
       const tags = [];
       if (e.aerobics) tags.push(`有氧操${e.duration ? ' ' + e.duration : ''}`);
-      if (e.cardio) tags.push(`爬坡 / 椭圆机${e.cardioType ? '·' + e.cardioType : ''}${e.duration ? ' ' + e.duration : ''}`);
+      if (e.cardio) tags.push(`爬坡${e.cardioType ? '·' + e.cardioType : ''}${e.duration ? ' ' + e.duration : ''}`);
       if (e.weights) tags.push(`器械${e.weightsContent ? '·' + e.weightsContent : ''}${e.sets ? ' ' + e.sets + '组' : ''}`);
       const tagsHtml = tags.length ? tags.map(t => `<span class="ex-tag">${t}</span>`).join('') : '<span class="ex-tag empty">今日无运动内容</span>';
       return `
@@ -14958,7 +15426,7 @@ function renderFitness() {
     };
     catOverviewEl.innerHTML =
       ovCard('aerobics', '有氧操') +
-      ovCard('cardio', '爬坡 / 椭圆机') +
+      ovCard('cardio', '爬坡') +
       ovCard('weights', '器械');
   }
 
@@ -14980,7 +15448,7 @@ function renderFitness() {
     <div class="progress-bar-container"><div class="progress-bar" style="width:${achRate}%;">${achRate}%</div></div>
     <div class="ex-stat-grid">
       ${catCard('aerobics','有氧操',aerobicsCount)}
-      ${catCard('cardio','爬坡 / 椭圆机',cardioCount)}
+      ${catCard('cardio','爬坡',cardioCount)}
       ${catCard('weights','器械',weightsCount)}
     </div>
   `;
@@ -14988,7 +15456,7 @@ function renderFitness() {
 }
 
 // 运动明细归类：主人三类 —— 有氧操 / 爬坡·椭圆机 / 器械
-const EX_CAT_NAME = { aerobics: '有氧操', cardio: '爬坡 / 椭圆机', weights: '器械' };
+const EX_CAT_NAME = { aerobics: '有氧操', cardio: '爬坡', weights: '器械' };
 function exCatName(cat) { return EX_CAT_NAME[cat] || '器械'; }
 // 旧数据 type 字段可能是「健身操/有氧/器械」，这里统一映射到三类
 function exItemCategory(it) {
@@ -15013,20 +15481,29 @@ function setExerciseFilter(cat) {
 }
 // 分类卡上的「记一项」：预选好类型再打开弹窗
 function quickAddExercise(cat) {
-  const nameMap = { aerobics: '有氧操', cardio: '爬坡/椭圆机', weights: '器械' };
+  const nameMap = { aerobics: '有氧操', cardio: '爬坡', weights: '器械' };
   try { openExerciseItemModal(-1); } catch (e) {}
   try { setEiType(nameMap[cat] || '器械'); } catch (e) {}
 }
 
 // ==================== 体重图 ====================
+var __wcData = null, __wcZoom = 1, __wcRaf = 0;
 function renderWeightChart(data) {
   if (data.length === 0) {
     document.getElementById('weight-chart').innerHTML = `<div class="empty-state"><div class="big-icon">📈</div><p>暂无数据</p></div>`;
     return;
   }
-  const width = Math.max(720, data.length * 90);
-  const height = 360;
-  const p = { top: 30, right: 30, bottom: 45, left: 45 };
+  __wcData = data;
+  // v312：高度固定 + 每天占宽 = 基准(一屏5天) × 缩放倍数（滚轮/双指捏合可调 0.5~4 倍）
+  const wcBox = document.getElementById('weight-chart');
+  const boxW = (wcBox && wcBox.clientWidth) ? wcBox.clientWidth : 700;
+  const basePerDay = Math.max(38, Math.min(78, Math.floor(boxW / 5)));
+  const perDay = Math.max(14, Math.min(320, Math.round(basePerDay * __wcZoom)));
+  const width = Math.max(boxW, data.length * perDay);
+  const prevScroll = wcBox ? wcBox.scrollLeft : 0;
+  const prevMax = wcBox ? Math.max(1, wcBox.scrollWidth - wcBox.clientWidth) : 0;
+  const height = 240;
+  const p = { top: 24, right: 24, bottom: 38, left: 40 };
   const cw = width - p.left - p.right;
   const ch = height - p.top - p.bottom;
   const vals = data.map(d => d.value != null ? d.value : (d.after != null ? d.after : d.before)).filter(v => v != null);
@@ -15049,21 +15526,26 @@ function renderWeightChart(data) {
   let ap = '';
   data.forEach((d,i) => { const v = d.value != null ? d.value : (d.after != null ? d.after : d.before); if (v != null) ap += (i===0?'M':'L') + xs(i) + ',' + ys(v) + ' '; });
   svg += `<path d="${ap}" fill="none" stroke="#e88a4f" stroke-width="3"/>`;
-  data.forEach((d,i) => { const v = d.value != null ? d.value : d.after; if (v != null) svg += `<circle cx="${xs(i)}" cy="${ys(v)}" r="5" fill="#e88a4f"/>`; });
+  data.forEach((d,i) => { const v = d.value != null ? d.value : d.after; if (v != null) svg += `<circle cx="${xs(i)}" cy="${ys(v)}" r="4" fill="#e88a4f"/>`; });
 
   data.forEach((d,i) => {
-    svg += `<text x="${xs(i)}" y="${height-p.bottom+18}" text-anchor="middle" font-size="11" fill="#8a6270">${d.date.substring(5)}</text>`;
+    svg += `<text x="${xs(i)}" y="${height-p.bottom+16}" text-anchor="middle" font-size="11" fill="#8a6270">${d.date.substring(5)}</text>`;
   });
 
-  svg += `<rect x="${p.left}" y="8" width="10" height="10" fill="#e88a4f" rx="2"/>`;
-  svg += `<text x="${p.left+15}" y="17" font-size="11" fill="#8a4a60">体重 (斤)</text>`;
+  svg += `<rect x="${p.left}" y="6" width="9" height="9" fill="#e88a4f" rx="2"/>`;
+  svg += `<text x="${p.left+14}" y="14" font-size="11" fill="#8a4a60">体重 (斤)</text>`;
   svg += '</svg>';
   const wc = document.getElementById('weight-chart');
   wc.innerHTML = svg;
-  wc.scrollLeft = wc.scrollWidth;   // 默认定位到最右边（最近几天）
+  // 缩放/重绘后保持视口位置（按比例）；首次渲染默认定位到最右边（最近几天）
+  if (prevMax > 1 && wc.scrollWidth > wc.clientWidth) {
+    wc.scrollLeft = (prevScroll / prevMax) * (wc.scrollWidth - wc.clientWidth);
+  } else {
+    wc.scrollLeft = wc.scrollWidth;
+  }
 }
 
-// 鼠标左右拖动查看（手机触屏本身就能滑）
+// 趋势图交互：鼠标拖动 / 滚轮缩放（电脑）、双指捏合缩放（手机）
 (function(){
   const el = document.getElementById('weight-chart');
   if (!el) return;
@@ -15071,6 +15553,44 @@ function renderWeightChart(data) {
   el.addEventListener('mousedown', e => { down = true; sx = e.pageX; sl = el.scrollLeft; el.style.cursor = 'grabbing'; });
   window.addEventListener('mousemove', e => { if (!down) return; e.preventDefault(); el.scrollLeft = sl - (e.pageX - sx); });
   window.addEventListener('mouseup', () => { if (down) { down = false; el.style.cursor = 'grab'; } });
+
+  function scheduleRepaint() {
+    if (__wcRaf) return;
+    __wcRaf = requestAnimationFrame(function () { __wcRaf = 0; if (__wcData) renderWeightChart(__wcData); });
+  }
+  function applyZoom(z) {
+    const nz = Math.max(0.5, Math.min(4, z));
+    if (Math.abs(nz - __wcZoom) < 0.001) return;
+    __wcZoom = nz;
+    scheduleRepaint();
+  }
+
+  // 电脑：鼠标滚轮缩放（向上放大、向下缩小）
+  el.addEventListener('wheel', function (e) {
+    if (!__wcData) return;
+    e.preventDefault();
+    applyZoom(__wcZoom * (e.deltaY > 0 ? 0.9 : 1.1));
+  }, { passive: false });
+
+  // 手机：双指捏合缩放
+  let pinchStart = 0, pinchZoom = 1;
+  el.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2) {
+      pinchStart = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) || 1;
+      pinchZoom = __wcZoom;
+    }
+  }, { passive: true });
+  el.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 2 && pinchStart > 0) {
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) || 1;
+      applyZoom(pinchZoom * (d / pinchStart));
+    }
+  }, { passive: false });
+  el.addEventListener('touchend', function (e) {
+    if (!e.touches || e.touches.length < 2) pinchStart = 0;
+  });
+  el.addEventListener('touchcancel', function () { pinchStart = 0; });
 })();
 
 // ==================== 桌面渲染 ====================
@@ -15169,9 +15689,9 @@ function renderMedia() {
     html += '</div>';
     if (totalPages > 1) {
       html += `<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">
-        <button class="date-fold-btn" type="button" onclick="mediaDetailGo(-1)" ${__mediaDetailPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <button class="date-fold-btn" type="button" onclick="mediaDetailGo(-1)" ${__mediaDetailPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
         <span style="font-size:12px;color:#8a6270;font-weight:600;">第 ${__mediaDetailPage + 1}/${totalPages} 页 · 共 ${monthRecordsDesc.length} 条</span>
-        <button class="date-fold-btn" type="button" onclick="mediaDetailGo(1)" ${__mediaDetailPage >= totalPages - 1 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+        <button class="date-fold-btn" type="button" onclick="mediaDetailGo(1)" ${__mediaDetailPage >= totalPages - 1 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
       </div>`;
     }
     document.getElementById('media-table').innerHTML = html;
@@ -15429,9 +15949,9 @@ function renderPublishCalendar() {
       });
       if (combined.length > PER_PAGE) {
         html += '<div class="sch-pager">';
-        html += '<button class="sch-page-btn" ' + (__schPage <= 0 ? 'disabled' : '') + ' onclick="__schPage=Math.max(0,__schPage-1);renderPublishCalendar();">‹ 上一页</button>';
+        html += '<button class="sch-page-btn" ' + (__schPage <= 0 ? 'disabled' : '') + ' onclick="__schPage=Math.max(0,__schPage-1);renderPublishCalendar();">‹ 上页</button>';
         html += '<span class="sch-page-info">第 ' + (__schPage + 1) + ' / ' + totalPages + ' 页</span>';
-        html += '<button class="sch-page-btn" ' + (__schPage >= totalPages - 1 ? 'disabled' : '') + ' onclick="__schPage=Math.min(' + (totalPages - 1) + ',__schPage+1);renderPublishCalendar();">下一页 ›</button>';
+        html += '<button class="sch-page-btn" ' + (__schPage >= totalPages - 1 ? 'disabled' : '') + ' onclick="__schPage=Math.min(' + (totalPages - 1) + ',__schPage+1);renderPublishCalendar();">下页 ›</button>';
         html += '</div>';
       }
       listEl.innerHTML = html;
@@ -15862,9 +16382,9 @@ function renderFuturePosts() {
     pageList.forEach(function (p) { html += fpCardHtml(p, today); });
     if (mainList.length > ACC_PAGE) {
       html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-        <button class="flow-toggle-btn" type="button" onclick="futureGo(-1)" ${(__futurePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <button class="flow-toggle-btn" type="button" onclick="futureGo(-1)" ${(__futurePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
         <span style="font-size:12px;color:#8a6270;">第 ${(__futurePage || 0) + 1}/${maxPg + 1} 页 · 共 ${mainList.length} 条待发布</span>
-        <button class="flow-toggle-btn" type="button" onclick="futureGo(1)" ${(__futurePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+        <button class="flow-toggle-btn" type="button" onclick="futureGo(1)" ${(__futurePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
       </div>`;
     }
     box.innerHTML = html;
@@ -15938,9 +16458,9 @@ function renderFutureDone(doneList, today) {
   viewList.forEach(function (p) { html += fpDoneCardHtml(p); });
   if (totalPages > 1) {
     html += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
-      + '<button class="date-fold-btn" type="button" onclick="futureDoneGo(-1)"' + (__donePage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+      + '<button class="date-fold-btn" type="button" onclick="futureDoneGo(-1)"' + (__donePage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
       + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__donePage + 1) + '/' + totalPages + ' 页 · 共 ' + doneList.length + ' 条</span>'
-      + '<button class="date-fold-btn" type="button" onclick="futureDoneGo(1)"' + (__donePage >= totalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+      + '<button class="date-fold-btn" type="button" onclick="futureDoneGo(1)"' + (__donePage >= totalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
       + '</div>';
   }
   sec.innerHTML = html;
@@ -17829,9 +18349,9 @@ function renderAccountFlow() {
   });
   if (inMonth.length > ACC_PAGE) {
     html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-      <button class="flow-toggle-btn" type="button" onclick="accFlowGo(-1)" ${accountFlowPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <button class="flow-toggle-btn" type="button" onclick="accFlowGo(-1)" ${accountFlowPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
       <span style="font-size:12px;color:#8a6270;">第 ${accountFlowPage + 1}/${maxPage + 1} 页 · 共 ${inMonth.length} 笔</span>
-      <button class="flow-toggle-btn" type="button" onclick="accFlowGo(1)" ${accountFlowPage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      <button class="flow-toggle-btn" type="button" onclick="accFlowGo(1)" ${accountFlowPage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
     </div>`;
   }
   el.innerHTML = html;
@@ -17908,10 +18428,10 @@ function renderAccountTimeline() {
       </div>`;
   });
   if (tlAll.length > ACC_PAGE) {
-    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-      <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(-1)" ${accountTimelinePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
-      <span style="font-size:12px;color:#8a6270;">第 ${accountTimelinePage + 1}/${maxPage + 1} 页 · 共 ${tlAll.length} 笔（按操作顺序）</span>
-      <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(1)" ${accountTimelinePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:6px;display:flex;align-items:center;flex-wrap:nowrap;">
+      <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(-1)" ${accountTimelinePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
+      <span style="font-size:12px;color:#8a6270;white-space:nowrap;">第 ${accountTimelinePage + 1}/${maxPage + 1} 页 · 共 ${tlAll.length} 笔</span>
+      <button class="flow-toggle-btn" type="button" onclick="accTimelineGo(1)" ${accountTimelinePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
     </div>`;
   }
   el.innerHTML = html;
@@ -17988,9 +18508,9 @@ function renderExpenseLedger() {
   });
   if (all.length > ACC_PAGE) {
     html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-      <button class="flow-toggle-btn" type="button" onclick="accExpenseGo(-1)" ${accountExpensePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <button class="flow-toggle-btn" type="button" onclick="accExpenseGo(-1)" ${accountExpensePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
       <span style="font-size:12px;color:#8a6270;">第 ${accountExpensePage + 1}/${maxPage + 1} 页 · 共 ${all.length} 笔</span>
-      <button class="flow-toggle-btn" type="button" onclick="accExpenseGo(1)" ${accountExpensePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      <button class="flow-toggle-btn" type="button" onclick="accExpenseGo(1)" ${accountExpensePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
     </div>`;
   }
   el.innerHTML = html;
@@ -18074,7 +18594,7 @@ function renderIncomeLedger() {
           <div class="fin-flow-line1">
             <div class="fin-flow-cat">
               <span class="rank-icon" style="background:${c.color};">${ICON_SVGS[c.icon] || ''}</span>
-              <span class="fin-flow-cat-name">${c.name}${isSims ? '<span class="sims-income-tag">🎮 模拟人生</span>' : ''}</span>
+              <span class="fin-flow-cat-name">${c.name}</span>
             </div>
             <span class="fin-flow-amt income">+¥${fmtMoney(it.amount)}</span>
           </div>
@@ -18086,9 +18606,9 @@ function renderIncomeLedger() {
   });
   if (all.length > ACC_PAGE) {
     html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">
-      <button class="flow-toggle-btn" type="button" onclick="accIncomeGo(-1)" ${accountIncomePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <button class="flow-toggle-btn" type="button" onclick="accIncomeGo(-1)" ${accountIncomePage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
       <span style="font-size:12px;color:#8a6270;">第 ${accountIncomePage + 1}/${maxPage + 1} 页 · 共 ${all.length} 笔</span>
-      <button class="flow-toggle-btn" type="button" onclick="accIncomeGo(1)" ${accountIncomePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      <button class="flow-toggle-btn" type="button" onclick="accIncomeGo(1)" ${accountIncomePage >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
     </div>`;
   }
   el.innerHTML = html;
@@ -18196,9 +18716,9 @@ function foldPagerHTML(key, total) {
   const maxPage = Math.max(0, Math.ceil(total / FOLD_PAGE) - 1);
   const cur = Math.min(page, maxPage);
   return '<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;">'
-    + '<button class="flow-toggle-btn" type="button" onclick="foldGo(\'' + key + '\',-1)"' + (cur === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上一页</button>'
+    + '<button class="flow-toggle-btn" type="button" onclick="foldGo(\'' + key + '\',-1)"' + (cur === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
     + '<span style="font-size:12px;color:#8a6270;">第 ' + (cur + 1) + '/' + (maxPage + 1) + ' 页 · 共 ' + total + ' 条</span>'
-    + '<button class="flow-toggle-btn" type="button" onclick="foldGo(\'' + key + '\',1)"' + (cur >= maxPage ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下一页 ›</button>'
+    + '<button class="flow-toggle-btn" type="button" onclick="foldGo(\'' + key + '\',1)"' + (cur >= maxPage ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
     + '</div>';
 }
 // monthItems：已按"近→远"排好序的【当月】记录数组；renderItem(item) 返回单条 HTML 字符串
@@ -18934,19 +19454,24 @@ function renderReminder() {
         countText = '';
       }
 
-      // 显示日期（农历生日直接显示农历月日 + 下次对应新历日，避免"按新历倒计时"的误解）
-      const dateDisplay = (d.isLunar && d.lunarLabel) ? ('农历' + d.lunarLabel + (d.nextDate ? ' · 下次 ' + d.nextDate : '')) : (d.hasYear ? d.date : (d.date + '（无年份）'));
+      // 显示日期（紧凑版）：公历 → 日期右侧同行带「新历」标记；农历 → 农历一行，下一行补充对应新历日期
+      let dateHtml;
+      if (d.isLunar && d.lunarLabel) {
+        dateHtml = `<div style="font-size:11px;color:#7d4a5a;">📅 农历${d.lunarLabel} <span style="font-size:10px;padding:0 4px;border-radius:5px;background:#fff0d6;color:#c08020;">农历</span></div>`
+          + (d.nextDate ? `<div style="font-size:11px;color:#7d4a5a;margin-top:1px;">新历 ${d.nextDate}</div>` : '');
+      } else {
+        dateHtml = `<div style="font-size:11px;color:#7d4a5a;">📅 ${d.hasYear ? d.date : d.date + '（无年份）'} <span style="font-size:10px;padding:0 4px;border-radius:5px;background:#e8f4fd;color:#2080c0;">新历</span></div>`;
+      }
 
-      const itemHtml = `<div style="padding:8px 10px;background:#fff8fa;border-radius:12px;margin-bottom:6px;border:1px solid #ffe4ec;">
+      const itemHtml = `<div style="padding:6px 8px;background:#fff8fa;border-radius:12px;margin-bottom:4px;border:1px solid #ffe4ec;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:2px;">
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:1px;">
               <span style="font-size:13px;">${icon}</span>
               <span style="font-size:14px;font-weight:700;color:#d14b73;">${escTodo(d.name)}</span>
               <span style="font-size:11px;padding:1px 5px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
-              ${lunarTag}
             </div>
-            <div style="font-size:11px;color:#7d4a5a;">📅 ${dateDisplay}</div>
+            ${dateHtml}
             ${countText ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
             ${d.remark ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">📝 ${escTodo(d.remark)}</div>` : ''}
           </div>
@@ -18965,9 +19490,9 @@ function renderReminder() {
     // v26 分页条：上一页 / 页码 / 下一页
     if (dateList.length > ACC_PAGE) {
       html += `<div style="text-align:center;margin-top:8px;display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button class="date-fold-btn" type="button" onclick="impDateGo(-1)" ${(__impDatePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+        <button class="date-fold-btn" type="button" onclick="impDateGo(-1)" ${(__impDatePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
         <span style="font-size:12px;color:#8a6270;">第 ${(__impDatePage || 0) + 1}/${maxPg + 1} 页 · 共 ${dateList.length} 条</span>
-        <button class="date-fold-btn" type="button" onclick="impDateGo(1)" ${(__impDatePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+        <button class="date-fold-btn" type="button" onclick="impDateGo(1)" ${(__impDatePage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
       </div>`;
     }
     document.getElementById('important-dates').innerHTML = html;
@@ -19270,9 +19795,9 @@ function renderTripPlans() {
   // v26 行程分页条
   if (sorted.length > ACC_PAGE) {
     html += `<div style="display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
-      <button class="flow-toggle-btn" type="button" onclick="tripGo(-1)" ${(__tripPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上一页</button>
+      <button class="flow-toggle-btn" type="button" onclick="tripGo(-1)" ${(__tripPage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
       <span style="font-size:12px;color:#8a6270;">第 ${(__tripPage || 0) + 1}/${maxPg + 1} 页 · 共 ${sorted.length} 个行程</span>
-      <button class="flow-toggle-btn" type="button" onclick="tripGo(1)" ${(__tripPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下一页 ›</button>
+      <button class="flow-toggle-btn" type="button" onclick="tripGo(1)" ${(__tripPage || 0) >= maxPg ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
     </div>`;
   }
   // ====== 游玩清单（与行程一起折叠在游玩计划卡片底部）======
@@ -20455,10 +20980,25 @@ function renderDesktopAccounts() {
     </div>`;
   });
   html += '</div>';
-  // 最后更新日期：仅数据真正刷新时才更新（精确到 年/月/日 时:分）
+  // 最后更新日期：仅数据真正刷新时才更新；展示「最后更新 月日 · 距离上次 X 天」（不转行）
   const lu = (store.accountsMeta && store.accountsMeta.lastUpdate) || '';
-  const luText = lu ? lu : '尚未更新数据';
-  html += `<div class="acc-updated">${lu ? '最后更新 ' + luText : '尚未更新数据'}</div>`;
+  let luText = '尚未更新数据';
+  if (lu) {
+    const mMatch = lu.match(/(\d{1,2})月(\d{1,2})日/);
+    const md = lu.replace(/\s?\d{1,2}:\d{2}\s*$/, '').trim();
+    if (mMatch) {
+      const mo = parseInt(mMatch[1], 10) - 1, da = parseInt(mMatch[2], 10);
+      const now = new Date();
+      const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      let last = new Date(now.getFullYear(), mo, da);
+      if (last.getTime() - today0.getTime() > 86400000) last = new Date(now.getFullYear() - 1, mo, da);
+      const diff = Math.max(0, Math.round((today0.getTime() - last.getTime()) / 86400000));
+      luText = '最后更新 ' + md + ' · 距离上次更新 ' + diff + ' 天';
+    } else {
+      luText = '最后更新 ' + lu;
+    }
+  }
+  html += `<div class="acc-updated">${luText}</div>`;
   document.getElementById('desktop-accounts').innerHTML = html;
 }
 
@@ -20811,15 +21351,26 @@ function getWeatherTip(name) {
 }
 // 根据天气给出穿衣 / 出行建议，丰富首页天气卡片
 function getWeatherAdvice(name) {
-  if (name.indexOf('暴') >= 0 || name.indexOf('雷') >= 0) return '减少外出，关好门窗';
-  if (name.indexOf('大雨') >= 0 || name.indexOf('暴雨') >= 0) return '穿防水外套，备雨伞';
-  if (name.indexOf('小雨') >= 0 || name.indexOf('雨') >= 0) return '出门带伞，穿防滑鞋';
-  if (name.indexOf('雪') >= 0) return '穿厚外套，围巾手套';
-  if (name.indexOf('雾') >= 0 || name.indexOf('霾') >= 0) return '戴口罩，开车减速';
-  if (name === '晴') return '轻薄透气，注意防晒';
-  if (name === '多云') return '舒适百搭，适合出行';
-  if (name === '阴') return '可备薄外套，别着凉';
-  return '适时增减衣物，别感冒';
+  if (name.indexOf('暴') >= 0 || name.indexOf('雷') >= 0) return '少外出关门窗';
+  if (name.indexOf('大雨') >= 0 || name.indexOf('暴雨') >= 0) return '穿雨衣备雨伞';
+  if (name.indexOf('小雨') >= 0 || name.indexOf('雨') >= 0) return '出门记得带伞';
+  if (name.indexOf('雪') >= 0) return '穿厚外套戴手套';
+  if (name.indexOf('雾') >= 0 || name.indexOf('霾') >= 0) return '戴口罩慢行车';
+  if (name === '晴') return '轻薄透气防晒';
+  if (name === '多云') return '舒适适宜出行';
+  if (name === '阴') return '备薄外套别着凉';
+  return '适时增减衣物';
+}
+// 紫外线指数 → 等级文案（v312：最弱0~2 / 弱3~4 / 中等5~6 / 强7 / 甚高8~10 / 极高≥11）
+function uvLevelText(uv) {
+  const v = parseFloat(uv);
+  if (uv == null || isNaN(v)) return null;
+  if (v < 3) return '最弱（指数0~2）';
+  if (v < 5) return '弱（指数3~4）';
+  if (v < 7) return '中等（指数5~6）';
+  if (v < 8) return '强（指数7）';
+  if (v <= 10) return '甚高（指数8~10）';
+  return '极高（指数≥11）';
 }
 function getWeatherFeelsLike(tempStr, name) {
   const t = parseFloat(tempStr);
@@ -20994,7 +21545,7 @@ function fetchWeather(onDone) {
     const timer = setTimeout(() => { if (done) return; done = true; renderWeatherFallback(); if (onDone) onDone(); }, 8000);
 
     // 2) 主用：open-meteo（免费、无需密钥、稳定）
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON + '&current=temperature_2m,relative_humidity_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&forecast_days=2&timezone=Asia%2FShanghai')
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON + '&current=temperature_2m,relative_humidity_2m,weather_code,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,uv_index_max&forecast_days=2&timezone=Asia%2FShanghai')
       .then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
       .then(d => {
         if (!d || !d.current) throw new Error('bad open-meteo');
@@ -21023,7 +21574,8 @@ function fetchWeather(onDone) {
           tomorrowHi: (tHiArr != null ? Math.round(tHiArr) + '°' : '—'),
           tomorrowLo: (tLoArr != null ? Math.round(tLoArr) + '°' : '—'),
           tomorrowRain: (tRainArr[1] != null ? Math.round(tRainArr[1]) : null),
-          tomorrowWind: (tWindArr[1] != null ? Math.round(tWindArr[1]) : null)
+          tomorrowWind: (tWindArr[1] != null ? Math.round(tWindArr[1]) : null),
+          uv: cur.uv_index
         });
       })
       .catch(() => {
@@ -21077,6 +21629,7 @@ function renderWeatherFromApi(d) {
     const tip = getWeatherTip(d.name);
     const feelsLike = getWeatherFeelsLike(d.temp, d.name);
     const advice = getWeatherAdvice(d.name);
+    const uvText = uvLevelText(d.uv) || '—';
     el.innerHTML = `
       <div class="home-card-flex">
         <div class="home-card-body">
@@ -21086,8 +21639,10 @@ function renderWeatherFromApi(d) {
           </div>
           <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
           <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
-          <div class="home-card-row"><span>建议</span><b>${advice}</b></div>
-          <div class="home-card-note">${tip}</div>
+          <div class="wx-extra-wrap">
+            <div class="home-card-note weather-advice"><b>建议：</b>${advice}</div>
+            <div class="home-card-row weather-uv"><span>紫外线</span><b>${uvText}</b></div>
+          </div>
         </div>
         <div class="home-card-foot">
           <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<span class="wb-tail">天气</span></span>
@@ -21119,8 +21674,10 @@ function renderWeatherFallback() {
         <div class="home-card-row"><span>位置</span><b>${WEATHER_CITY_CN}</b></div>
         <div class="home-card-row"><span>体感</span><b>${feelsLike}</b></div>
         <div class="home-card-row"><span>温度</span><b>${temp}</b></div>
-        <div class="home-card-row"><span>建议</span><b>${advice}</b></div>
-        <div class="home-card-note">${weatherDesc}</div>
+        <div class="wx-extra-wrap">
+          <div class="home-card-note weather-advice"><b>建议：</b>${advice}</div>
+          <div class="home-card-row weather-uv"><span>紫外线</span><b>—</b></div>
+        </div>
       </div>
       <div class="home-card-foot">
         <span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<span class="wb-tail">天气</span></span>
@@ -21698,7 +22255,7 @@ function renderDesktopWeight() {
   // v2026-09-06-21 关键修复：之前 inline 钉死 minmax(60px,1fr)+min-width:420px ，
   // 导致日历在被 panel grid 限到 ~360px 宽时横向溢出、cell 被严重拉宽（主人截图"大格子"）。
   // 现在改为 minmax(0,1fr) + 删除 min-width 强约束，让 7 列在父容器宽度内自然等分。
-  html += `<div class="weight-cal-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;"><div class="weight-cal-grid" style="display:grid !important;grid-template-columns:repeat(7,minmax(0,1fr)) !important;gap:4px !important;width:100%;box-sizing:border-box;">`;
+  html += `<div class="weight-cal-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;"><div class="weight-cal-grid" style="display:grid !important;grid-template-columns:repeat(7,minmax(0,1fr)) !important;gap:2px !important;width:100%;box-sizing:border-box;">`;
 
   // 前置空白
   for (let i = 0; i < firstDay; i++) {
