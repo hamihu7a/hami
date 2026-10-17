@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-326">
+<meta name="hami-build" content="2026-10-17-327">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -23582,8 +23582,9 @@ function renderCountdown() {
           <div style="font-size:13px;font-weight:800;color:#d14b73;">${isPlaceholder ? '—' : ('周' + weekday)}</div>
           <div style="font-size:11px;color:#d14b73;font-weight:600;letter-spacing:0.3px;">${monthDay}</div>
         </div>`;
-    // 打卡卡：右侧给轮播小点留出 20px 呼吸位，文字不与小点贴在一起
-    const padR = isCheckin ? 20 : 16;
+    // 打卡卡：右侧给轮播小点留出 20px 呼吸位，文字不与小点贴在一起；
+    // v327：提醒超过 4 页时改用「当前/总数」迷你数字（更宽），右侧再多留 16px 防重叠
+    const padR = (isCheckin ? 20 : 16) + (pages.length > 4 ? 16 : 0);
     return `
       <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px ${padR}px 8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);outline:1.5px dashed rgba(209,75,115,0.25);outline-offset:-5px;display:flex;align-items:center;gap:10px;overflow:hidden;">
         ${dateCol}
@@ -23596,15 +23597,20 @@ function renderCountdown() {
 
   // 一页一张卡片，整行占满，每张独立一行（上下轮播）
   // v120：分页小点改为竖排（从上到下），绝对定位贴卡片右缘，不再占横向空间挤压文字
+  // v327：提醒多时竖排小点会超过卡片高度、戳出边框（主人截图反馈）。
+  // ≤4 页：缩小点距（点 4px / 间隙 3px / 激活 12px，最高 33px < 卡片约 36px）仍竖排；
+  // >4 页：改「当前/总数」迷你数字，高度恒定绝不出框。
   let html = `<div class="countdown-page" style="position:relative;">`;
   page.forEach(item => html += boxHtml(item));
-  if (pages.length > 1) {
-    html += `<div class="countdown-dots" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;z-index:2;">`;
+  if (pages.length > 1 && pages.length <= 4) {
+    html += `<div class="countdown-dots" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;z-index:2;">`;
     pages.forEach((_, idx) => {
-      const active = idx === pageIndex ? 'background:#d14b73;height:14px;' : 'background:rgba(209,75,115,0.4);height:5px;';
-      html += `<span class="countdown-dot" style="width:5px;border-radius:3px;transition:all .3s;${active}"></span>`;
+      const active = idx === pageIndex ? 'background:#d14b73;height:12px;' : 'background:rgba(209,75,115,0.4);height:4px;';
+      html += `<span class="countdown-dot" style="width:4px;border-radius:2px;transition:all .3s;${active}"></span>`;
     });
     html += `</div>`;
+  } else if (pages.length > 4) {
+    html += `<div class="countdown-dots" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);z-index:2;font-size:9px;font-weight:700;color:#d14b73;background:rgba(209,75,115,0.10);border-radius:8px;padding:2px 4px;line-height:1;white-space:nowrap;">${pageIndex + 1}/${pages.length}</div>`;
   }
   html += `</div>`;
 
