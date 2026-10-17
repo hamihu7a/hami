@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-319">
+<meta name="hami-build" content="2026-10-17-320">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -21507,6 +21507,51 @@ function moonEmoji(day) {
   return '🌘';                       // 廿三后 残月
 }
 
+// ===== v320：城市名有效性 + 反地理编码多服务兜底 =====
+// 背景：反查失败时旧代码把占位名「本地」当真实城市写进 localStorage 缓存并广播到云端，
+// 导致手机端每次开机都读到「本地」继续显示，而电脑端（跟随端）读到云端旧值「河源」，两端不一致。
+// 「本地」只是占位符，不是城市名——任何采用点都必须先过 isValidCityName。
+function isValidCityName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const n = name.trim();
+  if (!n) return false;
+  return n !== '本地' && n !== 'Local' && n !== '当前位置' && n !== '未知' && n !== '未知地区';
+}
+
+// 反地理编码（经纬度 → 城市名）：主 BigDataCloud，备 ArcGIS（免费无需 key、langCode=zh-CN 返中文）。
+// 两个都失败时 cb(null)——绝不返回「本地」这种占位名，避免污染缓存与云端。
+// v320 注意：主源返回 200 但没有城市名时，同样要继续走备用服务，不能直接放弃。
+function reverseGeocodeCity(lat, lon, cb) {
+  let settled = false;
+  function done(cityCn, cityEn) {
+    if (settled) return;
+    settled = true;
+    cb(cityCn || null, cityEn || null);
+  }
+  function tryArcgis() {
+    fetch('https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=json&location=' + lon + ',' + lat + '&langCode=zh-CN')
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('arcgis http ' + r.status)); })
+      .then(function (d) {
+        const a = (d && d.address) || {};
+        // 中国区地址：City=地级市、District=区县、MetroArea=都市圈，优先取市
+        let city = a.City || a.District || a.MetroArea || '';
+        if (city && city.length > 2 && /市$/.test(city)) city = city.replace(/市$/, '');  // 「河源市」→「河源」
+        if (isValidCityName(city)) done(city.trim(), '');
+        else done(null, null);
+      })
+      .catch(function () { done(null, null); });
+  }
+  fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=zh')
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('bdc http ' + r.status)); })
+    .then(function (data) {
+      const city = (data && (data.city || data.locality || data.principalSubdivision)) || '';
+      const cityEn = (data && data.localityInfo && data.localityInfo.informative && data.localityInfo.informative[0] && data.localityInfo.informative[0].name) || '';
+      if (isValidCityName(city)) done(city.trim(), cityEn || '');
+      else tryArcgis();   // 主源没给出有效城市名 → 交给备用服务
+    })
+    .catch(tryArcgis);    // 主源请求失败 → 交给备用服务
+}
+
 // 实时天气：默认汕尾，启动时会尝试定位到当前城市
 let WEATHER_CITY = 'Shanwei';
 let WEATHER_CITY_CN = '汕尾';
@@ -21514,6 +21559,7 @@ let WEATHER_LAT = 22.79;
 let WEATHER_LON = 115.34;
 
 // 从缓存恢复上次定位（避免每次刷新都弹定位请求）
+// v320：缓存里的「本地」是反查失败占位名，不是城市——不采用，交给 detectLocation 重新反查补真名
 try {
   const locRaw = localStorage.getItem('hami_location_cache');
   if (locRaw) {
@@ -21521,8 +21567,8 @@ try {
     if (loc && loc.lat != null && loc.lon != null) {
       WEATHER_LAT = parseFloat(loc.lat);
       WEATHER_LON = parseFloat(loc.lon);
-      if (loc.city) WEATHER_CITY_CN = loc.city;
-      if (loc.cityEn) WEATHER_CITY = loc.cityEn;
+      if (isValidCityName(loc.city)) WEATHER_CITY_CN = loc.city;
+      if (isValidCityName(loc.cityEn)) WEATHER_CITY = loc.cityEn;
     }
   }
 } catch (e) {}
@@ -21820,10 +21866,50 @@ function hamiWhenCloudReady(cb) {
 // 尝试获取当前位置与城市名（失败则保持默认值）
 // v304：跨端一致——优先用云端共享位置（手机端定位后写入 store.weatherLocation，电脑端直接读取）；
 //       仅当云端&本地都无记录时才用浏览器定位，并把结果广播到云端，供另一端读取。
+// v320：城市名兜底治理（修复「手机端显示本地、电脑端显示河源」两端不一致）：
+//   ① 反查失败 ≠ 没有城市名：只更新经纬度，城市名沿用已有真名；没有真名就保持默认，
+//      绝不把占位名「本地」写进缓存/广播云端覆盖另一端的好名字
+//   ② 缓存/云端里的「本地」一律不采用：手机端遇到无效名会重新反查补真名再广播
+//   ③ 跟随端（电脑端）有经纬度但缺有效城市名时，自己反查一次补名，不再显示默认「汕尾」
 function detectLocation(onDone) {
   onDone = onDone || function () {};
   const today = todayStr();
   const isComputer = (window.innerWidth || document.documentElement.clientWidth || 0) >= 500; // ≥500px 视为电脑/平板（跟随端），<500px 视为手机（定位源）
+
+  // 从本地缓存/云端挑一个「有效」城市名（过滤「本地」占位符）
+  function pickValidCity() {
+    let cn = '', en = '';
+    try {
+      const raw = localStorage.getItem('hami_location_cache');
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (isValidCityName(c && c.city)) { cn = c.city; en = c.cityEn || ''; }
+      }
+    } catch (e) {}
+    if (!cn) {
+      try {
+        const s = (typeof store !== 'undefined' && store) ? store.weatherLocation : null;
+        if (s && isValidCityName(s.city)) { cn = s.city; en = s.cityEn || ''; }
+      } catch (e) {}
+    }
+    return { cn: cn, en: en };
+  }
+
+  // 有经纬度但缺有效城市名时补一次反查（拿到真名才写缓存/云端，不覆盖已有好名）
+  function fillCityIfMissing(lat, lon, cb) {
+    const have = pickValidCity();
+    if (have.cn) { cb(have); return; }
+    reverseGeocodeCity(lat, lon, function (cn, en) {
+      if (cn) {
+        try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: cn, cityEn: en || '' })); } catch (e) {}
+        try { store.weatherLocation = { lat: lat, lon: lon, city: cn, cityEn: en || '', ts: Date.now(), fromReverse: true }; saveData(); } catch (e2) {}
+        cb({ cn: cn, en: en || '' });
+        return;
+      }
+      cb(have);
+    });
+  }
+
   hamiWhenCloudReady(function () {
     // 1) 云端共享位置：仅电脑端优先读取（手机端是定位源，不走这里，避免被云端的旧值反向覆盖）
     if (isComputer) {
@@ -21832,15 +21918,23 @@ function detectLocation(onDone) {
         if (shared && shared.lat != null && shared.lon != null) {
           WEATHER_LAT = parseFloat(shared.lat);
           WEATHER_LON = parseFloat(shared.lon);
-          if (shared.city) WEATHER_CITY_CN = shared.city;
-          if (shared.cityEn) WEATHER_CITY = shared.cityEn;
+          if (isValidCityName(shared.city)) WEATHER_CITY_CN = shared.city;
+          if (isValidCityName(shared.cityEn)) WEATHER_CITY = shared.cityEn;
+          if (!isValidCityName(shared.city)) {
+            fillCityIfMissing(WEATHER_LAT, WEATHER_LON, function (r) {
+              if (r.cn) WEATHER_CITY_CN = r.cn;
+              if (r.en) WEATHER_CITY = r.en;
+              onDone();
+            });
+            return;
+          }
           onDone();
           return;
         }
       } catch (e) {}
     }
 
-    // 2) 电脑端：不自己定位（避免反客为主），只读取云端共享位置；
+    // 2) 电脑端：不自己定位（避免反客为主），只读取云端共享位置/本地缓存；
     //    云端为空时回退到本地缓存/默认城市兜底显示，绝不上传自己的位置覆盖手机端
     if (isComputer) {
       try {
@@ -21850,8 +21944,16 @@ function detectLocation(onDone) {
           if (c && c.lat != null && c.lon != null) {
             WEATHER_LAT = parseFloat(c.lat);
             WEATHER_LON = parseFloat(c.lon);
-            if (c.city) WEATHER_CITY_CN = c.city;
-            if (c.cityEn) WEATHER_CITY = c.cityEn;
+            if (isValidCityName(c.city)) WEATHER_CITY_CN = c.city;
+            if (isValidCityName(c.cityEn)) WEATHER_CITY = c.cityEn;
+            if (!isValidCityName(c.city)) {
+              fillCityIfMissing(WEATHER_LAT, WEATHER_LON, function (r) {
+                if (r.cn) WEATHER_CITY_CN = r.cn;
+                if (r.en) WEATHER_CITY = r.en;
+                onDone();
+              });
+              return;
+            }
             onDone();
             return;
           }
@@ -21864,7 +21966,8 @@ function detectLocation(onDone) {
 
     // 手机端：本地当日缓存 → 使用并【无条件广播到云端】
     // （v307 修复：v304 的缓存分支漏了广播，导致手机带着旧缓存永不共享，电脑端永远对不上；
-    //  手机端每次都重新断言自己的位置，确保覆盖云端任何历史旧值，电脑端稳定跟随手机）
+    //  手机端每次都重新断言自己的位置，确保覆盖云端任何历史旧值，电脑端稳定跟随手机。
+    //  v320 补充：缓存里的「本地」占位名不采用也不广播，改为重新反查补真名后再广播）
     try {
       const raw = localStorage.getItem('hami_location_cache');
       if (raw) {
@@ -21872,10 +21975,36 @@ function detectLocation(onDone) {
         if (c && c.date === today && c.lat != null && c.lon != null) {
           WEATHER_LAT = parseFloat(c.lat);
           WEATHER_LON = parseFloat(c.lon);
-          if (c.city) WEATHER_CITY_CN = c.city;
-          if (c.cityEn) WEATHER_CITY = c.cityEn;
-          try { store.weatherLocation = { lat: c.lat, lon: c.lon, city: c.city, cityEn: c.cityEn, ts: Date.now(), fromCache: true }; saveData(); } catch(e2) {}
-          onDone();
+          if (isValidCityName(c.city)) WEATHER_CITY_CN = c.city;
+          if (isValidCityName(c.cityEn)) WEATHER_CITY = c.cityEn;
+          if (isValidCityName(c.city)) {
+            try { store.weatherLocation = { lat: c.lat, lon: c.lon, city: c.city, cityEn: c.cityEn, ts: Date.now(), fromCache: true }; saveData(); } catch(e2) {}
+            onDone();
+            return;
+          }
+          // 缓存里是「本地」占位名：经纬度照用，名字重新反查，绝不把占位名广播上云
+          reverseGeocodeCity(WEATHER_LAT, WEATHER_LON, function (cn, en) {
+            if (cn) {
+              // 反查成功：真名入缓存并广播
+              WEATHER_CITY_CN = cn;
+              if (en) WEATHER_CITY = en;
+              try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: WEATHER_LAT, lon: WEATHER_LON, city: cn, cityEn: en || '' })); } catch (e) {}
+              try { store.weatherLocation = { lat: WEATHER_LAT, lon: WEATHER_LON, city: cn, cityEn: en || '', ts: Date.now(), fromReverse: true }; saveData(); } catch (e2) {}
+            } else {
+              // v320：反查也失败——沿用历史真名（缓存/云端里有就捡回来），
+              // 并把缓存里的「本地」占位名清掉，避免脏数据反复残留；没有真名就保持默认城市
+              const keep = pickValidCity();
+              if (keep.cn) {
+                WEATHER_CITY_CN = keep.cn;
+                if (keep.en) WEATHER_CITY = keep.en;
+                try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: WEATHER_LAT, lon: WEATHER_LON, city: keep.cn, cityEn: keep.en || '' })); } catch (e) {}
+                try { store.weatherLocation = { lat: WEATHER_LAT, lon: WEATHER_LON, city: keep.cn, cityEn: keep.en || '', ts: Date.now(), cityKept: true }; saveData(); } catch (e2) {}
+              } else {
+                try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: WEATHER_LAT, lon: WEATHER_LON })); } catch (e) {}
+              }
+            }
+            onDone();
+          });
           return;
         }
       }
@@ -21892,26 +22021,29 @@ function detectLocation(onDone) {
         const lon = pos.coords.longitude;
         WEATHER_LAT = lat;
         WEATHER_LON = lon;
-        // 用 BigDataCloud 免费反地理编码获取城市名
-        fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=zh')
-          .then(r => r.ok ? r.json() : Promise.reject(new Error('geo http ' + r.status)))
-          .then(data => {
-            const city = (data && (data.city || data.locality || data.principalSubdivision)) || '本地';
-            const cityEn = (data && data.localityInfo && data.localityInfo.informative && data.localityInfo.informative[0] && data.localityInfo.informative[0].name) || 'Local';
-            WEATHER_CITY_CN = city;
-            WEATHER_CITY = cityEn;
-            try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: city, cityEn: cityEn })); } catch(e) {}
-            // 广播到云端，供另一端（如电脑端）读取，保持一致
-            try { store.weatherLocation = { lat: lat, lon: lon, city: city, cityEn: cityEn, ts: Date.now() }; saveData(); } catch(e2) {}
-            onDone();
-          })
-          .catch(function () {
-            WEATHER_CITY_CN = '本地';
-            WEATHER_CITY = 'Local';
-            try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: '本地', cityEn: 'Local' })); } catch(e) {}
-            try { store.weatherLocation = { lat: lat, lon: lon, city: '本地', cityEn: 'Local', ts: Date.now() }; saveData(); } catch(e2) {}
-            onDone();
-          });
+        reverseGeocodeCity(lat, lon, function (cn, en) {
+          if (cn) {
+            // 反查成功：真名入缓存并广播，供另一端读取，保持一致
+            WEATHER_CITY_CN = cn;
+            WEATHER_CITY = en || 'Local';
+            try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: cn, cityEn: en || '' })); } catch(e) {}
+            try { store.weatherLocation = { lat: lat, lon: lon, city: cn, cityEn: en || '', ts: Date.now() }; saveData(); } catch(e2) {}
+          } else {
+            // v320：反查失败——只更新经纬度，城市名沿用已有真名；没有真名就保持默认城市。
+            // 绝不写「本地」占位名：否则手机端下次开机读到它继续显示，还会把它广播上云覆盖另一端（两端不一致根因）
+            const keep = pickValidCity();
+            if (keep.cn) {
+              WEATHER_CITY_CN = keep.cn;
+              if (keep.en) WEATHER_CITY = keep.en;
+              try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: keep.cn, cityEn: keep.en || '' })); } catch(e) {}
+              try { store.weatherLocation = { lat: lat, lon: lon, city: keep.cn, cityEn: keep.en || '', ts: Date.now(), cityKept: true }; saveData(); } catch(e2) {}
+            } else {
+              // 连历史真名都没有：只存经纬度（不写占位城市名），下次有机会再反查补名
+              try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon })); } catch(e) {}
+            }
+          }
+          onDone();
+        });
       },
       function () {
         // 用户拒绝或定位失败：保持默认/缓存城市
@@ -21972,7 +22104,7 @@ function fetchWeather(onDone, force) {
         const tRainArr = daily.precipitation_probability_max || [];
         const tWindArr = daily.wind_speed_10m_max || [];
         finish({
-          city: WEATHER_CITY_CN,
+          city: isValidCityName(WEATHER_CITY_CN) ? WEATHER_CITY_CN : '',
           name: m.name, icon: m.icon,
           temp: Math.round(cur.temperature_2m) + '°',
           humidity: Math.round(cur.relative_humidity_2m),
@@ -22002,7 +22134,7 @@ function fetchWeather(onDone, force) {
             const tomorrowName = (w2 && w2.weatherDesc && w2.weatherDesc[0] && w2.weatherDesc[0].value) || '未知';
             const tomorrowIcon = guessWeatherIcon(tomorrowName);
             finish({
-              city: WEATHER_CITY_CN,
+              city: isValidCityName(WEATHER_CITY_CN) ? WEATHER_CITY_CN : '',
               name: map.name, icon: map.icon,
               temp: c.temp_C + '°',
               humidity: c.humidity,
@@ -22064,7 +22196,7 @@ function renderWeatherFromApi(d) {
             <div class="weather-title-text"><div>今日</div><div>天气</div></div>
             <div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div>
           </div>
-          <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
+          <div class="home-card-row"><span>位置</span><b>${isValidCityName(d.city) ? d.city : WEATHER_CITY_CN}</b></div>
           <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
           <div class="wx-extra-wrap">
             <div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div>
@@ -22140,7 +22272,7 @@ function renderWeatherFallback() {
           <div class="weather-title-text"><div>今日</div><div>天气</div></div>
           <div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div>
         </div>
-        <div class="home-card-row"><span>位置</span><b>${d.city || WEATHER_CITY_CN}</b></div>
+        <div class="home-card-row"><span>位置</span><b>${isValidCityName(d.city) ? d.city : WEATHER_CITY_CN}</b></div>
         <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
         <div class="home-card-row weather-stale"><span>数据</span><b>${stamp} 取的（非最新）</b></div>
         <div class="wx-extra-wrap">
