@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-284">
+<meta name="hami-build" content="2026-10-16-285">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1214,6 +1214,60 @@
     margin-bottom: 3px;
   }
   .account-card .ac-detail b { color: #8a6270; }   /* v258 */
+
+  /* ===== v285：自媒体账号卡重设计（账号感+实时感+高级感）===== */
+  @keyframes accPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(76,217,100,.45); } 50% { box-shadow: 0 0 0 4px rgba(76,217,100,0); } }
+  @keyframes accBlink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+  .account-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, rgba(255,240,246,.72) 100%);
+    border: 1px solid rgba(255,183,204,.55);
+    box-shadow: 0 3px 14px rgba(255,127,158,.14);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .account-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--acc, #ff7f9e), var(--acc2, #ffb3c6));
+  }
+  .account-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,127,158,.22); }
+  .acc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .acc-avatar {
+    position: relative; flex: none;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--acc2, #ffb3c6), var(--acc, #ff7f9e));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 2px 8px rgba(255,127,158,.35), inset 0 0 0 2px rgba(255,255,255,.65);
+  }
+  .acc-live {
+    position: absolute; right: -1px; bottom: -1px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #4cd964; border: 2px solid #fff;
+    animation: accPulse 2s infinite;
+  }
+  .acc-id { min-width: 0; flex: 1; }
+  .acc-name { font-size: 13px; font-weight: 800; color: #5a3a48; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acc-handle { margin-top: 2px; font-size: 10.5px; color: #b08898; display: flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .acc-chip { flex: none; font-size: 9.5px; line-height: 1; padding: 3px 7px; border-radius: 999px; background: var(--chipBg, #ffe3ea); color: var(--chipFg, #e8447a); font-weight: 700; }
+  .account-card .ac-followers { display: flex; align-items: baseline; justify-content: center; gap: 2px; font-size: 24px; font-weight: 800; margin: 6px 0 4px; }
+  .account-card .acc-num { background: linear-gradient(90deg, var(--acc, #ff7f9e), var(--acc2, #ffb3c6)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .account-card .ac-follower-change { justify-content: center; }
+  .account-card .ac-change-value.up, .account-card .ac-change-value.down, .account-card .ac-change-value.same { padding: 1px 9px; border-radius: 999px; font-size: 11.5px; }
+  .account-card .ac-change-value.up { background: #ffe4ec; }
+  .account-card .ac-change-value.down { background: #e0f6e9; }
+  .account-card .ac-change-value.same { background: #f6eef2; }
+  .account-card .ac-detail { background: rgba(255,255,255,.55); border-radius: 8px; padding: 3px 8px; }
+  .acc-updated { text-align: center; font-size: 11.5px; color: #d14b73; font-weight: 700; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .acc-pulse { width: 7px; height: 7px; border-radius: 50%; background: #ff5c8a; display: inline-block; animation: accBlink 1.6s infinite; }
+  @media (max-width: 768px) {
+    .acc-avatar { width: 32px; height: 32px; font-size: 16px; }
+    .acc-name { font-size: 12px; }
+    .acc-handle { font-size: 9.5px; }
+    .acc-handle .acc-aid { display: none; }
+    .account-card .ac-followers { font-size: 19px; }
+  }
 
   @media (max-width: 768px) {
     .accounts-grid { display: flex; gap: 6px; min-width: 0; }
@@ -20353,9 +20407,9 @@ function renderFollowerChange(data) {
   }
   const diff = cur - prev;
   if (diff > 0) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value up">+' + diff + '</span></div>';
+    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value up">▲ +' + diff + '</span></div>';
   } else if (diff < 0) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value down">' + diff + '</span></div>';
+    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value down">▼' + diff + '</span></div>';
   }
   return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value same">0</span></div>';
 }
@@ -20368,26 +20422,52 @@ function renderDesktopAccounts() {
     { key: 'small', data: a.small, nameCn: '哈弥定制版' },
     { key: 'douyin', data: a.douyin, nameCn: '哈弥老师' }
   ];
+  const accTheme = {
+    big:    { emoji: '🎀', acc: '#ff7f9e', acc2: '#ffb3c6', chipBg: '#ffe3ea', chipFg: '#e8447a' },
+    small:  { emoji: '🧸', acc: '#c58ae6', acc2: '#e2c2f5', chipBg: '#f3e8ff', chipFg: '#9a5fd0' },
+    douyin: { emoji: '🎬', acc: '#ff6f9c', acc2: '#ffc2d4', chipBg: '#33323f', chipFg: '#ffffff' }
+  };
   let html = '<div class="accounts-grid">';
   cards.forEach(c => {
-    const link = c.data.link || '';
-    html += `<div class="account-card">
-      <div style="text-align:center;margin-bottom:4px;">
-        <div style="font-size:13px;font-weight:700;color:#ff7f9e;line-height:1.3;white-space:nowrap;">${c.nameCn}</div>
-        <div style="font-size:11px;color:#7d4a5a;margin-top:1px;white-space:nowrap;">${escTodo(c.data.platform)}</div>
+    const t = accTheme[c.key] || accTheme.big;
+    const st = '--acc:' + t.acc + ';--acc2:' + t.acc2 + ';--chipBg:' + t.chipBg + ';--chipFg:' + t.chipFg;
+    const aid = c.data.accountId ? '<span class="acc-aid">@' + escTodo(c.data.accountId) + '</span>' : '';
+    html += `<div class="account-card" style="${st}">
+      <div class="acc-head">
+        <div class="acc-avatar">${t.emoji}<i class="acc-live"></i></div>
+        <div class="acc-id">
+          <div class="acc-name">${c.nameCn}</div>
+          <div class="acc-handle"><span class="acc-chip">${escTodo(c.data.platform)}</span>${aid}</div>
+        </div>
       </div>
-      <div class="ac-followers" style="color:#ff7f9e;text-align:center;margin:4px 0;">${c.data.followers}<span class="ac-unit"> 粉丝</span></div>
+      <div class="ac-followers"><span class="acc-num" data-count="${c.data.followers}">${c.data.followers}</span><span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
-      <div class="ac-detail"><span>获赞</span><b>${c.data.likes}</b></div>
-      <div class="ac-detail"><span>本周</span><b>${c.data.weekly}</b></div>
+      <div class="ac-detail"><span>❤️ 获赞</span><b>${c.data.likes}</b></div>
+      <div class="ac-detail"><span>📅 本周</span><b>${c.data.weekly}</b></div>
     </div>`;
   });
   html += '</div>';
   // 最后更新日期：仅数据真正刷新时才更新（精确到 年/月/日 时:分）
   const lu = (store.accountsMeta && store.accountsMeta.lastUpdate) || '';
   const luText = lu ? lu : '尚未更新数据';
-  html += `<div style="text-align:center;font-size:12px;color:#d14b73;font-weight:600;margin-top:4px;opacity:0.95;">最后更新日期：${luText}</div>`;
+  html += `<div class="acc-updated"><i class="acc-pulse"></i>${lu ? '实时同步 · 最后更新 ' + luText : '尚未更新数据'}</div>`;
   document.getElementById('desktop-accounts').innerHTML = html;
+  // v285 粉丝数滚动动画（实时感）
+  try {
+    document.querySelectorAll('#desktop-accounts .acc-num[data-count]').forEach(function (el) {
+      const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+      if (!target) return;
+      const dur = 900; let t0 = null;
+      function step(ts) {
+        if (!t0) t0 = ts;
+        let p = Math.min((ts - t0) / dur, 1);
+        p = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * p);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  } catch (e) {}
 }
 
 // 账号数据更新时间格式化（精确到 年/月/日 时:分）
