@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-321">
+<meta name="hami-build" content="2026-10-17-322">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -19572,10 +19572,12 @@ function showReminderBanners() {
 }
 
 // v26：重要日期也每页 4 条翻页
+// v322：主人要求一次显示 5 条——生日面板独立分页大小（ACC_PAGE=3 是账本/图文/行程共用，不能动）
+const IMP_DATE_PAGE = 5;
 let __impDatePage = 0;
 function impDateGo(delta) {
   const n = (typeof visibleImportantDates === 'function') ? visibleImportantDates().length : ((store.importantDates || []).length);
-  const mp = Math.max(0, Math.ceil(n / ACC_PAGE) - 1);
+  const mp = Math.max(0, Math.ceil(n / IMP_DATE_PAGE) - 1);
   __impDatePage = Math.max(0, Math.min((__impDatePage || 0) + delta, mp));
   renderReminder();
 }
@@ -19598,11 +19600,11 @@ function renderReminder() {
     dateList.sort((a, b) => b._idx - a._idx);   // v216：最新添加的排最前（新→旧）
 
     let html = '';
-    // v26 分页：每页 ACC_PAGE 条，翻到底看全不丢
-    const maxPg = Math.max(0, Math.ceil(dateList.length / ACC_PAGE) - 1);
+    // v26 分页：每页 IMP_DATE_PAGE 条，翻到底看全不丢
+    const maxPg = Math.max(0, Math.ceil(dateList.length / IMP_DATE_PAGE) - 1);
     if ((__impDatePage || 0) > maxPg) __impDatePage = maxPg;
-    const start = (__impDatePage || 0) * ACC_PAGE;
-    const pageList = dateList.slice(start, start + ACC_PAGE);
+    const start = (__impDatePage || 0) * IMP_DATE_PAGE;
+    const pageList = dateList.slice(start, start + IMP_DATE_PAGE);
     pageList.forEach((d, idx) => {
       const isBirthday = d.type === 'birthday';
       const isAnniversary = d.type === 'anniversary';
@@ -19645,32 +19647,40 @@ function renderReminder() {
         dateHtml = `<div style="font-size:11px;color:#7d4a5a;">📅 ${d.hasYear ? d.date : d.date + '（无年份）'} <span style="font-size:10px;padding:0 4px;border-radius:5px;background:#e8f4fd;color:#2080c0;">新历</span></div>`;
       }
 
-      const itemHtml = `<div style="padding:6px 8px;background:#fff8fa;border-radius:12px;margin-bottom:4px;border:1px solid #ffe4ec;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+      // v322 紧凑排版：①「今年 N 岁」并到姓名后（小字，不再单占一行）；②「编辑/删除」按钮上移到
+      // 右侧倒计时下方紧贴「N 天后生日」，不再单独占一行——上下间距大幅缩短；③padding/margin 收紧
+      const ageHtml = (isBirthday && d.thisYearAge)
+        ? `<span style="font-size:11px;color:#8a6270;white-space:nowrap;">今年 ${d.thisYearAge} 岁</span>` : '';
+
+      const itemHtml = `<div style="padding:5px 9px;background:#fff8fa;border-radius:12px;margin-bottom:3px;border:1px solid #ffe4ec;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:1px;">
               <span style="font-size:13px;">${icon}</span>
               <span style="font-size:14px;font-weight:700;color:#d14b73;">${escTodo(d.name)}</span>
               <span style="font-size:11px;padding:1px 5px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
+              ${ageHtml}
             </div>
             ${dateHtml}
-            ${countText ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
+            ${!isBirthday && countText ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
             ${d.remark ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">📝 ${escTodo(d.remark)}</div>` : ''}
           </div>
-          <div style="text-align:center;min-width:52px;padding-left:6px;">
-            <div style="font-size:17px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
-            <div style="font-size:10px;color:#7d4a5a;margin-top:1px;">${countLabel}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none;">
+            <div style="text-align:center;min-width:52px;">
+              <div style="font-size:17px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
+              <div style="font-size:10px;color:#7d4a5a;margin-top:1px;">${countLabel}</div>
+            </div>
+            <div style="display:flex;gap:4px;">
+              <button class="row-edit-btn" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
+              <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
+            </div>
           </div>
-        </div>
-        <div style="margin-top:4px;text-align:right;">
-          <button class="row-edit-btn" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
-          <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
         </div>
       </div>`;
       html += itemHtml;
     });
     // v26 分页条：上一页 / 页码 / 下一页
-    if (dateList.length > ACC_PAGE) {
+    if (dateList.length > IMP_DATE_PAGE) {
       html += `<div style="text-align:center;margin-top:8px;display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;">
         <button class="date-fold-btn" type="button" onclick="impDateGo(-1)" ${(__impDatePage || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
         <span style="font-size:12px;color:#8a6270;">第 ${(__impDatePage || 0) + 1}/${maxPg + 1} 页 · 共 ${dateList.length} 条</span>
