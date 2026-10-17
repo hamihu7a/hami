@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-316">
+<meta name="hami-build" content="2026-10-17-317">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -733,8 +733,6 @@
   .goal-row .goal-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
   .goal-row .goal-edit-btn { flex: none; border: 1px solid var(--c-line); background: #fff0f6; color: var(--c-pink-deep); font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 9px; cursor: pointer; }
   .goal-row .goal-edit-btn:hover { background: #ffe0ee; }
-  .goal-row .goal-clear-btn { flex: none; border: 1px solid var(--c-line); background: #fff; color: var(--c-muted); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 9px; cursor: pointer; }
-  .goal-row .goal-clear-btn:hover { color: #d14b73; background: #fff4f8; }
   .goal-row .goal-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; width: 78px; }
   .goal-row .goal-unit { font-size: 12px; color: var(--c-muted); }
@@ -6474,7 +6472,6 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div class="goal-main">
         <div class="goal-actions">
           <button id="goal-edit-btn" class="goal-edit-btn" type="button">✏️ 修改</button>
-          <button id="goal-clear-btn" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
         </div>
         <div class="goal-line">
           <label for="weight-goal-input">🎯 目标体重</label>
@@ -15377,7 +15374,6 @@ function bindWeightGoalInput() {
   const gInput = document.getElementById('weight-goal-input');
   const sInput = document.getElementById('start-weight-input');
   const editBtn = document.getElementById('goal-edit-btn');
-  const clearBtn = document.getElementById('goal-clear-btn');
   if (!gInput || gInput.dataset.bound) return;
   gInput.dataset.bound = '1';
   // v297：还原 v295 常显输入框，仅左上角一个「修改」按钮统一保存（目标+起始）
@@ -15389,13 +15385,6 @@ function bindWeightGoalInput() {
     if (!isNaN(sv) && sv > 0) { store.startWeight = sv; finToast && finToast('⚖️ 起始体重已设为 ' + sv.toFixed(1) + ' 斤'); }
     saveData();
     try { renderFitness(); } catch(e) {}
-  });
-  if (clearBtn) clearBtn.addEventListener('click', () => {
-    gInput.value = '';
-    store.weightGoal = null;
-    saveData();
-    try { renderFitness(); } catch(e) {}
-    finToast && finToast('已清除目标体重');
   });
 }
 
