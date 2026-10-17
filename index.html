@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-287">
+<meta name="hami-build" content="2026-10-17-288">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -10321,7 +10321,7 @@ function hamiBgMaskGet(key) {
       if (o.mode === 'even' || o.mode === 'down' || o.mode === 'up') d.mode = o.mode;
       if (typeof o.px === 'number' && isFinite(o.px)) d.px = Math.max(0, Math.min(100, Math.round(o.px)));
       if (typeof o.py === 'number' && isFinite(o.py)) d.py = Math.max(0, Math.min(100, Math.round(o.py)));
-      if (typeof o.zoom === 'number' && isFinite(o.zoom)) d.zoom = Math.max(100, Math.min(250, Math.round(o.zoom)));
+      if (typeof o.zoom === 'number' && isFinite(o.zoom)) d.zoom = Math.max(50, Math.min(250, Math.round(o.zoom)));
       d.flip = o.flip ? 1 : 0;
       if (typeof o.rot === 'number' && isFinite(o.rot)) d.rot = Math.max(-180, Math.min(180, Math.round(o.rot)));
     }
@@ -10330,7 +10330,7 @@ function hamiBgMaskGet(key) {
 }
 // v243：图片几何 —— 位置(左右/上下) + 放大。zoom=100 时仍用 cover（与原外观完全一致，不留白）
 function hamiBgGeomPos(cfg) { return cfg.px + '% ' + cfg.py + '%'; }
-function hamiBgGeomSize(cfg) { return (cfg.zoom && cfg.zoom > 100) ? (cfg.zoom + '%') : 'cover'; }
+function hamiBgGeomSize(cfg) { return (cfg.zoom && cfg.zoom !== 100) ? (cfg.zoom + '%') : 'cover'; }
 function hamiBgResetGeom(cfg) { cfg.px = 50; cfg.py = 50; cfg.zoom = 100; cfg.flip = 0; cfg.rot = 0; }
 // v254：旋转时为保证四角不留空所需的最小放大倍数（拖动位移换算也要用同一个值）
 function hamiBgScale(rot, W, H) {
@@ -10522,6 +10522,7 @@ function buildMirrorMaskCtl(key, block) {
     '</div>';
   }
   ctl.innerHTML =
+    row('zoom', '大小', cfg.zoom || 100, 50, 250) +
     row('vis', '不透明度', cfg.vis, 0, 100) +
     '<div class="mirror-ctl-row">' +
       '<button type="button" class="mirror-dir-btn mirror-flip-btn' + (cfg.flip ? ' active' : '') + '" title="水平镜像（左右翻转）">⇋ 镜像</button>' +
@@ -10610,6 +10611,10 @@ function buildMirrorMaskCtl(key, block) {
     var v2 = ctl.querySelector('.mirror-ctl-val[data-v="vis"]');
     if (r2) r2.value = 100;
     if (v2) v2.textContent = '100%';
+    var rZ = ctl.querySelector('input[data-f="zoom"]');
+    var vZ = ctl.querySelector('.mirror-ctl-val[data-v="zoom"]');
+    if (rZ) rZ.value = 100;
+    if (vZ) vZ.textContent = '100%';
     var r3 = ctl.querySelector('input[data-f="rot"]');
     var v3 = ctl.querySelector('.mirror-ctl-val[data-v="rot"]');
     if (r3) r3.value = 0;
@@ -10637,7 +10642,7 @@ function mirrorRendered(block, ar, zoom) {
   var W = block.clientWidth, H = block.clientHeight;
   if (!(W > 0) || !(H > 0) || !(ar > 0)) return null;
   var w, h;
-  if (zoom && zoom > 100) { w = W * zoom / 100; h = w / ar; }
+  if (zoom && zoom !== 100) { w = W * zoom / 100; h = w / ar; }
   else { w = Math.max(W, H * ar); h = w / ar; }
   if (h < H) { h = H; w = h * ar; }      // 兜底：至少铺满容器
   return { w: w, h: h, W: W, H: H };
@@ -10696,7 +10701,7 @@ function initMirrorDrag(block, key) {
       var p2 = ids.map(function (i) { return ptrs[i]; });
       var d = Math.hypot(p2[0].x - p2[1].x, p2[0].y - p2[1].y);
       if (st.d0 > 0 && d > 0) {
-        var z = Math.max(100, Math.min(250, Math.round(st.z0 * (d / st.d0))));
+        var z = Math.max(50, Math.min(250, Math.round(st.z0 * (d / st.d0))));
         var c2 = hamiBgMaskGet(key);
         if (c2.zoom !== z) { c2.zoom = z; hamiBgMaskSet(key, c2); applyBgMask(key, c2); }
       }
@@ -10727,7 +10732,7 @@ function initMirrorDrag(block, key) {
     if (!block.classList.contains('editing')) return;   // v254：非编辑态不劫持滚轮，设置面板能正常上下滚
     e.preventDefault(); e.stopPropagation();
     var c = hamiBgMaskGet(key);
-    var z = Math.max(100, Math.min(250, (c.zoom || 100) + (e.deltaY < 0 ? 10 : -10)));
+    var z = Math.max(50, Math.min(250, (c.zoom || 100) + (e.deltaY < 0 ? 10 : -10)));
     if (z !== c.zoom) {
       c.zoom = z; hamiBgMaskSet(key, c); applyBgMask(key, c);
       clearTimeout(block.__wheelT);
