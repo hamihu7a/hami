@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-292">
+<meta name="hami-build" content="2026-10-17-293">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3238,7 +3238,10 @@
     cursor: pointer;
   }
 
-  .chart-container { width: 100%; overflow-x: auto; }
+  .chart-container { width: 100%; overflow-x: auto; cursor: grab; user-select: none; -webkit-user-select: none; scrollbar-width: thin; }
+  .chart-container:active { cursor: grabbing; }
+  .chart-container::-webkit-scrollbar { height: 6px; }
+  .chart-container::-webkit-scrollbar-thumb { background: #f6bdd0; border-radius: 3px; }
 
   .empty-state {
     text-align: center;
@@ -15044,8 +15047,8 @@ function renderWeightChart(data) {
     document.getElementById('weight-chart').innerHTML = `<div class="empty-state"><div class="big-icon">📈</div><p>暂无数据</p></div>`;
     return;
   }
-  const width = Math.max(600, data.length * 60);
-  const height = 280;
+  const width = Math.max(720, data.length * 90);
+  const height = 360;
   const p = { top: 30, right: 30, bottom: 45, left: 45 };
   const cw = width - p.left - p.right;
   const ch = height - p.top - p.bottom;
@@ -15057,7 +15060,7 @@ function renderWeightChart(data) {
   const ys = v => p.top + (1 - (v-minV)/range) * ch;
   const sy = ys(START_WEIGHT);
 
-  let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="max-width:100%;">`;
+  let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;">`;
   for (let i = 0; i <= 4; i++) {
     const y = p.top + (i/4) * ch;
     svg += `<line x1="${p.left}" y1="${y}" x2="${width-p.right}" y2="${y}" stroke="#ffe4ec" stroke-width="1"/>`;
@@ -15068,19 +15071,30 @@ function renderWeightChart(data) {
 
   let ap = '';
   data.forEach((d,i) => { const v = d.value != null ? d.value : (d.after != null ? d.after : d.before); if (v != null) ap += (i===0?'M':'L') + xs(i) + ',' + ys(v) + ' '; });
-  svg += `<path d="${ap}" fill="none" stroke="#e88a4f" stroke-width="2.5"/>`;
-  data.forEach((d,i) => { const v = d.value != null ? d.value : d.after; if (v != null) svg += `<circle cx="${xs(i)}" cy="${ys(v)}" r="4" fill="#e88a4f"/>`; });
+  svg += `<path d="${ap}" fill="none" stroke="#e88a4f" stroke-width="3"/>`;
+  data.forEach((d,i) => { const v = d.value != null ? d.value : d.after; if (v != null) svg += `<circle cx="${xs(i)}" cy="${ys(v)}" r="5" fill="#e88a4f"/>`; });
 
   data.forEach((d,i) => {
-    if (data.length > 10 && i % Math.ceil(data.length/8) !== 0) return;
-    svg += `<text x="${xs(i)}" y="${height-p.bottom+18}" text-anchor="middle" font-size="10" fill="#8a6270">${d.date.substring(5)}</text>`;
+    svg += `<text x="${xs(i)}" y="${height-p.bottom+18}" text-anchor="middle" font-size="11" fill="#8a6270">${d.date.substring(5)}</text>`;
   });
 
   svg += `<rect x="${p.left}" y="8" width="10" height="10" fill="#e88a4f" rx="2"/>`;
   svg += `<text x="${p.left+15}" y="17" font-size="11" fill="#8a4a60">体重 (斤)</text>`;
   svg += '</svg>';
-  document.getElementById('weight-chart').innerHTML = svg;
+  const wc = document.getElementById('weight-chart');
+  wc.innerHTML = svg;
+  wc.scrollLeft = wc.scrollWidth;   // 默认定位到最右边（最近几天）
 }
+
+// 鼠标左右拖动查看（手机触屏本身就能滑）
+(function(){
+  const el = document.getElementById('weight-chart');
+  if (!el) return;
+  let down = false, sx = 0, sl = 0;
+  el.addEventListener('mousedown', e => { down = true; sx = e.pageX; sl = el.scrollLeft; el.style.cursor = 'grabbing'; });
+  window.addEventListener('mousemove', e => { if (!down) return; e.preventDefault(); el.scrollLeft = sl - (e.pageX - sx); });
+  window.addEventListener('mouseup', () => { if (down) { down = false; el.style.cursor = 'grab'; } });
+})();
 
 // ==================== 桌面渲染 ====================
 // ==================== 自媒体更新记录 ====================
