@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-315">
+<meta name="hami-build" content="2026-10-17-316">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7355,7 +7355,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div class="future-post-top-actions" style="display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end;">
         <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostModal()">➕ 添加</button>
         <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostBatch()">📥 批量</button>
-        <button class="media-add-btn" style="background:linear-gradient(90deg,#ff9eb5,#ff7f9e);padding:7px 10px;font-size:12px;" onclick="checkAllFuturePostTitles()">🏆 检查</button>
+        <!-- v316：主人不需要「一键检查」按钮，已移除；单条卡片上的「🏆 检查」保留 -->
       </div>
     </div>
     <div id="future-post-list"></div>
@@ -16546,7 +16546,6 @@ function fpCardHtml(p, today) {
     + '<div class="future-post-meta">'
     +   '<span class="future-post-date' + (isOverdue ? ' late' : '') + '">📅 ' + (p.date || '未设日期') + '</span>'
     +   '<span class="future-post-tag">' + accName + '</span>'
-    +   (p.douyin ? '<span class="future-post-tag" style="background:rgba(25,25,25,0.08);color:#5a3a48;">🎵 同步抖音</span>' : '')
     +   (p.done ? '<span class="future-post-done-badge">已完成</span>' : '')
     + '</div>'
     + (contentPreview ? '<div class="future-post-content">' + contentPreview + '</div>' : '')
@@ -16774,69 +16773,6 @@ function checkFuturePostTitle(idOrIdx) {
   }
   box.innerHTML = html;
   box.style.display = 'block';
-}
-
-// 一键检查全部未来图文：弹窗汇总（标题评分 + 文案违禁词）
-function checkAllFuturePostTitles() {
-  const list = (store.futurePosts || []).slice();
-  if (!list.length) { hamiToast('还没有待完成图文项目哦~'); return; }
-  let bodyHtml = '<div style="max-height:55vh;overflow:auto;padding-right:4px;">';
-  let hasResult = false;
-  list.forEach(function(p, idx){
-    const title = (p.title || '').trim();
-    const content = (p.content || '').trim();
-    if (!title && !content) return;
-    hasResult = true;
-    const ar = analyzeFuturePost(p);
-    const accMap = { big: '🎨 美化档大号', small: '👤 定制人物小号', douyin: '🎵 抖音' };
-    const accName = accMap[p.account] || accMap['big'];
-    bodyHtml += '<div style="margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.6);border-radius:10px;border:1px solid rgba(209,75,115,0.12);">';
-    if (title) bodyHtml += '<div style="font-weight:700;color:#d14b73;margin-bottom:4px;">' + crEscapeHtml(title) + '</div>';
-    bodyHtml += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">';
-    if (ar.titleResult) {
-      bodyHtml += '<span class="fp-score-badge">' + ar.titleResult.score + '分</span><span class="fp-score-level">' + ar.titleResult.level + '</span>';
-    }
-    bodyHtml += '<span style="font-size:11px;color:#8a6270;">' + (p.date || '未设日期') + ' · ' + accName + '</span>';
-    bodyHtml += '</div>';
-    if (ar.titleResult && ar.titleResult.bad.length) bodyHtml += '<div class="fp-risk">⚠️ 标题风险词：' + crEscapeHtml(ar.titleResult.bad.join('、')) + '</div>';
-    if (ar.contentResult.bad.length) bodyHtml += '<div class="fp-risk">⚠️ 文案风险词：' + crEscapeHtml(ar.contentResult.bad.join('、')) + '</div>';
-    if (ar.titleResult && ar.titleResult.tips.length) {
-      bodyHtml += '<ul class="fp-tips">';
-      ar.titleResult.tips.forEach(function(tp){ bodyHtml += '<li>' + crEscapeHtml(tp) + '</li>'; });
-      bodyHtml += '</ul>';
-    }
-    if ((!ar.titleResult || !ar.titleResult.tips.length) && !ar.titleResult.bad.length && !ar.contentResult.bad.length) {
-      bodyHtml += '<div class="fp-ok">✅ 很棒，可以直接发！</div>';
-    }
-    bodyHtml += '</div>';
-  });
-  bodyHtml += '</div>';
-  if (!hasResult) { hamiToast('所有计划都还没有内容，先补标题或文案再检查~'); return; }
-  showFutureCheckAllModal(bodyHtml);
-}
-
-function showFutureCheckAllModal(bodyHtml) {
-  const existing = document.getElementById('fp-check-all-modal');
-  if (existing) existing.remove();
-  const mask = document.createElement('div');
-  mask.id = 'fp-check-all-modal';
-  mask.className = 'modal-mask';
-  mask.style.display = 'flex';
-  mask.style.zIndex = '3000';
-  mask.innerHTML = `
-    <div class="modal-card" style="max-width:480px;width:92vw;" onclick="event.stopPropagation()">
-      <div class="arm-head">
-        <button type="button" class="arm-close" onclick="document.getElementById('fp-check-all-modal').remove()" aria-label="关闭">✕</button>
-        <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">🏆 一键检查结果</div>
-        <span style="width:36px;"></span>
-      </div>
-      <div class="co-body" style="max-height:calc(100vh - 56px - 24px - 70px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;">${bodyHtml}</div>
-      <div class="co-actions">
-        <button class="co-save" onclick="document.getElementById('fp-check-all-modal').remove()">知道了</button>
-      </div>
-    </div>`;
-  mask.addEventListener('click', function(e){ if (e.target === mask) mask.remove(); });
-  document.body.appendChild(mask);
 }
 
 // ==================== 自媒体「记一条」弹窗 ====================
