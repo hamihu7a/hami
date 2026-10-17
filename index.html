@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-294">
+<meta name="hami-build" content="2026-10-17-295">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -728,10 +728,14 @@
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 9px; }
   }
   /* 健康·目标体重行 + 进度环 */
-  .goal-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 10px; }
-  .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; }
+  .goal-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px; }
+  .goal-row .goal-main { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 6px; }
+  .goal-row .goal-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; width: 78px; }
+  .goal-row .goal-unit { font-size: 12px; color: var(--c-muted); }
   .goal-row input { width: 70px; padding: 4px 6px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 14px; text-align: center; background: #fff; color: var(--c-text); }
-  .goal-row .goal-info { font-size: 12px; color: var(--c-muted); line-height: 1.35; }
+  .goal-row .goal-info { font-size: 12px; color: var(--c-muted); line-height: 1.4; margin-top: 2px; padding-top: 6px; border-top: 1px dashed var(--c-line, #ffe4ec); }
+  .goal-row .goal-info b { font-size: 14px; }
 
   /* 数据备份温和提醒（满 60 条时显示） */
   .backup-tip {
@@ -5879,18 +5883,18 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
 
     <div class="goal-row" id="weight-goal-row">
       <div class="fitness-ring" id="goal-ring"></div>
-      <div style="flex:1;min-width:180px;">
-        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
+      <div class="goal-main">
+        <div class="goal-line">
           <label for="weight-goal-input">🎯 目标体重</label>
           <input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal">
-          <span style="font-size:12px;color:var(--c-muted);">斤</span>
+          <span class="goal-unit">斤</span>
           <button id="weight-goal-save" class="goal-save-btn" type="button">✓ 确定</button>
           <button id="weight-goal-clear" class="goal-clear-btn" type="button" title="清除目标">✗ 清除</button>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
+        <div class="goal-line">
           <label for="start-weight-input">⚖️ 起始体重</label>
           <input type="number" id="start-weight-input" step="0.1" min="60" max="600" placeholder="如 180" inputmode="decimal">
-          <span style="font-size:12px;color:var(--c-muted);">斤</span>
+          <span class="goal-unit">斤</span>
           <button id="start-weight-save" class="goal-save-btn" type="button">✓ 确定</button>
         </div>
         <div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div>
@@ -14771,9 +14775,9 @@ function renderWeightGoal(startWeight, latestAfter) {
   const dash = (pct / 100) * C;
 
   if (remain <= 0) {
-    info.innerHTML = `🎉 目标 <b>${goal.toFixed(1)}</b> 斤 已达成！当前 <b>${latestAfter.toFixed(1)}</b> 斤，超额 <b>${Math.abs(remain).toFixed(1)}</b> 斤，太棒啦～`;
+    info.innerHTML = `🎉 已达成！当前 <b>${latestAfter.toFixed(1)}</b> 斤 · 超额 <b>${Math.abs(remain).toFixed(1)}</b> 斤`;
   } else {
-    info.innerHTML = `目标 <b>${goal.toFixed(1)}</b> 斤 · 当前 <b>${latestAfter.toFixed(1)}</b> 斤 · 距目标还差 <b>${remain.toFixed(1)}</b> 斤（已完成 <b>${pct.toFixed(0)}%</b>）`;
+    info.innerHTML = `当前 <b>${latestAfter.toFixed(1)}</b> 斤 · 还差 <b>${remain.toFixed(1)}</b> 斤达标 · 已完成 <b>${pct.toFixed(0)}%</b>`;
   }
 
   ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60">
@@ -14866,11 +14870,22 @@ function renderFitness() {
   const cardioCount = monthExercises.filter(e=>e.cardio).length;
   const weightsCount = monthExercises.filter(e=>e.weights).length;
 
+  // v295：BMI（身高固定 166cm），体重单位为斤
+  let bmiVal = '—', bmiUnit = '待记录', bmiCls = '';
+  if (latestAfter != null) {
+    const bmi = (latestAfter / 2) / (1.66 * 1.66);
+    bmiVal = bmi.toFixed(1);
+    if (bmi < 18.5)    { bmiUnit = '偏瘦';      bmiCls = 'green'; }
+    else if (bmi < 24) { bmiUnit = '正常 ✅';   bmiCls = 'green'; }
+    else if (bmi < 28) { bmiUnit = '超重 ⚠️';   bmiCls = 'red'; }
+    else               { bmiUnit = '过高 ⚠️';   bmiCls = 'red'; }
+  }
+
   document.getElementById('fitness-stats').innerHTML = `
     <div class="stat-card"><div class="label">起始体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${startWeight.toFixed(1)}</div><div class="unit">斤</div></div>
     <div class="stat-card"><div class="label">最新体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${latestAfterText}</div><div class="unit">斤</div></div>
     <div class="stat-card"><div class="label">累计减重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${parseFloat(totalLost) > 0 ? 'green' : (totalLost !== '—' ? 'red' : '')}">${parseFloat(totalLost) > 0 ? '-' : ''}${totalLost}</div><div class="unit">斤</div></div>
-    <div class="stat-card"><div class="label">健身天数</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${exerciseDays}</div><div class="unit">/ ${activeDays}天</div></div>
+    <div class="stat-card"><div class="label">BMI · 身高166cm</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${bmiCls}">${bmiVal}</div><div class="unit">${bmiUnit}</div></div>
   `;
 
   renderWeightGoal(startWeight, latestAfter);
