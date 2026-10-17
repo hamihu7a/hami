@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-290">
+<meta name="hami-build" content="2026-10-17-291">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -20451,7 +20451,7 @@ function renderDesktopAccounts() {
     const aid = c.data.accountId ? '<span class="acc-aid">@' + escTodo(c.data.accountId) + '</span>' : '';
     html += `<div class="account-card" style="${st}">
       <div class="acc-head">
-        <div class="acc-avatar"><img src="${t.av}" alt=""><i class="acc-live"></i></div>
+        <div class="acc-avatar"><img src="${t.av}" alt=""></div>
         <div class="acc-id">
           <div class="acc-name">${c.nameCn}</div>
           <div class="acc-handle"><span class="acc-chip">${escTodo(c.data.platform)}</span>${aid}</div>
@@ -20466,7 +20466,7 @@ function renderDesktopAccounts() {
   // 最后更新日期：仅数据真正刷新时才更新（精确到 年/月/日 时:分）
   const lu = (store.accountsMeta && store.accountsMeta.lastUpdate) || '';
   const luText = lu ? lu : '尚未更新数据';
-  html += `<div class="acc-updated"><i class="acc-pulse"></i>${lu ? '实时同步 · 最后更新 ' + luText : '尚未更新数据'}</div>`;
+  html += `<div class="acc-updated">${lu ? '最后更新 ' + luText : '尚未更新数据'}</div>`;
   document.getElementById('desktop-accounts').innerHTML = html;
 }
 
