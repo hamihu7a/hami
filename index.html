@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-311">
+<meta name="hami-build" content="2026-10-17-312">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1117,7 +1117,7 @@
     background: rgba(255,255,255,0.75);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    padding: 7px 4px;
+    padding: 11px 5px;   /* v312：上下加长（原 7px 4px 太扁），卡片更饱满 */
     text-align: center;
     box-shadow: 0 2px 8px rgba(255, 158, 181, 0.08);
     cursor: pointer;
@@ -1179,6 +1179,20 @@
     font-size: 22px;
     font-weight: 700;
     color: #4a3340;   /* v256：粉丝数主数字用日历体重数字同款深色 */
+    /* v312：主人要求加「渐变的灰色描边阴影」——四周一圈由浓到淡的灰描边 + 向下渐隐投影，
+       让数字从半透明卡片背景里浮出来，小字也看得清（text-shadow 无法用渐变，
+       这里用多层 rgba 灰色叠加模拟由内到外由深到浅的过渡） */
+    text-shadow:
+      1px 0 0 rgba(120, 110, 118, 0.50),
+      -1px 0 0 rgba(120, 110, 118, 0.50),
+      0 1px 0 rgba(120, 110, 118, 0.50),
+      0 -1px 0 rgba(120, 110, 118, 0.50),
+      1px 1px 0 rgba(122, 112, 120, 0.36),
+      -1px -1px 0 rgba(122, 112, 120, 0.36),
+      1px -1px 0 rgba(122, 112, 120, 0.36),
+      -1px 1px 0 rgba(122, 112, 120, 0.36),
+      0 2px 5px rgba(120, 110, 118, 0.28),
+      0 5px 12px rgba(120, 110, 118, 0.14);
     margin-bottom: 8px;
   }
   .account-card .ac-followers .ac-unit { font-size: 12px; color: #7d4a5a; font-weight: 400; }   /* v256 */
@@ -1293,32 +1307,33 @@
     background: linear-gradient(135deg, #fff0f5, var(--c-pink-soft));
   }
   .checkin-card .ci-icon {
-    font-size: 20px;
-    margin-bottom: 1px;
+    font-size: 23px;   /* v312：20px → 23px */
+    margin-bottom: 3px;   /* v312：1px → 3px */
     line-height: 1.1;
   }
   .checkin-card .ci-label {
-    font-size: 11px;
+    font-size: 12.5px;   /* v312：11px → 12.5px */
     color: var(--c-text-2);
-    margin-bottom: 2px;
+    margin-bottom: 5px;   /* v312：2px → 5px */
     line-height: 1.2;
   }
   .checkin-card .ci-lines {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px;
+    gap: 2px;   /* v312：1px → 2px */
     margin-top: 0;
   }
   .checkin-card .ci-line {
-    font-size: 9px;
-    line-height: 1.2;
+    font-size: 10.5px;   /* v312：9px → 10.5px */
+    line-height: 1.25;
     color: #8a6270;
     white-space: nowrap;
   }
   .checkin-card .ci-status-line {
+    font-size: 10.5px;   /* v312：显式加大（原继承 9px） */
     font-weight: 700;
-    padding: 1px 6px;
+    padding: 1px 7px;   /* v312：左右各加 1px，按钮更饱满 */
     border-radius: 7px;
     margin-bottom: 1px;
   }
@@ -1326,9 +1341,9 @@
   .ci-status-line.done { background: #ffb3c6; color: var(--c-text-2); }
   .ci-status-line.rest { background: #ece4f5; color: #6b5b8a; }   /* 休息日：紫色系淡色，区分待打卡 vs 完成 */
   .checkin-card.rest { border-color: rgba(180,150,210,.35); }
-  .checkin-card .ci-fact-line { font-size: 9px; color: #a67c8a; }
-  .checkin-card .ci-date-line { font-size: 8px; color: #a67c8a; }
-  .checkin-card .ci-tip-line { font-size: 8px; color: #b58a96; }
+  .checkin-card .ci-fact-line { font-size: 10.5px; color: #a67c8a; }   /* v312：9px → 10.5px */
+  .checkin-card .ci-date-line { font-size: 9.5px; color: #a67c8a; }   /* v312：8px → 9.5px */
+  .checkin-card .ci-tip-line { font-size: 9.5px; color: #b58a96; }   /* v312：8px → 9.5px */
 
   /* 待办卡片 */
   .todo-card {
@@ -4360,12 +4375,12 @@
   @media (max-width: 420px) {
     /* 打卡卡片：横向 3 列空间宝贵，再小一档 */
     .checkin-grid { gap: 5px; }
-    .checkin-card { padding: 5px 3px; border-radius: 9px; }
-    .checkin-card .ci-icon { font-size: 17px; margin-bottom: 0; }
-    .checkin-card .ci-label { font-size: 10px; margin-bottom: 1px; }
-    .checkin-card .ci-line { font-size: 8px; line-height: 1.15; max-width: 100%; }
-    .checkin-card .ci-status-line { font-size: 8px; padding: 1px 4px; border-radius: 5px; margin-bottom: 1px; }
-    .checkin-card .ci-fact-line { font-size: 8px; }
+    .checkin-card { padding: 8px 4px; border-radius: 9px; }
+    .checkin-card .ci-icon { font-size: 19px; margin-bottom: 2px; }
+    .checkin-card .ci-label { font-size: 11.5px; margin-bottom: 3px; }
+    .checkin-card .ci-line { font-size: 9.5px; line-height: 1.2; max-width: 100%; }
+    .checkin-card .ci-status-line { font-size: 9.5px; padding: 1px 5px; border-radius: 5px; margin-bottom: 1px; }
+    .checkin-card .ci-fact-line { font-size: 9.5px; }
 
     /* 跟小助理说 bar：超小屏上简化排版，标签文字折叠成图标，同步文字隐藏避免挤压输入框 */
     .hami-cmd-bar { padding: 7px 10px; gap: 5px; height: 56px; }
@@ -4568,6 +4583,8 @@
     margin-bottom: 1px;
   }
   .home-card-row b { color: #4a3340; font-weight: 700; flex: 1; min-width: 0; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* v312：紫外线数值与「紫外线」三个字同色（#7d4a5a），不再突然变深 */
+  .home-card-row.weather-uv b { color: #7d4a5a; }
   .home-card-note {
     font-size: 12px;
     color: #7d4a5a;
