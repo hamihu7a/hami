@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-328">
+<meta name="hami-build" content="2026-10-17-329">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5334,12 +5334,22 @@ body.theme-vintage .sidebar {
 }
 body.theme-vintage .sidebar > .nav-header { background: #fff0f5 !important; }
 body.theme-vintage .sidebar button,
-body.theme-vintage .sidebar [class*="nav"],
+body.theme-vintage .sidebar [class*="nav"]:not(.nav-group),
 body.theme-vintage .sidebar [class*="item"] {
   border: none !important;
   box-shadow: none !important;
   background: rgba(255,255,255,0.55) !important;
   border-radius: 12px !important;
+}
+/* v329：分组大区块的白底收窄 + 底部浅粉阴影（主人点名，观感同「今日时光」hcp 卡）。
+   原先 .nav-group 被 [class*="nav"] 误伤，白底通栏顶满任务栏两边；
+   现在豁免后单独样式：左右各缩 7px、上下留 2px，不再顶满，底部有淡粉浮起感。 */
+body.theme-vintage .sidebar .nav-group {
+  background: rgba(255,255,255,0.55) !important;
+  border-radius: 14px !important;
+  margin: 0 7px 8px !important;
+  padding: 2px 0 !important;
+  box-shadow: 0 3px 12px rgba(233,120,158,0.15) !important;
 }
 body.theme-vintage .sidebar button:active { transform: none !important; }
 /* 在此基础上只加一条：选中项变深色（一眼知道停在哪） */
