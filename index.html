@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-308">
+<meta name="hami-build" content="2026-10-17-309">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5832,6 +5832,29 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
   .hcp-fest-tag { flex: 0 0 auto; font-size: 10px; font-weight: 800; color: #fff; background: #ff8aa6; border-radius: 6px; padding: 1px 5px; }
   .hcp-fest-tag.ab { background: #cdb9e8; }
   .hcp-fest-txt { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* ===== v313：近期节日「点开预览」气泡（点卡片展开全部，点其他地方收起）===== */
+  .hcp-fest { cursor: pointer; }
+  .hcp-fest:active { transform: translateY(0); }
+  .hcp-fest-pop {
+    position: fixed; z-index: 6000; display: none;
+    width: min(310px, calc(100vw - 20px));
+    max-height: min(62vh, 400px); overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: #fffafc; border: 1.5px solid #ffc7d8; border-radius: 16px;
+    box-shadow: 0 14px 36px rgba(180,60,100,.22), inset 0 1px 0 rgba(255,255,255,.8);
+    padding: 10px 12px 9px; text-align: left;
+    font-family: inherit;
+  }
+  .hcp-fest-pop.show { display: block; animation: hfpIn .16s ease-out; }
+  @keyframes hfpIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .hfp-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800; color: #d14b73; margin-bottom: 2px; }
+  .hfp-head .hfp-tip { font-size: 10px; font-weight: 700; color: #c08aa0; }
+  .hfp-group { display: inline-block; margin: 7px 0 3px; padding: 1px 7px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #fff; background: #ff8aa6; }
+  .hfp-group.ab { background: #cdb9e8; }
+  .hfp-item { display: flex; justify-content: space-between; gap: 8px; padding: 3px 2px; font-size: 11.5px; font-weight: 700; color: #7d4a5a; border-bottom: 1px dashed rgba(209,75,115,.14); }
+  .hfp-item:last-child { border-bottom: none; }
+  .hfp-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hfp-date { flex: 0 0 auto; color: #b0587a; font-variant-numeric: tabular-nums; }
+  .hfp-item.near .hfp-name, .hfp-item.near .hfp-date { color: #d14b73; }
     </style>
     <div id="hami-countdown-pair">
       <div class="hcp-card hcp-life">
@@ -5906,6 +5929,72 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         _festCache = out; _festYear = y; _festDay = dayKey;
         return out;
       }
+      /* ===== v313：点「国内/国外」省略处 → 气泡预览全部近期节日；点其他地方收起 ===== */
+      var _festPop = null;
+      function ensureFestPop() {
+        if (_festPop && _festPop.parentNode) return _festPop;
+        _festPop = document.createElement('div');
+        _festPop.className = 'hcp-fest-pop';
+        _festPop.id = 'hcp-fest-pop';
+        document.body.appendChild(_festPop);
+        return _festPop;
+      }
+      function festPopHtml() {
+        var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+        var fs = buildFestivals();
+        function ds(f) { return Math.round((f.date - t0) / 86400000); }
+        function line(f) {
+          var dd = ds(f);
+          return '<div class="hfp-item' + (dd === 0 ? ' near' : '') + '">'
+            + '<span class="hfp-name">' + f.name + '</span>'
+            + '<span class="hfp-date">' + (f.date.getMonth() + 1) + '/' + f.date.getDate()
+            + ' · ' + (dd === 0 ? '今天' : dd + '天') + '</span></div>';
+        }
+        function group(kind) { return fs.filter(function (f) { return f.kind === kind; }).slice(0, 8).map(line).join(''); }
+        return '<div class="hfp-head"><span>🎉 近期节日</span><span class="hfp-tip">点空白处收起</span></div>'
+          + '<div class="hfp-group">国内</div>' + group('cn')
+          + '<div class="hfp-group ab">国外</div>' + group('ab');
+      }
+      function closeFestPop() {
+        if (_festPop) _festPop.classList.remove('show');
+      }
+      function toggleFestPop() {
+        var card = document.querySelector('.hcp-card.hcp-fest');
+        if (!card) return;
+        var p = ensureFestPop();
+        if (p.classList.contains('show')) { closeFestPop(); return; }
+        p.innerHTML = festPopHtml();
+        p.style.visibility = 'hidden';
+        p.classList.add('show');
+        var r = card.getBoundingClientRect();
+        var w = p.offsetWidth, h = p.offsetHeight;
+        var vw = window.innerWidth, vh = window.innerHeight;
+        var left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), Math.max(8, vw - w - 8));
+        var top = r.bottom + 8;
+        if (top + h > vh - 8) top = r.top - h - 8;          // 下方放不下就翻到卡片上方
+        if (top < 8) top = Math.max(8, vh - h - 8);
+        p.style.left = left + 'px';
+        p.style.top = top + 'px';
+        p.style.visibility = 'visible';
+      }
+      function bindFestPop() {
+        var card = document.querySelector('.hcp-card.hcp-fest');
+        if (!card || card.getAttribute('data-pop-bound')) return;
+        card.setAttribute('data-pop-bound', '1');
+        card.addEventListener('click', function (ev) { ev.stopPropagation(); toggleFestPop(); });
+        // 捕获阶段先判断：点卡片本身 → 交给上面的 toggle；点气泡内 → 保持；点其他地方 → 收起
+        document.addEventListener('click', function (ev) {
+          if (!_festPop || !_festPop.classList.contains('show')) return;
+          if (card.contains(ev.target) || _festPop.contains(ev.target)) return;
+          closeFestPop();
+        }, true);
+        document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeFestPop(); });
+        window.addEventListener('resize', closeFestPop);
+        window.addEventListener('scroll', function (ev) {
+          if (_festPop && _festPop.contains(ev.target)) return;   // 气泡内部滚动不关
+          closeFestPop();
+        }, true);
+      }
       function render(){
         try {
           var now = new Date();
@@ -5919,8 +6008,15 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
             document.getElementById('hcp-fest-sub').textContent = (near.date.getMonth() + 1) + '月' + near.date.getDate() + '日 · ' + (ds(near) === 0 ? '就是今天！' : '还有 ' + ds(near) + ' 天');
             var cn = fs.filter(function (f) { return f.kind === 'cn'; })[0];
             var ab = fs.filter(function (f) { return f.kind === 'ab'; })[0];
-            document.getElementById('hcp-fest-cn').textContent = cn ? (cn.name + ' ' + (cn.date.getMonth() + 1) + '/' + cn.date.getDate() + ' · ' + ds(cn) + '天') : '—';
-            document.getElementById('hcp-fest-ab').textContent = ab ? (ab.name + ' ' + (ab.date.getMonth() + 1) + '/' + ab.date.getDate() + ' · ' + ds(ab) + '天') : '—';
+            var cnEl = document.getElementById('hcp-fest-cn');
+            var abEl = document.getElementById('hcp-fest-ab');
+            var cnTxt = cn ? (cn.name + ' ' + (cn.date.getMonth() + 1) + '/' + cn.date.getDate() + ' · ' + ds(cn) + '天') : '—';
+            var abTxt = ab ? (ab.name + ' ' + (ab.date.getMonth() + 1) + '/' + ab.date.getDate() + ' · ' + ds(ab) + '天') : '—';
+            cnEl.textContent = cnTxt;
+            abEl.textContent = abTxt;
+            // v313：整行补充完整标题（悬停可看全），点击卡片弹出全部节日
+            cnEl.title = '国内：' + cnTxt + '（点击查看全部）';
+            abEl.title = '国外：' + abTxt + '（点击查看全部）';
           }
           // 左卡：人生剩余天数
           var L = lifeDates();
@@ -5938,7 +6034,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       }
       function boot(){
         if (document.getElementById('hcp-fest-name') && typeof findSolarForLunar === 'function') {
-          render(); setInterval(render, 30000);
+          render(); bindFestPop(); setInterval(render, 30000);
         } else { setTimeout(boot, 300); }
       }
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
@@ -21372,6 +21468,23 @@ function uvLevelText(uv) {
   if (v <= 10) return '甚高（指数8~10）';
   return '极高（指数≥11）';
 }
+// v313：紫外线短等级（天气卡单行显示用，不带指数区间）
+function uvShortLevel(uv) {
+  const v = parseFloat(uv);
+  if (uv == null || isNaN(v)) return '';
+  if (v < 3) return '最弱';
+  if (v < 5) return '弱';
+  if (v < 7) return '中等';
+  if (v < 8) return '强';
+  if (v <= 10) return '甚高';
+  return '极高';
+}
+// v313：紫外线数值化（1 位小数，整数不显示 .0），保证卡片里给出「具体数字」而不是只有等级
+function uvNumText(uv) {
+  const v = parseFloat(uv);
+  if (uv == null || isNaN(v)) return '';
+  return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '');
+}
 function getWeatherFeelsLike(tempStr, name) {
   const t = parseFloat(tempStr);
   if (isNaN(t)) return '—';
@@ -21575,7 +21688,8 @@ function fetchWeather(onDone) {
           tomorrowLo: (tLoArr != null ? Math.round(tLoArr) + '°' : '—'),
           tomorrowRain: (tRainArr[1] != null ? Math.round(tRainArr[1]) : null),
           tomorrowWind: (tWindArr[1] != null ? Math.round(tWindArr[1]) : null),
-          uv: cur.uv_index
+          uv: cur.uv_index,
+          uvMax: (daily.uv_index_max && daily.uv_index_max[0] != null ? daily.uv_index_max[0] : null)
         });
       })
       .catch(() => {
@@ -21629,7 +21743,14 @@ function renderWeatherFromApi(d) {
     const tip = getWeatherTip(d.name);
     const feelsLike = getWeatherFeelsLike(d.temp, d.name);
     const advice = getWeatherAdvice(d.name);
-    const uvText = uvLevelText(d.uv) || '—';
+    // v313：紫外线给出「具体数值 + 等级 + 今日峰值」，不再只显示等级区间
+    const uvCur = uvNumText(d.uv);
+    const uvMax = uvNumText(d.uvMax);
+    const uvText = uvCur ? (uvCur + ' ' + uvShortLevel(d.uv) + (uvMax ? ' · 峰值' + uvMax : '')) : '—';
+    const uvTitle = uvCur
+      ? ('当前紫外线指数 ' + uvCur + '（' + uvShortLevel(d.uv) + '）'
+        + (uvMax ? '｜今日峰值 ' + uvMax + '（' + uvShortLevel(d.uvMax) + '）' : ''))
+      : '暂无紫外线数据';
     el.innerHTML = `
       <div class="home-card-flex">
         <div class="home-card-body">
@@ -21641,7 +21762,7 @@ function renderWeatherFromApi(d) {
           <div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div>
           <div class="wx-extra-wrap">
             <div class="home-card-note weather-advice"><b>建议：</b>${advice}</div>
-            <div class="home-card-row weather-uv"><span>紫外线</span><b>${uvText}</b></div>
+            <div class="home-card-row weather-uv"><span>紫外线</span><b title="${uvTitle}">${uvText}</b></div>
           </div>
         </div>
         <div class="home-card-foot">
