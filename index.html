@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-288">
+<meta name="hami-build" content="2026-10-17-289">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1160,7 +1160,7 @@
   /* 自媒体账号概览小框 */
   .accounts-grid {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     margin-bottom: 14px;
   }
   .account-card {
@@ -1168,7 +1168,7 @@
     background: rgba(255,255,255,0.5);   /* v255：改半透明，透出背景图（仍有 blur 保证文字可读） */
     backdrop-filter: blur(10px);
     border-radius: 14px;
-    padding: 12px 8px;
+    padding: 12px 5px;
     box-shadow: 0 2px 10px rgba(255, 158, 181, 0.08);
     border: 1px solid var(--c-pink-soft);
   }
@@ -1241,6 +1241,7 @@
     font-size: 20px;
     box-shadow: 0 2px 8px rgba(255,127,158,.35), inset 0 0 0 2px rgba(255,255,255,.65);
   }
+  .acc-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
   .acc-live {
     position: absolute; right: -1px; bottom: -1px;
     width: 11px; height: 11px; border-radius: 50%;
@@ -1253,11 +1254,8 @@
   .acc-chip { flex: none; font-size: 9.5px; line-height: 1; padding: 3px 7px; border-radius: 999px; background: var(--chipBg, #ffe3ea); color: var(--chipFg, #e8447a); font-weight: 700; }
   .account-card .ac-followers { display: flex; align-items: baseline; justify-content: center; gap: 2px; font-size: 24px; font-weight: 800; margin: 6px 0 4px; }
   .account-card .acc-num { background: linear-gradient(90deg, var(--acc, #ff7f9e), var(--acc2, #ffb3c6)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .account-card .ac-follower-change { justify-content: center; }
-  .account-card .ac-change-value.up, .account-card .ac-change-value.down, .account-card .ac-change-value.same { padding: 1px 9px; border-radius: 999px; font-size: 11.5px; }
-  .account-card .ac-change-value.up { background: #ffe4ec; }
-  .account-card .ac-change-value.down { background: #e0f6e9; }
-  .account-card .ac-change-value.same { background: #f6eef2; }
+  .account-card .ac-detail b.ac-up { color: #e74c3c; }
+  .account-card .ac-detail b.ac-down { color: #27ae60; }
   .account-card .ac-detail { background: rgba(255,255,255,.55); border-radius: 8px; padding: 3px 8px; }
   .acc-updated { text-align: center; font-size: 11.5px; color: #d14b73; font-weight: 700; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 5px; }
   .acc-pulse { width: 7px; height: 7px; border-radius: 50%; background: #ff5c8a; display: inline-block; animation: accBlink 1.6s infinite; }
@@ -5332,7 +5330,7 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     </div>
 
     <!-- 自媒体账号概览 -->
-    <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 10px;border-radius:12px;margin-bottom:var(--space-block);">
+    <div id="desktop-accounts-wrap" class="accounts-wrap" style="padding:8px 4px;border-radius:12px;margin-bottom:var(--space-block);">
       <div class="ac-title" style="font-size:16px;font-weight:800;color:#8a6270;text-align:center;margin-bottom:6px;position:relative;">
         <span>自媒体数据</span>
         <span style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#ffffff;background:linear-gradient(90deg,#ff9eb5,#ff7f9e);padding:3px 10px;border-radius:10px;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(209,75,115,0.22);" onclick="promptUpdateAllAccounts()">修改</span>
@@ -20411,34 +20409,37 @@ function toggleChecklist(travelIdx, itemIdx) {
   }
 }
 
-// 渲染粉丝涨跌（涨红跌绿，字体与获赞行一致）
+// 渲染粉丝涨跌（v289：与获赞/本周同款上下排版，无 emoji，涨红跌绿）
 function renderFollowerChange(data) {
   const prev = data.prevFollowers;
   const cur = data.followers;
   if (prev == null || isNaN(prev) || cur == null || isNaN(cur)) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value same">—</span></div>';
+    return '<div class="ac-detail"><span>增减：</span><b>—</b></div>';
   }
   const diff = cur - prev;
   if (diff > 0) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value up">▲ +' + diff + '</span></div>';
+    return '<div class="ac-detail"><span>增减：</span><b class="ac-up">+' + diff + '</b></div>';
   } else if (diff < 0) {
-    return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value down">▼' + diff + '</span></div>';
+    return '<div class="ac-detail"><span>增减：</span><b class="ac-down">' + diff + '</b></div>';
   }
-  return '<div class="ac-follower-change"><span class="ac-change-label">增减</span><span class="ac-change-value same">0</span></div>';
+  return '<div class="ac-detail"><span>增减：</span><b>0</b></div>';
 }
 
+// v289 账号头像（base64 内嵌；换头像只需替换这两串）
+var ACC_AV_MAIN = 'data:image/jpeg;base64,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';
+var ACC_AV_CUSTOM = 'data:image/jpeg;base64,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';
 // 主页自媒体账号概览
 function renderDesktopAccounts() {
   const a = store.accounts;
   const cards = [
     { key: 'big', data: a.big, nameCn: '哈弥老师' },
-    { key: 'small', data: a.small, nameCn: '哈弥定制版' },
+    { key: 'small', data: a.small, nameCn: '定制' },
     { key: 'douyin', data: a.douyin, nameCn: '哈弥老师' }
   ];
   const accTheme = {
-    big:    { emoji: '🎀', acc: '#ff7f9e', acc2: '#ffb3c6', chipBg: '#ffe3ea', chipFg: '#e8447a' },
-    small:  { emoji: '🧸', acc: '#c58ae6', acc2: '#e2c2f5', chipBg: '#f3e8ff', chipFg: '#9a5fd0' },
-    douyin: { emoji: '🎬', acc: '#ff6f9c', acc2: '#ffc2d4', chipBg: '#33323f', chipFg: '#ffffff' }
+    big:    { av: ACC_AV_MAIN, emoji: '🎀', acc: '#ff7f9e', acc2: '#ffb3c6', chipBg: '#ffe3ea', chipFg: '#e8447a' },
+    small:  { av: ACC_AV_CUSTOM, emoji: '🧸', acc: '#c58ae6', acc2: '#e2c2f5', chipBg: '#f3e8ff', chipFg: '#9a5fd0' },
+    douyin: { av: ACC_AV_MAIN, emoji: '🎬', acc: '#ff6f9c', acc2: '#ffc2d4', chipBg: '#33323f', chipFg: '#ffffff' }
   };
   let html = '<div class="accounts-grid">';
   cards.forEach(c => {
@@ -20447,16 +20448,16 @@ function renderDesktopAccounts() {
     const aid = c.data.accountId ? '<span class="acc-aid">@' + escTodo(c.data.accountId) + '</span>' : '';
     html += `<div class="account-card" style="${st}">
       <div class="acc-head">
-        <div class="acc-avatar">${t.emoji}<i class="acc-live"></i></div>
+        <div class="acc-avatar"><img src="${t.av}" alt=""><i class="acc-live"></i></div>
         <div class="acc-id">
           <div class="acc-name">${c.nameCn}</div>
           <div class="acc-handle"><span class="acc-chip">${escTodo(c.data.platform)}</span>${aid}</div>
         </div>
       </div>
-      <div class="ac-followers"><span class="acc-num" data-count="${c.data.followers}">${c.data.followers}</span><span class="ac-unit"> 粉丝</span></div>
+      <div class="ac-followers"><span class="acc-num">${c.data.followers}</span><span class="ac-unit"> 粉丝</span></div>
       ${renderFollowerChange(c.data)}
-      <div class="ac-detail"><span>❤️ 获赞</span><b>${c.data.likes}</b></div>
-      <div class="ac-detail"><span>📅 本周</span><b>${c.data.weekly}</b></div>
+      <div class="ac-detail"><span>获赞：</span><b>${c.data.likes}</b></div>
+      <div class="ac-detail"><span>本周：</span><b>${c.data.weekly}</b></div>
     </div>`;
   });
   html += '</div>';
@@ -20465,22 +20466,6 @@ function renderDesktopAccounts() {
   const luText = lu ? lu : '尚未更新数据';
   html += `<div class="acc-updated"><i class="acc-pulse"></i>${lu ? '实时同步 · 最后更新 ' + luText : '尚未更新数据'}</div>`;
   document.getElementById('desktop-accounts').innerHTML = html;
-  // v285 粉丝数滚动动画（实时感）
-  try {
-    document.querySelectorAll('#desktop-accounts .acc-num[data-count]').forEach(function (el) {
-      const target = parseInt(el.getAttribute('data-count'), 10) || 0;
-      if (!target) return;
-      const dur = 900; let t0 = null;
-      function step(ts) {
-        if (!t0) t0 = ts;
-        let p = Math.min((ts - t0) / dur, 1);
-        p = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(target * p);
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    });
-  } catch (e) {}
 }
 
 // 账号数据更新时间格式化（精确到 年/月/日 时:分）
