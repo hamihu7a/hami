@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-313">
+<meta name="hami-build" content="2026-10-17-314">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4493,6 +4493,10 @@
   .tm-modal-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; color: #7d4a5a; }
   .tm-modal-row b { color: #4a3340; font-weight: 700; }
   .tm-modal-note { font-size: 12px; color: #8a6270; line-height: 1.7; background: rgba(255,255,255,0.55); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+  /* v314：明日黄历「宜/忌」+ 明日天气「建议」折叠成单行（与今日卡片同款手感：点一下弹完整面板） */
+  .tm-modal-note.fold { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; user-select: none; }
+  .tm-modal-note.fold:hover { background: rgba(255,255,255,0.8); }
+  .tm-modal-note.fold.advice b { color: #4a3340; }
   .tm-modal-note b { color: #4a3340; }
   .tm-modal-divider { height: 1px; background: linear-gradient(90deg, transparent, #ffd6e0, transparent); margin: 12px 0; }
   .tm-modal-pill { display: inline-block; padding: 2px 8px; border-radius: 8px; background: #fff; border: 1px solid #ffd6e0; color: #d14b73; font-size: 12px; font-weight: 600; }
@@ -7030,16 +7034,12 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <div class="arm-tabs">
           <button class="arm-tab active" data-type="expense">支出</button>
           <button class="arm-tab" data-type="income">收入</button>
-          <button class="arm-tab" data-type="transfer">转账</button>
         </div>
         <span class="arm-account" id="arm-account-name" onclick="cycleAccount()">默认账本 ▾</span>
       </div>
       <div class="arm-grid" id="arm-cat-grid"></div>
+      <!-- v314：主人不需要「选择账户 / 报销 / 优惠 / 图片」，仅保留「标签」 -->
       <div class="arm-toolbar" id="arm-toolbar">
-        <button class="arm-tool" data-tool="account" title="点击切换账户">⚙️ 选择账户</button>
-        <button class="arm-tool" data-tool="reimburse">💸 报销</button>
-        <button class="arm-tool" data-tool="discount">🏷️ 优惠</button>
-        <button class="arm-tool" data-tool="image">🖼️ 图片</button>
         <button class="arm-tool" data-tool="tag">🔖 标签</button>
       </div>
       <div class="arm-subinput" id="arm-subinput">
@@ -7058,14 +7058,11 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <span class="arm-quick-pill" data-d="yesterday">昨天</span>
         <span class="arm-quick-pill" data-d="-2">前天</span>
       </div>
+      <!-- v314：主人不需要时间选择器——记录时间自动取「打开弹窗的时刻」，旧记录仍按原时间保存 -->
       <div class="arm-meta-row">
         <label class="arm-date-wrap">
           <span class="arm-date-ico">📅</span>
           <input type="date" id="arm-date" class="arm-date-input" />
-        </label>
-        <label class="arm-date-wrap">
-          <span class="arm-date-ico">⏰</span>
-          <input type="time" id="arm-time" class="arm-time-input" value="00:48" />
         </label>
         <span id="arm-note-toggle" onclick="openNoteInput()" style="cursor:pointer;color:#d14b73;font-weight:600;font-size:12px;white-space:nowrap;">备注 ✏️</span>
       </div>
@@ -21973,6 +21970,7 @@ function renderWeatherFromApi(d) {
     // v314：建议不再限字数，卡片上折叠 1 行（超出省略号），点一下弹气泡看全文
     const adv = buildWeatherAdvice(d);
     window._wxAdvice = adv;
+    window._wxWeatherData = d;   // v314：存一份今日天气原始数据，明日建议面板借它的紫外线峰值
     // v314：紫外线必给数值——「紫外线：0.0（最弱）峰值7.1」
     const uvCur = uvNumText(d.uv);
     const uvMax = uvNumText(d.uvMax);
@@ -22055,6 +22053,7 @@ function renderWeatherFallback() {
   // 情况①：显示上次真实拉到的数据，并标明是什么时候的
   const adv = buildWeatherAdvice(d);
   window._wxAdvice = adv;
+  window._wxWeatherData = d;   // v314：存一份今日天气原始数据，明日建议面板借它的紫外线峰值
   const uvCur = uvNumText(d.uv), uvMax = uvNumText(d.uvMax);
   let uvText = '—';
   if (uvCur) uvText = uvCur + '（' + uvShortLevel(d.uv) + '）';
@@ -22087,8 +22086,12 @@ function retryWeather(e) {
   try { fetchWeather(null, true); } catch (err) {}
 }
 
-function showYiJiPop(el) {
-  const hl = window._hlToday;
+// v314：点「宜」或「忌」→ 弹出完整黄历面板（与「今日天气·建议」同一套气泡）
+// 面板里宜、忌全文一次给全，另外附上推算依据（建除、值神、值宿、吉神、凶煞、纳音、彭祖百忌），
+// 让主人能自己核对，而不是看一段无法验证的文案。点空白处 / 滚动页面 / 按 Esc 收起。
+// label 区分「今日 / 明日」，两个入口（今日黄历卡、明日黄历弹窗）共用。
+function showYiJiPop(el, hl, label) {
+  hl = hl || window._hlToday;
   if (!hl) { try { hamiToast('黄历还在计算，稍等一下再点～'); } catch (e) {} return; }
   const yiArr = (hl.yiArr && hl.yiArr.length) ? hl.yiArr : String(hl.yi || '').split(/\s+/).filter(Boolean);
   const jiArr = (hl.jiArr && hl.jiArr.length) ? hl.jiArr : String(hl.ji || '').split(/\s+/).filter(Boolean);
@@ -22104,7 +22107,18 @@ function showYiJiPop(el) {
     ['凶煞', (hl.xiongSha && hl.xiongSha.length) ? hl.xiongSha.join('、') : '—'],
     ['彭祖', hl.pengZu || '—']
   ];
-  openWxPop(el, 'yiji', '📜 今日黄历 · ' + (hl.lunar || ''), rows);
+  openWxPop(el, 'yiji', '📜 ' + (label || '今日') + '黄历 · ' + (hl.lunar || ''), rows);
+}
+// v314：明日黄历弹窗的「宜/忌」折叠入口
+function showTomorrowYiJiPop(el) {
+  if (!window._tmaData) { try { hamiToast('黄历数据还没加载好，稍等一下再点～'); } catch (e) {} return; }
+  showYiJiPop(el, window._tmaData, '明日');
+}
+// v314：明日天气弹窗的「建议」折叠入口
+function showTomorrowAdvicePop(el) {
+  const adv = window._tmwAdvice;
+  if (!adv || !adv.rows || !adv.rows.length) { try { hamiToast('建议还在计算，稍等一下再点～'); } catch (e) {} return; }
+  openWxPop(el, 'advice', '🌤️ 明日建议', adv.rows);
 }
 
 function renderWeatherFortune() {
@@ -22128,8 +22142,8 @@ function renderWeatherFortune() {
         <div class="home-card-row"><span>纳音</span><b>${naYin}</b></div>
         <div class="home-card-row"><span>冲煞</span><b>${hl.chong}${hl.sha ? ' · ' + hl.sha : ''}</b></div>
         <div class="yi-ji-wrap">
-          <div class="home-card-note yi-ji" id="desktop-yi-yi" onclick="showYiJiPop(this)" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="yi-label">宜：</b><span>${yi || '—'}</span></div>
-          <div class="home-card-note yi-ji" id="desktop-yi-ji" onclick="showYiJiPop(this)" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="ji-label">忌：</b><span>${ji || '—'}</span></div>
+          <div class="home-card-note yi-ji" id="desktop-yi-yi" onclick="showYiJiPop(this, window._hlToday, '今日')" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="yi-label">宜：</b><span>${yi || '—'}</span></div>
+          <div class="home-card-note yi-ji" id="desktop-yi-ji" onclick="showYiJiPop(this, window._hlToday, '今日')" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="ji-label">忌：</b><span>${ji || '—'}</span></div>
         </div>
       </div>
       <div class="home-card-foot">
@@ -22463,8 +22477,15 @@ function showTomorrowWeatherModal(e) {
   if (windEl) windEl.textContent = (d.tomorrowWind != null) ? (d.tomorrowWind + ' km/h') : '—';
   const feelsEl = document.getElementById('tmw-feels');
   if (feelsEl) feelsEl.textContent = getWeatherFeelsLike(parseTempMid(d.tomorrowLo, d.tomorrowHi), d.tomorrowName);
+  // v314：明日建议改为「折叠单行 + 点击弹完整面板」，完整内容走 buildWeatherAdvice（无"明日"分组）
+  const tmAdv = buildWeatherAdvice({
+    name: d.tomorrowName, hi: d.tomorrowHi, lo: d.tomorrowLo,
+    humidity: (d.humidity != null && d.humidity !== '—') ? d.humidity : null,
+    uvMax: (window._wxWeatherData && window._wxWeatherData.uvMax != null) ? window._wxWeatherData.uvMax : null
+  });
+  window._tmwAdvice = tmAdv;
   const adviceEl = document.getElementById('tmw-advice');
-  if (adviceEl) adviceEl.textContent = getWeatherAdvice(d.tomorrowName);
+  if (adviceEl) adviceEl.textContent = tmAdv.short;
   document.getElementById('tmw-tip').textContent = getWeatherTip(d.tomorrowName || '');
 
   // 异步拉取选中城市的明日天气
@@ -22525,8 +22546,15 @@ function loadTomorrowWeatherForCity(city, lat, lon) {
       if (windEl) windEl.textContent = (wind != null ? wind + ' km/h' : '—');
       const feelsEl = document.getElementById('tmw-feels');
       if (feelsEl) feelsEl.textContent = getWeatherFeelsLike(parseTempMid(lo, hi), name);
+      // v314：明日建议改为「折叠单行 + 点击弹完整面板」，完整内容走 buildWeatherAdvice（无"明日"分组）
+      const tmAdv = buildWeatherAdvice({
+        name: name, hi: hi, lo: lo,
+        humidity: (humidity != null ? humidity : null),
+        uvMax: (window._wxWeatherData && window._wxWeatherData.uvMax != null) ? window._wxWeatherData.uvMax : null
+      });
+      window._tmwAdvice = tmAdv;
       const adviceEl = document.getElementById('tmw-advice');
-      if (adviceEl) adviceEl.textContent = getWeatherAdvice(name);
+      if (adviceEl) adviceEl.textContent = tmAdv.short;
       const tipEl = document.getElementById('tmw-tip');
       if (tipEl) tipEl.textContent = getWeatherTip(name || '');
     })
@@ -22560,6 +22588,7 @@ function showTomorrowAlmanacModal(e) {
   document.getElementById('tma-chongsha').textContent = hl.chong + (hl.sha ? ' · ' + hl.sha : '');
   document.getElementById('tma-yi').textContent = yiTxt;
   document.getElementById('tma-ji').textContent = jiTxt;
+  window._tmaData = hl;   // v314：供「宜/忌」折叠气泡读取
 
   const mo = document.getElementById('tm-almanac-modal');
   if (mo) { mo.classList.add('show'); document.body.style.overflow = 'hidden'; }
@@ -24141,7 +24170,7 @@ setInterval(updateClock, 1000);
     <div class="tm-modal-row"><span>降水概率</span><b id="tmw-rain"></b></div>
     <div class="tm-modal-row"><span>最大风速</span><b id="tmw-wind"></b></div>
     <div class="tm-modal-row"><span>体感</span><b id="tmw-feels"></b></div>
-    <div class="tm-modal-row"><span>建议</span><b id="tmw-advice"></b></div>
+    <div class="tm-modal-note fold advice" id="tmw-advice-row" onclick="showTomorrowAdvicePop(this)" title="点击查看完整建议（天气 / 穿衣 / 防晒 / 湿度）"><b>建议：</b><span id="tmw-advice"></span></div>
     <div class="tm-modal-note" id="tmw-tip"></div>
     <div class="tm-modal-divider"></div>
     <div style="text-align:center;font-size:12px;color:#8a6270;">数据仅供参考，出门前记得看最新预报哦</div>
@@ -24158,8 +24187,8 @@ setInterval(updateClock, 1000);
     <div class="tm-modal-row"><span>生肖</span><span class="tm-modal-pill" id="tma-animal"></span></div>
     <div class="tm-modal-row"><span>纳音</span><b id="tma-wx"></b></div>
     <div class="tm-modal-row"><span>冲煞</span><b id="tma-chongsha"></b></div>
-    <div class="tm-modal-note"><b>宜：</b><span id="tma-yi"></span></div>
-    <div class="tm-modal-note"><b>忌：</b><span id="tma-ji"></span></div>
+    <div class="tm-modal-note fold" onclick="showTomorrowYiJiPop(this)" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b>宜：</b><span id="tma-yi"></span></div>
+    <div class="tm-modal-note fold" onclick="showTomorrowYiJiPop(this)" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b>忌：</b><span id="tma-ji"></span></div>
   </div>
 </div>
 
