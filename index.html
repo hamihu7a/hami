@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-314">
+<meta name="hami-build" content="2026-10-17-315">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6737,6 +6737,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
 
     <div class="tip-box">
       💕 <b>使用说明</b>：每3天更新1条推荐，互联网搜集和AI原创交替进行。感兴趣的内容点开看详情，可以借鉴到自己的小红书/抖音~<br>
+      🎯 <b>内容定位</b>：主人是模拟人生<b>捏脸博主</b>，本栏推荐已按 <b>70% 捏人向</b>（捏脸/妆容/发型/复刻/改造）+ 30% 其他向（MOD/攻略/穿搭/名场面）配比，轮换着给灵感~
       ⚠️ <b>数据来源</b>：当前已结合「公开搜索的 2026 真实热点趋势」（如 Royalty & Legacy 扩张包、Bridgerton 联动、无CC建造回潮、Maxis Match CC 等）+ 经验撰写，互动数为趋势参考。配置 <code>REDFOX_API_KEY</code> 后，将自动用「小红书爆款查询 / 七日爆款 / 低粉爆款 / 抖音热榜」等技能拉取真实爆款数据刷新本栏（届时互动数改为真实值）。
     </div>
 
@@ -13705,31 +13706,43 @@ function checkCheckinAlerts() {
 // ⚠️ 当前为「经验草稿」：基于小红书/抖音「模拟人生」赛道内容规律撰写，互动数为经验预估。
 // 配置 REDFOX_API_KEY 后，将自动用 小红书爆款查询/七日爆款/低粉爆款/抖音热榜 等技能
 // 拉取真实爆款数据刷新本池（见 refreshInspireFromLive 预留位）。
+//
+// v315：主人是「模拟人生捏脸博主」——池子按 70% 捏人向重排：
+//   · 共 14 条，其中 cas:true（捏人/捏脸向）10 条 = 71.4% ≈ 70%，其余 4 条保持账号多样性；
+//   · 按顺序轮换（ensureDailyInspire / refreshInspireToday 的 count % length），
+//     每转满一圈即精确命中 10:4 的捏人/其他配比；
+//   · 4 条非捏人向均匀撒在 2/6/9/13 位，循环时最长连续 3 条同倾向，不会扎堆；
+//   · AI原创/互联网搜集维持 7:7；新增条目仍受 INSPIRE_BLACKLIST（房屋/别墅/建造/城堡）约束。
+//   · 以后加新草稿时：优先补 cas:true 的捏人向，保持全池捏人向占比 ≥ 70%。
 const DAILY_INSPIRE_POOL = [
-  { type: 'ai', platform: '小红书', topic: '捏脸参数', title: 'Sims4捏脸参数分享｜手残党也能捏出神颜', traffic: '爆款',
+  { type: 'ai', platform: '小红书', topic: '捏脸参数', title: 'Sims4捏脸参数分享｜手残党也能捏出神颜', traffic: '爆款', cas: true,
     detail: { copy: '把整套脸部滑块数值截图发出来，从颧骨、鼻梁到唇形一步步对照调，再附一张「调前vs调后」对比图。新手照着抄就能捏出干净舒服的颜值脸，评论区还能让人点单捏指定风格。', tags: '#模拟人生4 #捏脸 #sims4捏脸 #神颜 #模拟人生教程', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '参数图+前后对比是爆点，结尾引导「想捏谁评论区点单」拉互动', link: '' } },
-  { type: 'web', platform: '小红书', topic: '秘籍大全', title: '模拟人生4作弊码大全｜30个必收藏神级指令', traffic: '爆款',
-    detail: { copy: '按场景分类整理：加钱（motherlode / kaching）、锁定需求（sims.fill_all_commodities）、快速升职、解锁全部物品。每条配「怎么打开控制台+粘贴什么」，收藏率极高，适合置顶当长尾引流。', tags: '#模拟人生4 #作弊码 #秘籍 #sims4攻略 #模拟人生', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '清单/合集类收藏率最高，做成图文长图更易存', link: '' } },
-  { type: 'web', platform: '抖音', topic: '治愈日常', title: '把模拟人生当电子宠物养｜我的治愈日常', traffic: '爆款',
-    detail: { copy: '不追求技术，主打情绪价值：清晨遛狗、煮咖啡、看Sims发呆的慢镜头+轻音乐。文案走「今天也辛苦啦」的陪伴感，戳中打工人的电子陪伴需求，完播率高。', tags: '#模拟人生 #sims4 #治愈系 #游戏vlog #电子陪伴', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '抖音重BGM与情绪，前3秒放最治愈画面锁完播', link: '' } },
   { type: 'web', platform: '小红书', topic: 'MOD清单', title: 'Sims4必装MOD清单｜UI+玩法+美化一次搞定', traffic: '爆款',
     detail: { copy: '分三块：UI优化（更好用）、玩法扩展（更有趣）、美化（更出片），每块列名称+作用+获取方式。亲测不冲突、不掉帧，降低新手踩坑成本。', tags: '#模拟人生4 #MOD #模拟人生4mod #必装mod #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '清单类收藏高，定期出「2026新版必装」迭代', link: '' } },
-  { type: 'ai', platform: '抖音', topic: '挑战玩法', title: '100个宝宝挑战DAY1｜我的血族Legacy开局', traffic: '爆款',
-    detail: { copy: '开场立人设：单亲血族妈妈，目标100个孩子。第一集讲设定+初始小屋+第一个崽的诞生，留钩子「下集崽要上学了」。Legacy 玩法2026回潮，连载型内容粉丝粘性最强。', tags: '#模拟人生4 #100个宝宝挑战 #legacy #模拟人生剧情 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：Legacy回潮）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '做成长连载，每集结尾留悬念引导追更', link: '' } },
-  { type: 'web', platform: '抖音', topic: '人物复刻', title: '把爱豆复刻进Sims4｜捏脸全过程记录', traffic: '爆款',
+  { type: 'web', platform: '抖音', topic: '人物复刻', title: '把爱豆复刻进Sims4｜捏脸全过程记录', traffic: '爆款', cas: true,
     detail: { copy: '选一个大家熟悉的爱豆/角色，从参考图→逐步捏脸→换装→最终成片，用快剪+卡点BGM。粉丝向内容传播强，容易出圈被转。', tags: '#模拟人生4 #捏脸 #爱豆复刻 #sims4 #饭圈', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '蹭热点角色/剧集，发布时机跟热点走', link: '' } },
-  { type: 'web', platform: '抖音', topic: '搞笑名场面', title: 'Sims4离谱bug合集｜笑不活了', traffic: '爆款',
-    detail: { copy: '剪辑游戏里最离谱的穿模、鬼畜动作、NPC迷惑行为，配夸张音效和字幕吐槽。搞笑类天然高转发，适合抖音信息流。', tags: '#模拟人生 #sims4 #搞笑 #游戏名场面 #游戏搞笑', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '前2秒放最离谱画面，配热门BGM提量', link: '' } },
+  { type: 'ai', platform: '小红书', topic: '风格捏脸', title: '同一张脸的多种打开方式｜清冷/甜酷/老钱风一键切换', traffic: '爆款', cas: true,
+    detail: { copy: '固定同一套骨相，只改妆容、发型和穿搭，捏出清冷感、甜酷感、老钱风三个版本并列展示。重点在「骨相不变、气质全变」的反差，让人一眼看懂风格到底由什么决定。结尾问一句「下一期想看什么风格」攒互动。', tags: '#模拟人生4 #捏脸 #风格化 #sims4捏脸 #气质感', stats: '趋势参考：公开搜索 2026-08（真实热点：风格化捏脸回潮）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '同骨相多风格对比最出片，适合做成固定栏目追更', link: '' } },
+  { type: 'web', platform: '抖音', topic: '改造对比', title: 'Sims4素人改造｜捏脸前后对比能有多狠', traffic: '爆款', cas: true,
+    detail: { copy: '拿一张「普通初始脸」开始，只动脸部滑块不改妆发，记录每一步变化，最后放调前vs调后同角度对比。反差越大越吸睛，抖音前3秒直接放对比结果留住人。', tags: '#模拟人生4 #捏脸 #改造 #前后对比 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：改造对比类高完播）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '前3秒放最终成品脸、过程倒叙，完播率更高', link: '' } },
   { type: 'ai', platform: '小红书', topic: '入门避坑', title: 'Sims4新手避坑指南｜这些钱别乱花', traffic: '潜力',
     detail: { copy: '写给刚入坑的玩家：开局职业怎么选、第一套房买哪、哪些DLC性价比高、哪些坑别踩。长尾搜索流量好，适合当账号置顶帖。', tags: '#模拟人生4 #入门 #攻略 #新手 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '做成「新手三部曲」系列，沉淀搜索流量', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '应季限定', title: 'Sims4冬日限定｜圣诞小屋+节日穿搭', traffic: '潜力',
-    detail: { copy: '应季内容：搭一座圣诞小屋（雪花/壁炉/礼物堆），再给Sims换上红绿节日穿搭，附应季CC链接。时效性强，节日前后发最香。', tags: '#模拟人生4 #圣诞 #冬日 #节日穿搭 #应季', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '卡节日前2周发，借节日搜索流量', link: '' } },
+  { type: 'ai', platform: '小红书', topic: '点单互动', title: '评论区点单捏人｜粉丝想捏谁，我就捏谁', traffic: '潜力', cas: true,
+    detail: { copy: '固定栏目：从评论区挑「想被捏的角色/风格」，直播或录屏全程捏给粉丝看，成品图回帖@点单的人。参与感强、复访高，还能自然接到定制单咨询。', tags: '#模拟人生4 #捏脸 #点单 #粉丝互动 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：点单类互动笔记涨粉快）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '置顶评论收集点单、每期翻牌，把观众变成回头粉', link: '' } },
+  { type: 'ai', platform: '小红书', topic: '妆容细节', title: 'Sims4妆容精讲｜眼线、唇釉、痣和雀斑怎么点才高级', traffic: '爆款', cas: true,
+    detail: { copy: '专讲CC妆容的细节堆法：眼线粗细与眼尾走向、唇釉叠涂、痣点在哪显脸小、雀斑的疏密节奏。每篇只讲一个部位，配高清特写截图，收藏向明显。', tags: '#模拟人生4 #捏脸 #妆容 #CC #sims4妆容', stats: '趋势参考：公开搜索 2026-08（真实热点：CC妆容教程需求旺）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '一个部位一篇做成系列，标题带「第X期」方便追更', link: '' } },
+  { type: 'web', platform: '抖音', topic: '搞笑名场面', title: 'Sims4离谱bug合集｜笑不活了', traffic: '爆款',
+    detail: { copy: '剪辑游戏里最离谱的穿模、鬼畜动作、NPC迷惑行为，配夸张音效和字幕吐槽。搞笑类天然高转发，适合抖音信息流。', tags: '#模拟人生 #sims4 #搞笑 #游戏名场面 #游戏搞笑', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '前2秒放最离谱画面，配热门BGM提量', link: '' } },
+  { type: 'web', platform: '小红书', topic: '发型搭配', title: 'Maxis Match发型图鉴｜按脸型选发型不翻车', traffic: '爆款', cas: true,
+    detail: { copy: '按圆脸/方脸/长脸分类，推荐适配的Maxis Match发型（标注作者名与获取方式），每类配「捏脸档里直接套」的演示图。帮粉丝避坑「好看但不适配」的发型。', tags: '#模拟人生4 #捏脸 #发型 #MaxisMatch #CC #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：Maxis Match 头发 CC 持续高热）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '发型×脸型适配是刚需，长尾搜索流量稳', link: '' } },
+  { type: 'ai', platform: '抖音', topic: '男颜捏脸', title: 'Sims4男颜捏脸｜稀缺赛道这样捏超上头', traffic: '潜力', cas: true,
+    detail: { copy: '男颜向内容供给少、竞争小：讲眉骨与下颌的男性化处理、胡茬青灰影的用法，配「校园/轻熟/硬汉」三种气质演示。快剪+卡点BGM，评论区会涌现「求出数据档」。', tags: '#模拟人生4 #捏脸 #男颜 #sims4 #稀缺赛道', stats: '趋势参考：公开搜索 2026-08（真实热点：男颜向内容供需失衡）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '男颜是蓝海，固定更新容易做到细分第一', link: '' } },
+  { type: 'ai', platform: '小红书', topic: '五官精讲', title: '捏脸五官精讲｜眼睛/鼻梁/唇形逐个抠', traffic: '爆款', cas: true,
+    detail: { copy: '把五官拆成可复用的方法论：眼睛的大小与眼距黄金区间、鼻梁起点决定侧颜立体度、唇形厚薄与嘟嘟唇的关系。每篇一个器官+可抄的数值区间，做成「五官三部曲」。', tags: '#模拟人生4 #捏脸 #五官 #教程 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：数值型教程收藏率高）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '数值区间型内容最容易被收藏转发，适合置顶', link: '' } },
   { type: 'web', platform: '小红书', topic: 'CC穿搭', title: '今日Sims OOTD｜温柔奶茶色系+Maxis Match CC', traffic: '潜力',
     detail: { copy: '每天/每周固定栏目：给Sims搭一套主题穿搭（奶茶色/学院风/老钱风），标清每件CC名字和获取方式。2026 最热的是 Maxis Match 头发 CC（如 Knox、Boho Flower Bun、Mei），穿搭类互动高，可和你的美化档联动导流。', tags: '#模拟人生4 #穿搭 #OOTD #CC #sims4穿搭', stats: '趋势参考：公开搜索 2026-08（真实热点：Maxis Match CC热）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '固定更新频率养成追更，CC注明来源避争议', link: '' } },
-  { type: 'web', platform: '抖音', topic: '剧情连载', title: '三代家族恩怨EP.1｜比剧还上头', traffic: '爆款',
-    detail: { copy: '用游戏画面+旁白讲一个家族三代的爱恨情仇，第一集埋矛盾（遗产/私生子/破产），钩子拉满。剧情向完播和关注转化都高。', tags: '#模拟人生4 #剧情 #家族故事 #sims4 #模拟人生故事', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '剧本式分集，每集留反转，引导关注看下集', link: '' } },
-  { type: 'web', platform: '小红书', topic: 'Legacy玩法', title: 'Royalty & Legacy贵族开局｜王朝Legacy这样玩才上头', traffic: '爆款',
-    detail: { copy: '2026 最火扩张包 Royalty & Legacy 真的上头：王室家族、爵位继承、王朝声望、政治丑闻一套齐全。笔记讲「平民→贵族→王朝」三阶段开局，配家族树截图+继承冲突名场面，钩子拉满。', tags: '#模拟人生4 #RoyaltyLegacy #legacy #王朝玩法 #模拟人生剧情', stats: '趋势参考：公开搜索 2026-08（真实热点：Royalty&Legacy 扩张包爆火）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '蹭扩张包热度，做「开局设定→继承危机→王朝崛起」连载', link: '' } }
+  { type: 'web', platform: '小红书', topic: '复刻技巧', title: '明星脸复刻有公式｜参考图怎么对标', traffic: '潜力', cas: true,
+    detail: { copy: '教方法而不是堆参数：参考图怎么裁三庭五眼、比例尺量法、先定型再调细节的顺序。用同一明星的正脸/侧脸两张图演示，让粉丝学会自己复刻任意角色。', tags: '#模拟人生4 #捏脸 #复刻 #明星脸 #教程', stats: '趋势参考：公开搜索 2026-08（真实热点：明星复刻类常青）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '授人以渔的教程信任感最强，适合引流到定制服务', link: '' } },
 ];
 
 // 笔记推荐黑名单（主人要求：规避 房屋 / 别墅 / 建造 类内容）
@@ -17503,7 +17516,7 @@ function renderInspire() {
       <div class="empty-state">
         <div class="big-icon">📚</div>
         <p>暂无推荐</p>
-        <p style="font-size:12px;margin-top:6px;">每3天会更新1条推荐，互联网搜集和AI原创交替~</p>
+        <p style="font-size:12px;margin-top:6px;">每3天会更新1条推荐，互联网搜集和AI原创交替，主打70%捏人向~</p>
       </div>`;
   } else {
     const latest = sorted[0];
