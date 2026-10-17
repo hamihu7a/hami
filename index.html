@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-297">
+<meta name="hami-build" content="2026-10-17-298">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5632,7 +5632,11 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         </div>
         <div class="co-field">
           <label>🎨 档数（销量）</label>
-          <input type="number" id="beauty-count" inputmode="decimal" min="0" step="1" placeholder="如 3" oninput="updateBeautyAmount()" />
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button type="button" onclick="beautyCountStep(-1)" aria-label="减少一档" style="flex:none;width:40px;height:40px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:18px;font-weight:800;cursor:pointer;line-height:1;">−</button>
+            <input type="number" id="beauty-count" inputmode="numeric" min="1" step="1" value="1" oninput="updateBeautyAmount()" style="flex:1;text-align:center;min-height:40px;" />
+            <button type="button" onclick="beautyCountStep(1)" aria-label="增加一档" style="flex:none;width:40px;height:40px;border:1.5px solid var(--c-pink-deep,#d14b73);border-radius:10px;background:#fff;color:var(--c-pink-deep,#d14b73);font-size:18px;font-weight:800;cursor:pointer;line-height:1;">＋</button>
+          </div>
         </div>
         <div class="co-field">
           <label>💰 金额（元，自动=档数×98；可手动改，以手动为准）</label>
@@ -6044,24 +6048,6 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
         <div class="co-field">
           <label>笔记标题</label>
           <input type="text" id="mr-title" placeholder="如：复刻某明星同款脸·参数公开">
-        </div>
-        <div class="co-field">
-          <label>更新了多少条</label>
-          <input type="number" id="mr-count" min="1" step="1" value="1" inputmode="numeric" placeholder="如 3">
-        </div>
-        <div class="co-field">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#7d4a5a;">
-            <input type="checkbox" id="mr-douyin" checked style="width:18px;height:18px;"> 是否同步抖音
-          </label>
-        </div>
-        <div class="co-field">
-          <label>笔记链接（可选）</label>
-          <input type="text" id="mr-link" placeholder="小红书/抖音笔记链接，方便复盘时回看">
-        </div>
-        <div class="co-field" style="display:flex;gap:8px;">
-          <div style="flex:1;"><label>👍 赞</label><input type="number" id="mr-likes" min="0" value="0" inputmode="numeric" placeholder="0" style="width:100%;"></div>
-          <div style="flex:1;"><label>⭐ 藏</label><input type="number" id="mr-collects" min="0" value="0" inputmode="numeric" placeholder="0" style="width:100%;"></div>
-          <div style="flex:1;"><label>💬 评</label><input type="number" id="mr-comments" min="0" value="0" inputmode="numeric" placeholder="0" style="width:100%;"></div>
         </div>
         <div class="co-field">
           <label>备注（可选）</label>
@@ -14638,6 +14624,15 @@ let editingBeautyIdx = -1;
 let beautyAmountManuallyEdited = false;
 function onBeautyAmountManualEdit() { beautyAmountManuallyEdited = true; }
 function resetBeautyAmountAuto() { beautyAmountManuallyEdited = false; updateBeautyAmount(); }
+// v298：档数 −/＋ 上下键；每点一档金额自动=档数×98（手动改过金额时以手动为准，可点「按档数重算」恢复）
+function beautyCountStep(delta) {
+  const cEl = document.getElementById('beauty-count');
+  if (!cEl) return;
+  let c = parseInt(cEl.value) || 0;
+  c = Math.max(1, c + delta);
+  cEl.value = c;
+  updateBeautyAmount();
+}
 function openBeautyRecordModal(idx) {
   editingBeautyIdx = (typeof idx === 'number' && idx >= 0 && store.beautyRecords && store.beautyRecords[idx]) ? idx : -1;
   const dEl = document.getElementById('beauty-date');
@@ -14656,9 +14651,9 @@ function openBeautyRecordModal(idx) {
     if (title) title.textContent = '✏️ 修改美化档';
   } else {
     if (dEl) dEl.value = todayStr();
-    if (cEl) cEl.value = '';
+    if (cEl) cEl.value = '1';
     if (nEl) nEl.value = '';
-    if (aEl) aEl.value = '';
+    if (aEl) aEl.value = MOD_PRICE.toFixed(2);
     beautyAmountManuallyEdited = false;
     if (title) title.textContent = '➕ 记美化档';
   }
@@ -16273,25 +16268,29 @@ function closeMediaRecordModal() {
 function submitMediaRecord() {
   const date = (document.getElementById('mr-date').value || todayStr());
   const title = (document.getElementById('mr-title').value || '').trim();
-  const count = Math.max(1, parseInt(document.getElementById('mr-count').value) || 1);
-  const douyin = !!document.getElementById('mr-douyin').checked;
-  const link = (document.getElementById('mr-link').value || '').trim();
-  const likes = parseInt(document.getElementById('mr-likes').value) || 0;
-  const collects = parseInt(document.getElementById('mr-collects').value) || 0;
-  const comments = parseInt(document.getElementById('mr-comments').value) || 0;
   const note = (document.getElementById('mr-note').value || '').trim();
   const accName = mrAccount === 'big' ? '🎨 美化档大号' : mrAccount === 'small' ? '👤 定制人物小号' : '🎵 抖音';
   if (!store.mediaRecords) store.mediaRecords = [];
-  // v145：用稳定 id 重新定位真实索引（编辑期间数组可能被后台合并改动过，原 idx 已失效，
-  // 否则会"改了却落到另一条/越界变新增"，正是"修改没成功反而多一条一模一样"的根因）
-  let realEditIdx = -1;
+  // v298：弹窗仅保留 日期/标题/备注；条数/同步抖音/链接/赞藏评不再填写——
+  // 编辑旧记录时保留原值，新增时用默认（1 条、已同步抖音、无链接、0 赞藏评）
+  let realEditIdx0 = -1;
   if (editingMrId != null) {
-    realEditIdx = (typeof editingMrId === 'string' && editingMrId.indexOf('__i') === 0)
+    realEditIdx0 = (typeof editingMrId === 'string' && editingMrId.indexOf('__i') === 0)
       ? parseInt(editingMrId.slice(3), 10)
       : (store.mediaRecords.findIndex(function (x) { return x && x.id === editingMrId; }));
   } else {
-    realEditIdx = editingMrIdx;
+    realEditIdx0 = editingMrIdx;
   }
+  const _origMr = (realEditIdx0 >= 0 && store.mediaRecords[realEditIdx0]) ? store.mediaRecords[realEditIdx0] : null;
+  const count = _origMr ? (_origMr.count || 1) : 1;
+  const douyin = _origMr ? (_origMr.douyin !== false) : true;
+  const link = _origMr ? (_origMr.link || '') : '';
+  const likes = _origMr ? (_origMr.likes || 0) : 0;
+  const collects = _origMr ? (_origMr.collects || 0) : 0;
+  const comments = _origMr ? (_origMr.comments || 0) : 0;
+  // v145：用稳定 id 重新定位真实索引（编辑期间数组可能被后台合并改动过，原 idx 已失效，
+  // 否则会"改了却落到另一条/越界变新增"，正是"修改没成功反而多一条一模一样"的根因）
+  const realEditIdx = realEditIdx0;
   if (realEditIdx >= 0 && store.mediaRecords[realEditIdx]) {
     // 原地修改：保留原 id，仅更新字段
     const orig = store.mediaRecords[realEditIdx];
