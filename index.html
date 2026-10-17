@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-299">
+<meta name="hami-build" content="2026-10-17-300">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3888,8 +3888,8 @@
     /* 账户面板：恢复到桌面 grid（mobile 是 flex 单列） */
     .accounts-grid {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 6px !important;
     }
     /* 抽屉和弹窗：iPad 不要全屏 */
     .hami-drawer {
@@ -4019,9 +4019,9 @@
   /* 自媒体账号卡：保持横向三卡紧凑（主人明确要求，不要被 v18 拆成上下排/空旷）。
      用 flex + 每卡弹性均分，宽度不足时允许轻微压缩，仍挤在同一行 */
   body.hami-force-desktop .accounts-grid {
-    display: flex !important;
-    flex-wrap: nowrap;
-    gap: 10px !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
   body.hami-force-desktop .account-card {
     flex: 1 1 0 !important;
@@ -4221,7 +4221,7 @@
   /* 账户面板保持 grid 但允许卡片横向排开 */
   body.hami-force-mini .accounts-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 6px !important;
   }
   body.hami-force-mini .modal-card { max-width: 320px !important; border-radius: 16px !important; }
