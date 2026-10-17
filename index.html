@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-327">
+<meta name="hami-build" content="2026-10-17-328">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1224,7 +1224,8 @@
     overflow: hidden;
     background: linear-gradient(180deg, #ffffff 0%, rgba(255,240,246,.72) 100%);
     border: 1px solid rgba(255,183,204,.55);
-    box-shadow: 0 3px 14px rgba(255,127,158,.14);
+    /* v328：主人要底部阴影像「今日时光」卡那样——同色系加重一档，底部感更明显 */
+    box-shadow: 0 4px 12px rgba(233,120,158,0.22);
     transition: transform .2s, box-shadow .2s;
   }
   .account-card::before {
@@ -1232,7 +1233,7 @@
     position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, var(--acc, #ff7f9e), var(--acc2, #ffb3c6));
   }
-  .account-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,127,158,.22); }
+  .account-card:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(233,120,158,0.3); }
   .acc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
   .acc-avatar {
     position: relative; flex: none;
