@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-303">
+<meta name="hami-build" content="2026-10-17-304">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9634,6 +9634,8 @@ async function pullAndMerge() {
     // v148 同步核心：mergeStoreInto 已改为「本地优先并集」——本地 localStorage 是绝对事实来源，
     // 云端只补充本地没有的记录，绝不覆盖/删除本地已有数据（根治刷新/同步丢数据）。
     mergeStoreInto(store, remote.store);
+    // v304：天气位置以云端(通常为手机端)为准，跨端保持一致（不受本机旧自动定位干扰）
+    try { if (remote.store && remote.store.weatherLocation) { store.weatherLocation = remote.store.weatherLocation; } } catch(e) {}
     // v205：云端合并后立刻把体重数值收敛为斤 + 清理同日重复（幂等），
     // 防止云端残留的「公斤口径 / 被反复翻倍」的旧值混进本地造成 4 倍、8 倍。
     try { migrateWeightUnitToJin(); } catch (e) {}
@@ -20845,59 +20847,93 @@ function break4(s) {
   return s;
 }
 
+// 等云同步就绪（再决定天气定位），避免电脑端在云端还没拉到手机位置时抢先定位、覆盖手机的位置
+function hamiWhenCloudReady(cb) {
+  if (typeof hamiSyncReady !== 'undefined' && hamiSyncReady) { cb(); return; }
+  let _t = 0;
+  const iv = setInterval(function () {
+    _t++;
+    if ((typeof hamiSyncReady !== 'undefined' && hamiSyncReady) || _t > 20) {
+      clearInterval(iv); cb();
+    }
+  }, 300);
+}
+
 // 尝试获取当前位置与城市名（失败则保持默认值）
+// v304：跨端一致——优先用云端共享位置（手机端定位后写入 store.weatherLocation，电脑端直接读取）；
+//       仅当云端&本地都无记录时才用浏览器定位，并把结果广播到云端，供另一端读取。
 function detectLocation(onDone) {
   onDone = onDone || function () {};
   const today = todayStr();
-  try {
-    const raw = localStorage.getItem('hami_location_cache');
-    if (raw) {
-      const c = JSON.parse(raw);
-      if (c && c.date === today && c.lat != null && c.lon != null) {
-        WEATHER_LAT = parseFloat(c.lat);
-        WEATHER_LON = parseFloat(c.lon);
-        if (c.city) WEATHER_CITY_CN = c.city;
-        if (c.cityEn) WEATHER_CITY = c.cityEn;
+  hamiWhenCloudReady(function () {
+    // 1) 云端共享位置（手机端授权定位后写入，电脑端直接读取 → 保持一致）
+    try {
+      const shared = (typeof store !== 'undefined' && store) ? store.weatherLocation : null;
+      if (shared && shared.lat != null && shared.lon != null) {
+        WEATHER_LAT = parseFloat(shared.lat);
+        WEATHER_LON = parseFloat(shared.lon);
+        if (shared.city) WEATHER_CITY_CN = shared.city;
+        if (shared.cityEn) WEATHER_CITY = shared.cityEn;
         onDone();
         return;
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
 
-  if (!navigator.geolocation) {
-    onDone();
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    function (pos) {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      WEATHER_LAT = lat;
-      WEATHER_LON = lon;
-      // 用 BigDataCloud 免费反地理编码获取城市名
-      fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=zh')
-        .then(r => r.ok ? r.json() : Promise.reject(new Error('geo http ' + r.status)))
-        .then(data => {
-          const city = (data && (data.city || data.locality || data.principalSubdivision)) || '本地';
-          const cityEn = (data && data.localityInfo && data.localityInfo.informative && data.localityInfo.informative[0] && data.localityInfo.informative[0].name) || 'Local';
-          WEATHER_CITY_CN = city;
-          WEATHER_CITY = cityEn;
-          try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: city, cityEn: cityEn })); } catch(e) {}
+    // 2) 本地当日缓存（避免每次刷新都弹定位请求）
+    try {
+      const raw = localStorage.getItem('hami_location_cache');
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (c && c.date === today && c.lat != null && c.lon != null) {
+          WEATHER_LAT = parseFloat(c.lat);
+          WEATHER_LON = parseFloat(c.lon);
+          if (c.city) WEATHER_CITY_CN = c.city;
+          if (c.cityEn) WEATHER_CITY = c.cityEn;
           onDone();
-        })
-        .catch(function () {
-          WEATHER_CITY_CN = '本地';
-          WEATHER_CITY = 'Local';
-          try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: '本地', cityEn: 'Local' })); } catch(e) {}
-          onDone();
-        });
-    },
-    function () {
-      // 用户拒绝或定位失败：保持默认/缓存城市
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // 3) 浏览器定位（仅当云端&本地都无记录时才定位，并广播到云端）
+    if (!navigator.geolocation) {
       onDone();
-    },
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
-  );
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        WEATHER_LAT = lat;
+        WEATHER_LON = lon;
+        // 用 BigDataCloud 免费反地理编码获取城市名
+        fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=zh')
+          .then(r => r.ok ? r.json() : Promise.reject(new Error('geo http ' + r.status)))
+          .then(data => {
+            const city = (data && (data.city || data.locality || data.principalSubdivision)) || '本地';
+            const cityEn = (data && data.localityInfo && data.localityInfo.informative && data.localityInfo.informative[0] && data.localityInfo.informative[0].name) || 'Local';
+            WEATHER_CITY_CN = city;
+            WEATHER_CITY = cityEn;
+            try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: city, cityEn: cityEn })); } catch(e) {}
+            // 广播到云端，供另一端（如电脑端）读取，保持一致
+            try { if (!store.weatherLocation) { store.weatherLocation = { lat: lat, lon: lon, city: city, cityEn: cityEn, ts: Date.now() }; saveData(); } } catch(e2) {}
+            onDone();
+          })
+          .catch(function () {
+            WEATHER_CITY_CN = '本地';
+            WEATHER_CITY = 'Local';
+            try { localStorage.setItem('hami_location_cache', JSON.stringify({ date: today, lat: lat, lon: lon, city: '本地', cityEn: 'Local' })); } catch(e) {}
+            try { if (!store.weatherLocation) { store.weatherLocation = { lat: lat, lon: lon, city: '本地', cityEn: 'Local', ts: Date.now() }; saveData(); } } catch(e2) {}
+            onDone();
+          });
+      },
+      function () {
+        // 用户拒绝或定位失败：保持默认/缓存城市
+        onDone();
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+    );
+  });
 }
 
 function fetchWeather(onDone) {
@@ -21329,6 +21365,8 @@ function applyWeatherCity(nameCn, lat, lon, alsoFetch) {
     // 保留 pinyin 形式作为 wttr.in 兜底（取拼音可能不准确，open-meteo 才是主用，故用空，主用中文）
     WEATHER_CITY = nameCn || 'Local';
     localStorage.setItem('hami_weather_city', JSON.stringify({ name: nameCn, lat: WEATHER_LAT, lon: WEATHER_LON, ts: Date.now() }));
+    // 手动选城市 = 主人明确指定，写入云端共享位置（覆盖自动定位），手机/电脑两端都生效
+    try { store.weatherLocation = { lat: WEATHER_LAT, lon: WEATHER_LON, city: nameCn || '本地', cityEn: nameCn || 'Local', ts: Date.now(), manual: true }; saveData(); } catch(e3) {}
     // 同步删除位置缓存，避免 detectLocation 又把它覆盖回定位
     try { localStorage.removeItem('hami_location_cache'); } catch(e) {}
     try { localStorage.removeItem('hami_weather_cache_v3'); try { localStorage.removeItem('hami_weather_cache_v2'); } catch(e2) {} } catch(e) {}
