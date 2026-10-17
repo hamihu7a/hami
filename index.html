@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-16-285">
+<meta name="hami-build" content="2026-10-16-286">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5396,6 +5396,14 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
     .hcp-fill { fill:none; stroke-width:7; stroke-linecap:round; stroke-dasharray:163.36; stroke-dashoffset:163.36; transition:stroke-dashoffset .8s ease; }
     .hcp-ring-pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#d14b73; }
     .hcp-ring-lab { font-size:10px; font-weight:700; color:#c47a96; margin-top:2px; white-space:nowrap; }
+
+  /* ===== v286：手机端今日时光三环缩小保持并排 ===== */
+  @media (max-width: 600px) {
+    .hcp-rings { gap: 3px; padding-top: 2px; }
+    .hcp-ring-wrap { width: 33px; height: 33px; }
+    .hcp-ring-pct { font-size: 8px; }
+    .hcp-ring-lab { font-size: 8px; margin-top: 1px; }
+  }
     </style>
     <div id="hami-countdown-pair">
       <div class="hcp-card hcp-life">
