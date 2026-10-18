@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-335">
+<meta name="hami-build" content="2026-10-18-336">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -16617,12 +16617,14 @@ function renderMedia() {
     document.getElementById('media-table').innerHTML = html;
   }
 
-  // 历史统计：固定展示范围（2026-07 ~ 2026-12）+ 数据中出现的其它月份；抖音列 = 账号为抖音 或 勾选了同步抖音，避免漏记
-  const baseMonths = ['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  // 历史统计：动态展示范围（当前月 + 往前 5 个月共 6 个）+ 数据中出现的其它月份；当前月置顶、逐月新→旧，未来月份一律不显示；抖音列 = 账号为抖音 或 勾选了同步抖音，避免漏记
+  const baseMonths = [];
+  { const _now = new Date(); for (let _i = 0; _i < 6; _i++) { const _d = new Date(_now.getFullYear(), _now.getMonth() - _i, 1); baseMonths.push(_d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0')); } }
   const monthSet = {};
   baseMonths.forEach(m => monthSet[m] = true);
   (store.mediaRecords || []).forEach(function (r) { const m = (r.date || '').substring(0, 7); if (/^\d{4}-\d{2}$/.test(m)) monthSet[m] = true; });
-  const months = Object.keys(monthSet).sort().reverse();   // v216：最新月份排最上（新→旧）
+  const _histCurMonth = todayStr().substring(0, 7);
+  const months = Object.keys(monthSet).filter(m => m <= _histCurMonth).sort().reverse();   // v336：当前月置顶，新→旧；过滤未来月份（旧写死 2026-07~12 会把 11/12 月排到当前月上头）
   let histHtml = '';
   let totalAll = 0;
   // v268：历史统计改月份卡片——账号三色（粉=大号 / 蓝=小号 / 紫=抖音）+ 占比条
@@ -16649,7 +16651,7 @@ function renderMedia() {
       + `<div class="mh-bar">${segs}</div>`
       + `</div>`;
   });
-  histHtml += `<div class="mh-sum"><span>📚 六个月全部合计</span><b>${totalAll} 条</b></div>`;
+  histHtml += `<div class="mh-sum"><span>📚 全部合计</span><b>${totalAll} 条</b></div>`;
   document.getElementById('media-history').innerHTML = histHtml;
 
 }
