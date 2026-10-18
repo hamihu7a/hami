@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-332">
+<meta name="hami-build" content="2026-10-18-333">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -727,18 +727,16 @@
     .hami-cmd-bar .cmd-label { font-size: 11px; }
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 9px; }
   }
-  /* 健康·目标体重行 + 进度环（v297：还原 v295 常显输入框，仅左上角一个修改按钮） */
-  .goal-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px; }
-  .goal-row .goal-main { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 6px; }
-  .goal-row .goal-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
-  .goal-row .goal-edit-btn { flex: none; border: 1px solid var(--c-line); background: #fff0f6; color: var(--c-pink-deep); font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 9px; cursor: pointer; }
-  .goal-row .goal-edit-btn:hover { background: #ffe0ee; }
-  .goal-row .goal-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  /* 健康·目标体重行 + 进度环（v333：删除修改按钮，直接点数字编辑；上下排布压紧凑） */
+  .goal-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 8px; }
+  .goal-row .goal-main { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 4px; }
+  .goal-row .goal-line { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; width: 78px; }
   .goal-row .goal-unit { font-size: 12px; color: var(--c-muted); }
-  .goal-row input { width: 70px; padding: 4px 6px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 14px; text-align: center; background: #fff; color: var(--c-text); }
-  .goal-row .goal-info { font-size: 12px; color: var(--c-muted); line-height: 1.4; margin-top: 2px; padding-top: 6px; border-top: 1px dashed var(--c-line, #ffe4ec); }
-  .goal-row .goal-info b { font-size: 14px; color: var(--c-pink-deep); }
+  .goal-row input { width: 70px; padding: 3px 6px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 14px; text-align: center; background: #fff; color: var(--c-text); }
+  .goal-row input:focus { outline: none; border-color: var(--c-pink); box-shadow: 0 0 0 3px rgba(255,158,181,0.25); }
+  .goal-row .goal-info { font-size: 11px; color: var(--c-muted); line-height: 1.3; padding-top: 3px; border-top: 1px dashed var(--c-line, #ffe4ec); }
+  .goal-row .goal-info b { font-size: 13px; color: var(--c-pink-deep); }
 
   /* 数据备份温和提醒（满 60 条时显示） */
   .backup-tip {
@@ -2009,10 +2007,11 @@
   #weight-table-wrap { overflow-x: auto; }
   #weight-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
   #weight-table-wrap th, #weight-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #weight-table-wrap th:nth-child(1), #weight-table-wrap td:nth-child(1) { width: 28%; }
-  #weight-table-wrap th:nth-child(2), #weight-table-wrap td:nth-child(2) { width: 18%; text-align: center; }
-  #weight-table-wrap th:nth-child(3), #weight-table-wrap td:nth-child(3) { width: 36%; }
-  #weight-table-wrap th:nth-child(4), #weight-table-wrap td:nth-child(4) { width: 18%; text-align: center; }
+  #weight-table-wrap th { padding: 6px 8px; font-size: 12px; }
+  #weight-table-wrap td { padding: 5px 8px; font-size: 13px; }
+  #weight-table-wrap th:nth-child(1), #weight-table-wrap td:nth-child(1) { width: 30%; }
+  #weight-table-wrap th:nth-child(2), #weight-table-wrap td:nth-child(2) { width: 20%; text-align: center; }
+  #weight-table-wrap th:nth-child(3), #weight-table-wrap td:nth-child(3) { width: 50%; }
   /* 敷面膜记录：紧凑无空白列 */
   #mask-table-wrap { overflow-x: auto; }
   #mask-table-wrap table { min-width: 0 !important; table-layout: fixed; width: 100%; }
@@ -5748,10 +5747,9 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
 
   <!-- 学车（临时模块：学完即删） -->
   <div class="nav-group">
-    <img class="nav-group-sticker" draggable="false" onclick="navStickerGo(this)" alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmY5YmIzIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY2YjllIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMjAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI0MCIgeT0iNTQiIGZvbnQtc2l6ZT0iNDQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfmpc8L3RleHQ+PC9zdmc+">
     <button class="nav-item" type="button" onclick="switchPanel('drive', this)">
       <span class="nav-icon">🚗</span>
-      <span class="nav-text">学车<br>进度跟踪</span>
+      <span class="nav-text">学车<br>进度</span>
     </button>
   </div>
 
@@ -6608,9 +6606,6 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     <div class="goal-row" id="weight-goal-row">
       <div class="fitness-ring" id="goal-ring"></div>
       <div class="goal-main">
-        <div class="goal-actions">
-          <button id="goal-edit-btn" class="goal-edit-btn" type="button">✏️ 修改</button>
-        </div>
         <div class="goal-line">
           <label for="weight-goal-input">🎯 目标体重</label>
           <input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal">
@@ -6646,7 +6641,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       </div>
       <div id="weight-table-wrap">
         <table>
-          <thead><tr><th>日期</th><th>体重</th><th>备注</th><th>操作</th></tr></thead>
+          <thead><tr><th>日期</th><th>体重</th><th>备注</th></tr></thead>
           <tbody id="weight-table"></tbody>
         </table>
       </div>
@@ -12995,6 +12990,31 @@ function loadData() {
       }
       // 学车进度（临时模块）：恢复存档后确保结构完整
       ensureDriveLearn();
+      // v333：工作待办里「毕业设计」多条合并为类目（一次性迁移，主人反馈有3条毕业设计工作待办）
+      if (!store.migratedGradDesign) {
+        try {
+          const todos = store.userTodos || [];
+          const grad = todos.filter(function (t) { return (t.category || 'daily') === 'work' && /毕业设计/.test(t.text || ''); });
+          if (grad.length >= 2) {
+            const others = todos.filter(function (t) { return !((t.category || 'daily') === 'work' && /毕业设计/.test(t.text || '')); });
+            const group = {
+              type: 'group',
+              category: 'work',
+              date: grad[0].date || todayStr(),
+              text: '毕业设计',
+              done: false,
+              createdAt: grad[0].createdAt || Date.now(),
+              subtasks: grad.map(function (t) {
+                const st = (t.text || '').replace(/^毕业设计[：:\-\s]*/, '').trim();
+                return { text: st || (t.text || '任务'), done: !!t.done };
+              })
+            };
+            recomputeGroupDone(group);
+            store.userTodos = others.concat([group]);
+          }
+          store.migratedGradDesign = true;
+        } catch (e) {}
+      }
       if (p.accountsMeta) store.accountsMeta = Object.assign({}, store.accountsMeta, p.accountsMeta);
       if (p.importantDates !== undefined) store.importantDates = p.importantDates;
       if (p.travelPlans !== undefined) store.travelPlans = p.travelPlans;
@@ -16070,19 +16090,26 @@ function renderWeightGoal(startWeight, latestAfter) {
 function bindWeightGoalInput() {
   const gInput = document.getElementById('weight-goal-input');
   const sInput = document.getElementById('start-weight-input');
-  const editBtn = document.getElementById('goal-edit-btn');
   if (!gInput || gInput.dataset.bound) return;
   gInput.dataset.bound = '1';
-  // v297：还原 v295 常显输入框，仅左上角一个「修改」按钮统一保存（目标+起始）
+  // v333：删除「修改」按钮，直接点数字编辑，失焦/回车自动保存
   if (store.weightGoal != null) gInput.value = store.weightGoal;
   if (store.startWeight != null) sInput.value = store.startWeight;
-  if (editBtn) editBtn.addEventListener('click', () => {
+
+  const saveGoal = () => {
     const gv = parseFloat(gInput.value), sv = parseFloat(sInput.value);
-    if (!isNaN(gv) && gv > 0) { store.weightGoal = gv; finToast && finToast('🎯 目标体重已设为 ' + gv.toFixed(1) + ' 斤'); }
-    if (!isNaN(sv) && sv > 0) { store.startWeight = sv; finToast && finToast('⚖️ 起始体重已设为 ' + sv.toFixed(1) + ' 斤'); }
-    saveData();
-    try { renderFitness(); } catch(e) {}
-  });
+    let changed = false;
+    if (!isNaN(gv) && gv > 0) { store.weightGoal = gv; changed = true; }
+    if (!isNaN(sv) && sv > 0) { store.startWeight = sv; changed = true; }
+    if (changed) {
+      saveData();
+      try { renderFitness(); } catch(e) {}
+    }
+  };
+  gInput.addEventListener('change', saveGoal);
+  sInput.addEventListener('change', saveGoal);
+  gInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); gInput.blur(); } });
+  sInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sInput.blur(); } });
 }
 
 // ==================== 减肥记录 ====================
@@ -16147,13 +16174,13 @@ function renderFitness() {
     .filter(w => w.v != null)
     .sort((a, b) => b.rec.date.localeCompare(a.rec.date));
   if (allWeightsDesc.length === 0) {
-    document.getElementById('weight-table').innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>还没有体重记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div></td></tr>`;
+    document.getElementById('weight-table').innerHTML = `<tr><td colspan="3"><div class="empty-state"><p>还没有体重记录</p><p style="font-size:12px;margin-top:6px;">点右上角「记一项」添加</p></div></td></tr>`;
   } else {
     const html = foldRecordsTable('weight', allWeightsDesc, function (it) {
       const w = it.rec;
       const idx = store.weightRecords.indexOf(w);  // 真实 store 索引（避免 id 缺失导致 bug）
       const v = it.v;
-      return `<tr><td>${w.date}</td><td>${v != null ? v.toFixed(1) : '—'}</td><td>${w.note||'—'}</td><td style="white-space:nowrap;"><button class="row-edit-btn" onclick="openWeightEditModal(${idx})">✏️</button> <button class="row-del-btn" onclick="deleteWeightRecord(${idx})">🗑</button></td></tr>`;
+      return `<tr><td>${w.date}</td><td>${v != null ? v.toFixed(1) : '—'}</td><td>${w.note||'—'}</td></tr>`;
     }, 4);
     document.getElementById('weight-table').innerHTML = html;
   }
