@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-352">
+<meta name="hami-build" content="2026-10-18-353">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9310,6 +9310,7 @@ let _periodicPullBusy = false;
 let _lastVisiblePullAt = 0;   // v352：切回标签页拉云端的节流时间戳，30 秒内不重复拉
 // 上次成功同步的时间戳（持久化，刷新后仍能显示"上次同步：xx"）
 let _lastSyncAt = Number(localStorage.getItem('hami_last_sync') || 0);
+let _lastPulledRemoteAt = 0;   // v353：最近一次拉取拿到的云端 updatedAt，用于判断"本地是否比云端新"
 
 function getSyncPassword() { try { return localStorage.getItem(SYNC_PWD_KEY) || ''; } catch (e) { return ''; } }
 function setSyncPassword(p) { try { if (p) localStorage.setItem(SYNC_PWD_KEY, p); else localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {} }
@@ -10358,6 +10359,25 @@ function cloudStatus(text, color) {
 // 不要"云端写入失败……"这类一大段技术话；内容必须简短（如"洗头""体重 100 斤"）。
 var _syncActLabel = '';        // 刚刚操作的内容名（如"洗头"）
 var _syncActAt = 0;            // 记录时刻：超过 5 分钟的旧操作不再当"刚刚"，避免张冠李戴
+// v353：追踪"哪些板块有多少条改动还没同步成功"，失败时提示具体到板块+条数
+var _syncDirtyModules = {};    // { '体重': 3, '记账': 1, ... }
+function _syncDirtyInc(label) {
+  try {
+    if (!label) return;
+    // "记账（删除）" 归一为 "记账"，避免删除和新增分成两个键
+    var k = String(label).replace(/（删除）$/, '').replace(/×\d+$/, '').trim();
+    if (!k) return;
+    _syncDirtyModules[k] = (_syncDirtyModules[k] || 0) + 1;
+  } catch (e) {}
+}
+function _syncDirtySummary() {
+  try {
+    var keys = Object.keys(_syncDirtyModules);
+    if (!keys.length) return '';
+    return keys.map(function (k) { return k + ' ×' + _syncDirtyModules[k] + '条'; }).join('、');
+  } catch (e) { return ''; }
+}
+function _syncDirtyClear() { _syncDirtyModules = {}; }
 var _SYNC_LIST_NAME = {
   weightRecords: '体重', bodyRecords: '身体数据', periodRecords: '经期', washRecords: '洗头',
   toiletRecords: '上厕所', maskRecords: '面膜', exerciseRecords: '运动', exerciseItems: '运动项目',
@@ -10373,6 +10393,7 @@ function markSyncAction(label) {
     if (typeof _cloudRendering !== 'undefined' && _cloudRendering) return;  // 云端合并后的重渲也不算
     _syncActLabel = String(label).slice(0, 24);
     _syncActAt = Date.now();
+    _syncDirtyInc(label);   // v353：记一笔脏改动，失败时能点名"哪个板块多少条没同步"
   } catch (e) {}
 }
 function _syncActName() {
@@ -10577,6 +10598,7 @@ async function pullAndMerge() {
     // v252：页面已就绪时（后台定时拉取）发现云端背景更新 → 自动收下来，不用主人手动点
     try { if (hamiSyncReady && _remoteBgMeta && _remoteBgMeta.at > bgLocalRev()) bgDownloadFromCloud(true); } catch (e) {}
     _lastSyncAt = Date.now(); _persistLastSync();
+    _lastPulledRemoteAt = remote.updatedAt || 0;   // v353：记下云端时间，供 initCloudSync 判断"本地是否比云端新"
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
     syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
     return got.sha || null;
@@ -10615,6 +10637,7 @@ async function pushNow() {
         }
         await _ghPut(ct, upSha, 'hami sync ' + new Date().toISOString());
         _lastSyncAt = Date.now(); _persistLastSync();
+        _syncDirtyClear();   // v353：推送成功，清脟脟的"哪个板块多少条没同步"记录
         cloudStatus('☁️ 已同步到云端（' + new Date().toLocaleTimeString('zh-CN') + '）', '#5aa86a');
         // v227：成功只说"同步了什么内容"；没有具体操作的后台自动同步就不打扰主人
         // v264：小标恢复旧文案；「同步了什么」只由弹出的浮层（showCloudToast）点名
@@ -10643,8 +10666,11 @@ async function pushNow() {
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
     // v264：小标恢复旧文案「同步失败」；弹出的浮层点名具体什么没同步成功（体重/背景图/数据…）
+    // v353：失败提示具体到"哪个板块多少条没同步成功"——主人明确要求
     syncBadgeShow('同步失败', true);
-    try { showCloudToast('❌ 同步失败：' + (((typeof _syncActName === 'function') && _syncActName()) || '数据'), 'fail'); } catch (e2) {}
+    var _dirtySum = (typeof _syncDirtySummary === 'function') ? _syncDirtySummary() : '';
+    var _failDetail = _dirtySum || (((typeof _syncActName === 'function') && _syncActName()) || '数据');
+    try { showCloudToast('❌ 同步失败：' + _failDetail + ' 还没上云，先别关页面', 'fail'); } catch (e2) {}
     // 失败提示统一交给 commitToCloud 的「还没同步到云端」横幅（已移到工作台正中间），此处不再弹第二条，避免重复
     throw e;   // 失败必须向上抛出，否则上层误以为"推送完成"
   } finally { _syncBusy = false; }
@@ -10980,12 +11006,20 @@ async function initCloudSync(statusEl, force) {
       if (_cloudPushPending) { _cloudPushPending = false; try { commitToCloud(); } catch (e) {} }
       // 关键：云同步刚就绪时，如果启动阶段主人改过背景图（彼时 hamiSyncReady=false 排队了），现在补传
       try { if (_hamiBgAutoUploadPending) { _hamiBgAutoUploadPending = false; hamiScheduleBgAutoUpload(); } } catch (e) {}
-      try {
-        await pushNow();
-        _diagStep('推送云端完成', true, '');
-      } catch (e) {
-        _diagStep('推送云端失败', false, (e && e.message) ? e.message : String(e));
-        console.error('[initCloudSync] 首次推送失败', e);
+      // v353：主人明确要求「只有我操作了才推」——开页面后只在「本地比云端新」或「有未推改动」时才推，
+      // 本地与云端一致就不空推（以前每次开页面都无脑 pushNow，是空推的主要来源之一）
+      var _localNewer = (Number(store._lastSavedAt) || 0) > (Number(_lastPulledRemoteAt) || 0);
+      var _hasDirty = (typeof _syncDirtySummary === 'function' && _syncDirtySummary()) || _cloudPushPending || _pendingCommit > 0;
+      if (_localNewer || _hasDirty) {
+        try {
+          await pushNow();
+          _diagStep('推送云端完成', true, _localNewer ? '本地比云端新，已推' : '有未推改动，已推');
+        } catch (e) {
+          _diagStep('推送云端失败', false, (e && e.message) ? e.message : String(e));
+          console.error('[initCloudSync] 首次推送失败', e);
+        }
+      } else {
+        _diagStep('推送云端跳过', true, '本地与云端一致，无需空推（v353 主人要求：没事别推）');
       }
       // v252：云同步就绪 + 首次推送完成 → 背景图/遮盖对账（电脑端改的自动上传，手机端自动收下）
       try { bgAutoSyncAfterReady(); } catch (e) {}
@@ -11041,10 +11075,10 @@ try {
   });
 } catch (e) {}
 
-// v218：关页面/切走（pagehide 在 iOS Safari 比 visibilitychange 更可靠）时立刻补推本机改动，杜绝"记完就关页"漏推
+// v218/v353：关页面时只在「本地有未推改动」才补推，杜绝每次关页都空推（主人要求：没事别一直推）
 try {
   window.addEventListener('pagehide', function () {
-    if (hamiSyncReady && hamiCloudEnabled()) { try { pushNow(); } catch (e) {} }
+    if (hamiSyncReady && hamiCloudEnabled() && (_cloudPushPending || _pendingCommit > 0 || _commitFailNotified || (typeof _syncDirtySummary === 'function' && _syncDirtySummary()))) { try { pushNow(); } catch (e) {} }
   });
 } catch (e) {}
 
