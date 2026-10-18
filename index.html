@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-346">
+<meta name="hami-build" content="2026-10-18-347">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -920,19 +920,8 @@
     70%  { box-shadow:0 0 0 12px rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
     100% { box-shadow:0 0 0 0 rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
   }
-  /* v342：主人三次反馈「开启了看不出区别」——录音态从「只变按钮」升级为「整条指令栏变色」：
-     栏体淡粉渐变 + 外圈粉描边 + 标签深粉加粗 + 输入框白底粉内描边（box-shadow 不占布局防抖动）。
-     语音一开，整条 bar 都在告诉主人「我在听」，不再只靠一颗小按钮变色。 */
-  .hami-cmd-bar.voice-on {
-    background: linear-gradient(90deg, #ffe9f0, #ffd9e6) !important;
-    box-shadow: inset 0 0 0 1.5px #ff9eb5, 0 4px 14px rgba(209,75,115,.16) !important;
-    border-bottom-color: #ff9eb5 !important;
-  }
-  .hami-cmd-bar.voice-on .cmd-label { color: #c2185b; font-weight: 800; }
-  .hami-cmd-bar.voice-on .cmd-input {
-    background: #fff;
-    box-shadow: inset 0 0 0 1.5px #ff9eb5;
-  }
+  /* v347：主人反馈「不要一整条都跟着动」——撤销 v342 整条指令栏联动变色，
+     录音态效果收回到按钮本身：.cmd-mic.recording 深酒红底+白图标+脉冲光圈已经够明显 */
   /* v342：浏览器不支持语音时，按钮抖一下变灰——点了必须有反应，不是「开了跟没开一样」 */
   .hami-cmd-bar .cmd-mic.voice-unsupported,
   .hami-cmd-bar .cmd-mic.voice-unsupported:hover,
@@ -15445,7 +15434,12 @@ function renderDriveLearn() {
   } else {
     html += '<div class="drive-points">';
     sub.points.forEach(function (p, idx) {
-      const open = (window.__driveNoteOpen === ak + ':' + idx);
+      // v347：主人要求——没学会的知识点，备注（添加的文字）直接全部显示出来，不再默认收纳；
+      // 标记学会（done）后自动省略收起，📝 仍可手动展开回看
+      const key = ak + ':' + idx;
+      const autoOpen = !p.done && p.note;
+      const manual = window.__driveNoteOpen;
+      const open = (manual === key) ? true : (manual === 'hide:' + key ? false : !!autoOpen);
       html += '<div class="drive-point' + (p.done ? ' done' : '') + '">';
       html += '<span class="drive-point-check' + (p.done ? ' done' : '') + '" onclick="toggleDrivePoint(\'' + ak + '\',' + idx + ')">' + (p.done ? '✓' : '') + '</span>';
       html += '<span class="drive-point-text">' + escHtml(p.text) + '</span>';
@@ -15510,7 +15504,13 @@ window.__driveNoteOpen = null;
 function toggleDrivePointNote(k, idx) {
   ensureDriveLearn();
   const key = k + ':' + idx;
-  window.__driveNoteOpen = (window.__driveNoteOpen === key) ? null : key;
+  // v347：当前实际展开态 = 手动标记优先，否则看自动规则（未完成+有备注）；目标是反转
+  const sub = store.driveLearn.subjects[k];
+  const p = sub && sub.points[idx];
+  const autoOpen = !!(p && !p.done && p.note);
+  const curOpen = (window.__driveNoteOpen === key) ? true : (window.__driveNoteOpen === 'hide:' + key ? false : autoOpen);
+  const nextOpen = !curOpen;
+  window.__driveNoteOpen = (nextOpen === autoOpen) ? null : (nextOpen ? key : 'hide:' + key);
   renderDriveLearn();
 }
 // 保存某条知识点的备注（点保存或失焦触发；不重渲染整段，避免打断输入）
@@ -25626,9 +25626,8 @@ var HamiVoice = (function () {
   function inputEl() { return document.getElementById('hami-cmd-input'); }
   function setUI(on) {
     if (btn) { try { if (on) btn.classList.add('recording'); else btn.classList.remove('recording'); } catch (e) {} }
-    // v342：录音态同步给整条指令栏加 .voice-on（淡粉渐变+粉描边+标签深粉+输入框粉内描边），
-    // 主人三次反馈「开启了看不出区别」——现在一开语音整条 bar 都变色，任何角度一眼可见
-    try { var bar = document.getElementById('hami-cmd-bar'); if (bar) bar.classList.toggle('voice-on', !!on); } catch (e2) {}
+    // v347：撤销整条指令栏联动（主人：「只要那个按住说话的图标有变化，不用一整条都跟着动」）——
+    // 深色+脉冲动效都在 .cmd-mic.recording 上，效果聚焦于图标本身
     // v335：录音中同步把输入框占位符换成提示，双保险确认"语音已开启"
     try { var el = inputEl(); if (el) el.setAttribute('placeholder', on ? '🎤 录音中…说完自动记' : ''); } catch (e) {}
   }
