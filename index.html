@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-351">
+<meta name="hami-build" content="2026-10-18-352">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -8218,6 +8218,17 @@ function saveData(skipCloud) {
   } catch (e) {}
   // v109：存盘前给所有缺 id 的老记录补上身份（补一次即可，之后永远稳定）
   try { if (typeof hamiEnsureIds === 'function') hamiEnsureIds(); } catch (e) {}
+  // v352：__revoked（撤销指纹）瘦身——实测云端累积到 170KB+（占档案 51%），
+  // 每次同步都白传。每列表只留最近 150 条（旧指纹引用的记录早不在两端了，纯浪费）。
+  try {
+    if (store.__revoked && typeof store.__revoked === 'object') {
+      Object.keys(store.__revoked).forEach(function (lk) {
+        if (Array.isArray(store.__revoked[lk]) && store.__revoked[lk].length > 150) {
+          store.__revoked[lk] = store.__revoked[lk].slice(-150);
+        }
+      });
+    }
+  } catch (e) {}
   let savedOk = false;
   // 更新时间戳，便于与 IndexedDB 备份比较新旧
   try { store._lastSavedAt = Date.now(); } catch (e) {}
@@ -9296,6 +9307,7 @@ let _syncBusy = false;
 let _syncPushTimer = null;
 // 后台定时拉取进行中标记（避免与前一次拉取重叠）
 let _periodicPullBusy = false;
+let _lastVisiblePullAt = 0;   // v352：切回标签页拉云端的节流时间戳，30 秒内不重复拉
 // 上次成功同步的时间戳（持久化，刷新后仍能显示"上次同步：xx"）
 let _lastSyncAt = Number(localStorage.getItem('hami_last_sync') || 0);
 
@@ -9804,7 +9816,7 @@ function mergeStoreInto(local, remote) {
             if (!Array.isArray(local.__revoked[lk])) local.__revoked[lk] = [];
             const seen = new Set(local.__revoked[lk]);
             arr.forEach(function (k) { if (k && !seen.has(k)) { seen.add(k); local.__revoked[lk].push(k); } });
-            if (local.__revoked[lk].length > 600) local.__revoked[lk] = local.__revoked[lk].slice(-600);
+            if (local.__revoked[lk].length > 150) local.__revoked[lk] = local.__revoked[lk].slice(-150);   // v352：600→150，瘦身
           });
           if (local.__deleted && typeof local.__deleted === 'object') {
             Object.keys(local.__revoked).forEach(function (lk) {
@@ -11012,13 +11024,15 @@ function afterBgChange(statusEl) {
 try {
   window.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'hidden') {
-      // 切走/锁屏时立刻把本机改动推上云端，别处设备随时能拉到
-      if (hamiSyncReady && hamiCloudEnabled()) { try { pushNow(); } catch (e) {} }
-      } else if (document.visibilityState === 'visible') {
-        // v231：切回标签页 = 相当于"重新打开"，先拉一次云端拿别处最新（这是允许的自动检查时机）。
-        if (hamiSyncReady && hamiCloudEnabled() && !_periodicPullBusy && !_syncBusy) {
-          pullAndMerge().catch(function () {});
-        }
+      // v352：切走只在「本地有未推改动」时才推，杜绝每分钟空转
+      if (hamiSyncReady && hamiCloudEnabled() && (_cloudPushPending || _pendingCommit > 0 || _commitFailNotified)) { try { pushNow(); } catch (e) {} }
+    } else if (document.visibilityState === 'visible') {
+      // v231：切回标签页 = 相当于"重新打开"，先拉一次云端拿别处最新（这是允许的自动检查时机）。
+      // v352：30 秒内不重复拉——频繁切标签页不再反复全量拉取 447KB
+      if (hamiSyncReady && hamiCloudEnabled() && !_periodicPullBusy && !_syncBusy && (Date.now() - _lastVisiblePullAt > 30000)) {
+        _lastVisiblePullAt = Date.now();
+        pullAndMerge().catch(function () {});
+      }
         // 仅当确实有「没推成功的本地改动」或「上次推送失败」时才补推，空闲时不推（主人要求：无操作不同步）。
         if (_cloudPushPending || _pendingCommit > 0 || _commitFailNotified) {
           try { if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); } catch (e) {}
