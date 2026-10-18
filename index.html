@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-341">
+<meta name="hami-build" content="2026-10-18-343">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -891,6 +891,31 @@
     0%   { box-shadow:0 0 0 0 rgba(74,15,38,0.55), 0 2px 6px rgba(74,15,38,0.3); }
     70%  { box-shadow:0 0 0 12px rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
     100% { box-shadow:0 0 0 0 rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
+  }
+  /* v342：主人三次反馈「开启了看不出区别」——录音态从「只变按钮」升级为「整条指令栏变色」：
+     栏体淡粉渐变 + 外圈粉描边 + 标签深粉加粗 + 输入框白底粉内描边（box-shadow 不占布局防抖动）。
+     语音一开，整条 bar 都在告诉主人「我在听」，不再只靠一颗小按钮变色。 */
+  .hami-cmd-bar.voice-on {
+    background: linear-gradient(90deg, #ffe9f0, #ffd9e6) !important;
+    box-shadow: inset 0 0 0 1.5px #ff9eb5, 0 4px 14px rgba(209,75,115,.16) !important;
+    border-bottom-color: #ff9eb5 !important;
+  }
+  .hami-cmd-bar.voice-on .cmd-label { color: #c2185b; font-weight: 800; }
+  .hami-cmd-bar.voice-on .cmd-input {
+    background: #fff;
+    box-shadow: inset 0 0 0 1.5px #ff9eb5;
+  }
+  /* v342：浏览器不支持语音时，按钮抖一下变灰——点了必须有反应，不是「开了跟没开一样」 */
+  .hami-cmd-bar .cmd-mic.voice-unsupported,
+  .hami-cmd-bar .cmd-mic.voice-unsupported:hover,
+  .hami-cmd-bar .cmd-mic.voice-unsupported:active {
+    background: #c9c9c9 !important; color: #fff !important;
+    animation: hami-mic-shake .45s;
+  }
+  @keyframes hami-mic-shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
   }
   @keyframes hami-refresh-spin { 100% { transform:rotate(360deg); } }
   .hami-cmd-toast {
@@ -3450,6 +3475,11 @@
   .db-btn {
     padding: 11px 16px; border-radius: 10px; font-size: 13px; font-weight: 700;
     cursor: pointer; min-height: 44px; border: none; font-family: inherit;
+    /* v342：主人三次反馈「按键边框很不简约、很没必要」——某些浏览器/环境下 button 的 UA
+       默认边框仍会露出来（实测桌面 Chrome 无框，但主人截图确实有圈）。加 appearance:none
+       + !important 三重保险，任何环境都是无框纯色块。 */
+    -webkit-appearance: none; appearance: none;
+    border: none !important; outline: none;
   }
   .db-btn-main { background: linear-gradient(135deg, var(--c-pink,#ff8aa6), var(--c-pink-deep,#d14b73)); color: #fff; box-shadow: 0 2px 8px rgba(209,75,115,.3); }
   /* v325：主人说描边没必要——去边框，改淡粉底色保持按钮可辨识 */
@@ -7588,7 +7618,8 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     </div>
 
     <div class="fin-topbar" style="flex-wrap:nowrap;gap:10px;">
-      <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);line-height:1.25;text-align:center;">📅 待完成<br>图文项目</div>
+      <!-- v342：主人反馈「明明右边还有很多空间却折行」——去掉写死的 <br>，一行显示 + nowrap 防小屏再折 -->
+      <div style="font-size:14px;font-weight:800;color:var(--c-pink-deep,#d14b73);white-space:nowrap;">📅 待完成图文项目</div>
       <div class="future-post-top-actions" style="display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end;">
         <button class="media-add-btn" style="padding:7px 10px;font-size:12px;" onclick="openFuturePostModal()">➕ 添加</button>
         <!-- v326：主人不需要「批量连更」，「📥 批量」按钮已移除 -->
@@ -10484,6 +10515,13 @@ async function pullAndMerge() {
     mergeStoreInto(store, remote.store);
     // v304：天气位置以云端(通常为手机端)为准，跨端保持一致（不受本机旧自动定位干扰）
     try { if (remote.store && remote.store.weatherLocation) { store.weatherLocation = remote.store.weatherLocation; } } catch(e) {}
+    // v343：今日激励语跨端一致——云端日期 >= 本地日期就用云端的（换天以先开的一方为准；
+    // 同一天两端各自抽了不同三条时，先推上云的一方赢，后拉的一方对齐，绝不来回横跳）
+    try {
+      const _rq = (remote.store && remote.store.dailyQuotes) || null;
+      const _lq = store.dailyQuotes || null;
+      if (_rq && _rq.date && (!_lq || _rq.date >= _lq.date)) store.dailyQuotes = _rq;
+    } catch (e) {}
     // v205：云端合并后立刻把体重数值收敛为斤 + 清理同日重复（幂等），
     // 防止云端残留的「公斤口径 / 被反复翻倍」的旧值混进本地造成 4 倍、8 倍。
     try { migrateWeightUnitToJin(); } catch (e) {}
@@ -13858,7 +13896,38 @@ const moodQuotes = [
   "我的状态，我全权负责",
   "有目标的人，睡不着也精神",
   "把「想」变成「正在做」",
-  "正能量不是傻乐，是选择强大"
+  "正能量不是傻乐，是选择强大",
+  // v343 扩容 50→80：主人要「每天都不重复」——配合洗牌发牌，80 天内绝不重样
+  "我自带光芒，走到哪亮到哪",
+  "好运正在派送中，请保持斗志",
+  "我的心气，比天还高",
+  "今天这关，我过定了",
+  "乐观是底牌，行动是王牌",
+  "血厚的人，才配谈运气",
+  "我不等风来，我追着风跑",
+  "眼里有光的人，走路都带风",
+  "状态在线，全世界让路",
+  "我的热血，刚烧到沸点",
+  "关关难过，关关过",
+  "自信放大了，困难就缩小了",
+  "我这种人，只会越来越顺",
+  "脾气可以有，志气不能丢",
+  "敢拼的人，老天都会搭手",
+  "每天都要比昨天更带劲",
+  "我的剧本，我演大主角",
+  "冲劲这东西，我从来不缺",
+  "心气不灭，早晚出头",
+  "把日子过成升级打怪",
+  "我这股劲，自己都害怕",
+  "越是关键时刻，越兴奋",
+  "好戏在后头，我现在就在场",
+  "我的能量，超乎我想象",
+  "昂着头的人，不会走下坡",
+  "把每个今天，都过成主场",
+  "心态不崩，我就没输",
+  "我的运气，靠自己充值",
+  "清醒又上进，就是我",
+  "天生狠人，不服就干"
 ];
 
 const moneyQuotes = [
@@ -13911,7 +13980,38 @@ const moneyQuotes = [
   "我不抠门，我只是会赚",
   "财富是打出来的，不是等出来的",
   "搞钱这件事，我天赋异禀",
-  "钱包鼓起来，说话都大声"
+  "钱包鼓起来，说话都大声",
+  // v343 扩容 50→80
+  "我的钱包，只进不退",
+  "谈钱是正经事，别觉得俗",
+  "赚钱不努力，等于浪费命",
+  "银行卡数字，是我的军功章",
+  "今天也要把钱挣得漂亮",
+  "会搞钱的人，最有魅力",
+  "我的目标很俗：钱越多越好",
+  "每一分进账，都值得庆祝",
+  "舍不得面子，赚不到钱",
+  "钱是胆，越多胆越肥",
+  "这单必须拿，我有预感",
+  "把钱谈清楚，感情更长久",
+  "我的时薪，值得翻倍",
+  "赚钱的路上，没有舒适区",
+  "存款是底气，谁都不借",
+  "忙而不盲，赚得明白",
+  "今天搞钱，明天数钱",
+  "我的商业脑，该上场了",
+  "机会面前，手要快心要狠",
+  "花出去的，十倍赚回来",
+  "认真搞钱的人，眼里有刀",
+  "小生意认真做，也能翻身",
+  "我的收入，要配得上野心",
+  "别谈理想了，先搞到钱",
+  "钱到手，话才说得响",
+  "趁年轻，把钱挣够",
+  "我卖的每一样，都很值",
+  "客户满意，我数钱手软",
+  "省钱不如赚钱，搞钱要猛",
+  "我的口袋，迟早沉甸甸"
 ];
 
 const fitnessQuotes = [
@@ -13964,17 +14064,119 @@ const fitnessQuotes = [
   "今天多走一千步，明天多瘦一分",
   "和身体合作，而不是对抗",
   "好身材是自信的作弊器",
-  "燃烧吧，把不可能烧成灰"
+  "燃烧吧，把不可能烧成灰",
+  // v343 扩容 50→80
+  "汗水流过的路，都有回报",
+  "今天多练一分钟，明天多瘦一分",
+  "脂肪在颤抖，我在加速",
+  "我的意志，比铁还硬",
+  "秤上的数字，我说了算",
+  "把赘肉，一点点撕掉",
+  "自律的人，连脂肪都让路",
+  "今天的酸痛，明天的骄傲",
+  "我练的不是身体，是狠劲",
+  "想瘦的念头，要压过食欲",
+  "这组做完，离目标又近了",
+  "穿不进的衣服，是战书",
+  "我的腰，迟早细回来",
+  "运动是苦，瘦下来是甜",
+  "别停，镜子在看",
+  "脂肪最怕的，是我这种坚持",
+  "每一次呼吸，都在燃烧",
+  "我的身材，我自己雕刻",
+  "今天不吃亏，明天不受罪",
+  "狠下心减肥，才能惊艳人",
+  "汗水不会背叛你",
+  "瘦下来，世界都变温柔",
+  "我的节奏，脂肪跟不上",
+  "撑住，脂肪正在崩溃",
+  "把运动，变成每天的正经事",
+  "我的身体，值得最好的",
+  "动了就有效果，坚持就蜕变",
+  "不想练的时候，才是最该练",
+  "腿会酸，眼会亮，值",
+  "最后的冲刺，脂肪的终点"
 ];
 
+// —— v343 激励语「洗牌发牌」机制（主人要「每天都不重复」）——
+// 旧机制 d%len 顺序轮换的两大毛病：① 50 天一轮回；② d 按年初起算，每年元旦清零重念。
+// 新机制：每个池子 Fisher-Yates 洗成一副牌，游标每天走一张 → 一圈内 80 天绝对不重复、
+// 顺序全打乱无「念名单」感、走完重洗（避开上圈收尾）、跨年连续不重置；
+// 今日三条写进 store.dailyQuotes 云同步 → 手机/电脑同一天永远同三条；
+// localStorage 不可用（隐私模式）时降级为「日期哈希」确定性选取。
+function _quoteLsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function _quoteLsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function _quoteShuffle(len) {
+  const a = [];
+  for (let i = 0; i < len; i++) a.push(i);
+  for (let i = len - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function _quoteDeck(key, len) {
+  let deck = null;
+  const raw = _quoteLsGet(key);
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      if (Array.isArray(p) && p.length === len && p.every(x => typeof x === 'number' && x >= 0 && x < len)) deck = p;
+    } catch (e) { deck = null; }
+  }
+  if (!deck) { deck = _quoteShuffle(len); _quoteLsSet(key, JSON.stringify(deck)); }
+  return deck;
+}
+function _quoteDraw(key, len) {
+  let deck = _quoteDeck(key, len);
+  let cur = parseInt(_quoteLsGet(key + '_cur') || '0', 10);
+  if (!isFinite(cur) || cur < 0) cur = 0;
+  if (cur >= deck.length) {
+    // 一圈走完：重洗，并尽量不让新圈开头撞上圈最后 3 张（连续发牌也不重复）
+    const prevTail = deck.slice(-3);
+    let tries = 0;
+    do { deck = _quoteShuffle(len); tries++; }
+    while (tries < 6 && deck.slice(0, 3).some(x => prevTail.indexOf(x) >= 0));
+    _quoteLsSet(key, JSON.stringify(deck));
+    cur = 0;
+  }
+  _quoteLsSet(key + '_cur', String(cur + 1));
+  return deck[cur];
+}
+function _quoteHash(str, len) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  return Math.abs(h) % len;
+}
+
 function getDailyQuote() {
-  // v299：三句各自从对应分类数组取，不再混成同一个大池——
-  // 上=正能量/乐观(mood·😊)、中=挣钱(money·💰)、下=健身减肥(fitness·💪) 分类永远正确
-  const d = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-  const i1 = d % moodQuotes.length;
-  const i2 = (d + 13) % moneyQuotes.length;
-  const i3 = (d + 27) % fitnessQuotes.length;
-  return { mood: moodQuotes[i1], money: moneyQuotes[i2], fitness: fitnessQuotes[i3] };
+  const today = todayStr();
+  // 1) 今天已定过三条（本机定的或云端同步来的）→ 原样返回：同一天刷新不变、多端一致
+  if (store.dailyQuotes && store.dailyQuotes.date === today &&
+      store.dailyQuotes.mood && store.dailyQuotes.money && store.dailyQuotes.fitness) {
+    return { mood: store.dailyQuotes.mood, money: store.dailyQuotes.money, fitness: store.dailyQuotes.fitness };
+  }
+  // 2) 洗牌发牌抽今天的三条
+  let q = null;
+  try {
+    q = {
+      mood: moodQuotes[_quoteDraw('hami_qdeck_mood_' + moodQuotes.length, moodQuotes.length)],
+      money: moneyQuotes[_quoteDraw('hami_qdeck_money_' + moneyQuotes.length, moneyQuotes.length)],
+      fitness: fitnessQuotes[_quoteDraw('hami_qdeck_fitness_' + fitnessQuotes.length, fitnessQuotes.length)]
+    };
+  } catch (e) { q = null; }
+  // 3) localStorage 全挂的降级：日期哈希确定性选取（同一天同一条，跨年不同）
+  if (!q) {
+    q = {
+      mood: moodQuotes[_quoteHash(today + '|mood', moodQuotes.length)],
+      money: moneyQuotes[_quoteHash(today + '|money', moneyQuotes.length)],
+      fitness: fitnessQuotes[_quoteHash(today + '|fitness', fitnessQuotes.length)]
+    };
+  }
+  // 4) 记进 store：当天固定 + 云同步让另一端同三条（saveData 不回调本函数，无死循环）
+  store.dailyQuotes = { date: today, mood: q.mood, money: q.money, fitness: q.fitness };
+  try { saveData(true); } catch (e) {}
+  return q;
 }
 
 // 三条每日激励语（emoji + 文字，无“心情/搞钱/健身”标签），渲染进顶部 hero 卡片
@@ -25362,6 +25564,9 @@ var HamiVoice = (function () {
   function inputEl() { return document.getElementById('hami-cmd-input'); }
   function setUI(on) {
     if (btn) { try { if (on) btn.classList.add('recording'); else btn.classList.remove('recording'); } catch (e) {} }
+    // v342：录音态同步给整条指令栏加 .voice-on（淡粉渐变+粉描边+标签深粉+输入框粉内描边），
+    // 主人三次反馈「开启了看不出区别」——现在一开语音整条 bar 都变色，任何角度一眼可见
+    try { var bar = document.getElementById('hami-cmd-bar'); if (bar) bar.classList.toggle('voice-on', !!on); } catch (e2) {}
     // v335：录音中同步把输入框占位符换成提示，双保险确认"语音已开启"
     try { var el = inputEl(); if (el) el.setAttribute('placeholder', on ? '🎤 录音中…说完自动记' : ''); } catch (e) {}
   }
@@ -25407,7 +25612,18 @@ var HamiVoice = (function () {
   }
 
   function startVoice() {
-    if (!SR) { toast('🎤 这个浏览器不支持语音，直接打字也能记~'); return; }
+    if (!SR) {
+      // v342：不支持语音时给足反馈——按钮抖一下变灰 + 说人话的提示（含 iPhone 系统要求），
+      // 杜绝主人「点了没反应、开了跟没开一样」
+      toast('🎤 当前浏览器不支持语音输入（iPhone 需 iOS 16.4 以上，电脑用 Chrome/Edge）～先打字也能记');
+      try {
+        if (btn) {
+          btn.classList.add('voice-unsupported');
+          setTimeout(function () { try { btn.classList.remove('voice-unsupported'); } catch (e3) {} }, 1300);
+        }
+      } catch (e3) {}
+      return;
+    }
     var r = ensure();
     if (!r) return;
     finalTxt = '';
