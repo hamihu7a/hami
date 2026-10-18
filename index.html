@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-17-329">
+<meta name="hami-build" content="2026-10-18-330">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1533,6 +1533,26 @@
     border-radius: 8px; padding: 2px 8px; cursor: pointer; margin-left: auto;
   }
   .todo-add-mini:hover { background: rgba(255,158,181,0.32); }
+
+  /* ===== 类目待办（一条类目 + 多条小点，全勾才算完成）===== */
+  .todo-group-title { white-space: normal; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .todo-grp-prog { font-size: 11px; font-weight: 700; color: #d14b73; background: #fff0f4; border-radius: 10px; padding: 1px 8px; flex-shrink: 0; }
+  .todo-sublist { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 2px 30px; }
+  .todo-subitem { display: flex; align-items: center; gap: 8px; }
+  .todo-subcheck { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #e3a6bb; background: #fff; color: #fff; font-size: 11px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: .15s; }
+  .todo-subcheck.done { background: linear-gradient(135deg,#34c759,#2fb350); border-color: #2fb350; }
+  .todo-subtext { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; color: #4a3340; word-break: break-word; }
+  .todo-subitem.done .todo-subtext { text-decoration: line-through; color: #b0a0a8; }
+  .todo-sub-del { border: none; background: transparent; color: #c25f5f; cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 6px; flex-shrink: 0; }
+  .todo-sub-del:hover { background: #ffe0e0; }
+  /* 类目弹窗内的子项输入行 */
+  .gt-sub-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .gt-sub-input { flex: 1; min-width: 0; padding: 7px 9px; border: 1.5px solid #ffd0de; border-radius: 9px; font-size: 13px; }
+  .gt-sub-input:focus { border-color: #d14b73; outline: none; }
+  .gt-sub-del { border: none; background: #ffe0e0; color: #c25f5f; border-radius: 8px; padding: 6px 9px; cursor: pointer; font-size: 12px; }
+  .gt-sub-del:hover { background: #f3b4b4; color: #fff; }
+  /* 首页卡片里的类目小点缩进 */
+  .todo-subitem.home-sub { margin-left: 22px; }
 
   /* ============ 待办事项升级：两区独立 + 完成期限 ============ */
   /* 面板里两个独立区域（日常 / 工作），上下堆叠、各自成块 */
@@ -6130,6 +6150,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
             <input type="date" id="todo-date-daily" class="todo-date-input" title="选择日期（可选，留空=无期限）">
           </div>
           <button class="todo-add-btn" onclick="addUserTodo('daily')">➕ 添加</button>
+          <button class="todo-add-btn" onclick="openGroupModal('daily')" title="新建「一个类目 + 多条小点」的待办">📋 类目</button>
         </div>
       </div>
       <div id="todo-list-daily"></div>
@@ -6154,6 +6175,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
             <input type="date" id="todo-date-work" class="todo-date-input" title="选择日期（可选，留空=无期限）">
           </div>
           <button class="todo-add-btn" onclick="addUserTodo('work')">➕ 添加</button>
+          <button class="todo-add-btn" onclick="openGroupModal('work')" title="新建「一个类目 + 多条小点」的待办">📋 类目</button>
         </div>
       </div>
       <div id="todo-list-work"></div>
@@ -7228,6 +7250,37 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <button class="co-cancel" onclick="closeTodoEditModal()">取消</button>
         <button class="co-save" onclick="submitTodoEdit()">保存修改</button>
         <button class="co-del" onclick="deleteTodoFromEdit()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 类目待办（多条小点）弹窗 ==================== -->
+  <div id="group-todo-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeGroupModal()">
+    <div class="modal-card" style="max-width:460px;">
+      <div class="arm-head">
+        <button type="button" class="arm-close" onclick="closeGroupModal()" aria-label="关闭">✕</button>
+        <div id="group-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">新建类目待办</div>
+        <span style="width:36px;"></span>
+      </div>
+      <div class="co-body">
+        <div class="co-field">
+          <label>📋 类目名称</label>
+          <input type="text" id="gt-title" placeholder="如：出国旅游准备" maxlength="40">
+        </div>
+        <div class="co-field">
+          <label>📅 完成期限（可选，留空=无期限）</label>
+          <input type="date" id="gt-deadline" title="点击选择日期，手机上会弹出日历">
+        </div>
+        <div class="co-field">
+          <label>✅ 小点（逐条勾选，<b>全部勾完才算完成</b>）</label>
+          <div id="gt-subs"></div>
+          <button class="todo-add-mini" type="button" onclick="addGroupSubInput('')" style="margin-left:0;">＋ 再加一条</button>
+        </div>
+      </div>
+      <div class="co-actions">
+        <button class="co-cancel" onclick="closeGroupModal()">取消</button>
+        <button class="co-del" id="gt-del-btn" style="display:none;" onclick="deleteGroupFromModal()">删除</button>
+        <button class="co-save" onclick="submitGroupModal()">保存</button>
       </div>
     </div>
   </div>
@@ -12909,6 +12962,8 @@ function loadData() {
         store.userTodos = Array.from(best.values());
       }
     } catch (e) {}
+    // 类目待办（type:'group'）归一化：旧数据补默认 type，并按小点重算 done，避免多端同步后状态串
+    try { normalizeUserTodos(); } catch (e) {}
     // v211：导入账目分类校正（幂等）——「拉面」应算三餐而不是买菜
     try { fixImportedCategoriesV211(); } catch (e) {}
     // v213：导入账目收入分类校正（幂等）——没写来源的小额收入是「定制单收入」而非「其他收入」
@@ -14067,7 +14122,7 @@ function escTodo(s) {
 function sortTodos(items) {
   const rank = o => {
     const ut = o.ut;
-    if (ut.done) return 4;
+    if (isTodoDone(ut)) return 4;
     const info = todoDeadlineInfo(ut);
     if (info.overdue) return 0;
     if (info.due) return 1;
@@ -14097,10 +14152,19 @@ function renderHomeTodo() {
   const userDaily = [], userWork = [];
   for (let i = (store.userTodos || []).length - 1; i >= 0; i--) {
     const ut = store.userTodos[i];
-    if (!ut || ut.done) continue;
+    if (!ut || isTodoDone(ut)) continue;
     const info = todoDeadlineInfo(ut);
     const dl = info.has ? ' · ' + info.label.replace('⏰ ', '') : '';
-    const item = { icon: '📌', text: ut.text + dl, userIdx: i, urgent: info.overdue };
+    let icon = '📌', text;
+    if (ut.type === 'group') {
+      const subs = ut.subtasks || [];
+      const done = subs.filter(function (s) { return s.done; }).length;
+      icon = '📋';
+      text = ut.text + ' (' + done + '/' + subs.length + ')' + dl;
+    } else {
+      text = ut.text + dl;
+    }
+    const item = { icon: icon, text: text, userIdx: i, urgent: info.overdue, group: ut.type === 'group', subs: ut.type === 'group' ? ut.subtasks : null };
     if ((ut.category || 'daily') === 'work') userWork.push(item); else userDaily.push(item);
   }
 
@@ -14113,6 +14177,11 @@ function renderHomeTodo() {
     items.forEach(t => {
       const cls = t.urgent ? ' todo-item-urgent' : '';
       h += `<div class="todo-item${cls}"><span>${t.icon} ${escTodo(t.text)}</span></div>`;
+      if (t.group && t.subs) {
+        t.subs.forEach(function (s) {
+          h += `<div class="todo-subitem home-sub${s.done ? ' done' : ''}"><span class="todo-subcheck${s.done ? ' done' : ''}">${s.done ? '✓' : ''}</span><span class="todo-subtext">${escTodo(s.text)}</span></div>`;
+        });
+      }
     });
     return h;
   };
@@ -14129,6 +14198,142 @@ function renderHomeTodo() {
     const card = workEl.closest('.todo-card');
     if (card) card.style.display = work.length ? '' : 'none';
   }
+}
+
+// ==================== 类目待办（一条类目 + 多条小点，全勾才算完成）====================
+let __grpCurCat = 'daily';
+let __grpEditIdx = -1;
+// 旧数据兼容：补 type 默认、按小点重算 group 的 done，保证「全部勾完才算完成」状态不串
+function normalizeUserTodos() {
+  if (!Array.isArray(store.userTodos)) return;
+  store.userTodos.forEach(function (ut) {
+    if (!ut) return;
+    if (ut.type === 'group') {
+      if (!Array.isArray(ut.subtasks)) ut.subtasks = [];
+      ut.subtasks.forEach(function (s) {
+        if (typeof s.done !== 'boolean') s.done = false;
+        if (typeof s.text !== 'string') s.text = '';
+      });
+      ut.done = ut.subtasks.length > 0 && ut.subtasks.every(function (x) { return x.done; });
+    } else {
+      if (ut.type === undefined) ut.type = 'single';
+      if (typeof ut.done !== 'boolean') ut.done = false;
+    }
+  });
+}
+// 渲染一条类目待办（标题 + 进度 + 可勾选小点列表 + 操作）
+function groupTodoHtml(o, cat, info) {
+  const ut = o.ut;
+  const subs = ut.subtasks || [];
+  const done = subs.filter(function (s) { return s.done; }).length;
+  const allDone = subs.length > 0 && done === subs.length;
+  const overdueCls = (info.overdue && !allDone) ? ' todo-item-overdue' : '';
+  const subHtml = subs.map(function (s, k) {
+    return `<div class="todo-subitem${s.done ? ' done' : ''}">
+      <span class="todo-subcheck${s.done ? ' done' : ''}" onclick="toggleSubtask(${o.i},${k})" title="勾选这条小点">${s.done ? '✓' : ''}</span>
+      <span class="todo-subtext">${escTodo(s.text)}</span>
+      <button class="todo-sub-del" onclick="removeSubtask(${o.i},${k})" title="删除这条小点">✕</button>
+    </div>`;
+  }).join('');
+  return `<div class="todo-item todo-group-item${overdueCls}">
+    <span class="todo-check${allDone ? ' done' : ''}" onclick="toggleUserTodo(${o.i})" title="点一下=全部勾选 / 取消">${allDone ? '✓' : ''}</span>
+    <div class="todo-body">
+      <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog">${done}/${subs.length}</span></div>
+      <div class="todo-sublist">${subHtml}</div>
+      <div class="todo-meta">
+        ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
+        <span class="todo-meta-sp"></span>
+        <button class="todo-btn mini" onclick="openGroupModal('${cat}',${o.i})" title="增删小点 / 改名称期限">编辑类目</button>
+        <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除整个类目">删类目</button>
+      </div>
+    </div>
+  </div>`;
+}
+// 打开类目弹窗：cat=当前区；idx 不传=新建，传=编辑
+function openGroupModal(cat, idx) {
+  __grpCurCat = cat || 'daily';
+  __grpEditIdx = (typeof idx === 'number' && idx >= 0) ? idx : -1;
+  const titleEl = document.getElementById('gt-title');
+  const deadEl = document.getElementById('gt-deadline');
+  const subsEl = document.getElementById('gt-subs');
+  if (!titleEl || !subsEl) return;
+  subsEl.innerHTML = '';
+  if (__grpEditIdx >= 0) {
+    const ut = store.userTodos[__grpEditIdx];
+    const tEl = document.getElementById('group-modal-title');
+    const dEl = document.getElementById('gt-del-btn');
+    if (tEl) tEl.textContent = '编辑类目待办';
+    if (dEl) dEl.style.display = '';
+    titleEl.value = ut.text || '';
+    deadEl.value = ut.deadline || '';
+    (ut.subtasks || []).forEach(function (s) { addGroupSubInput(s.text); });
+  } else {
+    const tEl = document.getElementById('group-modal-title');
+    const dEl = document.getElementById('gt-del-btn');
+    if (tEl) tEl.textContent = '新建类目待办';
+    if (dEl) dEl.style.display = 'none';
+    titleEl.value = '';
+    deadEl.value = '';
+    addGroupSubInput(''); addGroupSubInput(''); addGroupSubInput('');
+  }
+  const m = document.getElementById('group-todo-modal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  setTimeout(function () { try { titleEl && titleEl.focus(); } catch (e) {} }, 50);
+}
+function closeGroupModal() {
+  const m = document.getElementById('group-todo-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+// 在弹窗里新增一行小点输入框
+function addGroupSubInput(val) {
+  const subsEl = document.getElementById('gt-subs');
+  if (!subsEl) return;
+  const row = document.createElement('div');
+  row.className = 'gt-sub-row';
+  row.innerHTML = '<input class="gt-sub-input" placeholder="小点内容（如：订机票）" maxlength="60" value="' + escTodo(val || '') + '"><button type="button" class="gt-sub-del" onclick="removeGroupSubInput(this)" title="删掉这行">✕</button>';
+  subsEl.appendChild(row);
+  try { row.querySelector('input').focus(); } catch (e) {}
+}
+function removeGroupSubInput(btn) {
+  const row = btn && btn.closest ? btn.closest('.gt-sub-row') : null;
+  if (row) row.remove();
+}
+// 保存类目待办（新建 / 编辑统一入口）
+function submitGroupModal() {
+  const titleEl = document.getElementById('gt-title');
+  const deadEl = document.getElementById('gt-deadline');
+  const title = (titleEl && titleEl.value || '').trim();
+  if (!title) { try { finToast('请填写类目名称'); } catch (e) {} return; }
+  const subs = [];
+  const inputs = document.querySelectorAll('#gt-subs .gt-sub-input');
+  for (let n = 0; n < inputs.length; n++) {
+    const v = (inputs[n].value || '').trim();
+    if (v) subs.push({ text: v, done: false });
+  }
+  if (subs.length === 0) { try { finToast('至少写一条小点'); } catch (e) {} return; }
+  const deadline = (deadEl && deadEl.value || '').trim();
+  if (__grpEditIdx >= 0) {
+    const ut = store.userTodos[__grpEditIdx];
+    if (!ut) { closeGroupModal(); return; }
+    // 编辑时按位置保留已勾状态，新加的小点默认未完成
+    subs.forEach(function (s, k) { if (ut.subtasks && ut.subtasks[k]) s.done = ut.subtasks[k].done; });
+    ut.text = title; ut.deadline = deadline; ut.subtasks = subs;
+    recomputeGroupDone(ut);
+    saveData(); closeGroupModal(); try { renderHomeTodo(); } catch (e) {} try { renderTodoPanel(); } catch (e) {}
+    try { finToast('已保存类目'); } catch (e) {}
+  } else {
+    hamiPushRecord('userTodos', { date: todayStr(), text: title, done: false, type: 'group', category: __grpCurCat, deadline: deadline, createdAt: Date.now(), subtasks: subs });
+    saveData(); closeGroupModal(); try { renderHomeTodo(); } catch (e) {} try { renderTodoPanel(); } catch (e) {}
+    try { finToast('已添加类目待办'); } catch (e) {}
+  }
+}
+// 从弹窗里删除整个类目
+function deleteGroupFromModal() {
+  if (__grpEditIdx < 0) { closeGroupModal(); return; }
+  const idx = __grpEditIdx;
+  closeGroupModal();
+  removeUserTodo(idx);
 }
 
 // 代办事项管理面板：日常 / 工作 两个独立区域（带打卡圆圈 + 完成期限）
@@ -14150,7 +14355,7 @@ function todoDoneGo(cat, delta) {
 function todoGo(cat, delta) {
   const items = (store.userTodos || [])
     .map((ut, i) => ({ ut, i }))
-    .filter(o => (o.ut.category || 'daily') === cat && !o.ut.done);
+    .filter(o => (o.ut.category || 'daily') === cat && !isTodoDone(o.ut));
   const maxPage = Math.max(0, Math.ceil(items.length / TODO_PAGE) - 1);
   __todoPage[cat] = Math.max(0, Math.min((__todoPage[cat] || 0) + delta, maxPage));
   renderTodoListForCat(cat);
@@ -14162,7 +14367,7 @@ function renderTodoListForCat(cat) {
     .map((ut, i) => ({ ut, i }))
     .filter(o => (o.ut.category || 'daily') === cat);
   // 主列表只显示「未完成」项（已完成项落到下方「已完成」区块）
-  const items = allItems.filter(o => !o.ut.done);
+  const items = allItems.filter(o => !isTodoDone(o.ut));
   // 顶部小计：未完成 / 已完成 / 逾期
   const sumEl = document.getElementById('todo-summary-' + cat);
   if (sumEl) {
@@ -14190,19 +14395,23 @@ function renderTodoListForCat(cat) {
   pageList.forEach(o => {
     const ut = o.ut;
     const info = todoDeadlineInfo(ut);
-    const overdueCls = (info.overdue && !ut.done) ? ' todo-item-overdue' : '';
-    html += `<div class="todo-item${overdueCls}">
-      <span class="todo-check" onclick="toggleUserTodo(${o.i})" title="点击打卡完成">${ut.done ? '✓' : ''}</span>
-      <div class="todo-body">
-        <div class="todo-text">${escTodo(ut.text)}</div>
-        <div class="todo-meta">
-          ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
-          <span class="todo-meta-sp"></span>
-          <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">修改</button>
-          <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+    if (ut.type === 'group') {
+      html += groupTodoHtml(o, cat, info);
+    } else {
+      const overdueCls = (info.overdue && !ut.done) ? ' todo-item-overdue' : '';
+      html += `<div class="todo-item${overdueCls}">
+        <span class="todo-check" onclick="toggleUserTodo(${o.i})" title="点击打卡完成">${ut.done ? '✓' : ''}</span>
+        <div class="todo-body">
+          <div class="todo-text">${escTodo(ut.text)}</div>
+          <div class="todo-meta">
+            ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
+            <span class="todo-meta-sp"></span>
+            <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">修改</button>
+            <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+          </div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
+    }
   });
   if (sorted.length > TODO_PAGE) {
     html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;padding-top:6px;">
@@ -14220,7 +14429,7 @@ function renderTodoDoneForCat(cat) {
   if (!el) return;
   const items = (store.userTodos || [])
     .map((ut, i) => ({ ut, i }))
-    .filter(o => (o.ut.category || 'daily') === cat && o.ut.done)
+    .filter(o => (o.ut.category || 'daily') === cat && isTodoDone(o.ut))
     .sort((a, b) => (b.ut.completedAt || b.ut.createdAt || 0) - (a.ut.completedAt || a.ut.createdAt || 0));
   if (!items.length) {
     el.innerHTML = '<div class="todo-done-head">✅ 已完成' + (cat === 'work' ? '工作' : '日常') + '待办 <span class="todo-done-count">0</span></div><div class="todo-done-empty">暂无已完成项目，完成一条待办后会出现在这里~</div>';
@@ -14237,6 +14446,26 @@ function renderTodoDoneForCat(cat) {
   viewList.forEach(o => {
     const ut = o.ut;
     const doneAt = ut.completedAt ? fmtDoneDate(ut.completedAt) : '';
+    if (ut.type === 'group') {
+      const subs = ut.subtasks || [];
+      const subHtml = subs.map(function (s) {
+        return `<div class="todo-subitem done"><span class="todo-subcheck done">✓</span><span class="todo-subtext">${escTodo(s.text)}</span></div>`;
+      }).join('');
+      html += `<div class="todo-done-item">
+        <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
+        <div class="todo-body">
+          <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog">✓ 全部完成 ${subs.length}/${subs.length}</span></div>
+          <div class="todo-sublist">${subHtml}</div>
+          <div class="todo-meta">
+            ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
+            <span class="todo-meta-sp"></span>
+            <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
+            <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+          </div>
+        </div>
+      </div>`;
+      return;
+    }
     html += `<div class="todo-done-item">
       <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
       <div class="todo-body">
@@ -14383,7 +14612,7 @@ function addUserTodo(cat) {
   try {
     const newI = store.userTodos.length - 1;
     const catItems = (store.userTodos || []).map((ut, i) => ({ ut, i }))
-      .filter(o => (o.ut.category || 'daily') === cat && !o.ut.done);
+      .filter(o => (o.ut.category || 'daily') === cat && !isTodoDone(o.ut));
     const sorted = sortTodos(catItems);
     const pos = sorted.findIndex(o => o.i === newI);
     if (pos >= 0) __todoPage[cat] = Math.floor(pos / TODO_PAGE);
@@ -14478,13 +14707,52 @@ async function deleteTodoFromEdit() {
 function editUserTodo(idx) { openTodoEditModal(idx); }
 function setTodoDeadline(idx) { openTodoEditModal(idx); }
 
+// 是否算「完成」：单条看 done；类目待办看是不是所有小点都勾完
+function isTodoDone(ut) {
+  if (!ut) return false;
+  if (ut.type === 'group') {
+    const s = ut.subtasks || [];
+    return s.length > 0 && s.every(function (x) { return x.done; });
+  }
+  return !!ut.done;
+}
+function recomputeGroupDone(ut) {
+  if (ut && ut.type === 'group') { ut.done = isTodoDone(ut); }
+}
 function toggleUserTodo(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
   const ut = store.userTodos[idx];
-  ut.done = !ut.done;
-  if (ut.done) { ut.completedAt = Date.now(); }   // v85：记录完成时间，用于「已完成」区块显示
-  else { ut.completedAt = 0; }
+  if (ut.type === 'group') {
+    // 类目待办：点主勾=一键全部勾选 / 全部取消（快捷操作）
+    const target = isTodoDone(ut) ? false : true;
+    (ut.subtasks || []).forEach(function (s) { s.done = target; });
+    ut.done = target;
+  } else {
+    ut.done = !ut.done;
+  }
+  if (isTodoDone(ut)) { ut.completedAt = Date.now(); } else { ut.completedAt = 0; }
   __todoPage.daily = 0; __todoPage.work = 0;   // 勾选会改变排序位置，回到第1页最直观
+  saveData(); try { renderHomeTodo(); } catch (e) {}
+  try { renderTodoPanel(); } catch (e) {}
+}
+// 勾选 / 取消类目里的某一条小点；全部勾完父类目才算完成
+function toggleSubtask(gIdx, k) {
+  const ut = store.userTodos && store.userTodos[gIdx];
+  if (!ut || ut.type !== 'group' || !ut.subtasks || !ut.subtasks[k]) return;
+  ut.subtasks[k].done = !ut.subtasks[k].done;
+  recomputeGroupDone(ut);
+  if (isTodoDone(ut)) { ut.completedAt = Date.now(); } else { ut.completedAt = 0; }
+  __todoPage.daily = 0; __todoPage.work = 0;
+  saveData(); try { renderHomeTodo(); } catch (e) {}
+  try { renderTodoPanel(); } catch (e) {}
+}
+// 删除类目里的一条小点；删到一条不剩则整个类目一并移除
+function removeSubtask(gIdx, k) {
+  const ut = store.userTodos && store.userTodos[gIdx];
+  if (!ut || ut.type !== 'group' || !ut.subtasks || !ut.subtasks[k]) return;
+  ut.subtasks.splice(k, 1);
+  if (ut.subtasks.length === 0) { removeUserTodo(gIdx); return; }
+  recomputeGroupDone(ut);
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
 }
