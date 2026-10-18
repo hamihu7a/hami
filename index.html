@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-334">
+<meta name="hami-build" content="2026-10-18-335">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -841,10 +841,17 @@
   .hami-cmd-bar .cmd-send:hover { transform:scale(1.04); box-shadow:0 2px 8px rgba(209,75,115,0.25); }
   .hami-cmd-bar .cmd-send:active { transform:scale(0.97); }
   /* v323：点「记一下」=整键深色闪 1 秒（JS 挂 .flash-dark，1 秒后自动摘），确认点击生效 */
+  /* v335：追加弹跳动效——点击瞬间放大回弹，配合深色渐变，反馈更明显 */
   .hami-cmd-bar .cmd-send.flash-dark {
     background:linear-gradient(135deg,#4a0f26,#2b0715);
     color:#fff;
     box-shadow:0 2px 10px rgba(74,15,38,0.35);
+    animation:hami-send-pop .5s ease forwards;
+  }
+  @keyframes hami-send-pop {
+    0%   { transform:scale(1); }
+    45%  { transform:scale(1.14); }
+    100% { transform:scale(1.05); }
   }
   /* v247：同步状态 + 版本号（上下并排），位于「记一下」右侧固定宽度区，让「记一下 / 语音」整体左移 */
   .hami-cmd-bar .cmd-meta {
@@ -872,15 +879,18 @@
   .hami-cmd-bar .cmd-mic svg { display:block; }
   .hami-cmd-bar .cmd-mic:hover { background:#ffe4ec; transform:scale(1.06); }
   .hami-cmd-bar .cmd-mic:active { transform:scale(0.95); }
-  /* v323：录音中=深色底+白图标+同色系脉冲光圈，主人一眼确认"语音开启成功"；松手/出错自动恢复浅粉 */
-  .hami-cmd-bar .cmd-mic.recording {
-    background:#4a0f26;color:#fff;
+  /* v335：录音中状态再加强——深酒红底+白图标+放大1.1倍+脉冲光圈，任何角度一眼可见；
+     hover/active 也锁死深色，杜绝"开启了看起来跟没开一样" */
+  .hami-cmd-bar .cmd-mic.recording,
+  .hami-cmd-bar .cmd-mic.recording:hover,
+  .hami-cmd-bar .cmd-mic.recording:active {
+    background:#4a0f26;color:#fff;transform:scale(1.1);
     animation:hami-mic-pulse-dark 1.2s infinite;
   }
   @keyframes hami-mic-pulse-dark {
-    0%   { box-shadow:0 0 0 0 rgba(74,15,38,0.5); }
-    70%  { box-shadow:0 0 0 10px rgba(74,15,38,0); }
-    100% { box-shadow:0 0 0 0 rgba(74,15,38,0); }
+    0%   { box-shadow:0 0 0 0 rgba(74,15,38,0.55), 0 2px 6px rgba(74,15,38,0.3); }
+    70%  { box-shadow:0 0 0 12px rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
+    100% { box-shadow:0 0 0 0 rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
   }
   @keyframes hami-refresh-spin { 100% { transform:rotate(360deg); } }
   .hami-cmd-toast {
@@ -1551,6 +1561,28 @@
   .gt-sub-del:hover { background: #f3b4b4; color: #fff; }
   /* 首页卡片里的类目小点缩进 */
   .todo-subitem.home-sub { margin-left: 22px; }
+  /* v335：类目待办排版升级——卡片式容器 + 细进度条 + 卡片式子点，更精致高级 */
+  .todo-item.todo-group-item {
+    align-items: flex-start;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #fffbf9;
+    border: 1px solid #ffe0e8;
+    border-bottom: 1px solid #ffe0e8;
+    border-radius: 14px;
+  }
+  .todo-item.todo-group-item .todo-check { margin-top: 2px; }
+  .todo-group-title { font-size: 14px; font-weight: 800; color: #4a2f3c; }
+  .todo-grp-prog { font-size: 11px; font-weight: 800; color: #d14b73; background: #fff0f4; border: 1px solid #ffd0dc; border-radius: 10px; padding: 1px 8px; flex-shrink: 0; }
+  .todo-grp-prog.all { background: linear-gradient(135deg,#7fe0a0,#34c759); border-color: transparent; color: #fff; }
+  .todo-grp-bar { height: 6px; background: #f6e3ea; border-radius: 4px; margin: 7px 0 9px 30px; overflow: hidden; }
+  .todo-grp-bar-in { height: 100%; background: linear-gradient(90deg,#ff9bb3,#ff6b9e); border-radius: 4px; transition: width .3s ease; }
+  .todo-sublist { margin: 0 0 4px 30px; gap: 5px; }
+  .todo-subitem { background: #fff; border: 1px solid #f4e0e8; border-radius: 10px; padding: 6px 8px; transition: border-color .15s, background .15s; }
+  .todo-subitem:hover { border-color: #ffc4d4; background: #fffafc; }
+  .todo-subtext { font-size: 12.5px; color: #5a4048; }
+  .todo-sub-del { opacity: .45; transition: opacity .15s; }
+  .todo-subitem:hover .todo-sub-del { opacity: 1; }
 
   /* ============ 学车进度（临时模块：科目一~四 标签卡 + 知识点打卡）============ */
   .drive-card { padding: 18px 18px 22px; }
@@ -1565,11 +1597,13 @@
   .drive-progress-fill.all-done { background: linear-gradient(90deg,#5bd97f,#2fb350); }
   /* 科目标签卡 */
   .drive-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  /* v335：标签卡改两行结构——第一行「科目几」nowrap 不转行，第二行放 x/y 进度 */
   .drive-tab {
     position: relative; border: 1.5px solid #ffd0dc; background: #fff; color: #d14b73;
-    font-size: 14px; font-weight: 800; padding: 10px 4px; border-radius: 12px; cursor: pointer;
-    transition: all .18s ease; display: flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 9px 4px; border-radius: 12px; cursor: pointer;
+    transition: all .18s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   }
+  .drive-tab-name { display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; font-size: 15px; font-weight: 800; line-height: 1.2; }
   .drive-tab:hover { border-color: #ff9bb3; background: #fff5f8; }
   .drive-tab.active { background: linear-gradient(135deg,#ff7e9c,#ff6b9e); color: #fff; border-color: transparent; box-shadow: 0 5px 14px rgba(255,107,158,0.35); transform: translateY(-1px); }
   .drive-tab.done { background: linear-gradient(135deg,#7fe0a0,#34c759); border-color: transparent; color: #fff; box-shadow: 0 4px 12px rgba(52,199,89,0.3); }
@@ -2707,37 +2741,39 @@
   /* v2026-09-06-29 收入面板「上2下2」专属：4 张卡永远 2×2 排布（不随容器宽度折叠） */
   #income-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   #income-stats .stat-card { padding: 7px 8px; }
-  #income-stats .stat-card .value { font-size: 18px; }
-  #income-stats .stat-card .label { font-size: 11px; margin-bottom: 2px; }
+  /* v335：主人要求四格统计卡标签/数值放大、加深、不转行（手机端同步生效） */
+  #income-stats .stat-card .value { font-size: 22px; white-space: nowrap; }
+  #income-stats .stat-card .label { font-size: 13px; margin-bottom: 2px; color: #6b3f4e; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* v2026-09-06-29 自媒体更新记录「上2下2」专属：4 张卡永远 2×2 */
   #media-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   /* v129：主人要求压扁——数值+单位同行、少留白、字号别太小 */
   #media-stats .stat-card { padding: 7px 8px; }
-  #media-stats .stat-card .value { font-size: 19px; }
-  #media-stats .stat-card .label { font-size: 11.5px; margin-bottom: 2px; white-space: nowrap; }
+  #media-stats .stat-card .value { font-size: 22px; white-space: nowrap; }
+  #media-stats .stat-card .label { font-size: 13px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6b3f4e; font-weight: 700; }
   /* v2026-09-07-30 健康记录 4 张卡「上2下2 紧密」：主人要求紧密排版 */
   #fitness-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
   #fitness-stats .stat-card { padding: 7px 6px; }
-  #fitness-stats .stat-card .value { font-size: 18px; }
-  #fitness-stats .stat-card .label { font-size: 11px; margin-bottom: 2px; white-space: nowrap; }
-  #fitness-stats .stat-card .unit { font-size: 11px; }
+  #fitness-stats .stat-card .value { font-size: 22px; white-space: nowrap; }
+  #fitness-stats .stat-card .label { font-size: 13px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6b3f4e; font-weight: 700; }
+  #fitness-stats .stat-card .unit { font-size: 12px; }
   /* v2026-09-08 经期记录 4 张卡「上2下2 紧密」 */
   #period-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
   #period-stats .stat-card { padding: 7px 6px; }
-  #period-stats .stat-card .value { font-size: 18px; }
-  #period-stats .stat-card .label { font-size: 11px; margin-bottom: 2px; white-space: nowrap; }
-  #period-stats .stat-card .unit { font-size: 11px; }
-  /* v2026-09-08 如厕/敷面膜 3 张卡横向并排（v129：字号加大、仍紧凑不转行） */
-  #toilet-stats, #mask-stats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+  #period-stats .stat-card .value { font-size: 22px; white-space: nowrap; }
+  #period-stats .stat-card .label { font-size: 13px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6b3f4e; font-weight: 700; }
+  #period-stats .stat-card .unit { font-size: 12px; }
+  /* v2026-09-08 如厕/敷面膜 3 张卡横向并排（v335：字号加大、仍紧凑不转行）；敷面膜改 2 张（去掉当前星期卡） */
+  #toilet-stats { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+  #mask-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
   #toilet-stats .stat-card, #mask-stats .stat-card { padding: 7px 4px; }
-  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 16px; white-space: nowrap; }
-  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 10.5px; margin-bottom: 2px; white-space: nowrap; }
-  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 10.5px; white-space: nowrap; }
+  #toilet-stats .stat-card .value, #mask-stats .stat-card .value { font-size: 17px; white-space: nowrap; }
+  #toilet-stats .stat-card .label, #mask-stats .stat-card .label { font-size: 11.5px; margin-bottom: 2px; white-space: nowrap; color: #6b3f4e; font-weight: 700; }
+  #toilet-stats .stat-card .unit, #mask-stats .stat-card .unit { font-size: 11px; white-space: nowrap; }
   /* v267：历史推荐已由表格改为 .ih-item 卡片列表，旧表格列宽规则删除 */
   /* 表格整体紧凑 + 在窄屏仍能横滚看标题 */
   .card table { table-layout: auto; min-width: 500px; }
   /* 让"标题"列在历史推荐表里真正宽：列宽用 min-width 而非死宽，剩下宽度按内容自然分配 */
-  #income-stats .stat-card .label { font-size: 11.5px; margin-bottom: 4px; }
+  #income-stats .stat-card .label { font-size: 13px; margin-bottom: 4px; color: #6b3f4e; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stat-card {
     background: rgba(255,255,255,0.85);
     border-radius: var(--radius-sm);
@@ -2748,7 +2784,9 @@
     transition: box-shadow var(--t), transform var(--t);
   }
   .stat-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-  .stat-card .label { font-size:11px; color: var(--c-muted); margin-bottom: 2px; }
+  /* v335：标签放大加深不转行；第二行「最后更新」用小字弱化，保持层次 */
+  .stat-card .label { font-size:12.5px; color: #6b3f4e; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat-card .label + .label { font-size: 10.5px; font-weight: 400; color: #a0788c; margin-bottom: 3px; }
   .stat-card .value { font-size: 19px; font-weight: 700; color: var(--c-pink-deep); }
   .stat-card .value.green { color: #e88a4f; }
   .stat-card .value.red { color: #e85f7a; }
@@ -3724,7 +3762,7 @@
     }
     .desktop-time { font-size: 22px; }
     .desktop-hero { padding: 10px 12px; }
-    .stat-card .value { font-size: 18px; }
+    .stat-card .value { font-size: 21px; white-space: nowrap; }
     th, td { padding: 8px 5px; font-size:12px; }
 
     /* ===== 主人 iPhone 17 超小屏适配（≤420px）=====
@@ -3785,11 +3823,11 @@
       .desktop-hero { padding: 10px 10px; min-height: 120px; }
       .desktop-hero .motto { font-size:12px; }
 
-      /* 统计卡（v129：手机端同样压扁——数值+单位同行、少留白） */
+      /* 统计卡（v129：手机端同样压扁——数值+单位同行、少留白；v335：字号放大加深，禁止转行） */
       .stat-card { padding: 7px 8px; }
-      .stat-card .label { font-size:11px; }
-      .stat-card .value { font-size: 18px; }
-      .stat-card .unit { font-size:11px; }
+      .stat-card .label { font-size:12.5px; color: #6b3f4e; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .stat-card .value { font-size: 21px; white-space: nowrap; }
+      .stat-card .unit { font-size:12px; }
 
       /* 表格 */
       th, td { padding: 4px 3px; font-size:11px; }
@@ -12990,6 +13028,8 @@ function loadData() {
       }
       // 学车进度（临时模块）：恢复存档后确保结构完整
       ensureDriveLearn();
+      // v335：阿婆生日回归（一次性迁移，主人反馈生日不见了）
+      try { restoreApoBirthdayOnce(); } catch (e) {}
       // v333：工作待办里「毕业设计」多条合并为类目（一次性迁移，主人反馈有3条毕业设计工作待办）
       if (!store.migratedGradDesign) {
         try {
@@ -14356,7 +14396,8 @@ function groupTodoHtml(o, cat, info) {
   return `<div class="todo-item todo-group-item${overdueCls}">
     <span class="todo-check${allDone ? ' done' : ''}" onclick="toggleUserTodo(${o.i})" title="点一下=全部勾选 / 取消">${allDone ? '✓' : ''}</span>
     <div class="todo-body">
-      <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog">${done}/${subs.length}</span></div>
+      <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog${allDone ? ' all' : ''}">${done}/${subs.length}</span></div>
+      <div class="todo-grp-bar"><div class="todo-grp-bar-in" style="width:${subs.length ? Math.round(done / subs.length * 100) : 0}%;${allDone ? 'background:linear-gradient(90deg,#7fe0a0,#34c759);' : ''}"></div></div>
       <div class="todo-sublist">${subHtml}</div>
       <div class="todo-meta">
         ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
@@ -14572,7 +14613,7 @@ function renderTodoDoneForCat(cat) {
       html += `<div class="todo-done-item">
         <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
         <div class="todo-body">
-          <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog">✓ 全部完成 ${subs.length}/${subs.length}</span></div>
+          <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog all">✓ 全部完成 ${subs.length}/${subs.length}</span></div>
           <div class="todo-sublist">${subHtml}</div>
           <div class="todo-meta">
             ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
@@ -14948,6 +14989,38 @@ var DRIVE_SEED = {
 };
 // 数据：store.driveLearn = { subjects:{ '1':{name,points:[{text,done,note}]}, ... }, active }
 // 规则：某科目 points 全部 done（且≥1条）=> 该科目完成；四科全完成 => 拿证通关
+// v335：阿婆生日回归（主人反馈"阿婆的生日怎么不见了"）——一次性迁移：
+// 若当前 store 里没有任何「阿婆」生日，清掉对应墓碑（含本地镜像）并把默认数据补种回去，
+// 带新 id 排到最前；只跑一次，主人若再删不会复活（有 flag + 墓碑机制兜底）。
+var APO_RESTORE_FLAG = 'hami_apo_restore_v335';
+function restoreApoBirthdayOnce() {
+  try {
+    if (localStorage.getItem(APO_RESTORE_FLAG)) return;
+    localStorage.setItem(APO_RESTORE_FLAG, '1');
+    if (!Array.isArray(store.importantDates)) store.importantDates = [];
+    const has = store.importantDates.some(function (x) {
+      return x && x.type === 'birthday' && String(x.name || '').trim() === '阿婆';
+    });
+    if (has) return;   // 还在（可能在翻页）→ 不动数据
+    const seed = { type: 'birthday', name: '阿婆', date: '1952-07-19', remark: '农历七月十九' };
+    // ① 清墓碑：store.__deleted + localStorage 镜像双清，防止补种后被合并/渲染再次过滤
+    try {
+      if (typeof hamiTombMirrorMerge === 'function') hamiTombMirrorMerge();
+      const keys = (typeof _allDedupKeys === 'function') ? _allDedupKeys('importantDates', seed) : [];
+      if (store.__deleted && Array.isArray(store.__deleted['importantDates'])) {
+        store.__deleted['importantDates'] = store.__deleted['importantDates'].filter(function (k) {
+          return keys.indexOf(k) < 0 && String(k).indexOf('阿婆') < 0;
+        });
+      }
+      try { localStorage.setItem('hami_tomb_mirror_v1', JSON.stringify(store.__deleted || {})); } catch (e2) {}
+    } catch (e) {}
+    // ② 补种（新 id → 排序在最前，主人一眼能看到）
+    store.importantDates.push(Object.assign({ id: 'imp_' + Date.now() + '_apo' }, seed));
+    saveData();
+    try { if (typeof renderReminder === 'function') renderReminder(); } catch (e3) {}
+  } catch (e4) {}
+}
+
 function ensureDriveLearn() {
   if (!store.driveLearn || typeof store.driveLearn !== 'object') store.driveLearn = { subjects: {}, active: '1' };
   const s = store.driveLearn;
@@ -15016,9 +15089,9 @@ function renderDriveLearn() {
     const done = driveSubjectDone(k);
     const prog = driveSubjectProgress(k);
     const cls = 'drive-tab' + (s.active === k ? ' active' : '') + (done ? ' done' : '');
-    const badge = done ? '<span class="drive-tab-badge">✓</span>'
-      : (prog.total ? '<span class="drive-tab-count">' + prog.done + '/' + prog.total + '</span>' : '');
-    return '<button class="' + cls + '" type="button" onclick="switchDriveSubject(\'' + k + '\')">' + escHtml(sub.name) + badge + '</button>';
+    const badge = done ? '<span class="drive-tab-badge">✓</span>' : '';
+    const cnt = (!done && prog.total) ? '<span class="drive-tab-count">' + prog.done + '/' + prog.total + '</span>' : '';
+    return '<button class="' + cls + '" type="button" onclick="switchDriveSubject(\'' + k + '\')"><span class="drive-tab-name">' + escHtml(sub.name) + badge + '</span>' + cnt + '</button>';
   }).join('');
   // 当前科目内容
   const ak = s.active;
@@ -19970,7 +20043,6 @@ function renderMask() {
   document.getElementById('mask-stats').innerHTML = `
     <div class="stat-card"><div class="label">本周进度</div><div class="value">${info.count}<span style="font-size:13px;color:#b87088;">/${info.goal}</span></div><div class="unit">${done?'✅完成':'进行中'}</div></div>
     <div class="stat-card"><div class="label">还需</div><div class="value">${info.goal - info.count}</div><div class="unit">次</div></div>
-    <div class="stat-card"><div class="label">当前星期</div><div class="value" style="font-size:18px;">周${wn[info.weekdayNum-1]}</div><div class="unit">${info.needRemind?'⚠️提醒':'正常'}</div></div>
   `;
 
   const allRecs = [...store.maskRecords].sort((a,b)=>b.date.localeCompare(a.date));
@@ -20258,27 +20330,27 @@ function renderReminder() {
       const ageHtml = (isBirthday && d.thisYearAge)
         ? `<span style="font-size:11px;color:#8a6270;white-space:nowrap;">今年 ${d.thisYearAge} 岁</span>` : '';
 
-      const itemHtml = `<div style="padding:5px 9px;background:#fff8fa;border-radius:12px;margin-bottom:3px;border:1px solid #ffe4ec;">
+      const itemHtml = `<div style="padding:5px 9px;background:#fff8fa;border-radius:12px;margin-bottom:4px;border:1px solid #ffe4ec;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:1px;">
-              <span style="font-size:13px;">${icon}</span>
-              <span style="font-size:14px;font-weight:700;color:#d14b73;">${escTodo(d.name)}</span>
-              <span style="font-size:11px;padding:1px 5px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
+              <span style="font-size:12px;">${icon}</span>
+              <span style="font-size:13px;font-weight:700;color:#d14b73;">${escTodo(d.name)}</span>
+              <span style="font-size:10px;padding:1px 5px;border-radius:6px;background:${typeColor}22;color:${typeColor};">${typeLabel}</span>
               ${ageHtml}
             </div>
             ${dateHtml}
-            ${!isBirthday && countText ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
-            ${d.remark ? `<div style="font-size:11px;color:#8a6270;margin-top:1px;">📝 ${escTodo(d.remark)}</div>` : ''}
+            ${!isBirthday && countText ? `<div style="font-size:10.5px;color:#8a6270;margin-top:1px;">${countText}</div>` : ''}
+            ${(d.remark && ['公历','新历','农历'].indexOf(String(d.remark).trim()) < 0) ? `<div style="font-size:10.5px;color:#8a6270;margin-top:1px;">📝 ${escTodo(d.remark)}</div>` : ''}
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none;">
-            <div style="text-align:center;min-width:52px;">
-              <div style="font-size:17px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;">
+            <div style="text-align:center;min-width:48px;">
+              <div style="font-size:16px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
               <div style="font-size:10px;color:#7d4a5a;margin-top:1px;">${countLabel}</div>
             </div>
-            <div style="display:flex;gap:4px;">
-              <button class="row-edit-btn" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
-              <button class="row-del-btn" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <button class="row-edit-btn" style="font-size:10px;padding:2px 10px;border-radius:7px;" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
+              <button class="row-del-btn" style="font-size:10px;padding:2px 10px;border-radius:7px;" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
             </div>
           </div>
         </div>
@@ -25039,7 +25111,11 @@ var HamiVoice = (function () {
   var rec = null, want = false, holdStart = 0, tapMode = false, finalTxt = '', btn = null;
 
   function inputEl() { return document.getElementById('hami-cmd-input'); }
-  function setUI(on) { if (btn) { try { if (on) btn.classList.add('recording'); else btn.classList.remove('recording'); } catch (e) {} } }
+  function setUI(on) {
+    if (btn) { try { if (on) btn.classList.add('recording'); else btn.classList.remove('recording'); } catch (e) {} }
+    // v335：录音中同步把输入框占位符换成提示，双保险确认"语音已开启"
+    try { var el = inputEl(); if (el) el.setAttribute('placeholder', on ? '🎤 录音中…说完自动记' : ''); } catch (e) {}
+  }
   function toast(msg) { try { showCmdToast(msg); } catch (e) { try { hamiToast(msg); } catch (e2) {} } }
 
   function ensure() {
