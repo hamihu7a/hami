@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-339">
+<meta name="hami-build" content="2026-10-18-340">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1168,6 +1168,8 @@
     gap: 3px;
     margin-bottom: 8px;
   }
+  /* v340：主人反馈账号卡边界看不清——半透明浅粉边框在毛玻璃背景上几乎不可见，
+     改 1.5px 实线主粉 #ff9eb5（细但明显，仍是马卡龙粉色系） */
   .account-card {
     flex: 1;
     background: rgba(255,255,255,0.5);   /* v255：改半透明，透出背景图（仍有 blur 保证文字可读） */
@@ -1175,7 +1177,7 @@
     border-radius: 14px;
     padding: 9px 5px;
     box-shadow: 0 2px 10px rgba(255, 158, 181, 0.08);
-    border: 1px solid var(--c-pink-soft);
+    border: 1.5px solid #ff9eb5;
   }
   .account-card .ac-header {
     display: flex;
@@ -1231,7 +1233,8 @@
     position: relative;
     overflow: hidden;
     background: linear-gradient(180deg, #ffffff 0%, rgba(255,240,246,.72) 100%);
-    border: 1px solid rgba(255,183,204,.55);
+    /* v340：1.5px 实线主粉（原 rgba(255,183,204,.55) 半透明太浅，主人反馈三个账号卡边界看不清） */
+    border: 1.5px solid #ff9eb5;
     /* v328：主人要底部阴影像「今日时光」卡那样——同色系加重一档，底部感更明显 */
     box-shadow: 0 4px 12px rgba(233,120,158,0.22);
     transition: transform .2s, box-shadow .2s;
@@ -9873,6 +9876,52 @@ function mergeStoreInto(local, remote) {
       }
     }
   } catch (e) {}
+  // ===== v340：学车进度跨设备深合并（症状「科目一勾选全部完成，刷新就没了」的根治）=====
+  // 根因：driveLearn 是「对象套数组」结构，而合并核心对非数组字段的策略是
+  // 「本地已有值一律保留、仅本地为空才用云端补」——云端的勾选进度永远合并不进来。
+  // 跨设备场景：A 端勾选推云(done:true)，B 端 pull 时本地已有旧 driveLearn → 跳过 →
+  // B 端任何一次推送就把自己的旧进度(false)整对象推回云端 → A 端再拉也是旧的 →
+  // 主人看到的就是「勾了三次、每次刷新都被打回原形」。
+  // 修法：对象字段不再整体跳过，按 科目→知识点(text) 逐层并集——
+  //   · 科目(subjects 键)：本地没有的科目才整体采用云端；
+  //   · 知识点(points)：按 text 认人并集（本地没有的并进来，同 text 的做升级）；
+  //   · 同一条：done 任一为 true 即 true（与 futurePosts/userTodos「完成优先」同精神），
+  //     note 取较长非空的一边（信息更全者赢）；
+  //   · active/_seeded 等标量：本地已有不动，本地没有才补。
+  function mergeDriveLearn(l, r) {
+    try {
+      if (!l || typeof l !== 'object') return r;
+      if (!r || typeof r !== 'object') return l;
+      const out = Object.assign({}, l);   // 浅拷贝：subjects 仍是本地引用，下面就地升级本地 store
+      ['active', '_seeded'].forEach(function (sk) {
+        if (out[sk] === undefined && r[sk] !== undefined) out[sk] = r[sk];
+      });
+      if (r.subjects && typeof r.subjects === 'object') {
+        if (!out.subjects || typeof out.subjects !== 'object') out.subjects = {};
+        Object.keys(r.subjects).forEach(function (k) {
+          const rs = r.subjects[k];
+          if (!rs || typeof rs !== 'object') return;
+          const ls = out.subjects[k];
+          if (!ls || typeof ls !== 'object') { out.subjects[k] = rs; return; }   // 本地没这科目才整体用云端
+          if (!ls.name && rs.name) ls.name = rs.name;
+          if (!ls.note && rs.note) ls.note = rs.note;
+          if (!Array.isArray(ls.points)) ls.points = [];
+          if (!Array.isArray(rs.points)) return;
+          const byText = {};
+          ls.points.forEach(function (p) { if (p && typeof p === 'object') byText[String(p.text || '')] = p; });
+          rs.points.forEach(function (p) {
+            if (!p || typeof p !== 'object') return;
+            const tk = String(p.text || '');
+            const lp = byText[tk];
+            if (!lp) { ls.points.push(p); byText[tk] = p; return; }              // 云端独有知识点 → 并进来
+            if (p.done === true && lp.done !== true) lp.done = true;              // 完成优先：跨设备勾选互相可见
+            if (p.note && String(p.note).length > String(lp.note || '').length) lp.note = p.note;  // 备注取更全的
+          });
+        });
+      }
+      return out;
+    } catch (e) { return l; }
+  }
   // ====== 数据合并核心：本地优先并集（根治「刷新 / 同步丢数据」）======
   // 设计铁律：本地 localStorage 是绝对事实来源，云端只作为「补充」，绝不允许覆盖 / 删除本地已有记录。
   //  - 数组字段：双方并集，云端独有的记录并进来，本地记录一律保留（绝不整列替换 / 清空）；
@@ -9921,6 +9970,10 @@ function mergeStoreInto(local, remote) {
           local[k].push(it);
         });
       }
+    } else if (k === 'driveLearn' && lv && typeof lv === 'object' && !Array.isArray(lv)
+               && rv && typeof rv === 'object' && !Array.isArray(rv)) {
+      // v340：学车进度这类「对象套数组」字段深合并，不再整体跳过（详见 mergeDriveLearn 注释）
+      local[k] = mergeDriveLearn(lv, rv);
     } else if (lv === undefined || lv === null) {
       // 本地该字段为空才用云端补充；本地已有值一律保留，绝不覆盖
       local[k] = rv;
@@ -10513,9 +10566,13 @@ async function pushNow() {
       } catch (e) {
         lastErr = e;
         const m = (e && e.message) || '';
-        if (m.indexOf('does not match') >= 0 || m.indexOf('409') >= 0) {
-          _diagStep('推送冲突重试', false, '云端有别人刚改动，重新合并后重试（第 ' + (attempt + 1) + ' 次）');
-          await new Promise(function (r) { setTimeout(r, 1200); });
+        // v340：原来只有 409 冲突才重试，网络抖动/超时直接放弃 → 主人看到「经常提示失败」。
+        // 现在两类错误都重试：冲突固定等 1.2s，网络类错误退避递增（1.5s/3s/4.5s/6s），
+        // 重试前都会重新拉云端合并，绝不会用旧内容覆盖别处刚记的数据。
+        const isConflict = m.indexOf('does not match') >= 0 || m.indexOf('409') >= 0;
+        if (attempt < 4) {
+          _diagStep('推送重试', false, (isConflict ? '云端有别人刚改动，重新合并后重试' : '网络波动，稍后重试') + '（第 ' + (attempt + 1) + ' 次）：' + m);
+          await new Promise(function (r) { setTimeout(r, isConflict ? 1200 : 1500 * (attempt + 1)); });
           continue;
         }
         throw e;
@@ -13049,31 +13106,7 @@ function loadData() {
       ensureDriveLearn();
       // v335：阿婆生日回归（一次性迁移，主人反馈生日不见了）
       try { restoreApoBirthdayOnce(); } catch (e) {}
-      // v333：工作待办里「毕业设计」多条合并为类目（一次性迁移，主人反馈有3条毕业设计工作待办）
-      if (!store.migratedGradDesign) {
-        try {
-          const todos = store.userTodos || [];
-          const grad = todos.filter(function (t) { return (t.category || 'daily') === 'work' && /毕业设计/.test(t.text || ''); });
-          if (grad.length >= 2) {
-            const others = todos.filter(function (t) { return !((t.category || 'daily') === 'work' && /毕业设计/.test(t.text || '')); });
-            const group = {
-              type: 'group',
-              category: 'work',
-              date: grad[0].date || todayStr(),
-              text: '毕业设计',
-              done: false,
-              createdAt: grad[0].createdAt || Date.now(),
-              subtasks: grad.map(function (t) {
-                const st = (t.text || '').replace(/^毕业设计[：:\-\s]*/, '').trim();
-                return { text: st || (t.text || '任务'), done: !!t.done };
-              })
-            };
-            recomputeGroupDone(group);
-            store.userTodos = others.concat([group]);
-          }
-          store.migratedGradDesign = true;
-        } catch (e) {}
-      }
+      // v340：毕业设计合并迁移已移至下方存档恢复之后执行（原位置会被 store.userTodos=p.userTodos 整体覆盖）
       if (p.accountsMeta) store.accountsMeta = Object.assign({}, store.accountsMeta, p.accountsMeta);
       if (p.importantDates !== undefined) store.importantDates = p.importantDates;
       if (p.travelPlans !== undefined) store.travelPlans = p.travelPlans;
@@ -13092,6 +13125,43 @@ function loadData() {
       // 【止血·第零批】恢复这两个字段：否则记进去的数据读不回来，还会被初始化空值覆盖销毁
       if (p.exerciseItems !== undefined) store.exerciseItems = p.exerciseItems;
       if (p.userTodos !== undefined) store.userTodos = p.userTodos;
+      // v333：工作待办里「毕业设计」多条合并为类目（一次性迁移，主人反馈有3条毕业设计工作待办）
+      // v340 修复①：原实现跑在存档恢复（上一行 store.userTodos=p.userTodos）之前，迁移刚跑完就被
+      //   存档整体覆盖回去、migratedGradDesign 却已置 true → 三条单独的永远活着、合并再不生效，
+      //   主人手动删除后也因「云端旧副本 + 墓碑没推成」反复复活（删除复活事故的土壤）。现移到此处执行。
+      // v340 修复②：条件改补救式——只要没有毕业设计 group 且还存在 ≥2 条单独记录就再收拢一次，
+      //   已被旧 bug 坑过的设备刷新后自动愈合（原来标志一置 true 就永远不修了）。
+      //   已有 group 时绝不动主人后来新建的单独记录（那是主人有意加的）。
+      // v340 修复③：迁移删掉的旧记录写墓碑（hamiTombAdd），云端旧副本再也并不回来。
+      try {
+        const _gradTodos = (store.userTodos || []).filter(function (t) { return (t.category || 'daily') === 'work' && /毕业设计/.test(t.text || ''); });
+        const _hasGradGroup = (store.userTodos || []).some(function (t) { return t && t.type === 'group' && t.text === '毕业设计'; });
+        if (!store.migratedGradDesign || (_gradTodos.length >= 2 && !_hasGradGroup)) {
+          if (_gradTodos.length >= 2 && !_hasGradGroup) {
+            const todos = store.userTodos || [];
+            const grad = _gradTodos;
+            const others = todos.filter(function (t) { return !((t.category || 'daily') === 'work' && /毕业设计/.test(t.text || '')); });
+            const group = {
+              id: _hamiNewId('userTodos'),
+              type: 'group',
+              category: 'work',
+              date: grad[0].date || todayStr(),
+              text: '毕业设计',
+              done: false,
+              createdAt: grad[0].createdAt || Date.now(),
+              subtasks: grad.map(function (t) {
+                const st = (t.text || '').replace(/^毕业设计[：:\-\s]*/, '').trim();
+                return { text: st || (t.text || '任务'), done: !!t.done };
+              })
+            };
+            recomputeGroupDone(group);
+            grad.forEach(function (t) { try { hamiTombAdd('userTodos', t); } catch (e2) {} });
+            store.userTodos = others.concat([group]);
+            try { hamiTombMirrorSave(); } catch (e2) {}
+          }
+          store.migratedGradDesign = true;
+        }
+      } catch (e) {}
     }
     // v199：体重单位由「公斤」改为「斤」（1 公斤 = 2 斤）——存量数据一次性 ×2，靠哨兵只做一次。
     // ⚠️ 必须在下面两个体重 seed 之前执行，且 seed 里的数值已同步改成斤。
