@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-353">
+<meta name="hami-build" content="2026-10-18-354">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9971,8 +9971,40 @@ function mergeStoreInto(local, remote) {
       if (!l || typeof l !== 'object') return r;
       if (!r || typeof r !== 'object') return l;
       const lu = Number(l._updatedAt) || 0, ru = Number(r._updatedAt) || 0;
-      if (ru > lu) return r;   // 云端更新 → 整体采用云端
-      return l;                // 本地更新或持平 → 完全以本地为准，云端旧状态不复活
+      // v354：只有【双方都有时间戳】才用「谁新听谁」；任一方没时间戳（旧结构数据）
+      // 就退回字段级合并（勾选完成优先）——修复 v351 漏洞：本地哪怕只是点开看了一眼科目页
+      // （switchDriveSubject 曾刷新时间戳），云端再新的完成状态也会被永远挡在门外（主人科目一勾选被卡死的真凶）
+      if (lu > 0 && ru > 0) {
+        if (ru > lu) return r;   // 双方都有时间戳：云端更新 → 整体采用云端
+        return l;                // 本地更新或持平 → 以本地为准
+      }
+      // 任一方无时间戳 → 字段级并集：科目/知识点按 text 认人，done 任一为 true 即 true，备注取更长
+      const out = Object.assign({}, l);
+      if (!out.subjects || typeof out.subjects !== 'object') out.subjects = {};
+      const rSubj = (r.subjects && typeof r.subjects === 'object') ? r.subjects : {};
+      Object.keys(rSubj).forEach(function (k) {
+        const rs = rSubj[k];
+        if (!rs || typeof rs !== 'object') return;
+        const ls = out.subjects[k];
+        if (!ls || typeof ls !== 'object') { out.subjects[k] = rs; return; }
+        if (!ls.name && rs.name) ls.name = rs.name;
+        if (!ls.note && rs.note) ls.note = rs.note;
+        if (String(rs.note || '').length > String(ls.note || '').length) ls.note = rs.note;
+        if (!Array.isArray(ls.points)) ls.points = [];
+        if (!Array.isArray(rs.points)) return;
+        const byText = {};
+        ls.points.forEach(function (p) { if (p && typeof p === 'object') byText[String(p.text || '')] = p; });
+        rs.points.forEach(function (p) {
+          if (!p || typeof p !== 'object') return;
+          const lp = byText[String(p.text || '')];
+          if (!lp) { ls.points.push(p); byText[String(p.text || '')] = p; return; }
+          if (p.done === true && lp.done !== true) lp.done = true;
+          if (p.note && String(p.note).length > String(lp.note || '').length) lp.note = p.note;
+        });
+      });
+      if (out._seeded === undefined && r._seeded !== undefined) out._seeded = r._seeded;
+      if (out.active === undefined && r.active !== undefined) out.active = r.active;
+      return out;
     } catch (e) { return l; }
   }
   // ====== 数据合并核心：本地优先并集（根治「刷新 / 同步丢数据」）======
@@ -10668,10 +10700,7 @@ async function pushNow() {
     // v264：小标恢复旧文案「同步失败」；弹出的浮层点名具体什么没同步成功（体重/背景图/数据…）
     // v353：失败提示具体到"哪个板块多少条没同步成功"——主人明确要求
     syncBadgeShow('同步失败', true);
-    var _dirtySum = (typeof _syncDirtySummary === 'function') ? _syncDirtySummary() : '';
-    var _failDetail = _dirtySum || (((typeof _syncActName === 'function') && _syncActName()) || '数据');
-    try { showCloudToast('❌ 同步失败：' + _failDetail + ' 还没上云，先别关页面', 'fail'); } catch (e2) {}
-    // 失败提示统一交给 commitToCloud 的「还没同步到云端」横幅（已移到工作台正中间），此处不再弹第二条，避免重复
+    // v354：不再在这里弹 toast——commitToCloud 的横幅是唯一弹窗（主人反馈两个提示叠在一起，只留一个）
     throw e;   // 失败必须向上抛出，否则上层误以为"推送完成"
   } finally { _syncBusy = false; }
 }
@@ -10774,8 +10803,10 @@ async function commitToCloud() {
     if (!_commitFailNotified) {
       _commitFailNotified = true;
       _hamiBannerLastFailKey = key;
-      const _failName = (typeof _syncActName === 'function') ? _syncActName() : '';
-      hamiPendingBanner(true, _failName ? ('未同步：' + _failName) : '还没同步成功');
+      // v354：横幅是唯一弹窗，文案带具体板块+条数（主人要求），不再另外弹 toast
+      var _dirtySum2 = (typeof _syncDirtySummary === 'function') ? _syncDirtySummary() : '';
+      var _bannerMsg = _dirtySum2 ? ('同步失败：' + _dirtySum2 + ' 还没上云') : '还没同步成功';
+      hamiPendingBanner(true, _bannerMsg);
     }
     _hamiBannerFailStreak++;
     if (!_commitRetryTimer) {
@@ -15505,7 +15536,7 @@ function renderDriveLearn() {
   html += '</div>';
   root.innerHTML = html;
 }
-function switchDriveSubject(k) { ensureDriveLearn(); store.driveLearn.active = k; window.__driveNoteOpen = null; touchDrive(); saveData(); renderDriveLearn(); }
+function switchDriveSubject(k) { ensureDriveLearn(); store.driveLearn.active = k; window.__driveNoteOpen = null; saveData(); renderDriveLearn(); }   // v354：看标签页不算改数据，不再 touchDrive
 function addDrivePoint() {
   ensureDriveLearn();
   const inp = document.getElementById('drive-point-input');
