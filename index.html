@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-331">
+<meta name="hami-build" content="2026-10-18-332">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1604,6 +1604,20 @@
   .drive-add-btn { border: none; background: linear-gradient(135deg,#ff7e9c,#ff6b9e); color: #fff; font-size: 14px; font-weight: 800; padding: 8px 18px; border-radius: 11px; cursor: pointer; flex-shrink: 0; transition: filter .15s; }
   .drive-add-btn:hover { filter: brightness(1.06); }
   .drive-empty { text-align: center; color: #a07080; font-size: 13px; padding: 22px 12px; background: rgba(255,255,255,0.5); border: 1px dashed #ffd0dc; border-radius: 12px; margin-top: 12px; }
+  /* 备注：知识点行内备注按钮 + 展开区 */
+  .drive-point-note-btn { border: none; background: transparent; color: #c98ab0; cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; transition: all .15s; }
+  .drive-point-note-btn:hover { background: #f5e6f0; color: #a85f93; }
+  .drive-point-note-btn.has { color: #a85f93; font-weight: 800; }
+  .drive-point-note { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 0 32px; }
+  .drive-note-area { width: 100%; box-sizing: border-box; min-height: 56px; resize: vertical; padding: 9px 11px; border: 1.5px solid #ffd9ea; border-radius: 11px; font-size: 13px; line-height: 1.5; font-family: inherit; color: #4a3340; outline: none; background: #fffafc; }
+  .drive-note-area:focus { border-color: #d14b73; }
+  .drive-point-note-actions { display: flex; gap: 6px; align-items: center; }
+  .drive-note-saved { font-size: 11px; color: #34c759; font-weight: 700; opacity: 0; transition: opacity .25s; }
+  .drive-note-saved.show { opacity: 1; }
+  /* 科目底部整体备注 */
+  .drive-subject-note { margin-top: 16px; padding: 14px; background: linear-gradient(135deg,#fff7fb,#fff0f6); border: 1px solid #ffd9ea; border-radius: 14px; }
+  .drive-subject-note-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: #a85f93; margin-bottom: 8px; }
+  .drive-subject-note-title .drive-note-saved { margin-left: auto; }
 
   /* ============ 待办事项升级：两区独立 + 完成期限 ============ */
   /* 面板里两个独立区域（日常 / 工作），上下堆叠、各自成块 */
@@ -14905,19 +14919,45 @@ function fillMonthSelect(sel, includeAll) {
 }
 
 // ==================== 学车进度（临时模块）====================
-// 数据：store.driveLearn = { subjects:{ '1':{name,points:[{text,done}]}, ... }, active }
+// 学车种子清单（C2 驾照，首次自动填充；已有内容不覆盖；模块删除时一并移除）
+var DRIVE_SEED = {
+  '1': { name: '科目一', note: '', points: ['道路法规', '交通标志标线', '灯光、速度规定', '处罚扣分题目', '车辆基础常识'] },
+  '2': { name: '科目二', note: '重点：低速匀速，看后视镜，不压线', points: ['倒车入库', '侧方停车（出库打左灯）', '曲线行驶', '直角转弯（转弯前打灯）'] },
+  '3': { name: '科目三', note: '重点：转向灯≥3秒，观察后视镜', points: ['上车准备', '模拟灯光', '起步', '直线行驶', '变更车道', '直行路口', '路口左转', '路口右转', '人行横道', '学校区域', '公交站台', '会车', '超车', '掉头', '靠边停车'] },
+  '4': { name: '科目四', note: '', points: ['安全文明驾驶', '恶劣天气行车', '应急处置（爆胎、故障）', '伤员急救知识', '案例违法判断'] }
+};
+// 数据：store.driveLearn = { subjects:{ '1':{name,points:[{text,done,note}]}, ... }, active }
 // 规则：某科目 points 全部 done（且≥1条）=> 该科目完成；四科全完成 => 拿证通关
 function ensureDriveLearn() {
   if (!store.driveLearn || typeof store.driveLearn !== 'object') store.driveLearn = { subjects: {}, active: '1' };
   const s = store.driveLearn;
   if (!s.subjects) s.subjects = {};
   ['1','2','3','4'].forEach(function (k) {
-    if (!s.subjects[k]) s.subjects[k] = { name: '科目' + k, points: [] };
+    if (!s.subjects[k]) s.subjects[k] = { name: '科目' + k, points: [], note: '' };
     else {
       if (!s.subjects[k].name) s.subjects[k].name = '科目' + k;
       if (!Array.isArray(s.subjects[k].points)) s.subjects[k].points = [];
+      if (typeof s.subjects[k].note !== 'string') s.subjects[k].note = '';
+      s.subjects[k].points.forEach(function (p) { if (p && typeof p.note !== 'string') p.note = ''; });
     }
   });
+  // 首次使用自动填充「学车打勾清单（C2）」种子数据；已有任意内容则不覆盖
+  if (!s._seeded) {
+    const allEmpty = ['1', '2', '3', '4'].every(function (kk) {
+      const sb = s.subjects[kk];
+      return sb && sb.points.length === 0 && !sb.note;
+    });
+    if (allEmpty) {
+      ['1', '2', '3', '4'].forEach(function (kk) {
+        const sd = DRIVE_SEED[kk];
+        if (!sd) return;
+        s.subjects[kk].name = sd.name;
+        s.subjects[kk].note = sd.note;
+        s.subjects[kk].points = sd.points.map(function (t) { return { text: t, done: false, note: '' }; });
+      });
+      s._seeded = true;
+    }
+  }
   if (!s.active || !s.subjects[s.active]) s.active = '1';
 }
 function driveSubjectDone(k) {
@@ -14986,17 +15026,33 @@ function renderDriveLearn() {
   } else {
     html += '<div class="drive-points">';
     sub.points.forEach(function (p, idx) {
+      const open = (window.__driveNoteOpen === ak + ':' + idx);
       html += '<div class="drive-point' + (p.done ? ' done' : '') + '">';
       html += '<span class="drive-point-check' + (p.done ? ' done' : '') + '" onclick="toggleDrivePoint(\'' + ak + '\',' + idx + ')">' + (p.done ? '✓' : '') + '</span>';
       html += '<span class="drive-point-text">' + escHtml(p.text) + '</span>';
+      html += '<button class="drive-point-note-btn' + (p.note ? ' has' : '') + '" type="button" title="给这条知识点加备注（记忆方法/注意要点）" onclick="toggleDrivePointNote(\'' + ak + '\',' + idx + ')">📝</button>';
       html += '<button class="drive-point-del" type="button" onclick="removeDrivePoint(\'' + ak + '\',' + idx + ')" title="删除这条">✕</button>';
       html += '</div>';
+      if (open) {
+        html += '<div class="drive-point-note">';
+        html += '<textarea class="drive-note-area" id="drive-point-note-' + ak + '-' + idx + '" placeholder="记下这个知识点的记忆方法、注意要点…">' + escHtml(p.note || '') + '</textarea>';
+        html += '<div class="drive-point-note-actions">';
+        html += '<button class="drive-mini-btn" type="button" onclick="saveDrivePointNote(\'' + ak + '\',' + idx + ')">保存</button>';
+        html += '<button class="drive-mini-btn" type="button" onclick="toggleDrivePointNote(\'' + ak + '\',' + idx + ')">收起</button>';
+        html += '<span class="drive-note-saved" id="drive-pn-saved-' + ak + '-' + idx + '">已保存 ✓</span>';
+        html += '</div></div>';
+      }
     });
     html += '</div>';
   }
+  // 科目底部整体备注（常驻输入框，失焦自动保存；不触发整段重渲染，避免打断输入）
+  html += '<div class="drive-subject-note">';
+  html += '<div class="drive-subject-note-title">📒 科目要点<span class="drive-note-saved" id="drive-subj-saved-' + ak + '">已保存 ✓</span></div>';
+  html += '<textarea class="drive-note-area" id="drive-subj-note-' + ak + '" placeholder="记录这个科目的学识要点、重点总结…" onblur="saveDriveSubjectNote(\'' + ak + '\', this.value)">' + escHtml(sub.note || '') + '</textarea>';
+  html += '</div>';
   root.innerHTML = html;
 }
-function switchDriveSubject(k) { ensureDriveLearn(); store.driveLearn.active = k; saveData(); renderDriveLearn(); }
+function switchDriveSubject(k) { ensureDriveLearn(); store.driveLearn.active = k; window.__driveNoteOpen = null; saveData(); renderDriveLearn(); }
 function addDrivePoint() {
   ensureDriveLearn();
   const inp = document.getElementById('drive-point-input');
@@ -15028,6 +15084,36 @@ function toggleAllDrivePoints(k, val) {
   if (!sub) return;
   sub.points.forEach(function (p) { p.done = val; });
   saveData(); renderDriveLearn();
+}
+
+// 学车·备注：展开/收起某条知识点的备注输入框（仅切换视图态，不写数据）
+window.__driveNoteOpen = null;
+function toggleDrivePointNote(k, idx) {
+  ensureDriveLearn();
+  const key = k + ':' + idx;
+  window.__driveNoteOpen = (window.__driveNoteOpen === key) ? null : key;
+  renderDriveLearn();
+}
+// 保存某条知识点的备注（点保存或失焦触发；不重渲染整段，避免打断输入）
+function saveDrivePointNote(k, idx) {
+  ensureDriveLearn();
+  const sub = store.driveLearn.subjects[k];
+  if (!sub || !sub.points[idx]) return;
+  const ta = document.getElementById('drive-point-note-' + k + '-' + idx);
+  sub.points[idx].note = ta ? ta.value : '';
+  saveData();
+  const saved = document.getElementById('drive-pn-saved-' + k + '-' + idx);
+  if (saved) { saved.classList.add('show'); setTimeout(function () { saved.classList.remove('show'); }, 1500); }
+}
+// 保存科目整体备注（失焦触发）
+function saveDriveSubjectNote(k, val) {
+  ensureDriveLearn();
+  const sub = store.driveLearn.subjects[k];
+  if (!sub) return;
+  sub.note = (val === undefined || val === null) ? '' : String(val);
+  saveData();
+  const saved = document.getElementById('drive-subj-saved-' + k);
+  if (saved) { saved.classList.add('show'); setTimeout(function () { saved.classList.remove('show'); }, 1500); }
 }
 
 function switchPanel(name, navEl) {
