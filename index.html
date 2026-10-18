@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-349">
+<meta name="hami-build" content="2026-10-18-350">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -25711,6 +25711,10 @@ var HamiVoice = (function () {
   function onDown(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (want) { finishVoice(); return; }   // 录音中再按 = 结束并发送
+    // v350：按下时把指针锁在本按钮上——主人按住时手指/鼠标稍微滑出 1 像素，
+    // 之前会触发 pointerleave → finishVoice，深色瞬间被熄灭，看起来就是「点了没变深」（真实浏览器已复现）。
+    // 锁定后滑动不再触发离开，松手 pointerup 仍会派发到本按钮。
+    try { if (btn && e && e.pointerId != null && btn.setPointerCapture) btn.setPointerCapture(e.pointerId); } catch (x) {}
     holdStart = Date.now();
     startVoice();
   }
@@ -25720,8 +25724,8 @@ var HamiVoice = (function () {
     if (Date.now() - holdStart >= 700) finishVoice();   // 按住 ≥0.7 秒：松手即发送
     else { tapMode = true; toast('🎤 继续说…说完了再点一下麦克风'); }  // 轻点：进入免按模式
   }
-  function onLeave() { if (want && !tapMode) finishVoice(); }
-
+  // v350：移除 pointerleave 监听——它是「图标不变深」的元凶（按下后稍微滑动就被结束），
+  // setPointerCapture 后不再需要；松手/取消由 pointerup/pointercancel 兑底
   function bind() {
     btn = document.getElementById('hami-cmd-mic');
     if (!btn) return;
@@ -25729,7 +25733,6 @@ var HamiVoice = (function () {
       btn.addEventListener('pointerdown', onDown);
       btn.addEventListener('pointerup', onUp);
       btn.addEventListener('pointercancel', onUp);
-      btn.addEventListener('pointerleave', onLeave);
     } else {
       btn.addEventListener('touchstart', function (e) { e.preventDefault(); onDown(e); }, false);
       btn.addEventListener('touchend', function (e) { e.preventDefault(); onUp(e); }, false);
