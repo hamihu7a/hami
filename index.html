@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-343">
+<meta name="hami-build" content="2026-10-18-344">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5161,6 +5161,12 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
   }
   .ih-item:hover { box-shadow: 0 3px 10px rgba(209,75,115,0.10); transform: translateY(-1px); }
   .ih-item:last-child { margin-bottom: 0; }
+  /* v344：历史推荐卡可点击展开全文 */
+  .ih-item.ih-expandable { cursor: pointer; }
+  .ih-item .ih-caret { margin-left: auto; font-size: 11px; color: #c991a5; transition: transform .2s ease; }
+  .ih-item.open .ih-caret { transform: rotate(180deg); }
+  .ih-item .ih-detail { padding-top: 8px; cursor: default; }
+  .ih-item .ih-detail .ins-divider { margin: 0 0 8px; }
   .ih-top { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 5px; }
   .ih-date { font-size: 10.5px; font-weight: 700; color: #a08492; white-space: nowrap; margin-right: 2px; }
   .ih-chip {
@@ -18616,8 +18622,57 @@ function adoptInspireRec(id) {
   }
 }
 
+// v344：详情渲染抽成公共函数——今日大卡与历史推荐展开共用（历史卡点击也能看全文案/标签/数据/借鉴/链接）
+function inspireDetailHtml(rec) {
+  if (!rec || !rec.detail) return '';
+  const row = (ico, bg, label, text) => {
+    const v = (text == null ? '' : String(text)).trim();
+    if (!v) return '';
+    return `<div class="ins-d-row"><span class="ins-d-ico" style="background:${bg};">${ico}</span>`
+      + `<div class="ins-d-body"><div class="ins-d-label">${label}</div><div class="ins-d-text">${escTodo(v)}</div></div></div>`;
+  };
+  let h = '';
+  h += row('📝', '#ffe1ea', '标题 TITLE', rec.title);
+  h += row('✍️', '#efe8f8', '文案 COPY', rec.detail.copy);
+  const tags = String(rec.detail.tags || '').trim();
+  if (tags) {
+    const tagChips = tags.split(/[\s,，#、]+/).filter(Boolean)
+      .map(t => `<span class="ins-tag">#${escTodo(t)}</span>`).join('');
+    h += `<div class="ins-d-row"><span class="ins-d-ico" style="background:#fff0d6;">🏷️</span>`
+      + `<div class="ins-d-body"><div class="ins-d-label">标签 TAGS</div><div class="ins-d-text">${tagChips}</div></div></div>`;
+  }
+  h += row('📊', '#e3f2fd', '数据 DATA', rec.detail.stats);
+  h += row('💡', '#fff6d9', '借鉴 TIPS', rec.detail.advice);
+  const _lk = String(rec.detail.link || '');
+  const _safe = /^(https?:|mailto:)/i.test(_lk) ? _lk : '';
+  if (_safe) h += `<div class="ins-d-row"><span class="ins-d-ico" style="background:#e8f7ec;">🔗</span>`
+    + `<div class="ins-d-body"><div class="ins-d-label">原文 LINK</div>`
+    + `<div class="ins-d-text"><a class="ins-link" href="${escTodo(_safe)}" target="_blank" rel="noopener noreferrer">点开看原文 ›</a></div></div></div>`;
+  return h;
+}
+
+// v344：历史推荐卡点击展开/收起全文（采纳按钮点击不触发展开）
+function ihToggleDetail(ev, el) {
+  try {
+    if (ev && ev.target && ev.target.closest && ev.target.closest('.ih-adopt-row')) return;  // 点采纳按钮不折叠
+    const d = el.querySelector('.ih-detail');
+    if (!d) return;
+    const open = d.style.display === 'none';
+    d.style.display = open ? '' : 'none';
+    el.classList.toggle('open', open);
+  } catch (e) {}
+}
+
 function renderInspire() {
-  const sorted = [...store.inspireRecords].sort((a,b) => b.date.localeCompare(a.date));
+  // v344：历史推荐去重——同标题+平台只显示一条（保留日期最新那条）；今日大卡取去重后第一条不受影响
+  const __insSeen = new Set();
+  const sorted = [...store.inspireRecords].sort((a,b) => b.date.localeCompare(a.date))
+    .filter(r => {
+      const k = (r.title || '').trim() + '|' + (r.platform || '');
+      if (__insSeen.has(k)) return false;
+      __insSeen.add(k);
+      return true;
+    });
 
   // 今日推荐
   if (sorted.length === 0) {
@@ -18630,33 +18685,8 @@ function renderInspire() {
   } else {
     const latest = sorted[0];
     const typeLabel = latest.type === 'web' ? '🌐 互联网搜集' : '💡 AI原创';
-    // v268：详情从"纯文字行"改成彩色图标分区（每区小图标 + 灰标签 + 正文），标签拆成粉色小徽章
-    const detailHtml = latest.detail ? (() => {
-      const row = (ico, bg, label, text) => {
-        const v = (text == null ? '' : String(text)).trim();
-        if (!v) return '';
-        return `<div class="ins-d-row"><span class="ins-d-ico" style="background:${bg};">${ico}</span>`
-          + `<div class="ins-d-body"><div class="ins-d-label">${label}</div><div class="ins-d-text">${escTodo(v)}</div></div></div>`;
-      };
-      let h = '';
-      h += row('📝', '#ffe1ea', '标题 TITLE', latest.title);
-      h += row('✍️', '#efe8f8', '文案 COPY', latest.detail.copy);
-      const tags = String(latest.detail.tags || '').trim();
-      if (tags) {
-        const tagChips = tags.split(/[\s,，#、]+/).filter(Boolean)
-          .map(t => `<span class="ins-tag">#${escTodo(t)}</span>`).join('');
-        h += `<div class="ins-d-row"><span class="ins-d-ico" style="background:#fff0d6;">🏷️</span>`
-          + `<div class="ins-d-body"><div class="ins-d-label">标签 TAGS</div><div class="ins-d-text">${tagChips}</div></div></div>`;
-      }
-      h += row('📊', '#e3f2fd', '数据 DATA', latest.detail.stats);
-      h += row('💡', '#fff6d9', '借鉴 TIPS', latest.detail.advice);
-      const _lk = String(latest.detail.link || '');
-      const _safe = /^(https?:|mailto:)/i.test(_lk) ? _lk : '';
-      if (_safe) h += `<div class="ins-d-row"><span class="ins-d-ico" style="background:#e8f7ec;">🔗</span>`
-        + `<div class="ins-d-body"><div class="ins-d-label">原文 LINK</div>`
-        + `<div class="ins-d-text"><a class="ins-link" href="${escTodo(_safe)}" target="_blank" rel="noopener noreferrer">点开看原文 ›</a></div></div></div>`;
-      return h;
-    })() : '';
+    // v344：详情渲染已抽成公共函数 inspireDetailHtml（历史卡展开也用它）
+    const detailHtml = inspireDetailHtml(latest);
 
     document.getElementById('inspire-today').innerHTML = `
       <div class="ins-card">
@@ -18679,20 +18709,24 @@ function renderInspire() {
   if (sorted.length === 0) {
     document.getElementById('inspire-history').innerHTML = `<div class="empty-state"><p>暂无历史推荐</p></div>`;
   } else {
+    // v344：历史卡点击展开全文（文案/标签/数据/借鉴/链接），与今日大卡同一套详情渲染
     const html = foldRecords('inspire', sorted, function (r) {
       const tp = r.type === 'web'
         ? '<span class="ih-chip type-web">🌐 搜集</span>'
         : '<span class="ih-chip type-ai">💡 原创</span>';
       const topic = r.topic ? '<span class="ih-chip topic">' + escTodo(r.topic) + '</span>' : '';
-      return '<div class="ih-item">'
+      const detail = inspireDetailHtml(r);
+      return '<div class="ih-item ih-expandable" onclick="ihToggleDetail(event, this)">'
         + '<div class="ih-top">'
         + '<span class="ih-date">📅 ' + escTodo(r.date) + '</span>'
         + tp
         + '<span class="ih-chip plat">' + (escTodo(r.platform) || '—') + '</span>'
         + topic
         + '<span class="ih-traffic">🔥 ' + (escTodo(r.traffic) || '—') + '</span>'
+        + '<span class="ih-caret">▾</span>'
         + '</div>'
         + '<div class="ih-title">' + (escTodo(r.title) || '—') + '</div>'
+        + (detail ? '<div class="ih-detail" style="display:none;"><div class="ins-divider"></div>' + detail + '</div>' : '')
         + '<div class="ih-adopt-row">' + inspireAdoptBtnHtml(r) + '</div>'
         + '</div>';
     });
