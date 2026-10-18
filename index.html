@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-337">
+<meta name="hami-build" content="2026-10-18-338">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3370,6 +3370,8 @@
   .chart-container:active { cursor: grabbing; }
   .chart-container::-webkit-scrollbar { height: 6px; }
   .chart-container::-webkit-scrollbar-thumb { background: #f6bdd0; border-radius: 3px; }
+  /* v338：体重趋势图标题右侧的当前月份小字 */
+  .wc-month { font-size: 10.5px; font-weight: 700; color: #c991a5; margin-left: 7px; letter-spacing: .5px; white-space: nowrap; }
 
   .empty-state {
     text-align: center;
@@ -6678,7 +6680,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     <div class="stats-grid" id="fitness-stats"></div>
 
     <div class="card">
-      <div class="card-title"><span>⚖️</span> 体重趋势图</div>
+      <div class="card-title"><span>⚖️</span> 体重趋势图<span class="wc-month" id="wc-month"></span></div>
       <div class="chart-container" id="weight-chart"></div>
     </div>
 
@@ -16424,7 +16426,7 @@ function quickAddExercise(cat) {
 }
 
 // ==================== 体重图 ====================
-var __wcData = null, __wcZoom = 1, __wcRaf = 0;
+var __wcData = null, __wcZoom = 1, __wcRaf = 0, __wcLatestDate = null, __wcUserScrolled = false;
 function renderWeightChart(data) {
   if (data.length === 0) {
     document.getElementById('weight-chart').innerHTML = `<div class="empty-state"><div class="big-icon">📈</div><p>暂无数据</p></div>`;
@@ -16458,15 +16460,34 @@ function renderWeightChart(data) {
     svg += `<text x="${p.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8a6270">${(maxV - (i/4)*range).toFixed(1)}</text>`;
   }
   svg += `<line x1="${p.left}" y1="${sy}" x2="${width-p.right}" y2="${sy}" stroke="#ff9eb5" stroke-width="1.5" stroke-dasharray="5,5"/>`;
-  svg += `<text x="${width-p.right}" y="${sy-5}" text-anchor="end" font-size="10" fill="#ff7f9e" font-weight="600">起始 ${START_WEIGHT}斤</text>`;
+  // v338：起始标签三候选位置（右端→左端→中点）自动避让数据点，避免和点上的体重数字打架
+  const _slCands = [ { x: width - p.right, a: 'end' }, { x: p.left + 4, a: 'start' }, { x: width / 2, a: 'middle' } ];
+  let _sl = _slCands[0];
+  for (let ci = 0; ci < _slCands.length; ci++) {
+    const c = _slCands[ci];
+    let hit = false;
+    data.forEach((d, i) => { const v = d.value != null ? d.value : d.after; if (v != null && Math.abs(ys(v) - sy) < 18 && Math.abs(xs(i) - c.x) < 64) hit = true; });
+    if (!hit) { _sl = c; break; }
+  }
+  svg += `<text x="${_sl.x}" y="${sy - 5}" text-anchor="${_sl.a}" font-size="10" fill="#ff7f9e" font-weight="600">起始 ${START_WEIGHT}斤</text>`;
 
   let ap = '';
   data.forEach((d,i) => { const v = d.value != null ? d.value : (d.after != null ? d.after : d.before); if (v != null) ap += (i===0?'M':'L') + xs(i) + ',' + ys(v) + ' '; });
   svg += `<path d="${ap}" fill="none" stroke="#e88a4f" stroke-width="3"/>`;
   data.forEach((d,i) => { const v = d.value != null ? d.value : d.after; if (v != null) svg += `<circle cx="${xs(i)}" cy="${ys(v)}" r="4" fill="#e88a4f"/>`; });
 
+  // v338：每个小点上方显示具体体重数字（贴顶时自动改到点下方避开图例；左右边缘夹住防出框）
   data.forEach((d,i) => {
-    svg += `<text x="${xs(i)}" y="${height-p.bottom+16}" text-anchor="middle" font-size="11" fill="#8a6270">${d.date.substring(5)}</text>`;
+    const v = d.value != null ? d.value : d.after;
+    if (v == null) return;
+    const tx = Math.max(p.left + 15, Math.min(width - p.right - 15, xs(i)));
+    const ty = (ys(v) - 8 < 20) ? ys(v) + 16 : ys(v) - 8;
+    svg += `<text x="${tx}" y="${ty}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#b04a6a">${v.toFixed(1)}</text>`;
+  });
+
+  // v338：底部日期只显示「01、02」日号，月份看标题右侧小字
+  data.forEach((d,i) => {
+    svg += `<text x="${xs(i)}" y="${height-p.bottom+16}" text-anchor="middle" font-size="11" fill="#8a6270">${d.date.substring(8)}</text>`;
   });
 
   svg += `<rect x="${p.left}" y="6" width="9" height="9" fill="#e88a4f" rx="2"/>`;
@@ -16474,11 +16495,21 @@ function renderWeightChart(data) {
   svg += '</svg>';
   const wc = document.getElementById('weight-chart');
   wc.innerHTML = svg;
-  // 缩放/重绘后保持视口位置（按比例）；首次渲染默认定位到最右边（最近几天）
-  if (prevMax > 1 && wc.scrollWidth > wc.clientWidth) {
-    wc.scrollLeft = (prevScroll / prevMax) * (wc.scrollWidth - wc.clientWidth);
-  } else {
+  // v338：标题右侧月份小字 = 图中最新记录所在月份
+  const _wm = document.getElementById('wc-month');
+  if (_wm && data.length) {
+    const _ld = data[data.length - 1].date;
+    _wm.textContent = _ld.substring(0, 4) + '年' + parseInt(_ld.substring(5, 7), 10) + '月';
+  }
+  // 缩放/重绘后保持视口位置（按比例）；v338：默认定位到最新记录（贴最右）——仅主人手动拖开过且没有新纪录时才保持视口
+  const latestDate = data.length ? data[data.length - 1].date : '';
+  const latestChanged = latestDate !== __wcLatestDate;
+  __wcLatestDate = latestDate;
+  if (!__wcUserScrolled || latestChanged) {
+    __wcUserScrolled = false;
     wc.scrollLeft = wc.scrollWidth;
+  } else if (prevMax > 1 && wc.scrollWidth > wc.clientWidth) {
+    wc.scrollLeft = (prevScroll / prevMax) * (wc.scrollWidth - wc.clientWidth);
   }
 }
 
@@ -16490,6 +16521,8 @@ function renderWeightChart(data) {
   el.addEventListener('mousedown', e => { down = true; sx = e.pageX; sl = el.scrollLeft; el.style.cursor = 'grabbing'; });
   window.addEventListener('mousemove', e => { if (!down) return; e.preventDefault(); el.scrollLeft = sl - (e.pageX - sx); });
   window.addEventListener('mouseup', () => { if (down) { down = false; el.style.cursor = 'grab'; } });
+  // v338：只要发生滚动（拖动/触屏/滚动条），就视为主人手动定位过——之后重渲染保持视口；有新纪录时才重新贴到最新
+  el.addEventListener('scroll', function () { __wcUserScrolled = true; });
 
   function scheduleRepaint() {
     if (__wcRaf) return;
