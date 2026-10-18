@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-336">
+<meta name="hami-build" content="2026-10-18-337">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -5138,6 +5138,23 @@ body.hami-force-desktop .panel #desktop-accounts-wrap { margin-bottom: 4px !impo
   .ih-chip.topic    { background: #fff0f5; color: #b0557a; }
   .ih-traffic { margin-left: auto; font-size: 10.5px; font-weight: 800; color: #e8821e; white-space: nowrap; }
   .ih-title { margin-top: 4px; font-size: 12.5px; font-weight: 700; color: #4a3340; line-height: 1.45; word-break: break-word; }
+  /* v337：推荐卡「采纳到待完成」按钮（今日大卡 + 历史小卡共用） */
+  .ih-adopt-row { margin-top: 6px; display: flex; justify-content: flex-end; }
+  .ins-adopt-row { margin-top: 10px; display: flex; justify-content: flex-end; }
+  .ih-adopt-btn {
+    border: none; cursor: pointer; font-family: inherit; white-space: nowrap;
+    font-size: 10.5px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, #ff8aa6, #d14b73);
+    padding: 4px 12px; border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(209,75,115,0.25);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .ih-adopt-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(209,75,115,0.35); }
+  .ih-adopt-btn:active { transform: scale(0.95); }
+  .ih-adopt-btn.adopted {
+    background: #e8f5ec; color: #4a7c5e; border: 1px solid #b8e0c6;
+    cursor: default; box-shadow: none;
+  }
   @media (max-width: 420px) {
     .ih-item { padding: 7px 9px; }
     .ih-title { font-size: 12px; }
@@ -18235,6 +18252,64 @@ async function deleteMaskRecord(idx) {
 }
 
 // ==================== 模拟人生更新推荐 ====================
+// v337：某条推荐是否已被采纳进「待完成图文项目」（按 fromInspire 回指 或 同标题判断）
+function inspireAdopted(rec) {
+  try {
+    var fps = store.futurePosts || [];
+    var t = String((rec && rec.title) || '').trim();
+    for (var i = 0; i < fps.length; i++) {
+      var p = fps[i];
+      if (!p) continue;
+      if (rec && rec.id && p.fromInspire && p.fromInspire === rec.id) return true;
+      if (t && String(p.title || '').trim() === t) return true;
+    }
+  } catch (e) {}
+  return false;
+}
+// v337：采纳按钮 HTML（已采纳=绿态不可点；未采纳=粉渐变可点）
+function inspireAdoptBtnHtml(rec) {
+  var id = String((rec && rec.id) || '').replace(/'/g, '');
+  return inspireAdopted(rec)
+    ? '<button class="ih-adopt-btn adopted" type="button" disabled>✓ 已采纳</button>'
+    : '<button class="ih-adopt-btn" type="button" onclick="adoptInspireRec(\'' + id + '\')">📥 采纳到待完成</button>';
+}
+// v337：一键采纳——把推荐标题/文案/标签自动写进「待完成图文项目」，防重复，删后可重新采纳
+function adoptInspireRec(id) {
+  try {
+    var rec = null;
+    var list = store.inspireRecords || [];
+    for (var i = 0; i < list.length; i++) { if (list[i] && list[i].id === id) { rec = list[i]; break; } }
+    if (!rec) { try { hamiToast('没找到这条推荐，请刷新后再试'); } catch (e) {} return; }
+    var title = String(rec.title || '').trim();
+    if (!title) { try { hamiToast('这条推荐没有标题，没法采纳'); } catch (e) {} return; }
+    if (inspireAdopted(rec)) {
+      try { hamiToast('待完成图文里已经有这条啦'); } catch (e) {}
+      if (typeof renderFuturePosts === 'function') renderFuturePosts();
+      if (typeof renderInspire === 'function') renderInspire();
+      return;
+    }
+    var tagRaw = [rec.topic, rec.platform].filter(Boolean).join(' ');
+    hamiPushRecord('futurePosts', {
+      id: 'fp_' + Date.now() + '_insp',
+      title: title,
+      content: (rec.detail && rec.detail.copy) || '',
+      tags: (typeof parseFuturePostTags === 'function') ? parseFuturePostTags(tagRaw) : tagRaw,
+      date: todayStr(),
+      account: 'big',
+      douyin: false,
+      done: false,
+      fromInspire: rec.id,
+      createdAt: Date.now()
+    });
+    saveData();
+    if (typeof renderFuturePosts === 'function') renderFuturePosts();
+    if (typeof renderInspire === 'function') renderInspire();
+    try { hamiToast('✅ 已加入待完成图文项目'); } catch (e) {}
+  } catch (e) {
+    try { hamiToast('采纳失败：' + ((e && e.message) || '未知错误')); } catch (e2) {}
+  }
+}
+
 function renderInspire() {
   const sorted = [...store.inspireRecords].sort((a,b) => b.date.localeCompare(a.date));
 
@@ -18290,6 +18365,7 @@ function renderInspire() {
           <span class="ins-chip hot">🔥 ${escTodo(latest.traffic) || '—'}</span>
         </div>
         ${detailHtml ? '<div class="ins-divider"></div>' + detailHtml : ''}
+        <div class="ins-adopt-row">${inspireAdoptBtnHtml(latest)}</div>
       </div>`;
   }
 
@@ -18311,6 +18387,7 @@ function renderInspire() {
         + '<span class="ih-traffic">🔥 ' + (escTodo(r.traffic) || '—') + '</span>'
         + '</div>'
         + '<div class="ih-title">' + (escTodo(r.title) || '—') + '</div>'
+        + '<div class="ih-adopt-row">' + inspireAdoptBtnHtml(r) + '</div>'
         + '</div>';
     });
     document.getElementById('inspire-history').innerHTML = html;
