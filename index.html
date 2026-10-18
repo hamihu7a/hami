@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-347">
+<meta name="hami-build" content="2026-10-18-348">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1650,7 +1650,7 @@
   }
   .drive-tab-name { display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; font-size: 15px; font-weight: 800; line-height: 1.2; }
   .drive-tab:hover { border-color: #ff9bb3; background: #fff5f8; }
-  .drive-tab.active { background: linear-gradient(135deg,#ff7e9c,#ff6b9e); color: #fff; border-color: transparent; box-shadow: 0 5px 14px rgba(255,107,158,0.35); transform: translateY(-1px); }
+  .drive-tab.active { background: linear-gradient(135deg,#ff7e9c,#ff6b9e); color: #fff; border-color: transparent; box-shadow: 0 5px 14px rgba(255,107,158,0.35), inset 0 0 0 2px rgba(255,255,255,.65); outline: 2px solid #d14b73; outline-offset: 2px; transform: translateY(-1px); }
   .drive-tab.done { background: linear-gradient(135deg,#7fe0a0,#34c759); border-color: transparent; color: #fff; box-shadow: 0 4px 12px rgba(52,199,89,0.3); }
   .drive-tab.done.active { background: linear-gradient(135deg,#34c759,#2fb350); box-shadow: 0 5px 14px rgba(52,199,89,0.4); }
   .drive-tab-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.92); color: #2fb350; font-size: 11px; font-weight: 900; }
@@ -25692,7 +25692,7 @@ var HamiVoice = (function () {
     if (el) el.value = '';
     want = true; tapMode = false; setUI(true);
     try { r.start(); } catch (x) {}
-    toast('🎤 在听呢…说完松手就自动记下来');
+    toast('🎤 开始听啦！图标已变深色（深色=正在录音）…说完松手自动记，再点一下图标就结束');
   }
 
   function finishVoice() {
