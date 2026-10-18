@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-340">
+<meta name="hami-build" content="2026-10-18-341">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -22433,7 +22433,10 @@ function reverseGeocodeCity(lat, lon, cb) {
     .catch(tryArcgis);    // 主源请求失败 → 交给备用服务
 }
 
-// 实时天气：默认汕尾，启动时会尝试定位到当前城市
+// 实时天气：启动时会尝试定位到当前城市
+// v341：定位失败兜底从写死汕尾改为 IP 粗定位（主人没有常驻城市）——
+//   兜底链：浏览器精确定位 →（失败/拒绝/不支持）→ IP 粗定位（ipapi.co 主 + ipwho.is 备）
+//   →（仍失败）→ 保持默认城市。汕尾仅作 IP 也拿不到时的最终显示兜底，不再主动锁定。
 let WEATHER_CITY = 'Shanwei';
 let WEATHER_CITY_CN = '汕尾';
 let WEATHER_LAT = 22.79;
@@ -22744,7 +22747,38 @@ function hamiWhenCloudReady(cb) {
   }, 300);
 }
 
-// 尝试获取当前位置与城市名（失败则保持默认值）
+// v341：IP 粗定位（定位失败兜底，替代原来的写死汕尾——主人没有常驻城市）
+// 免费接口链：ipapi.co（https + CORS + 无需 key，免费层 1000 次/天）主，
+//             ipwho.is（https + CORS + 无需 key）备；两个都失败才 cb(null) 保持默认城市。
+// 只取 lat/lon/city 三样；5 秒超时保护，绝不卡住天气渲染（fetchWeather 本身还有 8 秒总闸）。
+function ipLocateCity(cb) {
+  var done = false;
+  var timer = setTimeout(function () { if (!done) { done = true; cb(null); } }, 5000);
+  function finish(r) { if (done) return; done = true; clearTimeout(timer); cb(r); }
+  function parseOk(j) {
+    // ipapi.co 与 ipwho.is 字段同名；ipwho.is 另有 success 标志
+    if (j && j.success !== false && j.latitude != null && j.longitude != null) {
+      return { lat: parseFloat(j.latitude), lon: parseFloat(j.longitude), city: String(j.city || '').trim() };
+    }
+    return null;
+  }
+  fetch('https://ipapi.co/json/', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)); })
+    .then(function (j) {
+      var r = parseOk(j);
+      if (r) { finish(r); return; }
+      return Promise.reject(new Error('ipapi 无有效结果'));
+    })
+    .catch(function () {
+      // 主源失败 → 备用 ipwho.is
+      fetch('https://ipwho.is/', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)); })
+        .then(function (j2) { finish(parseOk(j2)); })
+        .catch(function () { finish(null); });
+    });
+}
+
+// 尝试获取当前位置与城市名（失败则走 IP 粗定位兜底，再失败保持默认值）
 // v304：跨端一致——优先用云端共享位置（手机端定位后写入 store.weatherLocation，电脑端直接读取）；
 //       仅当云端&本地都无记录时才用浏览器定位，并把结果广播到云端，供另一端读取。
 // v320：城市名兜底治理（修复「手机端显示本地、电脑端显示河源」两端不一致）：
@@ -22788,6 +22822,37 @@ function detectLocation(onDone) {
         return;
       }
       cb(have);
+    });
+  }
+
+  // v341：定位失败兜底 = IP 粗定位（替代写死汕尾，主人没有常驻城市）
+  // share=true（手机端·定位源）：IP 结果写当日缓存并广播云端，电脑端也能跟随拿到；
+  // share=false（电脑端·跟随端）：只用 IP 结果显示，不写缓存不广播——绝不覆盖手机端精确定位（v304 原则）。
+  // IP 也没给出城市名时：手机端仍广播经纬度（电脑端会自己反查补真名，见 v320③），
+  // 城市名变量保持不动（有历史真名用真名，没有就保持默认），绝不写「本地」占位名。
+  function useIpFallback(share) {
+    ipLocateCity(function (r) {
+      if (r && r.lat != null && r.lon != null) {
+        WEATHER_LAT = r.lat;
+        WEATHER_LON = r.lon;
+        if (isValidCityName(r.city)) WEATHER_CITY_CN = r.city;
+        if (share) {
+          try {
+            localStorage.setItem('hami_location_cache', JSON.stringify({
+              date: today, lat: r.lat, lon: r.lon,
+              city: isValidCityName(r.city) ? r.city : '', cityEn: '', fromIp: true
+            }));
+          } catch (e) {}
+          try {
+            store.weatherLocation = {
+              lat: r.lat, lon: r.lon,
+              city: isValidCityName(r.city) ? r.city : '', cityEn: '', ts: Date.now(), fromIp: true
+            };
+            saveData();
+          } catch (e2) {}
+        }
+      }
+      onDone();
     });
   }
 
@@ -22840,8 +22905,8 @@ function detectLocation(onDone) {
           }
         }
       } catch (e) {}
-      // 无缓存则保持默认城市（不定位、不上云）
-      onDone();
+      // v341：无缓存 → IP 粗定位兜底（只显示，不上云不写缓存，避免覆盖手机端精定位）
+      useIpFallback(false);
       return;
     }
 
@@ -22893,7 +22958,8 @@ function detectLocation(onDone) {
 
     // 3) 浏览器定位（仅当云端&本地都无记录时才定位，并广播到云端）
     if (!navigator.geolocation) {
-      onDone();
+      // v341：浏览器不支持定位 → IP 粗定位兜底
+      useIpFallback(!isComputer);
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -22927,8 +22993,8 @@ function detectLocation(onDone) {
         });
       },
       function () {
-        // 用户拒绝或定位失败：保持默认/缓存城市
-        onDone();
+        // v341：用户拒绝或定位失败 → IP 粗定位兜底（手机端写缓存并广播，电脑端只显示）
+        useIpFallback(!isComputer);
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
     );
