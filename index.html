@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-350">
+<meta name="hami-build" content="2026-10-18-351">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9948,38 +9948,18 @@ function mergeStoreInto(local, remote) {
   //   · 同一条：done 任一为 true 即 true（与 futurePosts/userTodos「完成优先」同精神），
   //     note 取较长非空的一边（信息更全者赢）；
   //   · active/_seeded 等标量：本地已有不动，本地没有才补。
+  // ===== v351：学车进度合并改为「整对象新者赢」（主人反馈：改完下一秒又被刷回旧样子）=====
+  // v340 的并集+完成优先只适合「加勾选」，但主人取消勾选/删知识点/清备注时：
+  // 本地刚改成新状态，云端还是旧的（勾 true、旧备注更长），一合并全被拉回去——这就是「刷回旧操作」的根因。
+  // 修法：driveLearn 打 _updatedAt 时间戳，每次本机修改就刷新；合并时谁的时间新就整体听谁的，
+  // 云端旧状态绝不逐条复活（取消勾选/删除/清备注都能正常生效）。
   function mergeDriveLearn(l, r) {
     try {
       if (!l || typeof l !== 'object') return r;
       if (!r || typeof r !== 'object') return l;
-      const out = Object.assign({}, l);   // 浅拷贝：subjects 仍是本地引用，下面就地升级本地 store
-      ['active', '_seeded'].forEach(function (sk) {
-        if (out[sk] === undefined && r[sk] !== undefined) out[sk] = r[sk];
-      });
-      if (r.subjects && typeof r.subjects === 'object') {
-        if (!out.subjects || typeof out.subjects !== 'object') out.subjects = {};
-        Object.keys(r.subjects).forEach(function (k) {
-          const rs = r.subjects[k];
-          if (!rs || typeof rs !== 'object') return;
-          const ls = out.subjects[k];
-          if (!ls || typeof ls !== 'object') { out.subjects[k] = rs; return; }   // 本地没这科目才整体用云端
-          if (!ls.name && rs.name) ls.name = rs.name;
-          if (!ls.note && rs.note) ls.note = rs.note;
-          if (!Array.isArray(ls.points)) ls.points = [];
-          if (!Array.isArray(rs.points)) return;
-          const byText = {};
-          ls.points.forEach(function (p) { if (p && typeof p === 'object') byText[String(p.text || '')] = p; });
-          rs.points.forEach(function (p) {
-            if (!p || typeof p !== 'object') return;
-            const tk = String(p.text || '');
-            const lp = byText[tk];
-            if (!lp) { ls.points.push(p); byText[tk] = p; return; }              // 云端独有知识点 → 并进来
-            if (p.done === true && lp.done !== true) lp.done = true;              // 完成优先：跨设备勾选互相可见
-            if (p.note && String(p.note).length > String(lp.note || '').length) lp.note = p.note;  // 备注取更全的
-          });
-        });
-      }
-      return out;
+      const lu = Number(l._updatedAt) || 0, ru = Number(r._updatedAt) || 0;
+      if (ru > lu) return r;   // 云端更新 → 整体采用云端
+      return l;                // 本地更新或持平 → 完全以本地为准，云端旧状态不复活
     } catch (e) { return l; }
   }
   // ====== 数据合并核心：本地优先并集（根治「刷新 / 同步丢数据」）======
@@ -15308,7 +15288,8 @@ var DRIVE_SEED = {
   '3': { name: '科目三', note: '重点：转向灯≥3秒，观察后视镜', points: ['上车准备', '模拟灯光', '起步', '直线行驶', '变更车道', '直行路口', '路口左转', '路口右转', '人行横道', '学校区域', '公交站台', '会车', '超车', '掉头', '靠边停车'] },
   '4': { name: '科目四', note: '', points: ['安全文明驾驶', '恶劣天气行车', '应急处置（爆胎、故障）', '伤员急救知识', '案例违法判断'] }
 };
-// 数据：store.driveLearn = { subjects:{ '1':{name,points:[{text,done,note}]}, ... }, active }
+// 数据：store.driveLearn = { subjects:{ '1':{name,points:[{text,done,note}]}, ... }, active, _updatedAt }
+// v351：_updatedAt = 本机最后一次修改时间；云同步合并时「谁新听谁的」，根治改动被云端旧数据刷回去
 // 规则：某科目 points 全部 done（且≥1条）=> 该科目完成；四科全完成 => 拿证通关
 // v335：阿婆生日回归（主人反馈"阿婆的生日怎么不见了"）——一次性迁移：
 // 若当前 store 里没有任何「阿婆」生日，清掉对应墓碑（含本地镜像）并把默认数据补种回去，
@@ -15342,6 +15323,9 @@ function restoreApoBirthdayOnce() {
   } catch (e4) {}
 }
 
+// v351：本机改了学车数据就刷新时间戳——云同步「谁新听谁」的依据
+function touchDrive() { try { store.driveLearn._updatedAt = Date.now(); } catch (e) {} }
+
 function ensureDriveLearn() {
   if (!store.driveLearn || typeof store.driveLearn !== 'object') store.driveLearn = { subjects: {}, active: '1' };
   const s = store.driveLearn;
@@ -15357,6 +15341,7 @@ function ensureDriveLearn() {
   });
   // 首次使用自动填充「学车打勾清单（C2）」种子数据；已有任意内容则不覆盖
   if (!s._seeded) {
+    s._updatedAt = Date.now();   // v351：补种也打时间戳
     const allEmpty = ['1', '2', '3', '4'].every(function (kk) {
       const sb = s.subjects[kk];
       return sb && sb.points.length === 0 && !sb.note;
@@ -15472,7 +15457,7 @@ function renderDriveLearn() {
   html += '</div>';
   root.innerHTML = html;
 }
-function switchDriveSubject(k) { ensureDriveLearn(); store.driveLearn.active = k; window.__driveNoteOpen = null; saveData(); renderDriveLearn(); }
+function switchDriveSubject(k) { ensureDriveLearn(); store.driveLearn.active = k; window.__driveNoteOpen = null; touchDrive(); saveData(); renderDriveLearn(); }
 function addDrivePoint() {
   ensureDriveLearn();
   const inp = document.getElementById('drive-point-input');
@@ -15480,7 +15465,7 @@ function addDrivePoint() {
   if (!txt) { if (inp) inp.focus(); return; }
   const ak = store.driveLearn.active;
   store.driveLearn.subjects[ak].points.push({ text: txt, done: false });
-  saveData(); renderDriveLearn();
+  touchDrive(); saveData(); renderDriveLearn();
   const ninp = document.getElementById('drive-point-input');
   if (ninp) { ninp.value = ''; ninp.focus(); }
 }
@@ -15489,21 +15474,21 @@ function toggleDrivePoint(k, idx) {
   const sub = store.driveLearn.subjects[k];
   if (!sub || !sub.points[idx]) return;
   sub.points[idx].done = !sub.points[idx].done;
-  saveData(); renderDriveLearn();
+  touchDrive(); saveData(); renderDriveLearn();
 }
 function removeDrivePoint(k, idx) {
   ensureDriveLearn();
   const sub = store.driveLearn.subjects[k];
   if (!sub) return;
   sub.points.splice(idx, 1);
-  saveData(); renderDriveLearn();
+  touchDrive(); saveData(); renderDriveLearn();
 }
 function toggleAllDrivePoints(k, val) {
   ensureDriveLearn();
   const sub = store.driveLearn.subjects[k];
   if (!sub) return;
   sub.points.forEach(function (p) { p.done = val; });
-  saveData(); renderDriveLearn();
+  touchDrive(); saveData(); renderDriveLearn();
 }
 
 // 学车·备注：展开/收起某条知识点的备注输入框（仅切换视图态，不写数据）
@@ -15522,7 +15507,7 @@ function saveDrivePointNote(k, idx) {
   if (!sub || !sub.points[idx]) return;
   const ta = document.getElementById('drive-point-note-' + k + '-' + idx);
   sub.points[idx].note = ta ? ta.value : '';
-  saveData();
+  touchDrive(); saveData();
   try { hamiToast('✅ 已保存，文字显示在下面啦'); } catch (e) {}
   window.__driveNoteOpen = null;
   renderDriveLearn();
@@ -15533,7 +15518,7 @@ function saveDriveSubjectNote(k, val) {
   const sub = store.driveLearn.subjects[k];
   if (!sub) return;
   sub.note = (val === undefined || val === null) ? '' : String(val);
-  saveData();
+  touchDrive(); saveData();
   const saved = document.getElementById('drive-subj-saved-' + k);
   if (saved) { saved.classList.add('show'); setTimeout(function () { saved.classList.remove('show'); }, 1500); }
 }
