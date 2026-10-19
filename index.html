@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-18-354">
+<meta name="hami-build" content="2026-10-19-355">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -15376,8 +15376,8 @@ var DRIVE_SEED = {
 var APO_RESTORE_FLAG = 'hami_apo_restore_v335';
 function restoreApoBirthdayOnce() {
   try {
-    if (localStorage.getItem(APO_RESTORE_FLAG)) return;
-    localStorage.setItem(APO_RESTORE_FLAG, '1');
+    // v355：去掉「只跑一次」的标志位锁——之前 APO_RESTORE_FLAG 置 true 后，阿婆一旦被墓碑再次干掉就永远回不来。
+    // 改为每次加载都检查：只要阿婆不在列表里就补种 + 清墓碑（幂等，已在则不重复加）。
     if (!Array.isArray(store.importantDates)) store.importantDates = [];
     const has = store.importantDates.some(function (x) {
       return x && x.type === 'birthday' && String(x.name || '').trim() === '阿婆';
@@ -20789,7 +20789,9 @@ function renderReminder() {
       const info = calcDateInfo(d, today);
       return { ...d, ...info, _idx: __visIdx ? __visIdx[i] : i };   // v180：用 store 原始下标
     });
-    dateList.sort((a, b) => b._idx - a._idx);   // v216：最新添加的排最前（新→旧）
+    // v355：按「距离生日/纪念日天数」近到远排序（主人明确要求），不再是按添加顺序。
+    // 兜底：daysLeft 缺失时排到最后，避免 NaN 导致排序错乱。
+    dateList.sort((a, b) => (a.daysLeft == null ? 1e9 : a.daysLeft) - (b.daysLeft == null ? 1e9 : b.daysLeft));
 
     let html = '';
     // v26 分页：每页 IMP_DATE_PAGE 条，翻到底看全不丢
