@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-19-355">
+<meta name="hami-build" content="2026-10-19-356">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9630,6 +9630,14 @@ function applyTombOnLoad() {
     });
     if (store[listKey].length !== before) changed = true;
   });
+  // v356：阿婆受保护，加载时强制清掉其墓碑（防止被云端/本地残留墓碑剔除）
+  try {
+    if (store.__deleted && Array.isArray(store.__deleted['importantDates'])) {
+      const before2 = store.__deleted['importantDates'].length;
+      store.__deleted['importantDates'] = store.__deleted['importantDates'].filter(function (k) { return String(k).indexOf('阿婆') < 0; });
+      if (store.__deleted['importantDates'].length !== before2) changed = true;
+    }
+  } catch (e) {}
   if (changed) {
     try { saveData(true); } catch (e) {}
   }
@@ -9883,6 +9891,7 @@ function mergeStoreInto(local, remote) {
         const revokedSet = (local.__revoked && Array.isArray(local.__revoked[listKey])) ? new Set(local.__revoked[listKey]) : null;
         rarr.forEach(function (k) {
           if (!k) return;
+          if (String(k).indexOf('阿婆') >= 0) return;     // v356：阿婆受保护，云端墓碑不再并入本地
           if (revokedSet && revokedSet.has(k)) return;   // v108：已解禁，云端旧墓碑不再生效
           if (!seen.has(k)) { seen.add(k); local.__deleted[listKey].push(k); }
         });
@@ -9901,6 +9910,7 @@ function mergeStoreInto(local, remote) {
         // v57：任一 dedup key 命中墓碑即过滤（主键 + 内容键）
         const matchTomb = function (it) {
           if (it == null) return false;
+          if (listKey === 'importantDates' && it && String(it.name || '').trim() === '阿婆') return false;  // v356 受保护
           if (typeof _allDedupKeys === 'function') {
             const ks = _allDedupKeys(listKey, it);
             for (let i = 0; i < ks.length; i++) {
@@ -10076,6 +10086,8 @@ function mergeStoreInto(local, remote) {
 function hamiTombAdd(listKey, item) {
   try {
     if (!item) return;
+    // v356：阿婆生日永久受保护——删除时不写墓碑（主人多次反馈丢失）
+    if (listKey === 'importantDates' && item && String(item.name || '').trim() === '阿婆') return;
     if (!store.__deleted || typeof store.__deleted !== 'object') store.__deleted = {};
     if (!Array.isArray(store.__deleted[listKey])) store.__deleted[listKey] = [];
     // v57：写主键 + 内容键两个墓碑，任一命中就过滤
@@ -13833,7 +13845,8 @@ function ensureDefaults() {
         const __sdKeys = (typeof _allDedupKeys === 'function') ? _allDedupKeys('importantDates', d) : [];
         const __tombs = (store.__deleted && Array.isArray(store.__deleted['importantDates'])) ? store.__deleted['importantDates'] : [];
         for (let __ki = 0; __ki < __sdKeys.length; __ki++) {
-          if (__sdKeys[__ki] && __tombs.indexOf(__sdKeys[__ki]) >= 0) return;   // 主人删过 → 永不再播
+          // v356：阿婆受保护，墓碑不挡其播种；其余项删过则永不再播
+          if (__sdKeys[__ki] && __tombs.indexOf(__sdKeys[__ki]) >= 0 && !(d && String(d.name || '').trim() === '阿婆')) return;
         }
       } catch (e) {}
       store.importantDates.push(d);
@@ -21921,6 +21934,7 @@ function submitDateRecord() {
 async function deleteDateRecord(idx) {
   const item = (store.importantDates || [])[idx];
   if (!item) return;
+  if (String((item.name || '')).trim() === '阿婆') { try { finToast('阿婆的生日是受保护的，删不掉哦~'); } catch (e) {} return; }
   const name = item.name || '这条';
   if (!await hamiConfirm('确定删除「' + name + '」吗？')) return;
   // v123：走全站健壮删除。hamiDeleteRecord 会用记录本身（含稳定 id）写墓碑，
