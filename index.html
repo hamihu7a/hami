@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-19-356">
+<meta name="hami-build" content="2026-10-19-357">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2340,6 +2340,11 @@
   .row-del-btn  { background: #fff0f0; color: #c43e3e; border: 1px solid #ffd4d4; }
   .row-del-btn:hover  { background: #ffe4e4; }
   .row-edit-btn:active, .row-del-btn:active { transform: scale(0.95); }
+  /* v357：手机端重要日期「编辑/删除」改上下竖排（主人要求），电脑端维持横排 */
+  .imp-row-actions { display: flex; flex-direction: row; gap: 4px; align-items: flex-end; }
+  @media (max-width: 768px) {
+    .imp-row-actions { flex-direction: column; align-items: flex-end; }
+  }
   /* 重要日期「展开其余」折叠按钮 */
   .date-fold-btn {
     display: inline-block; margin: 4px auto 0; border: 1px solid #ffd0dc;
@@ -20877,7 +20882,7 @@ function renderReminder() {
               <div style="font-size:16px;font-weight:800;color:${countColor};line-height:1.1;">${countNum}</div>
               <div style="font-size:10px;color:#7d4a5a;margin-top:1px;">${countLabel}</div>
             </div>
-            <div style="display:flex;flex-direction:row;gap:4px;">
+            <div class="imp-row-actions">
               <button class="row-edit-btn" style="font-size:10px;padding:2px 10px;border-radius:7px;" onclick="openDateModal(${d._idx})" type="button">✏️ 编辑</button>
               <button class="row-del-btn" style="font-size:10px;padding:2px 10px;border-radius:7px;" onclick="deleteDateRecord(${d._idx})" type="button">🗑 删除</button>
             </div>
