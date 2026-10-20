@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-361">
+<meta name="hami-build" content="2026-10-20-362">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9367,6 +9367,9 @@ async function _verifySyncPassword(input) {
   // 兼容老设备无校验器：退化为本地明文比对（仍有密码即挡住外人）
   return v === (getSyncPassword() || '');
 }
+// v362：当天日期（本地时区），用于"每天只验证一次"
+function _hamiTodayStr() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function _hamiUnlockedToday() { try { return localStorage.getItem('hami_unlock_day') === _hamiTodayStr(); } catch (e) { return false; } }
 // 启动门：全屏密码遮罩，验证通过才执行 cb（初始化应用）。已设密码的设备打开网页先过这关。
 function hamiShowUnlock(cb) {
   try {
@@ -9378,7 +9381,7 @@ function hamiShowUnlock(cb) {
       '<div style="width:min(92vw,360px);background:#fff;border-radius:22px;box-shadow:0 12px 40px rgba(180,120,170,.28);padding:26px 22px;text-align:center;">'
       + '<div style="font-size:40px;line-height:1;">🔒</div>'
       + '<div style="font-size:19px;font-weight:800;color:#a64b86;margin-top:10px;">小助理已上锁</div>'
-      + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是你的私人工作台，请输入访问密码才能进入</div>'
+      + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是Hami的私人工作台，请输入访问密码才能进入</div>'
       + '<input id="hami-unlock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;margin-top:16px;padding:12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;"/>'
       + '<div id="hami-unlock-err" style="font-size:12px;color:#d14b73;height:16px;margin-top:8px;"></div>'
       + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
@@ -9393,6 +9396,7 @@ function hamiShowUnlock(cb) {
       if (!val) { err.textContent = '请输入密码'; return; }
       _verifySyncPassword(val).then(function (ok) {
         if (ok) {
+          try { localStorage.setItem('hami_unlock_day', _hamiTodayStr()); } catch (e) {}   // v362：当天已验证，本日再进不再拦
           try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
           try { hamiSyncPassword = getSyncPassword(); } catch (e) {}
           try { cb(); } catch (e) { console.error('[unlock] boot error', e); }
@@ -12170,6 +12174,7 @@ async function initSettingsPanel() {
         setSyncPassword(v);
         hamiSyncPassword = v;
         setSyncPwdVerifier(v);   // v360：写本地校验器，启动门离线验证密码对错
+        try { if (v) localStorage.setItem('hami_unlock_day', _hamiTodayStr()); } catch (e) {}   // v362：设密码当天本机视为已验证
         pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 已保存，正在从云端载入并重新加密…';
         try { await initCloudSync(pwdStatus); } catch (e) {}
         try { await commitToCloud(); } catch (e) {}   // v360：立刻用新密码重推云端，使匿名下载也解不开
@@ -25331,9 +25336,15 @@ try { requestNotifyPermission(); } catch(e) { console.log('requestNotifyPermissi
 try { checkWeeklyUpdateAlert(); } catch(e) { console.log('checkWeeklyUpdateAlert error:', e.message); }
 // 页面初始化完成：此后云端拉到新数据，就可以安全地全量重渲了
     try { _hamiBootDone = true; } catch (e) {}
+    // v362：清掉浏览器"表单恢复"回填的指令栏残留（如语音识别未提交的数字每次刷新都幽灵重现）
+    try {
+      var _clearCmd = function () { var _ci = document.getElementById('hami-cmd-input'); if (_ci) _ci.value = ''; };
+      _clearCmd(); setTimeout(_clearCmd, 300); setTimeout(_clearCmd, 1000);
+      window.addEventListener('pageshow', _clearCmd);
+    } catch (e) {}
     }
-    // 已设密码 → 先弹密码门；否则直接进（v360 访问密码启动门）
-    if (getSyncPassword()) { try { hamiShowUnlock(hamiRunBoot); } catch (e) { hamiRunBoot(); } }
+    // 已设密码 → 先弹密码门（v362：当天验证过一次就不再拦，直接进）；否则直接进
+    if (getSyncPassword() && !_hamiUnlockedToday()) { try { hamiShowUnlock(hamiRunBoot); } catch (e) { hamiRunBoot(); } }
     else { hamiRunBoot(); }
   })();
 
