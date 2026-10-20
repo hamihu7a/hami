@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-365">
+<meta name="hami-build" content="2026-10-20-366">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7820,6 +7820,10 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <button id="settings-sync-pwd-save" class="db-btn db-btn-main" style="flex:1;">💾 保存访问密码</button>
         <button id="settings-sync-lock" class="db-btn" style="flex:1;">🔒 暂时锁定</button>
       </div>
+      <div class="db-btn-row" style="margin-top:6px;">
+        <button id="settings-sync-pwd-rescue" class="db-btn" style="flex:1;">🔑 试解云端并恢复同步</button>
+      </div>
+      <div style="font-size:10.5px;color:#8a6270;margin-top:4px;">两台设备同步不上/数据互相覆盖时用：输入你记得的密码试解云端，试错不会弄坏任何数据</div>
       <div id="settings-sync-pwd-status" style="font-size:11px;margin-top:6px;color:#7d4a5a;"></div>
     </div>
 
@@ -9109,6 +9113,8 @@ async function bgUploadAllToCloud(silent) {
   const statusEl = document.getElementById('settings-bg-cloud-status');
   const setSt = function (t) { if (statusEl) statusEl.textContent = t; };
   if (!silent) setSt('⏳ 正在把背景图打包加密上传到云端…');
+  // v366：密码不一致隔离中，背景图也暂停上传（防止旧背景盖掉云端新背景）——必须在置 _bgUploadInFlight 之前拦
+  if (_syncCryptoMismatch) { if (!silent) setSt('🔒 云端和本机密码不一致，已暂停上传（先去「访问密码 → 🔑 试解云端」恢复）'); return; }
   _bgUploadInFlight = true;
   try {
     for (let i = 0; i < 40; i++) {
@@ -9340,6 +9346,7 @@ const SYNC_PWD_KEY = 'hami_sync_pwd';
 let hamiSyncReady = false;     // 首次拉取完成（或失败）后才允许推送，避免覆盖云端
 let hamiSyncEnabled = false;
 let hamiSyncPassword = '';
+let _syncCryptoMismatch = false;   // v366：云端与本机密码不一致 → 同步隔离（绝不上传，防两台设备互相覆盖）
 let _syncBusy = false;
 let _syncPushTimer = null;
 // 后台定时拉取进行中标记（避免与前一次拉取重叠）
@@ -10729,6 +10736,27 @@ function renderAllFromCloud() {
   } finally { _cloudRendering = false; }
 }
 
+// v366：科目一 5/5 曾在「两台设备密码不一致互相覆盖」中被踩掉。恢复同步后一次性补回勾选
+//（只跑一次：已是全勾只做标记不再动；知识点与种子清单不完全一致则绝不乱动，尊重主人后续修改）
+function restoreDriveSubject1Once() {
+  try {
+    if (localStorage.getItem('hami_drive_s1_fix_v366')) return;
+    var dl = store.driveLearn;
+    if (!dl || !dl.subjects || !dl.subjects['1']) return;
+    var pts = dl.subjects['1'].points || [];
+    var want = ['道路法规', '交通标志标线', '灯光、速度规定', '处罚扣分题目', '车辆基础常识'].sort();
+    if (pts.length !== want.length) return;
+    var texts = pts.map(function (p) { return (p.text || '').trim(); }).sort();
+    for (var i = 0; i < texts.length; i++) { if (texts[i] !== want[i]) return; }
+    if (!pts.some(function (p) { return !p.done; })) { try { localStorage.setItem('hami_drive_s1_fix_v366', '1'); } catch (e2) {} return; }
+    pts.forEach(function (p) { p.done = true; });
+    try { if (typeof touchDrive === 'function') touchDrive(); } catch (e2) { dl._updatedAt = Date.now(); }
+    try { localStorage.setItem('hami_drive_s1_fix_v366', '1'); } catch (e2) {}
+    try { _syncDirtyInc('学车'); } catch (e2) {}
+    try { scheduleCloudPush(); } catch (e2) {}
+    console.log('[v366] 科目一 5 个知识点勾选已一次性补回');
+  } catch (e) {}
+}
 async function pullAndMerge() {
   if (!hamiCloudEnabled()) return null;
   // v2026-10-05 安全网：合并改写 store 前先快照当前（本地）数据，任何误删都能从「🚑 数据急救」捞回
@@ -10756,6 +10784,7 @@ async function pullAndMerge() {
     // v148 同步核心：mergeStoreInto 已改为「本地优先并集」——本地 localStorage 是绝对事实来源，
     // 云端只补充本地没有的记录，绝不覆盖/删除本地已有数据（根治刷新/同步丢数据）。
     mergeStoreInto(store, remote.store);
+    try { restoreDriveSubject1Once(); } catch (e) {}   // v366：科目一勾选一次性补回（合并后仍缺才生效）
     // v304：天气位置以云端(通常为手机端)为准，跨端保持一致（不受本机旧自动定位干扰）
     try { if (remote.store && remote.store.weatherLocation) { store.weatherLocation = remote.store.weatherLocation; } } catch(e) {}
     // v343：今日激励语跨端一致——云端日期 >= 本地日期就用云端的（换天以先开的一方为准；
@@ -10805,14 +10834,24 @@ async function pullAndMerge() {
     _syncLogPush('pull', true, '已从云端合并');
     return got.sha || null;
   } else {
-    // 云端加密与本地密码都不匹配：不致命，保留本机数据，交给 pushNow 用默认密码上传覆盖，
-    // 避免“解不开就整段同步失败 + 数据看不见”。
-    cloudStatus('☁️ 云端加密与本地密码不一致，将用本机数据上传', '#c75b86');
-    return got.sha || null;
+    // v366【根治「两台设备密码不一致 → 每分钟互相覆盖」数据战争】
+    // 旧行为：解不开云端就"用本机数据上传覆盖"。两台设备各拿一把不同的钥匙时，
+    // 每台都解不开对方的档案，就都以为云端是空的，轮流把自己的旧数据整个盖上去
+    // （科目一 5/5 被打回 0/5 的真凶）。现在改为：立即隔离，绝不上传。
+    _syncCryptoMismatch = true;
+    cloudStatus('🔒 云端和本机的密码对不上，为了不互相覆盖，上传已暂停。请到「设置工具 → 🔒 访问密码」点「🔑 试解云端并恢复同步」', '#d14b73');
+    try { _syncLogPush('pull', false, '云端密码不一致，已隔离暂停上传'); } catch (e) {}
+    return null;
   }
 }
 async function pushNow() {
   if (!hamiCloudEnabled() || _syncBusy) return;
+  // v366：密码不一致隔离中——绝不上传，防止把本机旧数据盖到云端（云端那份可能是最新的）
+  if (_syncCryptoMismatch) {
+    cloudStatus('🔒 云端和本机密码不一致，上传已暂停（设置工具 → 🔒 访问密码 → 🔑 试解云端并恢复同步）', '#d14b73');
+    try { _syncLogPush('push', false, '隔离中拒绝上传：密码不一致'); } catch (e) {}
+    throw new Error('云端与本机密码不一致，已暂停上传以保护数据（去设置→访问密码→试解云端恢复）');
+  }
   _syncBusy = true;
   try {
     cloudStatus('⏳ 正在同步到云端…', '#c75b86');
@@ -11067,6 +11106,8 @@ function _diagEnv() {
   };
 }
 async function hamiCloudPurgeConfirm() {
+  // v366：密码不一致隔离中，绝不许清云端——云端那份可能是目前唯一最新的全量数据
+  if (_syncCryptoMismatch) { try { hamiToast('❌ 云端和本机密码不一致，先去「访问密码 → 🔑 试解云端」恢复同步，再考虑清档案'); } catch (e) {} return; }
   const ok = await hamiConfirm('🧹 清掉旧云端档案？\n\n这会清空 GitHub 上的加密存档，本机数据不会丢。\n\n清空后点「立即同步到云端」即可用本机最新数据重建。\n\n（主人可以放心做：这只是删除云端那个加密文件，本机浏览器里的所有记账/体重/代办等数据都还在。）', { title: '清掉旧云端档案', yesText: '✅ 是的，清掉重建', noText: '取消', danger: true });
   if (!ok) return;
   const out = document.getElementById('hami-sync-check-out');
@@ -11199,7 +11240,7 @@ async function hamiSyncSelfCheck() {
     }
     if (!remote) {
       add('云端存档', '存在，但解密失败：' + ((remoteErr && (remoteErr.message || remoteErr)) || '未知') + '（多半是更早的旧版云端档案用的不是默认密码）', false);
-      out.innerHTML = L.join('') + '<div style="font-size:12px;color:#c75b86;margin-top:6px;line-height:1.7;">若主人两台设备已经统一用默认加密，可以点下方 <b>「🧹 清掉旧云端档案」</b>一键重建——主人本机的数据不会丢。</div>';
+      out.innerHTML = L.join('') + '<div style="font-size:12px;color:#c75b86;margin-top:6px;line-height:1.7;">请到上方「🔒 访问密码」输入你记得的密码，点 <b>「🔑 试解云端并恢复同步」</b>——多试几个不会弄坏任何数据，试对了就自动恢复同步。</div>';
       return;
     }
     const rs = (remote && remote.store) || {};
@@ -12257,6 +12298,38 @@ async function initSettingsPanel() {
         try { localStorage.removeItem('hami_unlock_day'); } catch (e) {}   // 清掉"今天已验证"标记，锁定后刷新页面也照样拦
         try { hamiShowUnlock(function () { try { hamiToast('🔓 欢迎回来~'); } catch (e) {} }); } catch (e) {}
         pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '🔒 已锁定！回来后输入访问密码即可进入';
+      });
+      // v366：同步急救——两台设备密码不一致会互相覆盖（本次科目一被打回 0/5 的真凶）。
+      // 输入你记得的密码试解云端：解得开就设为本机密码并立即恢复拉取合并；解不开就明说，绝不瞎推。
+      const rescueBtn = document.getElementById('settings-sync-pwd-rescue');
+      if (rescueBtn) rescueBtn.addEventListener('click', async function () {
+        const v = (pwdInput.value || '').trim() || getSyncPassword();
+        if (!v) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 请先在上面输入你记得的密码，再点试解'; return; }
+        if (!_cryptoReady()) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 当前打开方式不支持加密（请用 https 打开本页）'; return; }
+        rescueBtn.disabled = true;
+        pwdStatus.style.color = '#c75b86'; pwdStatus.textContent = '⏳ 正在用这把密码试解云端档案…';
+        try {
+          const got = await _ghGet();
+          if (!got) { pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 云端还没有档案，不用试解——直接点「💾 保存访问密码」即可'; return; }
+          let ok = false;
+          try { await decryptStore(got.content.replace(/\s+/g, ''), v); ok = true; } catch (e2) {}
+          if (!ok) {
+            _syncCryptoMismatch = true;
+            pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 这把密码打不开云端档案。是不是在另一台设备设过别的密码？换一个再试（多试几次不会弄坏任何数据）';
+            return;
+          }
+          setSyncPassword(v);
+          hamiSyncPassword = v;
+          setSyncPwdVerifier(v);
+          _syncCryptoMismatch = false;
+          pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 密码正确！云端档案已解开，正在拉取合并…';
+          try { await pullAndMerge(); } catch (e2) {}
+          try { if (typeof renderAllFromCloud === 'function') renderAllFromCloud(); } catch (e2) {}
+          try { if (typeof renderDesktop === 'function') renderDesktop(); } catch (e2) {}
+          try { hamiToast('✅ 同步已恢复，数据已合并'); } catch (e2) {}
+        } catch (e) {
+          pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 试解失败：' + ((e && e.message) || '网络问题，稍后再试');
+        } finally { rescueBtn.disabled = false; }
       });
     }
   })();
