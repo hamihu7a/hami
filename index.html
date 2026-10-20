@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-358">
+<meta name="hami-build" content="2026-10-20-359">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -8223,15 +8223,31 @@ function saveData(skipCloud) {
   } catch (e) {}
   // v109：存盘前给所有缺 id 的老记录补上身份（补一次即可，之后永远稳定）
   try { if (typeof hamiEnsureIds === 'function') hamiEnsureIds(); } catch (e) {}
-  // v352：__revoked（撤销指纹）瘦身——实测云端累积到 170KB+（占档案 51%），
-  // 每次同步都白传。每列表只留最近 150 条（旧指纹引用的记录早不在两端了，纯浪费）。
+  // v359：__revoked 瘦身增强——去重 + 统一 cap + 总字节软上限，目标 <25KB
   try {
     if (store.__revoked && typeof store.__revoked === 'object') {
+      var _revCap = 100, _revBudget = 22 * 1024; // 单列表上限 100，总预算 ~22KB
+      var _revSizes = {}, _revTotal = 0;
       Object.keys(store.__revoked).forEach(function (lk) {
-        if (Array.isArray(store.__revoked[lk]) && store.__revoked[lk].length > 150) {
-          store.__revoked[lk] = store.__revoked[lk].slice(-150);
+        if (!Array.isArray(store.__revoked[lk])) return;
+        var _seen = {}, _uniq = []; // 去重（保留顺序，后出现的优先）
+        for (var i = store.__revoked[lk].length - 1; i >= 0; i--) {
+          var kk = store.__revoked[lk][i];
+          if (kk == null || _seen[kk]) continue;
+          _seen[kk] = 1; _uniq.unshift(kk);
         }
+        if (_uniq.length > _revCap) _uniq = _uniq.slice(-_revCap);
+        store.__revoked[lk] = _uniq;
+        _revSizes[lk] = _uniq.reduce(function (a, k) { return a + ('' + k).length; }, 0);
+        _revTotal += _revSizes[lk];
       });
+      if (_revTotal > _revBudget) { // 总额超标按比例再压缩
+        var _factor = _revBudget / Math.max(1, _revTotal);
+        Object.keys(_revSizes).forEach(function (lk) {
+          var allow = Math.max(8, Math.floor(_revSizes[lk] * _factor / 40));
+          if (store.__revoked[lk].length > allow) store.__revoked[lk] = store.__revoked[lk].slice(-allow);
+        });
+      }
     }
   } catch (e) {}
   let savedOk = false;
@@ -10185,7 +10201,7 @@ function hamiTombRevoke(listKey, item) {
       if (!k) return;
       if (store.__revoked[listKey].indexOf(k) < 0) store.__revoked[listKey].push(k);
     });
-    if (store.__revoked[listKey].length > 600) store.__revoked[listKey] = store.__revoked[listKey].slice(-600);
+    if (store.__revoked[listKey].length > 100) store.__revoked[listKey] = store.__revoked[listKey].slice(-100); // v359：600→100，与 saveData 瘦身一致
     // 本机墓碑里同键的立刻解禁
     try { hamiTombPurgeRevoked(); } catch (e) {}
     try { hamiRevokedMirrorSave(); } catch (e) {}
@@ -10670,6 +10686,7 @@ async function pullAndMerge() {
     _lastPulledRemoteAt = remote.updatedAt || 0;   // v353：记下云端时间，供 initCloudSync 判断"本地是否比云端新"
     cloudStatus('☁️ 已从云端合并（' + new Date().toLocaleString('zh-CN') + '）', '#5aa86a');
     syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
+    _syncLogPush('pull', true, '已从云端合并');
     return got.sha || null;
   } else {
     // 云端加密与本地密码都不匹配：不致命，保留本机数据，交给 pushNow 用默认密码上传覆盖，
@@ -10713,6 +10730,7 @@ async function pushNow() {
         const _okName = (typeof _syncActName === 'function') ? _syncActName() : '';
         syncBadgeShow('已同步 · ' + _fmtSyncTime(_lastSyncAt), false);
         if (_okName) showCloudToast('✅ 已同步：' + _okName, 'ok');
+        _syncLogPush('push', true, _okName || '已同步');
         return;
       } catch (e) {
         lastErr = e;
@@ -10723,6 +10741,7 @@ async function pushNow() {
         const isConflict = m.indexOf('does not match') >= 0 || m.indexOf('409') >= 0;
         if (attempt < 4) {
           _diagStep('推送重试', false, (isConflict ? '云端有别人刚改动，重新合并后重试' : '网络波动，稍后重试') + '（第 ' + (attempt + 1) + ' 次）：' + m);
+          _syncLogPush('push', false, '重试第' + (attempt + 1) + '次');
           await new Promise(function (r) { setTimeout(r, isConflict ? 1200 : 1500 * (attempt + 1)); });
           continue;
         }
@@ -10732,6 +10751,7 @@ async function pushNow() {
     throw lastErr || new Error('推送重试次数用尽');
   } catch (e) {
     _diagStep('pushNow 推送失败', false, (e && e.message) ? e.message : String(e));
+    _syncLogPush('push', false, (e && e.message) ? e.message : String(e));
     console.error('[pushNow]', e);
     cloudStatus('⚠️ 同步失败：' + (e.message || e), '#c75b86');
     // v264：小标恢复旧文案「同步失败」；弹出的浮层点名具体什么没同步成功（体重/背景图/数据…）
@@ -10872,6 +10892,47 @@ function _diagStep(name, ok, detail) {
     while (_syncDiag.steps.length > 60) _syncDiag.steps.shift();
   } catch (e) {}
 }
+// v359：同步日志持久化（主人可见的最近同步记录，存 localStorage，最多 50 条，绝不记具体内容）
+function _syncLogPush(action, ok, detail) {
+  try {
+    var arr = _loadSyncLog();
+    arr.push({ t: Date.now(), a: action, ok: !!ok, d: (detail ? ('' + detail).slice(0, 200) : '') });
+    while (arr.length > 50) arr.shift();
+    localStorage.setItem('hami_sync_log', JSON.stringify(arr));
+  } catch (e) {}
+}
+function _loadSyncLog() {
+  try { var s = localStorage.getItem('hami_sync_log'); var a = s ? JSON.parse(s) : []; return Array.isArray(a) ? a : []; }
+  catch (e) { return []; }
+}
+function parseVerSafe(v) {
+  var m = ('' + v).match(/^(\d{4})-(\d{2})-(\d{2})-(\d+)$/);
+  return m ? (+m[1] * 1e8) + (+m[2] * 1e6) + (+m[3] * 1e4) + (+m[4]) : 0;
+}
+function showNewVersionTip(ver) {
+  try {
+    var seen = sessionStorage.getItem('hami_newver_seen');
+    if (seen === ver) return;
+    sessionStorage.setItem('hami_newver_seen', ver);
+    var el = document.getElementById('hami-newver');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'hami-newver';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;text-align:center;font-size:13px;padding:7px 10px;background:#ffd6e7;color:#b03060;box-shadow:0 1px 4px rgba(0,0,0,.12);cursor:pointer;';
+      el.innerHTML = '✨ 发现新版本 ' + ver + '，点此刷新（当前 ' + BUILD_VER + '）';
+      el.onclick = function () { try { location.reload(true); } catch (e) { location.reload(); } };
+      document.body.appendChild(el);
+    }
+  } catch (e) {}
+}
+function checkNewVersion() {
+  try { fetch('version.txt?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (txt) {
+    if (!txt) return;
+    var rv = ('' + txt).trim();
+    if (parseVerSafe(rv) > parseVerSafe(BUILD_VER)) showNewVersionTip(rv);
+  }).catch(function () {}); } catch (e) {}
+}
+setTimeout(checkNewVersion, 2000); // v359：页面加载 2 秒后自动查一次新版本
 function _diagEnv() {
   const ua = (navigator.userAgent || '');
   const inWx = /MicroMessenger/i.test(ua);
@@ -11033,6 +11094,16 @@ async function hamiSyncSelfCheck() {
     add('云端体重记录', rw + ' 条', true);
     add('体重对比', '本机 ' + lw + ' 条 / 云端 ' + rw + ' 条'
       + (lw === rw ? '（一致）' : '（不一致 → 点「立即同步到云端」合并）'), lw === rw);
+    // v359：附上最近同步记录（来自 localStorage，纯技术信息，绝不记具体内容）
+    try {
+      var _log = _loadSyncLog().slice(-12).reverse();
+      if (_log.length) {
+        L.push('<div style="font-size:12px;color:#8a6270;margin-top:8px;line-height:1.7;">最近同步记录：</div>');
+        _log.forEach(function (x) {
+          L.push('<div style="font-size:11.5px;color:#6a4a58;line-height:1.6;">' + new Date(x.t).toLocaleString('zh-CN') + ' · ' + (x.ok ? '✓' : '✗') + ' ' + (window.escapeHtml ? escapeHtml(x.a) : x.a) + (x.d ? ' · ' + (window.escapeHtml ? escapeHtml(x.d) : x.d) : '') + '</div>');
+        });
+      }
+    } catch (e) {}
     out.innerHTML = L.join('');
   } catch (e) {
     add('云端读取', '失败：' + (e.message || e), false);
