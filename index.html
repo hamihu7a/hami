@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-19-357">
+<meta name="hami-build" content="2026-10-20-358">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9990,8 +9990,28 @@ function mergeStoreInto(local, remote) {
       // 就退回字段级合并（勾选完成优先）——修复 v351 漏洞：本地哪怕只是点开看了一眼科目页
       // （switchDriveSubject 曾刷新时间戳），云端再新的完成状态也会被永远挡在门外（主人科目一勾选被卡死的真凶）
       if (lu > 0 && ru > 0) {
-        if (ru > lu) return r;   // 双方都有时间戳：云端更新 → 整体采用云端
-        return l;                // 本地更新或持平 → 以本地为准
+        // v358：谁新听谁定骨架（知识点增删/备注归属），但勾选 done 只进不退——
+        // 学车勾选是进度型数据，勾了就是勾了，绝不允许被另一台的旧快照打回未完成
+        //（根治科目一 5/5 反复被本地旧数据顶回 0/5）
+        const base = (ru > lu) ? r : l;
+        const other = (ru > lu) ? l : r;
+        try {
+          if (other && other.subjects && base.subjects) {
+            Object.keys(other.subjects).forEach(function (k) {
+              const os = other.subjects[k], bs = base.subjects[k];
+              if (!os || !bs || !Array.isArray(os.points) || !Array.isArray(bs.points)) return;
+              const byText = {};
+              bs.points.forEach(function (p) { if (p && typeof p === 'object') byText[String(p.text || '')] = p; });
+              os.points.forEach(function (p) {
+                if (p && typeof p === 'object' && p.done === true) {
+                  const bp = byText[String(p.text || '')];
+                  if (bp && bp.done !== true) bp.done = true;
+                }
+              });
+            });
+          }
+        } catch (e) {}
+        return base;
       }
       // 任一方无时间戳 → 字段级并集：科目/知识点按 text 认人，done 任一为 true 即 true，备注取更长
       const out = Object.assign({}, l);
