@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-366">
+<meta name="hami-build" content="2026-10-20-367">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9396,7 +9396,7 @@ function hamiShowUnlock(cb) {
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#fde7f3 0%,#efe6fb 100%);font-family:inherit;';
     ov.innerHTML =
       '<div style="width:min(92vw,360px);background:#fff;border-radius:22px;box-shadow:0 12px 40px rgba(180,120,170,.28);padding:26px 22px;text-align:center;">'
-      + '<div style="font-size:40px;line-height:1;">🔒</div>'
+      + '<div id="hami-unlock-logo" style="font-size:40px;line-height:1;user-select:none;-webkit-user-select:none;cursor:default;">🔒</div>'
       + '<div style="font-size:19px;font-weight:800;color:#a64b86;margin-top:10px;">小助理已上锁</div>'
       + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是Hami的私人工作台，请输入访问密码才能进入</div>'
       + '<div style="position:relative;margin-top:16px;">'
@@ -9405,8 +9405,7 @@ function hamiShowUnlock(cb) {
       + '</div>'
       + '<div id="hami-unlock-err" style="font-size:12px;color:#d14b73;height:16px;margin-top:8px;"></div>'
       + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
-      + '<div style="font-size:11px;color:#b89;margin-top:12px;">密码仅存本设备；忘了可在设置重设（数据不丢）</div>'
-      + '<div style="font-size:12px;margin-top:9px;"><a id="hami-unlock-forgot" style="color:#b98be0;text-decoration:underline;cursor:pointer;">忘记密码？本设备解除锁定（数据不丢）</a></div>'
+      + '<div style="font-size:11px;color:#b89;margin-top:12px;">密码只存在你这台设备上，别人猜不到就进不来</div>'
       + '</div>';
     document.body.appendChild(ov);
     var inp = document.getElementById('hami-unlock-input');
@@ -9418,8 +9417,11 @@ function hamiShowUnlock(cb) {
       _verifySyncPassword(val).then(function (ok) {
         if (ok) {
           try { localStorage.setItem('hami_unlock_day', _hamiTodayStr()); } catch (e) {}   // v362：当天已验证，本日再进不再拦
+          // v367：密码输对了就记在这台设备上——以后点「🔒 暂时锁定」不用再重设密码
+          try { if (!getSyncPassword()) { setSyncPassword(val); setSyncPwdVerifier(val); } } catch (e) {}
+          try { hamiSyncPassword = getSyncPassword() || val; } catch (e) {}
+          try { _syncCryptoMismatch = false; } catch (e) {}   // 密码能对上，说明本机与云端一致，解除隔离
           try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
-          try { hamiSyncPassword = getSyncPassword(); } catch (e) {}
           try { cb(); } catch (e) { console.error('[unlock] boot error', e); }
         } else {
           err.textContent = '❌ 密码错误，请重试';
@@ -9429,13 +9431,32 @@ function hamiShowUnlock(cb) {
     }
     btn.addEventListener('click', tryUnlock);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
-    var forgot = document.getElementById('hami-unlock-forgot');   // v364：紧急入口，本设备解除锁定后进门重设，数据不丢
-    if (forgot) forgot.addEventListener('click', function () {
-      try { localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {}
-      try { localStorage.removeItem(SYNC_PWD_VERIFY_KEY); } catch (e) {}
-      try { localStorage.removeItem('hami_unlock_day'); } catch (e) {}
-      try { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
-      try { cb(); } catch (e2) {}
+    // v367：取消"一点就进"的后门（那等于没锁）。真正忘了密码时的唯一退路：
+    // 在锁屏上连点上面那把 🔒 5 次 → 二次确认 → 只清掉本设备的密码标记，本机数据不丢。
+    var logo = document.getElementById('hami-unlock-logo');
+    var _tap = 0, _tapAt = 0;
+    if (logo) logo.addEventListener('click', function () {
+      var now = Date.now();
+      if (now - _tapAt > 3500) _tap = 0;
+      _tapAt = now; _tap++;
+      if (_tap < 5) return;
+      _tap = 0;
+      var msg = '⚠️ 确认要重置这台设备的访问密码吗？\n\n'
+        + '· 本机已有的数据不会丢，会直接进工作台\n'
+        + '· 只能用在你确实忘了密码的情况\n'
+        + '· 云端存档仍是旧密码加密的，重置后需在设置里重新设一次密码，两台设备一致才能恢复同步';
+      var go = function (yes) {
+        if (!yes) return;
+        try { localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {}
+        try { localStorage.removeItem(SYNC_PWD_VERIFY_KEY); } catch (e) {}
+        try { localStorage.removeItem('hami_unlock_day'); } catch (e) {}
+        try { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
+        try { cb(); } catch (e2) {}
+      };
+      try {
+        var r = (typeof hamiConfirm === 'function') ? hamiConfirm(msg) : Promise.resolve(window.confirm(msg));
+        Promise.resolve(r).then(go);
+      } catch (e) { go(window.confirm(msg)); }
     });
     var eye = document.getElementById('hami-unlock-eye');   // v363：锁屏门也能看清楚输的密码
     if (eye) {
@@ -12294,7 +12315,18 @@ async function initSettingsPanel() {
       // v365：暂时锁定——离开电脑前把工作台锁回密码门，回来输密码再进
       const lockBtn = document.getElementById('settings-sync-lock');
       if (lockBtn) lockBtn.addEventListener('click', function () {
-        if (!getSyncPassword()) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 请先设置并保存访问密码，才能使用暂时锁定'; return; }
+        var v = getSyncPassword();
+        // v367：本机还没存过密码、但输入框里已经打了 → 直接用它记一次，不用先点保存
+        if (!v && pwdInput && (pwdInput.value || '').trim()) {
+          v = (pwdInput.value || '').trim();
+          try { setSyncPassword(v); hamiSyncPassword = v; setSyncPwdVerifier(v); localStorage.setItem('hami_unlock_day', _hamiTodayStr()); } catch (e) {}
+        }
+        if (!v) {
+          pwdStatus.style.color = '#d14b73';
+          pwdStatus.textContent = '⚠️ 这台设备还没记住密码：在上方输入一次密码，再点「🔒 暂时锁定」就行（只这一次，以后点一下即锁）';
+          try { pwdInput && pwdInput.focus(); } catch (e) {}
+          return;
+        }
         try { localStorage.removeItem('hami_unlock_day'); } catch (e) {}   // 清掉"今天已验证"标记，锁定后刷新页面也照样拦
         try { hamiShowUnlock(function () { try { hamiToast('🔓 欢迎回来~'); } catch (e) {} }); } catch (e) {}
         pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '🔒 已锁定！回来后输入访问密码即可进入';
