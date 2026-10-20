@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-359">
+<meta name="hami-build" content="2026-10-20-360">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9111,7 +9111,7 @@ async function bgUploadAllToCloud(silent) {
     if (!silent) setSt('⏳ 找到 ' + keys.length + ' 张背景图（' + Math.round(total / 1024) + ' KB）+ ' + Object.keys(masks).length + ' 项遮盖，上传中…');
     const at = Date.now();
     const payload = { v: 2, updatedAt: at, bgBackups: bgs, bgMasks: masks, bgBackupsAt: at };
-    const ct = await encryptStore(payload, '');
+    const ct = await encryptStore(payload, getSyncPassword());
     const wrapped = _b64enc(ct);
     if (wrapped === null) throw new Error('内容编码失败');
     let lastErr = null;
@@ -9335,6 +9335,69 @@ let _lastPulledRemoteAt = 0;   // v353：最近一次拉取拿到的云端 updat
 
 function getSyncPassword() { try { return localStorage.getItem(SYNC_PWD_KEY) || ''; } catch (e) { return ''; } }
 function setSyncPassword(p) { try { if (p) localStorage.setItem(SYNC_PWD_KEY, p); else localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {} }
+// v360：访问密码「启动门」配套——本地校验器（离线验证密码对错，不依赖云端）
+const SYNC_PWD_VERIFY_KEY = 'hami_sync_pwd_verify';
+function getSyncPwdVerifier() { try { return localStorage.getItem(SYNC_PWD_VERIFY_KEY) || ''; } catch (e) { return ''; } }
+function setSyncPwdVerifier(p) {
+  try {
+    if (!p || !_cryptoReady()) { localStorage.removeItem(SYNC_PWD_VERIFY_KEY); return; }
+    // 用密码派生密钥加密一个固定标记，作为本地校验器；以后开机输密码时靠它离线验证对错
+    encryptStore({ __lock: 1, __t: Date.now() }, p).then(function (c) {
+      try { localStorage.setItem(SYNC_PWD_VERIFY_KEY, c); } catch (e) {}
+    }).catch(function () { try { localStorage.removeItem(SYNC_PWD_VERIFY_KEY); } catch (e) {} });
+  } catch (e) {}
+}
+// 离线校验输入的密码是否正确（不碰云端）
+async function _verifySyncPassword(input) {
+  const v = (input || '').trim();
+  if (!v) return false;
+  const ver = getSyncPwdVerifier();
+  if (ver) { try { const o = await decryptStore(ver, v); return !!(o && o.__lock === 1); } catch (e) { return false; } }
+  // 兼容老设备无校验器：退化为本地明文比对（仍有密码即挡住外人）
+  return v === (getSyncPassword() || '');
+}
+// 启动门：全屏密码遮罩，验证通过才执行 cb（初始化应用）。已设密码的设备打开网页先过这关。
+function hamiShowUnlock(cb) {
+  try {
+    var ex = document.getElementById('hami-unlock-overlay'); if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
+    var ov = document.createElement('div');
+    ov.id = 'hami-unlock-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#fde7f3 0%,#efe6fb 100%);font-family:inherit;';
+    ov.innerHTML =
+      '<div style="width:min(92vw,360px);background:#fff;border-radius:22px;box-shadow:0 12px 40px rgba(180,120,170,.28);padding:26px 22px;text-align:center;">'
+      + '<div style="font-size:40px;line-height:1;">🔒</div>'
+      + '<div style="font-size:19px;font-weight:800;color:#a64b86;margin-top:10px;">小助理已上锁</div>'
+      + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是你的私人工作台，请输入访问密码才能进入</div>'
+      + '<input id="hami-unlock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;margin-top:16px;padding:12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;"/>'
+      + '<div id="hami-unlock-err" style="font-size:12px;color:#d14b73;height:16px;margin-top:8px;"></div>'
+      + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
+      + '<div style="font-size:11px;color:#b89;margin-top:12px;">密码仅存本设备；忘了可在设置重设（数据不丢）</div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    var inp = document.getElementById('hami-unlock-input');
+    var btn = document.getElementById('hami-unlock-btn');
+    var err = document.getElementById('hami-unlock-err');
+    function tryUnlock() {
+      var val = (inp.value || '').trim();
+      if (!val) { err.textContent = '请输入密码'; return; }
+      _verifySyncPassword(val).then(function (ok) {
+        if (ok) {
+          try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
+          try { hamiSyncPassword = getSyncPassword(); } catch (e) {}
+          try { cb(); } catch (e) { console.error('[unlock] boot error', e); }
+        } else {
+          err.textContent = '❌ 密码错误，请重试';
+          try { inp.value = ''; inp.focus(); } catch (e) {}
+        }
+      });
+    }
+    btn.addEventListener('click', tryUnlock);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
+    setTimeout(function () { try { inp.focus(); } catch (e) {} }, 60);
+  } catch (e) {
+    try { cb(); } catch (e2) {}   // 兜底：门异常就直接进，绝不让主人被挡在门外
+  }
+}
 function _encB64(buf) {
   // 原版 String.fromCharCode.apply 在大 buffer（>~125KB）上会 RangeError: Maximum call stack size exceeded
   // （手机 Safari 栈更小），这里改用循环拼接避免 apply。
@@ -10714,7 +10777,7 @@ async function pushNow() {
         // 本就不会丢失；跨设备背景恢复属锦上添花，绝不该拖垮核心数据同步）。
         // 去掉背景图后主档案回到 ~400KB，GitHub Contents API 读写都可正常返回，手机端也能稳定同步。
         const payload = { v: 1, updatedAt: Date.now(), store: store, bgMeta: { at: Math.max(bgLocalRev() || 0, (_remoteBgMeta && _remoteBgMeta.at) || 0) } };
-        const ct = await encryptStore(payload, '');
+        const ct = await encryptStore(payload, getSyncPassword());
         // v181：复用刚才 pull 拿到的 sha（同一轮内必然是最新值），不再额外下载一遍拿 sha
         let upSha = pulledSha || ((Date.now() - _lastPullAt < 60000) ? _lastPullSha : null);
         if (!upSha) {
@@ -10959,7 +11022,7 @@ async function hamiCloudPurgeConfirm() {
     // 直接 PUT 一个最小 payload（空 store）并强制覆盖，文件 → 仍存在但内容是空档案 → 下次 pushNow 即可覆盖
     // GitHub Contents API 没有"直接删除文件"接口，但可以用空 payload 覆盖 == 等价清空
     const payload = { v: 1, updatedAt: Date.now(), store: {}, _cleared: true, clearedAt: Date.now() };
-    const ct = await encryptStore(payload, '');
+    const ct = await encryptStore(payload, getSyncPassword());
     // 必须先 GET 拿到 sha 才能 PUT
     const got = await _ghGet();
     const sha = got ? got.sha : null;
@@ -12095,8 +12158,10 @@ async function initSettingsPanel() {
         if (!_cryptoReady()) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 当前打开方式不支持加密（请用 https）'; return; }
         setSyncPassword(v);
         hamiSyncPassword = v;
-        pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 已保存，正在从云端载入…';
+        setSyncPwdVerifier(v);   // v360：写本地校验器，启动门离线验证密码对错
+        pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '✅ 已保存，正在从云端载入并重新加密…';
         try { await initCloudSync(pwdStatus); } catch (e) {}
+        try { await commitToCloud(); } catch (e) {}   // v360：立刻用新密码重推云端，使匿名下载也解不开
         pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = v ? '✅ 进阶加密已启用！手机电脑填同一密码即可互通' : '✅ 已启用（内置密钥自动同步，零设置）';
       });
     }
@@ -25182,10 +25247,13 @@ try { setTimeout(function () { try { maybeRemindBackup(); } catch (e2) {} }, 250
 //   一旦 IndexedDB 在手机浏览器上打开被阻塞（open 请求既不 success 也不 error，Promise 永不 resolve），
 //   云同步就永远启动不了 —— 表现为「手机记的电脑看不到、电脑记的手机看不到」，且云端文件从未被创建。
 // 现在：云同步独立启动，三条路 + 只跑一次守卫；背景图各走各路，互不拖累。
-// 先统一初始化自定义背景（应用内嵌/缓存 + 启动云同步），避免 applyAllBgs 与 initCloudSync 分别漏调。
-try { initCustomBg(); } catch (e) {}
+// ===== v360 访问密码启动门：已设密码的设备先输密码才初始化（无密码设备照常秒进）=====
 (function () {
-  function bootCloud() {
+  function hamiRunBoot() {
+  // 先统一初始化自定义背景（应用内嵌/缓存 + 启动云同步），避免 applyAllBgs 与 initCloudSync 分别漏调。
+  try { initCustomBg(); } catch (e) {}
+  (function () {
+    function bootCloud() {
     try { initCloudSync(document.getElementById('settings-cloud-status')); } catch (e) {}
   }
   setTimeout(bootCloud, 200);                  // 路线一：200ms 内必定启动（原 1s，云端要抢第一优先级）
@@ -25251,7 +25319,12 @@ try { checkCheckinAlerts(); } catch(e) { console.log('checkCheckinAlerts error:'
 try { requestNotifyPermission(); } catch(e) { console.log('requestNotifyPermission error:', e.message); }
 try { checkWeeklyUpdateAlert(); } catch(e) { console.log('checkWeeklyUpdateAlert error:', e.message); }
 // 页面初始化完成：此后云端拉到新数据，就可以安全地全量重渲了
-try { _hamiBootDone = true; } catch (e) {}
+    try { _hamiBootDone = true; } catch (e) {}
+    }
+    // 已设密码 → 先弹密码门；否则直接进（v360 访问密码启动门）
+    if (getSyncPassword()) { try { hamiShowUnlock(hamiRunBoot); } catch (e) { hamiRunBoot(); } }
+    else { hamiRunBoot(); }
+  })();
 
 // ==================== 真实屏幕宽度强适配（iPad 兜底） ====================
 // 背景：iPadOS Safari 在某些场景下（缩放模式、UA 默认 mobile、低视力辅助）会把 CSS viewport
