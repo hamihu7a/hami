@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-364">
+<meta name="hami-build" content="2026-10-20-365">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3679,21 +3679,22 @@
   }
   .mirror-edit-hint { font-size: 9.5px; color: #b08a97; line-height: 1.45; font-weight: 600; }
   /* ===== v248：图片下方一行小按钮，点「⚙ 调整」才在它下面展开控制面板 ===== */
-  /* v319：主人反馈按钮太小 → 三个按钮（⚙ 调整 / ↶ 撤销 / 🗑 删除）整体放大；放不下时允许换行 */
+  /* v319：主人反馈按钮太小 → 三个按钮（⚙ 调整 / ↶ 撤销 / 🗑 删除）整体放大 */
+  /* v365：主人要求三个按钮必须并排在同一行不许换行 → nowrap + 间距/尺寸收紧 */
   .mirror-bar {
     display: none;                 /* 仅在该板块已有背景图时显示（靠 .has-bg 相邻选择器） */
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
+    gap: 4px;
     min-height: 16px;
     margin-top: -2px;              /* 紧贴图片下沿 */
-    flex-wrap: wrap;
+    flex-wrap: nowrap;             /* v365：不许换行 */
   }
   .mirror-block.has-bg + .mirror-bar { display: flex; }
   .mirror-bar-btn {
     border: 1px solid #ffd7e5; background: #fff; color: #c0537a;
-    font-size: 11px; font-weight: 700; line-height: 1.2;
-    padding: 5px 10px; border-radius: 8px; cursor: pointer;
+    font-size: 10px; font-weight: 700; line-height: 1.2;
+    padding: 3px 6px; border-radius: 8px; cursor: pointer;
     white-space: nowrap; transition: all .15s;
   }
   .mirror-bar-btn:hover { background: #fff0f5; border-color: #ffc0d6; }
@@ -7817,6 +7818,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       </div>
       <div class="db-btn-row" style="margin-top:8px;">
         <button id="settings-sync-pwd-save" class="db-btn db-btn-main" style="flex:1;">💾 保存访问密码</button>
+        <button id="settings-sync-lock" class="db-btn" style="flex:1;">🔒 暂时锁定</button>
       </div>
       <div id="settings-sync-pwd-status" style="font-size:11px;margin-top:6px;color:#7d4a5a;"></div>
     </div>
@@ -9429,12 +9431,16 @@ function hamiShowUnlock(cb) {
       try { cb(); } catch (e2) {}
     });
     var eye = document.getElementById('hami-unlock-eye');   // v363：锁屏门也能看清楚输的密码
-    if (eye) eye.addEventListener('click', function () {
-      var show = inp.type === 'password';
-      inp.type = show ? 'text' : 'password';
-      eye.textContent = show ? '🙈' : '👁';
-      try { inp.focus(); } catch (e) {}
-    });
+    if (eye) {
+      // v365：改用 pointerdown + 阻止默认——原来的 click 会先把输入框焦点抢走（手机键盘收起、按钮移位），
+      // 造成"点三四下才有反应"；pointerdown 在焦点转移之前就完成切换，指哪打哪。
+      eye.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        eye.textContent = show ? '🙈' : '👁';
+      });
+    }
     setTimeout(function () { try { inp.focus(); } catch (e) {} }, 60);
   } catch (e) {
     try { cb(); } catch (e2) {}   // 兜底：门异常就直接进，绝不让主人被挡在门外
@@ -9454,16 +9460,21 @@ function _encB64(buf) {
 function _decB642u(b64) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
 function _cryptoReady() { return !!(window.crypto && window.crypto.subtle); }
 
+var _deriveKeyCache = {};   // v365：PBKDF2 十万次迭代很重，同一密码只算一次并缓存密钥，之后加密解密零等待（撤销连点卡死白屏的元凶之一）
 async function _deriveKey(password, saltStr) {
+  const cacheKey = (password || '') + '|' + (saltStr || '');
+  if (_deriveKeyCache[cacheKey]) return _deriveKeyCache[cacheKey];
   const enc = new TextEncoder();
   const material = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
+  const key = await crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt: enc.encode(saltStr), iterations: 100000, hash: 'SHA-256' },
     material,
     { name: 'AES-GCM', length: 256 },
     false,
     ['encrypt', 'decrypt']
   );
+  try { _deriveKeyCache[cacheKey] = key; } catch (e) {}
+  return key;
 }
 async function encryptStore(obj, password) {
   const enc = new TextEncoder();
@@ -11607,6 +11618,14 @@ function bgPushUndoThrottled(key) {
   _bgUndoLastAt[key] = now;
   bgPushUndo(key);
 }
+var _bgUndoPushTimer = null;
+// v365：撤销专用推送合并——本地立即生效，云端等停手 1.2 秒后合并推一次。
+// （原来每按一次撤销就立刻全量加密+上传，连点五六次直接把主线程冻成白屏）
+function bgUndoSchedulePush() {
+  try { writeEmbeddedBgConfig(); } catch (e) {}
+  if (_bgUndoPushTimer) clearTimeout(_bgUndoPushTimer);
+  _bgUndoPushTimer = setTimeout(function () { _bgUndoPushTimer = null; try { scheduleCloudPush(); } catch (e) {} }, 1200);
+}
 // 撤销：弹出最近一次修改前的快照，原样恢复（图片 + 遮盖配置），并刷新控制面板
 function bgUndo(key) {
   try {
@@ -11636,7 +11655,7 @@ function bgUndo(key) {
       if (ctl) ctl.classList.add('open');
       block.classList.add('editing');
     }
-    try { afterBgChange(); } catch (e) {}       // 内嵌配置 + 云端同步，让撤销也跨设备生效
+    try { bgUndoSchedulePush(); } catch (e) {}  // v365：本地立即生效 + 云端停手后合并推一次（原来每按一次推一次，连点卡死白屏）
     syncMirrorCtlVisibility(key);
     try { hamiToast('↶ 已撤销，回到上一个版本'); } catch (e) {}
     try { playSound('click'); } catch (e) {}
@@ -12209,12 +12228,15 @@ async function initSettingsPanel() {
       if (saved) pwdInput.value = saved;
       // v363：👁 显示/隐藏密码——设密码时能看清自己输的是什么
       const pwdEye = document.getElementById('settings-sync-pwd-eye');
-      if (pwdEye) pwdEye.addEventListener('click', function () {
-        const show = pwdInput.type === 'password';
-        pwdInput.type = show ? 'text' : 'password';
-        pwdEye.textContent = show ? '🙈' : '👁';
-        try { pwdInput.focus(); } catch (e) {}
-      });
+      if (pwdEye) {
+        // v365：pointerdown + 阻止默认，根治"点好几下才切换"（原 click 先抢焦点→键盘收放→按钮移位点击落空）
+        pwdEye.addEventListener('pointerdown', function (e) {
+          e.preventDefault();
+          const show = pwdInput.type === 'password';
+          pwdInput.type = show ? 'text' : 'password';
+          pwdEye.textContent = show ? '🙈' : '👁';
+        });
+      }
       pwdSave.addEventListener('click', async () => {
         const v = (pwdInput.value || '').trim();
         if (v && v.length < 4) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 密码至少 4 位（或留空用内置密钥）'; return; }
@@ -12227,6 +12249,14 @@ async function initSettingsPanel() {
         try { await initCloudSync(pwdStatus); } catch (e) {}
         try { await commitToCloud(); } catch (e) {}   // v360：立刻用新密码重推云端，使匿名下载也解不开
         pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = v ? '✅ 进阶加密已启用！手机电脑填同一密码即可互通' : '✅ 已启用（内置密钥自动同步，零设置）';
+      });
+      // v365：暂时锁定——离开电脑前把工作台锁回密码门，回来输密码再进
+      const lockBtn = document.getElementById('settings-sync-lock');
+      if (lockBtn) lockBtn.addEventListener('click', function () {
+        if (!getSyncPassword()) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 请先设置并保存访问密码，才能使用暂时锁定'; return; }
+        try { localStorage.removeItem('hami_unlock_day'); } catch (e) {}   // 清掉"今天已验证"标记，锁定后刷新页面也照样拦
+        try { hamiShowUnlock(function () { try { hamiToast('🔓 欢迎回来~'); } catch (e) {} }); } catch (e) {}
+        pwdStatus.style.color = '#1a9e4b'; pwdStatus.textContent = '🔒 已锁定！回来后输入访问密码即可进入';
       });
     }
   })();
