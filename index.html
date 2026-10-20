@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-362">
+<meta name="hami-build" content="2026-10-20-363">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7811,7 +7811,10 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     <div class="card" style="margin-bottom:16px;border:1.5px solid #ff9eb5;">
       <div class="card-title"><span>🔒</span> 访问密码（同步加密 · 可选）</div>
       <div class="db-desc">设了密码后：<b>别人知道网址也进不来</b>（打开需输密码），且云端文件<b>没有密码解不开</b>。手机 / 电脑填<b>同一个密码</b>即可互通。密码只存你本机，<b>忘了可在设置重设，数据不丢</b>。</div>
-      <input type="password" id="settings-sync-pwd" placeholder="输入访问密码（至少 4 位，例如 4557878）" style="width:100%;padding:8px 10px;border:1px solid #f0c9d6;border-radius:8px;font-size:13px;box-sizing:border-box;margin-top:8px;">
+      <div style="position:relative;margin-top:8px;">
+        <input type="password" id="settings-sync-pwd" placeholder="输入访问密码（至少 4 位，例如 4557878）" style="width:100%;padding:8px 44px 8px 10px;border:1px solid #f0c9d6;border-radius:8px;font-size:13px;box-sizing:border-box;">
+        <button type="button" id="settings-sync-pwd-eye" title="显示 / 隐藏密码" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:17px;line-height:1;padding:4px 6px;border-radius:6px;">👁</button>
+      </div>
       <div class="db-btn-row" style="margin-top:8px;">
         <button id="settings-sync-pwd-save" class="db-btn db-btn-main" style="flex:1;">💾 保存访问密码</button>
       </div>
@@ -9382,7 +9385,10 @@ function hamiShowUnlock(cb) {
       + '<div style="font-size:40px;line-height:1;">🔒</div>'
       + '<div style="font-size:19px;font-weight:800;color:#a64b86;margin-top:10px;">小助理已上锁</div>'
       + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是Hami的私人工作台，请输入访问密码才能进入</div>'
-      + '<input id="hami-unlock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;margin-top:16px;padding:12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;"/>'
+      + '<div style="position:relative;margin-top:16px;">'
+      + '<input id="hami-unlock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:12px 46px 12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;"/>'
+      + '<button type="button" id="hami-unlock-eye" title="显示 / 隐藏密码" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;">👁</button>'
+      + '</div>'
       + '<div id="hami-unlock-err" style="font-size:12px;color:#d14b73;height:16px;margin-top:8px;"></div>'
       + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
       + '<div style="font-size:11px;color:#b89;margin-top:12px;">密码仅存本设备；忘了可在设置重设（数据不丢）</div>'
@@ -9408,6 +9414,13 @@ function hamiShowUnlock(cb) {
     }
     btn.addEventListener('click', tryUnlock);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
+    var eye = document.getElementById('hami-unlock-eye');   // v363：锁屏门也能看清楚输的密码
+    if (eye) eye.addEventListener('click', function () {
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      eye.textContent = show ? '🙈' : '👁';
+      try { inp.focus(); } catch (e) {}
+    });
     setTimeout(function () { try { inp.focus(); } catch (e) {} }, 60);
   } catch (e) {
     try { cb(); } catch (e2) {}   // 兜底：门异常就直接进，绝不让主人被挡在门外
@@ -11393,7 +11406,7 @@ let _settingsInited = false;
 // ==================== 镜像板块宽高比：与真实区域 1:1 同比例（等比缩小） ====================
 // v240：主人要求"镜像里每个板块的长宽比例＝实际上传后背景图所覆盖区域的比例，只是整体缩小"，
 // 这样一眼就能看出自己那张图在真实版面上的占比与裁切。比例随窗口宽度变化，故运行时实测后写入 CSS 变量。
-var HAMI_MIRROR_AR_KEY = 'hami_mirror_ar';
+var HAMI_MIRROR_AR_KEY = 'hami_mirror_ar_v2';   // v363：换新键作废旧坏值（旧键里可能存了空壳误测的扁条比例）
 var HAMI_MIRROR_AR = null;
 var HAMI_MIRROR_AR_SEL = {
   hero: '.desktop-hero',
@@ -11402,14 +11415,26 @@ var HAMI_MIRROR_AR_SEL = {
   accounts: '#desktop-accounts-wrap',
   weight: '#home-weight-cal'
 };
+// v363：比例有效性校验——真实板块高度不可能低于 50px；低于即"空壳误测"（如密码门延迟渲染期间量到的扁条），绝不采用
+function _mirrorArValid(res) {
+  if (!res) return false;
+  var keys = Object.keys(res);
+  if (!keys.length) return false;
+  for (var i = 0; i < keys.length; i++) {
+    var m = String(res[keys[i]] || '').match(/(\d+)\s*\/\s*(\d+)/);
+    if (!m || Number(m[2]) < 50 || Number(m[1]) < 40) return false;
+  }
+  return true;
+}
 // 实测真实区域宽高（主面板可见时才测得到；5 个全测到才算有效）
 function measureMirrorRatios() {
+  if (document.getElementById('hami-unlock-overlay')) return null;   // v363：密码门还开着 → 内容未渲染，量了也是空壳
   var res = {}, got = 0;
   Object.keys(HAMI_MIRROR_AR_SEL).forEach(function (k) {
     var el = document.querySelector(HAMI_MIRROR_AR_SEL[k]);
     if (!el) return;
     var r = el.getBoundingClientRect();
-    if (r.width < 40 || r.height < 20) return;   // 隐藏 / 未完成布局 → 跳过
+    if (r.width < 40 || r.height < 50) return;   // v363：高度阈值 20→50，拦截"空壳扁条"误测
     res[k] = Math.round(r.width) + ' / ' + Math.round(r.height);
     got++;
   });
@@ -11418,12 +11443,13 @@ function measureMirrorRatios() {
 function syncMirrorRatios() {
   try {
     var measured = measureMirrorRatios();
-    if (measured) {
+    if (measured && _mirrorArValid(measured)) {
       HAMI_MIRROR_AR = measured;
       try { localStorage.setItem(HAMI_MIRROR_AR_KEY, JSON.stringify(measured)); } catch (e) {}
     }
     if (!HAMI_MIRROR_AR) {
       try { HAMI_MIRROR_AR = JSON.parse(localStorage.getItem(HAMI_MIRROR_AR_KEY) || 'null'); } catch (e) { HAMI_MIRROR_AR = null; }
+      if (!_mirrorArValid(HAMI_MIRROR_AR)) HAMI_MIRROR_AR = null;   // v363：存量坏值（扁条）直接作废，回退 CSS 默认比例
     }
     var ar = HAMI_MIRROR_AR;
     if (!ar || !ar.hero) return;
@@ -11435,7 +11461,7 @@ function syncMirrorRatios() {
     return true;
   } catch (e) { return false; }
 }
-// 页面加载后测一次（此时主面板可见 = 主人当前窗口的真实比例）；窗口尺寸变化时重测
+// 页面加载后测一次（v363：改为等启动完成后再测——密码门延迟渲染期间量到的是空壳，正是镜像压扁的根因）；窗口尺寸变化时重测
 (function () {
   function boot() { setTimeout(syncMirrorRatios, 600); }
   if (document.readyState === 'complete') boot();
@@ -12167,6 +12193,14 @@ async function initSettingsPanel() {
     if (pwdInput && pwdSave) {
       const saved = getSyncPassword();
       if (saved) pwdInput.value = saved;
+      // v363：👁 显示/隐藏密码——设密码时能看清自己输的是什么
+      const pwdEye = document.getElementById('settings-sync-pwd-eye');
+      if (pwdEye) pwdEye.addEventListener('click', function () {
+        const show = pwdInput.type === 'password';
+        pwdInput.type = show ? 'text' : 'password';
+        pwdEye.textContent = show ? '🙈' : '👁';
+        try { pwdInput.focus(); } catch (e) {}
+      });
       pwdSave.addEventListener('click', async () => {
         const v = (pwdInput.value || '').trim();
         if (v && v.length < 4) { pwdStatus.style.color = '#d14b73'; pwdStatus.textContent = '❌ 密码至少 4 位（或留空用内置密钥）'; return; }
@@ -25336,6 +25370,8 @@ try { requestNotifyPermission(); } catch(e) { console.log('requestNotifyPermissi
 try { checkWeeklyUpdateAlert(); } catch(e) { console.log('checkWeeklyUpdateAlert error:', e.message); }
 // 页面初始化完成：此后云端拉到新数据，就可以安全地全量重渲了
     try { _hamiBootDone = true; } catch (e) {}
+    // v363：启动真正完成后重测镜像比例（密码门/延迟渲染期间量到的是空壳扁条）+ 重算背景几何
+    try { setTimeout(function () { try { syncMirrorRatios(); } catch (e) {} try { applyAllBgMasks(); } catch (e2) {} }, 900); } catch (e) {}
     // v362：清掉浏览器"表单恢复"回填的指令栏残留（如语音识别未提交的数字每次刷新都幽灵重现）
     try {
       var _clearCmd = function () { var _ci = document.getElementById('hami-cmd-input'); if (_ci) _ci.value = ''; };
