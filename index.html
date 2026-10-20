@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-363">
+<meta name="hami-build" content="2026-10-20-364">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9366,7 +9366,12 @@ async function _verifySyncPassword(input) {
   const v = (input || '').trim();
   if (!v) return false;
   const ver = getSyncPwdVerifier();
-  if (ver) { try { const o = await decryptStore(ver, v); return !!(o && o.__lock === 1); } catch (e) { return false; } }
+  if (ver) {
+    try { const o = await decryptStore(ver, v); if (o && o.__lock === 1) return true; } catch (e) {}
+    // v364：本地校验器损坏（换设备/状态异常）时，退一步用密码去解云端，能解说明密码确实对
+    try { const got = await _ghGet(); if (got && got.content) { await decryptStore(got.content.replace(/\s+/g, ''), v); return true; } } catch (e2) {}
+    return false;
+  }
   // 兼容老设备无校验器：退化为本地明文比对（仍有密码即挡住外人）
   return v === (getSyncPassword() || '');
 }
@@ -9392,6 +9397,7 @@ function hamiShowUnlock(cb) {
       + '<div id="hami-unlock-err" style="font-size:12px;color:#d14b73;height:16px;margin-top:8px;"></div>'
       + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
       + '<div style="font-size:11px;color:#b89;margin-top:12px;">密码仅存本设备；忘了可在设置重设（数据不丢）</div>'
+      + '<div style="font-size:12px;margin-top:9px;"><a id="hami-unlock-forgot" style="color:#b98be0;text-decoration:underline;cursor:pointer;">忘记密码？本设备解除锁定（数据不丢）</a></div>'
       + '</div>';
     document.body.appendChild(ov);
     var inp = document.getElementById('hami-unlock-input');
@@ -9414,6 +9420,14 @@ function hamiShowUnlock(cb) {
     }
     btn.addEventListener('click', tryUnlock);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
+    var forgot = document.getElementById('hami-unlock-forgot');   // v364：紧急入口，本设备解除锁定后进门重设，数据不丢
+    if (forgot) forgot.addEventListener('click', function () {
+      try { localStorage.removeItem(SYNC_PWD_KEY); } catch (e) {}
+      try { localStorage.removeItem(SYNC_PWD_VERIFY_KEY); } catch (e) {}
+      try { localStorage.removeItem('hami_unlock_day'); } catch (e) {}
+      try { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
+      try { cb(); } catch (e2) {}
+    });
     var eye = document.getElementById('hami-unlock-eye');   // v363：锁屏门也能看清楚输的密码
     if (eye) eye.addEventListener('click', function () {
       var show = inp.type === 'password';
