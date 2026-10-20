@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-360">
+<meta name="hami-build" content="2026-10-20-361">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -7807,6 +7807,17 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       ⚙️ <b>使用说明</b>：左侧镜像点击任意板块即可上传/修改该区域背景图；<b>上传后按住图片直接拖动</b>即可调整位置（滚轮 / 双指捏合可放大取景），点板块右下角 <b>⚙</b> 可调<b>不透明度</b>、<b>水平镜像</b>、<b>旋转</b>与<b>遮盖方向</b>（均匀 / 上→下 / 下→上，越浓的地方图越淡），效果即时预览并同步到真实版面；镜像下方可把背景图<b>上传到云端</b>、换设备时<b>从云端拉回</b>；右侧"音效"可分别开关三类提示音（任务打卡 / 顶部指令 / 主菜单）。
     </div>
 
+    <!-- v361：访问密码入口（v360 只写了逻辑漏了 UI，主人找不到；现补到设置工具面板顶部最显眼处） -->
+    <div class="card" style="margin-bottom:16px;border:1.5px solid #ff9eb5;">
+      <div class="card-title"><span>🔒</span> 访问密码（同步加密 · 可选）</div>
+      <div class="db-desc">设了密码后：<b>别人知道网址也进不来</b>（打开需输密码），且云端文件<b>没有密码解不开</b>。手机 / 电脑填<b>同一个密码</b>即可互通。密码只存你本机，<b>忘了可在设置重设，数据不丢</b>。</div>
+      <input type="password" id="settings-sync-pwd" placeholder="输入访问密码（至少 4 位，例如 4557878）" style="width:100%;padding:8px 10px;border:1px solid #f0c9d6;border-radius:8px;font-size:13px;box-sizing:border-box;margin-top:8px;">
+      <div class="db-btn-row" style="margin-top:8px;">
+        <button id="settings-sync-pwd-save" class="db-btn db-btn-main" style="flex:1;">💾 保存访问密码</button>
+      </div>
+      <div id="settings-sync-pwd-status" style="font-size:11px;margin-top:6px;color:#7d4a5a;"></div>
+    </div>
+
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
 
       <!-- ===== 左侧：主面板镜像（点击上传/修改背景） ===== -->
@@ -11126,7 +11137,7 @@ async function hamiSyncSelfCheck() {
   };
   add('本机加密环境', _cryptoReady() ? '支持' : '不支持（必须用 https 打开本页）', _cryptoReady());
   add('云同步开关', hamiSyncEnabled ? '已开启' : '未开启', hamiSyncEnabled);
-  add('同步密码', '已统一使用默认加密（进阶密码已停用），手机电脑自动互通', true);
+  add('同步密码', getSyncPassword() ? '已启用（进阶加密，手机电脑填同一密码即可互通）' : '未设置（当前用内置密钥自动同步；设密码可防别人查看你的记录）', !!getSyncPassword());
   add('上次成功同步', _lastSyncAt ? new Date(_lastSyncAt).toLocaleString('zh-CN') : '从未成功过', !!_lastSyncAt);
   add('本机体重记录', ((store.weightRecords || []).length) + ' 条', true);
   out.innerHTML = L.join('') + '<div style="font-size:12px;color:#8a6270;margin-top:6px;">正在查询云端…</div>';
