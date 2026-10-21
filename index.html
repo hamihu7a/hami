@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-20-367">
+<meta name="hami-build" content="2026-10-21-368">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11406,6 +11406,17 @@ try {
 //      若第一次没推成功，commitToCloud 内部按 5s→10s→20s→30s 退避静默重试，直到成功，绝不刷屏打扰。
 // 好处：空闲时零网络请求（省流量省电、不再反复弹「未同步」），又保证「改了必上云、失败必续传」。
 // 注：切回标签页（visible）仍会拉一次云端（相当于"重新打开"），保证换设备回来能看到别处的最新数据。
+
+// v368：开着页面不刷新也能看到对面新数据——每 90 秒静默拉一次云端（只读、不推、不抢指针）。
+// 隔离(_syncCryptoMismatch)或正在拉/推时跳过，绝不会把旧数据盖到云端上。
+try {
+  setInterval(function () {
+    if (hamiSyncReady && hamiCloudEnabled() && !_syncCryptoMismatch && !_periodicPullBusy && !_syncBusy) {
+      _lastVisiblePullAt = Date.now();
+      try { pullAndMerge().catch(function () {}); } catch (e) {}
+    }
+  }, 90000);
+} catch (e) {}
 
 
 
