@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-21-368">
+<meta name="hami-build" content="2026-10-21-369">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -9411,23 +9411,31 @@ function hamiShowUnlock(cb) {
     var inp = document.getElementById('hami-unlock-input');
     var btn = document.getElementById('hami-unlock-btn');
     var err = document.getElementById('hami-unlock-err');
-    function tryUnlock() {
+    async function tryUnlock() {
       var val = (inp.value || '').trim();
       if (!val) { err.textContent = '请输入密码'; return; }
-      _verifySyncPassword(val).then(function (ok) {
-        if (ok) {
-          try { localStorage.setItem('hami_unlock_day', _hamiTodayStr()); } catch (e) {}   // v362：当天已验证，本日再进不再拦
-          // v367：密码输对了就记在这台设备上——以后点「🔒 暂时锁定」不用再重设密码
-          try { if (!getSyncPassword()) { setSyncPassword(val); setSyncPwdVerifier(val); } } catch (e) {}
-          try { hamiSyncPassword = getSyncPassword() || val; } catch (e) {}
-          try { _syncCryptoMismatch = false; } catch (e) {}   // 密码能对上，说明本机与云端一致，解除隔离
-          try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
-          try { cb(); } catch (e) { console.error('[unlock] boot error', e); }
-        } else {
-          err.textContent = '❌ 密码错误，请重试';
-          try { inp.value = ''; inp.focus(); } catch (e) {}
+      var ok = false;
+      try { ok = await _verifySyncPassword(val); } catch (e) {}
+      if (!ok) { err.textContent = '❌ 密码错误，请重试'; try { inp.value = ''; inp.focus(); } catch (e) {} return; }
+      try { localStorage.setItem('hami_unlock_day', _hamiTodayStr()); } catch (e) {}   // v362：当天已验证，本日再进不再拦
+      // v367：密码输对了就记在这台设备上——以后点「🔒 暂时锁定」不用再重设密码
+      try { if (!getSyncPassword()) { setSyncPassword(val); setSyncPwdVerifier(val); } } catch (e) {}
+      try { hamiSyncPassword = getSyncPassword() || val; } catch (e) {}
+      try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (e) {}
+      try { cb(); } catch (e) { console.error('[unlock] boot error', e); }
+      // v368：进门即自动与云端对账（输对密码=已授权）。解开云端就清隔离+拉合并，无需再点"试解云端"
+      try {
+        if (_syncCryptoMismatch) {
+          var got = await _ghGet();
+          if (got && got.content) {
+            try {
+              await decryptStore(got.content.replace(/\s+/g, ''), val);
+              _syncCryptoMismatch = false;   // 云端确能解，说明本机密码与云端一致，解除隔离
+              try { if (typeof pullAndMerge === 'function') pullAndMerge().catch(function () {}); } catch (e2) {}
+            } catch (e2) { /* 云端是别的密码：保持隔离，可去设置点"🔑 试解云端" */ }
+          }
         }
-      });
+      } catch (e) {}
     }
     btn.addEventListener('click', tryUnlock);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
