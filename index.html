@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-22-375">
+<meta name="hami-build" content="2026-10-22-376">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6120,6 +6120,12 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       #hwt-work-card .hwt-sub { font-size: 11px; color: #b48a9a; font-weight: 700; letter-spacing: 2px; }
       #hwt-work-card .hwt-count { font-size: 12px; color: #8d6478; font-weight: 700; white-space: nowrap; }
       #hwt-work-card .hwt-count b { font-size: 17px; color: #d14b73; font-weight: 900; }
+      /* v376：便签墙去掉大白底框——便签直接浮在面板上，版面更紧凑（标题保留，模块照样认得） */
+      #home-daily-todo-card, #hwt-work-card {
+        background: transparent !important; border: none !important; box-shadow: none !important;
+        padding: 0 !important; margin-bottom: 12px;
+      }
+      #home-daily-todo-card h3, #hwt-work-card h3 { margin: 0 0 2px; font-size: 14.5px; }
       #hwr-card { text-align: center; }
       #hwr-card .hwr-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #b48a9a; }
       #hwr-card .hwr-wrap { position: relative; width: 150px; height: 150px; margin: 12px auto 8px; }
@@ -6145,30 +6151,22 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div id="hwr-quote" class="hwr-quote"></div>
     </div>
 
-    <!-- v370：🚀 赚钱思维（默认三行预览，点击卡片展开详情；整段（含下方 style 与 pop）可删，不影响其它功能） -->
+    <!-- v376：🚀 赚钱思维（不再折叠，全量直接展示；整段（含下方 style）可删，不影响其它功能） -->
     <style>
-      #hami-money-mind { cursor: pointer; position: relative; }
       #hami-money-mind .hmm-cat { font-size: 11px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
-      #hmm-preview { font-size: 13px; line-height: 1.5; color: #7d4a5a; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-      #hmm-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-      #hmm-foot .hmm-hint { font-size: 11px; color: #b06884; font-weight: 700; }
-      #hmm-next { border: 1px solid #ffd7e5; background: #fff; color: #c0537a; font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+      #hmm-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
+      #hmm-next { border: 1px solid #ffd7e5; background: #fff; color: #c0537a; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
       #hmm-next:active { transform: translateY(1px); }
-      /* v371：详情改为卡片内联展开，绝不超出面板，字体清晰 */
-      #hmm-detail { display: none; margin-top: 9px; padding: 10px 11px; background: #fff4f9; border: 1px solid #ffd9e6; border-radius: 12px; max-height: 300px; overflow-y: auto; text-align: left; }
-      #hmm-detail.show { display: block; animation: hfpIn .16s ease-out; }
-      #hmm-detail .hmm-d-cat { font-size: 11px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 6px; padding: 1px 7px; }
-      #hmm-detail .hmm-d-title { font-size: 14px; font-weight: 800; color: #d14b73; margin: 7px 0 5px; line-height: 1.35; }
-      #hmm-detail .hmm-d-body { font-size: 13px; line-height: 1.7; color: #5b3a47; white-space: pre-line; }
+      /* v376：详情全量常驻展示，不再有点击展开/折叠 */
+      #hmm-detail { margin-top: 8px; padding: 10px 12px; background: #fff4f9; border: 1px solid #ffd9e6; border-radius: 12px; text-align: left; }
+      #hmm-detail .hmm-d-title { font-size: 14px; font-weight: 800; color: #d14b73; margin-bottom: 6px; line-height: 1.35; }
+      #hmm-detail .hmm-d-body { font-size: 13px; line-height: 1.75; color: #5b3a47; white-space: pre-line; }
       #hmm-detail .hmm-d-src { font-size: 11px; color: #a988a0; margin-top: 8px; }
-      #hmm-detail .hmm-d-close { float: right; font-size: 16px; color: #c47a96; cursor: pointer; line-height: 1; margin-left: 6px; }
     </style>
     <div class="todo-card" id="hami-money-mind">
       <h3>🚀 赚钱思维<span id="hmm-cat" class="hmm-cat"></span></h3>
-      <div id="hmm-preview"></div>
       <div id="hmm-detail"></div>
       <div id="hmm-foot">
-        <span class="hmm-hint">点击卡片看详细 ↗</span>
         <button id="hmm-next">换一条 ↻</button>
       </div>
     </div>
@@ -14961,17 +14959,10 @@ function _hmmGetIdx(today) {
 function _hmmFillDetail(item) {
   const d = document.getElementById('hmm-detail');
   if (!d || !item) return;
-  d.innerHTML = '<span class="hmm-d-close" id="hmm-d-close">×</span>'
-    + '<span class="hmm-d-cat">' + item.cat + '</span>'
-    + '<div class="hmm-d-title">' + item.title + '</div>'
+  // v376：全量常驻展示（不再折叠/关闭）
+  d.innerHTML = '<div class="hmm-d-title">' + item.title + '</div>'
     + '<div class="hmm-d-body">' + item.detail + '</div>'
     + '<div class="hmm-d-src">来源：' + item.src + '</div>';
-  const c = document.getElementById('hmm-d-close');
-  if (c) c.onclick = function (ev) { ev.stopPropagation(); d.classList.remove('show'); };
-}
-function _hmmShort(s) {                                   // v372：预览超长就截断，保证卡片两行左右不铺满
-  s = (s || '').trim();
-  return s.length > 36 ? s.slice(0, 36) + '…' : s;
 }
 function renderMoneyMind() {
   const card = document.getElementById('hami-money-mind');
@@ -14981,9 +14972,8 @@ function renderMoneyMind() {
   const list = _hmmShuffle(MONEY_MINDS, _hmmSeed(today)); // 当天洗牌固定，保当天点「换一条」不重复
   const item = list[idx % list.length];
   const cat = document.getElementById('hmm-cat');
-  const pv = document.getElementById('hmm-preview');
   if (cat) cat.textContent = item.cat;
-  if (pv) pv.textContent = _hmmShort(item.preview);
+  _hmmFillDetail(item);
   card._hmmItem = item;
   const next = document.getElementById('hmm-next');
   if (next) next.onclick = function (ev) {
@@ -14992,16 +14982,8 @@ function renderMoneyMind() {
     try { localStorage.setItem('hami_mm_idx', String(cur)); localStorage.setItem('hami_mm_lastdate', today); } catch (e2) {}
     const it = list[cur];
     if (cat) cat.textContent = it.cat;
-    if (pv) pv.textContent = _hmmShort(it.preview);
+    _hmmFillDetail(it);
     card._hmmItem = it;
-    const d = document.getElementById('hmm-detail');
-    if (d && d.classList.contains('show')) _hmmFillDetail(it);  // 展开状态下同步刷新
-  };
-  card.onclick = function () {
-    const d = document.getElementById('hmm-detail');
-    if (!d) return;
-    if (d.classList.contains('show')) d.classList.remove('show');
-    else { _hmmFillDetail(card._hmmItem); d.classList.add('show'); }
   };
 }
 
