@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-22-371">
+<meta name="hami-build" content="2026-10-22-372">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -14901,6 +14901,10 @@ function _hmmFillDetail(item) {
   const c = document.getElementById('hmm-d-close');
   if (c) c.onclick = function (ev) { ev.stopPropagation(); d.classList.remove('show'); };
 }
+function _hmmShort(s) {                                   // v372：预览超长就截断，保证卡片两行左右不铺满
+  s = (s || '').trim();
+  return s.length > 36 ? s.slice(0, 36) + '…' : s;
+}
 function renderMoneyMind() {
   const card = document.getElementById('hami-money-mind');
   if (!card) return;
@@ -14911,7 +14915,7 @@ function renderMoneyMind() {
   const cat = document.getElementById('hmm-cat');
   const pv = document.getElementById('hmm-preview');
   if (cat) cat.textContent = item.cat;
-  if (pv) pv.textContent = item.preview;
+  if (pv) pv.textContent = _hmmShort(item.preview);
   card._hmmItem = item;
   const next = document.getElementById('hmm-next');
   if (next) next.onclick = function (ev) {
@@ -14920,7 +14924,7 @@ function renderMoneyMind() {
     try { localStorage.setItem('hami_mm_idx', String(cur)); localStorage.setItem('hami_mm_lastdate', today); } catch (e2) {}
     const it = list[cur];
     if (cat) cat.textContent = it.cat;
-    if (pv) pv.textContent = it.preview;
+    if (pv) pv.textContent = _hmmShort(it.preview);
     card._hmmItem = it;
     const d = document.getElementById('hmm-detail');
     if (d && d.classList.contains('show')) _hmmFillDetail(it);  // 展开状态下同步刷新
