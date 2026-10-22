@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-22-376">
+<meta name="hami-build" content="2026-10-22-377">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11198,7 +11198,15 @@ function showNewVersionTip(ver) {
       el.id = 'hami-newver';
       el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;text-align:center;font-size:13px;padding:7px 10px;background:#ffd6e7;color:#b03060;box-shadow:0 1px 4px rgba(0,0,0,.12);cursor:pointer;';
       el.innerHTML = '✨ 发现新版本 ' + ver + '，点此刷新（当前 ' + BUILD_VER + '）';
-      el.onclick = function () { try { location.reload(true); } catch (e) { location.reload(); } };
+      el.onclick = function () {
+        // v377：带 _v 随机参数整体换 URL 重新加载——普通刷新/F5 会吃 GitHub Pages 的 10 分钟文档缓存，必须破缓存
+        try {
+          var u = location.href.split('#')[0];
+          if (u.indexOf('_v=') >= 0) { location.reload(); return; }
+          var sep = (u.indexOf('?') >= 0 ? '&' : '?');
+          location.replace(u + sep + '_v=' + encodeURIComponent(ver) + '_' + Date.now());
+        } catch (e) { try { location.reload(true); } catch (e2) { location.reload(); } }
+      };
       document.body.appendChild(el);
     }
   } catch (e) {}
@@ -11211,6 +11219,7 @@ function checkNewVersion() {
   }).catch(function () {}); } catch (e) {}
 }
 setTimeout(checkNewVersion, 2000); // v359：页面加载 2 秒后自动查一次新版本
+setInterval(checkNewVersion, 120000); // v377：之后每 2 分钟静默复查——开着页面不刷新也能及时发现新版本（version.txt 走 no-store，不吃缓存）
 function _diagEnv() {
   const ua = (navigator.userAgent || '');
   const inWx = /MicroMessenger/i.test(ua);
