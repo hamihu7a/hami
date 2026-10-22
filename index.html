@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-22-373">
+<meta name="hami-build" content="2026-10-22-374">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6071,21 +6071,47 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div id="desktop-todo-daily"></div>
     </div>
 
-    <!-- 工作代办（纯展示，修改请进左侧四·待办事项）；v373 高级版 + 本周完成度圆环，两块整体删除即可无痕移除 -->
+    <!-- 工作代办（纯展示，修改请进左侧四·待办事项）；v374 便签墙版式，两块整体删除即可无痕移除 -->
     <style>
-      #hwt-work-card .hwt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+      /* v374 便签墙（日常代办 + 工作代办共用） */
+      .hnote-wall { display: flex; flex-wrap: wrap; gap: 12px 10px; padding-top: 6px; }
+      .hnote {
+        position: relative; flex: 1 1 150px; min-width: 140px; max-width: 100%; box-sizing: border-box;
+        background: #fffbe8; border-radius: 3px 12px 10px 12px;
+        padding: 15px 12px 11px; margin: 6px 3px 3px;
+        box-shadow: 0 3px 8px rgba(150,104,64,.16), 0 1px 3px rgba(150,104,64,.10);
+        font-size: 13px; font-weight: 600; line-height: 1.5; color: #4a3340;
+        word-break: break-word; transition: transform .18s ease, box-shadow .18s ease;
+      }
+      .hnote:hover { transform: rotate(0deg) translateY(-2px) !important; box-shadow: 0 6px 14px rgba(209,75,115,.18); }
+      .hnote::before { /* 顶部小圆钉 */
+        content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+        width: 11px; height: 11px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #ffd9e6, #e88aa8 72%);
+        box-shadow: 0 1px 2px rgba(0,0,0,.20);
+      }
+      .hnote.c1 { background: linear-gradient(160deg,#fff0f5,#ffe3ee); }
+      .hnote.c2 { background: linear-gradient(160deg,#fffbe8,#fff3c9); }
+      .hnote.c3 { background: linear-gradient(160deg,#f6efff,#eadffd); }
+      .hnote.c4 { background: linear-gradient(160deg,#edfaf3,#d9f4e5); }
+      .hnote.c5 { background: linear-gradient(160deg,#eef6ff,#ddeafd); }
+      .hnote.is-done { opacity: .62; }
+      .hnote.is-done::before { background: radial-gradient(circle at 35% 30%, #ffe9a8, #e0b53e 72%); }
+      .hnote.is-done .hnote-text { text-decoration: line-through; color: #a8909c; font-weight: 500; }
+      .hnote-text { display: block; }
+      .hnote-chip { display: inline-block; font-size: 10.5px; font-weight: 800; border-radius: 8px; padding: 1px 8px; margin: 0 0 5px; background: rgba(255,255,255,.75); color: #9b7b8c; }
+      .hnote-chip.hot { background: #ffe0e0; color: #e0413e; }
+      .hnote-chip.due { background: #fff0d6; color: #c8860d; }
+      .hnote-chip.okchip { background: #fff3c9; color: #b98a1d; }
+      .hnote-subs { margin-top: 7px; display: flex; flex-direction: column; gap: 4px; }
+      .hnote-sub { font-size: 12px; font-weight: 500; color: #6a4f5c; display: flex; gap: 5px; align-items: flex-start; }
+      .hnote-sub.done { text-decoration: line-through; color: #b0a0a8; }
+      .hnote-sub .hk { flex: 0 0 auto; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid #e3a6bb; background: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; box-sizing: border-box; margin-top: 1px; }
+      .hnote-sub.done .hk { background: #d14b73; border-color: #d14b73; }
+      #hwt-work-card .hwt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
       #hwt-work-card .hwt-sub { font-size: 11px; color: #b48a9a; font-weight: 700; letter-spacing: 2px; }
       #hwt-work-card .hwt-count { font-size: 12px; color: #8d6478; font-weight: 700; white-space: nowrap; }
       #hwt-work-card .hwt-count b { font-size: 17px; color: #d14b73; font-weight: 900; }
-      #hwt-work-card .hwt-item { display: flex; align-items: flex-start; gap: 10px; background: #fff8fa; border: 1px solid #ffe4ec; border-radius: 12px; padding: 10px 12px; margin-bottom: 7px; }
-      #hwt-work-card .hwt-item.is-done { opacity: .72; background: #fdf3f7; }
-      #hwt-work-card .hwt-day { flex: 0 0 auto; font-size: 11px; font-weight: 800; color: #9b7b8c; background: #f7edf2; border-radius: 8px; padding: 3px 8px; margin-top: 2px; white-space: nowrap; }
-      #hwt-work-card .hwt-day.hot { background: #ffe0e0; color: #e0413e; }
-      #hwt-work-card .hwt-day.due { background: #fff0d6; color: #c8860d; }
-      #hwt-work-card .hwt-check { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #e8b8c8; background: #fff; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; font-weight: 900; box-sizing: border-box; }
-      #hwt-work-card .hwt-check.done { background: #d14b73; border-color: #d14b73; }
-      #hwt-work-card .hwt-text { font-size: 14px; font-weight: 600; line-height: 1.45; color: #4a3340; flex: 1; min-width: 0; word-break: break-word; }
-      #hwt-work-card .hwt-item.is-done .hwt-text { text-decoration: line-through; color: #b9a3ae; font-weight: 500; }
       #hwr-card { text-align: center; }
       #hwr-card .hwr-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #b48a9a; }
       #hwr-card .hwr-wrap { position: relative; width: 150px; height: 150px; margin: 12px auto 8px; }
@@ -15402,19 +15428,26 @@ function renderHomeTodo() {
   const daily = userDaily;   // 日常代办只显示用户手动输入的内容，不含系统打卡提醒
   const work = orders.concat(userWork);
 
+  // v374 便签墙：固定歪斜序列（按序号取，刷新不跳）；颜色5色轮换
+  const HNOTE_ROT = [-1.6, 1.2, -0.9, 1.5, -1.2, 0.9];
+  const hnoteStyle = function (i) { return ' style="transform:rotate(' + HNOTE_ROT[i % 6] + 'deg)"'; };
+
   const catHtml = (title, items) => {
     if (items.length === 0) return '';
-    let h = '';
-    items.forEach(t => {
-      const cls = t.urgent ? ' todo-item-urgent' : '';
-      h += `<div class="todo-item${cls}"><span>${t.icon} ${escTodo(t.text)}</span></div>`;
+    let h = '<div class="hnote-wall">';
+    items.forEach((t, i) => {
+      h += '<div class="hnote c' + (i % 5 + 1) + '"' + hnoteStyle(i) + '>'
+        + '<span class="hnote-text">' + (t.icon ? t.icon + ' ' : '') + escTodo(t.text) + '</span>';
       if (t.group && t.subs) {
+        h += '<div class="hnote-subs">';
         t.subs.forEach(function (s) {
-          h += `<div class="todo-subitem home-sub${s.done ? ' done' : ''}"><span class="todo-subcheck${s.done ? ' done' : ''}">${s.done ? '✓' : ''}</span><span class="todo-subtext">${escTodo(s.text)}</span></div>`;
+          h += '<div class="hnote-sub' + (s.done ? ' done' : '') + '"><span class="hk">' + (s.done ? '✓' : '') + '</span><span>' + escTodo(s.text) + '</span></div>';
         });
+        h += '</div>';
       }
+      h += '</div>';
     });
-    return h;
+    return h + '</div>';
   };
 
   const dailyEl = document.getElementById('desktop-todo-daily');
@@ -15460,16 +15493,23 @@ function renderHomeTodo() {
     }
     rows.sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0));
     const doneN = rows.filter(r => r.done).length;
-    let h = '<div class="hwt-head"><span class="hwt-sub">本 周 任 务</span><span class="hwt-count">已完成 <b>' + doneN + '</b> / ' + rows.length + '</span></div>';
-    rows.forEach(r => {
-      h += '<div class="hwt-item' + (r.done ? ' is-done' : '') + '">'
-        + '<span class="hwt-day' + (r.chipCls ? ' ' + r.chipCls : '') + '">' + (r.done ? '完成' : (r.chip || '待定')) + '</span>'
-        + '<span class="hwt-check' + (r.done ? ' done' : '') + '">' + (r.done ? '✓' : '') + '</span>'
-        + '<span class="hwt-text">' + escTodo(r.text) + '</span></div>';
-      if (r.group && r.subs) r.subs.forEach(s => {
-        h += '<div class="todo-subitem home-sub' + (s.done ? ' done' : '') + '"><span class="todo-subcheck' + (s.done ? ' done' : '') + '">' + (s.done ? '✓' : '') + '</span><span class="todo-subtext">' + escTodo(s.text) + '</span></div>';
-      });
+    // v374 便签墙版式
+    let h = '<div class="hwt-head"><span class="hwt-sub">本 周 任 务</span><span class="hwt-count">已完成 <b>' + doneN + '</b> / ' + rows.length + '</span></div><div class="hnote-wall">';
+    rows.forEach((r, i) => {
+      h += '<div class="hnote c' + (i % 5 + 1) + (r.done ? ' is-done' : '') + '"' + hnoteStyle(i) + '>'
+        + (r.done
+          ? '<span class="hnote-chip okchip">✓ 完成</span><span class="hnote-text">' + escTodo(r.text) + '</span>'
+          : ((r.chip ? '<span class="hnote-chip' + (r.chipCls ? ' ' + r.chipCls : '') + '">' + r.chip + '</span>' : '') + '<span class="hnote-text">' + escTodo(r.text) + '</span>'));
+      if (r.group && r.subs) {
+        h += '<div class="hnote-subs">';
+        r.subs.forEach(s => {
+          h += '<div class="hnote-sub' + (s.done ? ' done' : '') + '"><span class="hk">' + (s.done ? '✓' : '') + '</span><span>' + escTodo(s.text) + '</span></div>';
+        });
+        h += '</div>';
+      }
+      h += '</div>';
     });
+    h += '</div>';
     workEl.innerHTML = h;
     const card = workEl.closest('.todo-card');
     if (card) card.style.display = rows.length ? '' : 'none';
