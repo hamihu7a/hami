@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-22-370">
+<meta name="hami-build" content="2026-10-22-371">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6079,30 +6079,31 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
 
     <!-- v370：🚀 赚钱思维（默认三行预览，点击卡片展开详情；整段（含下方 style 与 pop）可删，不影响其它功能） -->
     <style>
-      #hami-money-mind { cursor: pointer; }
+      #hami-money-mind { cursor: pointer; position: relative; }
       #hami-money-mind .hmm-cat { font-size: 11px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
       #hmm-preview { font-size: 13px; line-height: 1.5; color: #7d4a5a; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
       #hmm-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
       #hmm-foot .hmm-hint { font-size: 11px; color: #b06884; font-weight: 700; }
       #hmm-next { border: 1px solid #ffd7e5; background: #fff; color: #c0537a; font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
       #hmm-next:active { transform: translateY(1px); }
-      .hmm-pop { position: fixed; z-index: 6000; display: none; width: min(360px, calc(100vw - 20px)); max-height: min(72vh, 480px); overflow-y: auto; background: #fffafc; border: 1.5px solid #ffc7d8; border-radius: 16px; box-shadow: 0 14px 36px rgba(180,60,100,.22), inset 0 1px 0 rgba(255,255,255,.8); padding: 14px 16px 13px; text-align: left; font-family: inherit; }
-      .hmm-pop.show { display: block; animation: hfpIn .16s ease-out; }
-      .hmm-pop .hmm-pop-cat { font-size: 11px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 6px; padding: 1px 7px; display: inline-block; }
-      .hmm-pop .hmm-pop-title { font-size: 16px; font-weight: 900; color: #d14b73; margin: 8px 0 6px; line-height: 1.3; }
-      .hmm-pop .hmm-pop-body { font-size: 13.5px; line-height: 1.7; color: #5b3a47; white-space: pre-line; }
-      .hmm-pop .hmm-pop-src { font-size: 11px; color: #a988a0; margin-top: 10px; }
-      .hmm-pop .hmm-pop-close { position: absolute; top: 8px; right: 11px; font-size: 19px; color: #c47a96; cursor: pointer; line-height: 1; }
+      /* v371：详情改为卡片内联展开，绝不超出面板，字体清晰 */
+      #hmm-detail { display: none; margin-top: 9px; padding: 10px 11px; background: #fff4f9; border: 1px solid #ffd9e6; border-radius: 12px; max-height: 300px; overflow-y: auto; text-align: left; }
+      #hmm-detail.show { display: block; animation: hfpIn .16s ease-out; }
+      #hmm-detail .hmm-d-cat { font-size: 11px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 6px; padding: 1px 7px; }
+      #hmm-detail .hmm-d-title { font-size: 14px; font-weight: 800; color: #d14b73; margin: 7px 0 5px; line-height: 1.35; }
+      #hmm-detail .hmm-d-body { font-size: 13px; line-height: 1.7; color: #5b3a47; white-space: pre-line; }
+      #hmm-detail .hmm-d-src { font-size: 11px; color: #a988a0; margin-top: 8px; }
+      #hmm-detail .hmm-d-close { float: right; font-size: 16px; color: #c47a96; cursor: pointer; line-height: 1; margin-left: 6px; }
     </style>
     <div class="todo-card" id="hami-money-mind">
       <h3>🚀 赚钱思维<span id="hmm-cat" class="hmm-cat"></span></h3>
       <div id="hmm-preview"></div>
+      <div id="hmm-detail"></div>
       <div id="hmm-foot">
         <span class="hmm-hint">点击卡片看详细 ↗</span>
         <button id="hmm-next">换一条 ↻</button>
       </div>
     </div>
-    <div id="hmm-pop" class="hmm-pop"></div>
 
     <!-- v276：双倒计时卡（人生剩余天数 + 今日时光），整体删除本 div 即可无痕移除 -->
     <style>
@@ -14700,79 +14701,140 @@ function renderQuotes() {
 // ==================== v370：🚀 赚钱思维（真实可查案例/方法论，纯展示，不进云端同步） ====================
 // 内容均基于公开报道、企业财报、已出版方法论与公认商业常识，不编造具体数字；每条附来源锚点。
 const MONEY_MINDS = [
-  // —— 狠人案例（真实人物/公司的赚钱打法）——
-  { cat: '狠人案例', title: '巴菲特：不亏本金 + 复利', src: '伯克希尔年报 / 公开报道',
-    preview: '他管伯克希尔几十年，核心就两条：第一绝不亏本金，第二让钱长期复利。用保险浮存金做长期价值投资，时间站在他这边。',
-    detail: '巴菲特拒绝追热点，只在自己看得懂的生意里下注，买入后长期持有。伯克希尔用保险业务带来的浮存金（客户保费先收后赔）当零成本杠杆，长期年化回报约两成，几十年滚成巨无霸。他的铁律：规则一不亏钱，规则二记住规则一。' },
-  { cat: '狠人案例', title: '贝索斯：飞轮 + 长期主义', src: '亚马逊股东信 / 公开报道',
-    preview: '亚马逊早年不盈利，把每分钱再投入物流和降价，用飞轮越转越快：低价→多顾客→多卖家→更低价的循环。',
-    detail: '贝索斯相信长期自由现金流比短期利润重要。Prime会员用年费锁住复购，AWS把闲置算力卖成利润奶牛。他反复强调：把资源压在十年不变的事（顾客要低价、要快配送），而不是追时尚。' },
-  { cat: '狠人案例', title: '马斯克：第一性原理拆成本', src: '马斯克公开访谈 / 公开报道',
-    preview: '别人说火箭贵，他就拆到原材料——铝、钛、铜，发现成本只有售价的百分之几，于是自己造可回收火箭，把发射费降一个量级。',
-    detail: '第一性原理：不被向来如此绑架，回到物理和经济最底层重新算账。特斯拉把电池成本从每度电数百美元压到一百美元以下，靠拆解材料加大规模自产。SpaceX回收复用，把单次发射从数亿美元压到千万级。本质是重新定义成本结构。' },
-  { cat: '狠人案例', title: '胖东来：对员工好=赚钱', src: '多家媒体报道',
-    preview: '河南一家区域超市，给员工高薪、双休、委屈奖，结果人效远超同行。证明把人当人本身就是最好的商业模式。',
-    detail: '胖东来不靠压榨，靠极致服务和信任。员工收入高，更愿意帮顾客，复购和口碑爆棚，单店产出惊人。老板于东来把大部分利润分出去，反而做成了零售神话。它戳破一个谎言：低成本不等于压榨，高福利也能高利润。' },
-  { cat: '狠人案例', title: '老干妈：不上市不广告靠复购', src: '公开报道 / 企业资料',
-    preview: '不贷款、不上市、不打广告，靠一个口味做到全球华人调味品牌。秘诀：产品本身就是广告，复购就是增长。',
-    detail: '老干妈陶华碧坚持不融资、不上市，把利润全留自己。渠道把控极严，口味稳定到闭眼能认。它证明：当你有一个让人上瘾的产品，根本不需要烧钱营销，口碑和复购会替你跑遍全世界。' },
-  { cat: '狠人案例', title: 'SHEIN：小单快反卖全球', src: '多家媒体报道',
-    preview: '用小批试款、哪个爆就加单的柔性供应链，加实时数据选品和社媒投放，把中国服装卖到一百五十多个国家。',
-    detail: 'SHEIN的命门是小单快反：每款先产几百件测数据，爆了立刻翻单，库存风险极低。配合实时数据选款和KOL投放，把上新速度做到传统快时尚的数倍。它把中国供应链加全球社媒流量拧成一股绳，做成百亿美元级公司。' },
-  { cat: '狠人案例', title: 'Costco：靠会员费赚钱', src: '公司财报 / 公开报道',
-    preview: '商品近乎成本价卖，利润几乎全来自会员年费。顾客为了回本疯狂复购，反而黏得最紧。',
-    detail: 'Costco毛利率长期压在约一成（远低于同行），靠会员费这种订阅式收入赚钱。顾客交了年费，就会想方设法多来多买把会员用回本，复购和客单双高。它卖的不是商品，是帮你省钱的信任感。' },
-  { cat: '狠人案例', title: '字节：算法即印钞机', src: '公开报道 / 行业分析',
-    preview: '用推荐算法精准匹配人和内容/广告，用户越刷越停不下来，广告主越投越上瘾。流量本身就是印钞机。',
-    detail: '字节的核心资产是推荐算法：用极少人工编辑，靠数据把对的内容推给对的人。抖音让创作者免费生产内容、用户免费消费，中间插广告变现，规模效应极强。它证明：谁掌握注意力分配，谁就掌握印钞机。' },
+  // —— 狠人案例（聚焦：他成就了什么 + 他的核心思维，去餐饮类）——
+  { cat: '狠人案例', title: '巴菲特：年化20%滚了60年', src: '伯克希尔年报 / 公开报道',
+    preview: '他把一家小纺织厂变成近万亿美元帝国，一生年化约两成。思维：只投看得懂的、绝不亏本金、让时间替自己赚钱。',
+    detail: '成就：伯克希尔市值从几千万做到近万亿美元，他自己是史上最富之一却极简生活。核心思维有三条——能力圈（不懂不碰）、规则一不亏钱规则二记住规则一、用保险浮存金当零成本杠杆长期复利。今天能用的一招：别追热点，把买的东西当成持有一辈子的生意去挑。' },
+  { cat: '狠人案例', title: '贝索斯：押注十年不变的事', src: '亚马逊股东信 / 公开报道',
+    preview: '他把书店做成全球最大电商，AWS又养出利润奶牛。思维：长期自由现金流重于短期利润，把资源压在不变的需求上。',
+    detail: '成就：亚马逊从在线书店到全球电商+云霸主，个人曾登顶世界首富。核心思维：顾客永远要更低价、更快配送，这些十年不变，所以敢长年不盈利也要砸物流和降价，用飞轮（低价→多客→多卖家→更低价的循环）越转越快。今天能用的一招：做内容或产品时，盯住用户永远不变的需求而不是追潮流。' },
+  { cat: '狠人案例', title: '马斯克：第一性原理重算账', src: '马斯克公开访谈 / 公开报道',
+    preview: '特斯拉、SpaceX、推特多线颠覆。思维：不被向来如此绑架，回到物理和成本最底层重新算，敢下大注。',
+    detail: '成就：把电动车做成主流、把火箭回收复用把发射费降一个量级、用极高产出密度同时管多家公司。核心思维是第一性原理——火箭贵？拆到铝钛铜原材料发现成本只有售价几个点，于是自己造。今天能用的一招：遇到贵的东西，先问它原材料和真实成本到底多少，别被行业定价吓住。' },
+  { cat: '狠人案例', title: '张一鸣：算法即注意力分配权', src: '公开报道 / 行业分析',
+    preview: '抖音/TikTok全球数十亿用户。思维：延迟满足、数据驱动、用算法把对的内容推给对的人。',
+    detail: '成就：字节从房产搜索转型做出抖音、TikTok，成了全球最大的注意力工厂之一。核心思维：Stay young stay simple（始终归零心态）、用极少人工靠算法匹配、把用户时长当成要极致优化的指标。今天能用的一招：做内容别凭感觉，看数据哪个选题完播率高就加倍做哪个。' },
+  { cat: '狠人案例', title: 'SHEIN：小单快反卖遍150国', src: '多家媒体报道',
+    preview: '把中国供应链卖到全球百亿美元估值。思维：先小批试款、爆了再加单，用数据选品+社媒流量。',
+    detail: '成就：SHEIN用柔性供应链把上新速度做到传统快时尚数倍，覆盖一百五十多国。核心思维是小单快反——每款先产几百件测数据，爆了立刻翻单，库存风险极低；再用实时数据选款和KOL投放拧成一股绳。今天能用的一招：做任何生意先小成本测需求，数据说行再放大，别一上来重投入。' },
+  { cat: '狠人案例', title: 'Canva：让每个人都会设计', src: '公司资料 / 公开报道',
+    preview: '估值数百亿、数亿用户。思维：把专业设计的门槛降到零，不会用PS的人也能出图=最大市场。',
+    detail: '成就：Melanie Perkins把高端设计软件做成拖拽即用的网页工具，全球数亿用户、估值数百亿美元。核心思维：普通人想做好看的东西但被专业软件劝退，把门槛降到零就是巨大的未被满足的市场。今天能用的一招：你做的设计产品/模板，越让小白零门槛上手，受众越广。' },
+  { cat: '狠人案例', title: 'Figma：浏览器里颠覆Sketch', src: '公开报道 / Adobe收购案',
+    preview: '被Adobe用约200亿美元收购。思维：web原生+实时协作+免费起步，先占习惯再变现。',
+    detail: '成就：Dylan Field把设计工具搬进浏览器，多人实时协作彻底改变工作方式，最终被Adobe以约200亿美元收购。核心思维：不跟桌面软件拼功能，而是用web协作这个对方做不到的点切入，免费让团队先用起来、占住工作流。今天能用的一招：想切一个老市场，找巨头做不了的新形态（如协作/云端）切入。' },
+  { cat: '狠人案例', title: 'Pieter Levels：一人公司年入百万刀', src: '其公开博客 / 独立开发者社区',
+    preview: '一个人做几十个产品。思维：公开构建、快速发布、SEO+AI杠杆，睡后收入滚雪球。',
+    detail: '成就：独立开发者Pieter Levels不雇人，靠做小工具（如住宿、健康监测类）一年赚数百万美元，全远程一人搞定。核心思维：ship fast（先发布再迭代）、build in public（公开做给人看换流量）、用SEO和现在的AI把产出放大。今天能用的一招：你也会设计，完全能仿他——做个小工具上线，用内容带流量，一份时间卖万次。' },
+  { cat: '狠人案例', title: '纳瓦尔：专长×杠杆×责任', src: '《纳瓦尔宝典》',
+    preview: '天使投资人+思想产品化。思维：找到不可替代的专长，用代码和媒体这两种零许可杠杆放大。',
+    detail: '成就：纳瓦尔从穷移民到顶尖天使投资人，又把赚钱认知写成能广泛传播的思想产品。核心思维：财富=专长（你天生擅长且难被培训替代的）×杠杆（代码/媒体，不需别人批准）×责任（以自己名义承担风险）。今天能用的一招：把你设计师的专长，用媒体（账号/课程）放大成可复制的资产。' },
+  { cat: '狠人案例', title: '安克：中国充电品牌卖全球', src: '公司财报 / 出海报道',
+    preview: '把充电配件做成全球品牌年收百亿。思维：产品力+品牌化+吃透亚马逊红利期。',
+    detail: '成就：安克从亚马逊卖充电宝起家，做成全球知名充电与音频品牌，年营收数百亿人民币。核心思维：不拼低价山寨，而是把产品体验和品牌做上去、吃透早期亚马逊流量红利、用口碑复购滚雪球。今天能用的一招：出海或做电商，先把一个品类产品力打磨到口碑级，比铺量更重要。' },
 
   // —— 赚钱底层逻辑 ——
   { cat: '赚钱逻辑', title: '信息差：你知道别人不知道', src: '商业常识',
-    preview: '同一个东西，A地便宜B地贵，你搬一下就赚差价。跨境选品、平台红利期、内部消息差，本质都是信息差。',
+    preview: 'A地便宜B地贵，搬一下就赚差价。跨境选品、平台红利期、需求刚冒头，本质都是信息差。',
     detail: '赚钱最朴素的形态就是低买高卖，而价差来自信息不对等。别人不知道某平台有补贴、某货在另一个国家卖三倍价、某个需求刚冒头，你先知道就能撮合。保持信息敏感加行动快，是普通人最容易上手的第一桶金路径。' },
-  { cat: '赚钱逻辑', title: '杠杆：人力 / 资本 / 代码 / 媒体', src: '《纳瓦尔宝典》',
-    preview: '纳瓦尔说，普通人最便宜的杠杆是代码和媒体——写一次卖万次，不用许可、不用管人，边际成本趋零。',
-    detail: '古老杠杆是人力（雇人）和资本（钱生钱），门槛高。互联网给了两种新杠杆：代码（软件一次写好卖无限次）和媒体（博客、视频、社交账号，一份内容触达千万人）。想脱离一份时间卖一次，就靠这两种杠杆。' },
-  { cat: '赚钱逻辑', title: '复利：钱 / 知识 / 信誉都复利', src: '数学事实 / 《穷查理宝典》',
-    preview: '每天进步百分之一，一年后是约三十八倍（1.01的365次方）。钱、技能、人脉、信誉全都复利，关键是别中断、别归零。',
-    detail: '复利不只指利息。你每天攒一点能力、攒一点口碑、攒一点资产，三年后和原地踏步的人差出一个数量级。最怕归零：一次大亏、一次信用破产，前面全白搭。所以保住本金、保住信誉，是复利的前提。' },
+  { cat: '赚钱逻辑', title: '杠杆：代码 / 媒体是零许可杠杆', src: '《纳瓦尔宝典》',
+    preview: '纳瓦尔说普通人最便宜的杠杆是代码和媒体——写一次卖万次，不用许可、不用管人。',
+    detail: '古老杠杆是人力（雇人）和资本（钱生钱），门槛高。互联网给了两种新杠杆：代码（软件一次写好卖无限次）和媒体（账号、课程、视频，一份内容触达千万人）。想脱离一份时间卖一次，就靠这两种杠杆，设计师尤其适合用媒体杠杆。' },
+  { cat: '赚钱逻辑', title: '复利：钱 / 技能 / 信誉都复利', src: '数学事实 / 《穷查理宝典》',
+    preview: '每天进步1%，一年约38倍（1.01的365次方）。技能、人脉、信誉全复利，关键是别中断别归零。',
+    detail: '复利不只指利息。你每天攒一点能力、口碑、资产，三年后和原地踏步的人差出一个数量级。最怕归零：一次大亏、一次信用破产，前面全白搭。所以保住本金、保住信誉，是复利的前提。' },
   { cat: '赚钱逻辑', title: '流量漏斗：公域→私域→转化', src: '营销常识',
-    preview: '所有自媒体赚钱都一样：公域平台引流量，沉淀到私域，再用信任卖货卖课。流量不是目的，转化才是。',
-    detail: '在抖音、小红书发内容吸引陌生人（公域），把他们加到微信或社群（私域），通过持续价值输出建立信任，最后卖产品、服务或课程。关键指标不是粉丝数，是能变现的私域人数。没有私域的流量，等于在租别人的地。' },
+    preview: '自媒体赚钱都一样：公域引流量，沉淀私域，再用信任卖货卖课。流量不是目的，转化才是。',
+    detail: '在抖音、小红书发内容吸引陌生人（公域），加到微信或社群（私域），持续价值输出建信任，最后卖产品/服务/课程。关键指标不是粉丝数，是能变现的私域人数。没有私域的流量，等于在租别人的地。' },
   { cat: '赚钱逻辑', title: '销售：最被低估的印钞技能', src: '巴菲特公开言论 / 商业常识',
-    preview: '不管你是程序员、设计师还是老板，能把东西或自己卖出去的人，永远比只会做的人赚得多。',
-    detail: '巴菲特说，他年轻时花一百美元学了卡耐基演讲课，比任何MBA都值。销售的本质是把别人的需求和你有的东西对齐。会做不会卖，价值被严重低估；会卖，哪怕产品普通也能变现。这是人人该练的底层能力。' },
+    preview: '不管你是设计师还是老板，能把东西或自己卖出去的人，永远比只会做的人赚得多。',
+    detail: '巴菲特说他年轻时花一百美元学卡耐基演讲课，比任何MBA都值。销售的本质是把别人的需求和你有的东西对齐。会做不会卖，价值被严重低估；会卖，哪怕产品普通也能变现。这是人人该练的底层能力，设计师报价、谈单都用得上。' },
   { cat: '赚钱逻辑', title: '边际成本趋零：卖一次设计卖万次', src: '商业常识',
-    preview: '软件、电子书、课程、模板——做一次卖无限次，多卖一份几乎不增加成本。这是互联网给普通人最大的红利。',
-    detail: '传统生意卖一件赚一份，边际成本不降。但数字产品（课程、插件、模板、AI工具）第一份最难，之后复制成本接近零。把你的技能固化成可复制的数字产品，就从一个卖时间的人变成有资产的人。' },
+    preview: '模板、课程、插件——做一次卖无限次，多卖一份几乎不增成本。这是互联网给普通人最大红利。',
+    detail: '传统生意卖一件赚一份，边际成本不降。但数字产品（课程、UI Kit、模板、AI工具）第一份最难，之后复制成本接近零。把你的设计技能固化成可复制的数字产品，就从一个卖时间的人变成有资产的人。' },
 
   // —— 狠话金句 ——
   { cat: '狠话金句', title: '穷人用时间换钱，富人用系统换钱', src: '财富思维常识',
     preview: '差别不在谁更努力，在结构：你是把一份时间卖一次，还是让一份时间、一份资产反复卖？',
-    detail: '工资是线性收入，停手就停。富人在建系统——内容、产品、团队、投资，让钱和资产替自己干活。你不用立刻辞职，但要开始把一部分精力从出卖时间挪到搭建资产。' },
+    detail: '工资是线性收入，停手就停。富人在建系统——内容、产品、团队、投资，让钱和资产替自己干活。你不用立刻辞职，但要开始把一部分精力从出卖时间挪到搭建资产，比如做一个能持续卖的模板库。' },
   { cat: '狠话金句', title: '别等准备好，先开枪再瞄准', src: '行动力常识',
     preview: '等我学好了再开始，是拖延的遮羞布。你永远准备不好，市场只奖励先上场的人。',
-    detail: '完美主义是行动力的天敌。第一版烂没关系，先发出去、先接第一单、先跑通最小闭环，再迭代。大多数机会窗口就几个月，等你想清楚，红利期早过了。完成永远优于完美。' },
+    detail: '完美主义是行动力的天敌。第一版烂没关系，先发出去、先接第一单、先跑通最小闭环，再迭代。大多数机会窗口就几个月，等你想清楚，红利期早过了。完成永远优于完美，设计师发作品也是早发早有反馈。' },
   { cat: '狠话金句', title: '你刷手机羡慕别人时，别人在琢磨怎么被刷到', src: '内容变现常识',
     preview: '同样是刷，有人消耗时间，有人研究怎么让更多人刷到我、然后买单。视角差，就是贫富差。',
-    detail: '注意力是当下最稀缺的资源。与其嫉妒别人的结果，不如拆解别人的路径：他发什么、什么时候发、怎么变现。把消费者视角切到生产者视角，你刷的每一分钟都在偷师。' },
+    detail: '注意力是当下最稀缺的资源。与其嫉妒别人的结果，不如拆解别人的路径：他发什么、什么时候发、怎么变现。把消费者视角切到生产者视角，你刷的每一分钟都在偷师，顺手收集选题灵感。' },
 
-  // —— 副业路径（普通人可抄，基于真实平台生态）——
+  // —— 设计赚钱（设计师视角，真实可落地）——
+  { cat: '设计赚钱', title: 'UI Kit 售卖：一份组件卖万次', src: 'Gumroad / 即时设计市场生态',
+    preview: '把常用的按钮、卡片、图标做成组件库，挂 Gumroad 或即时设计市场，一次做好反复卖。',
+    detail: '这是设计师最稳的睡后收入之一。做法：挑一个高频风格（如玻璃拟态、可爱少女风），做一套高质量可商用组件，定价十几到几十美元，配好预览图。关键是持续更新和做好SEO标题，让搜得到。一份设计卖万次，边际成本趋零。' },
+  { cat: '设计赚钱', title: '模板变现：PPT/海报/简历', src: '淘宝 / 闲鱼 / Etsy 真实生态',
+    preview: '简历、海报、PPT模板在淘宝闲鱼Etsy都有稳定需求，做一次上传卖无数次，懒人愿意花钱省事。',
+    detail: '模板类数字产品几乎零成本复购。做法：选一个刚需细分（如互联网简历、小红书封面、述职PPT），做3-5款高质量模板，上架多平台，用买家秀和好评滚雪球。注意标明可商用范围避免纠纷。比接单轻松，适合积累资产。' },
+  { cat: '设计赚钱', title: '作品集引流接单', src: 'Dribbble / Behance / 站酷生态',
+    preview: '在Dribbble、Behance、站酷持续发作品，被搜到就被私信询单，转化长期客户比海投高效。',
+    detail: '设计师接单最怕没客源。做法：把最好作品按系列发，配清晰标题关键词（如"品牌VI""App界面"），简介留联系方式。平台算法会把高质量作品推给找设计的人，询单质量远高于闲鱼。核心是持续发+关键词对齐需求。' },
+  { cat: '设计赚钱', title: '设计接单平台：把技能产品化', src: 'Fiverr / 蓝湖 / 猪八戒',
+    preview: '在Fiverr、蓝湖、猪八戒挂清晰服务页（解决什么、交付什么、多少钱），积累好评就源源接单。',
+    detail: '自由职业的本质是把技能产品化。做法：做一个服务页面，写清交付物、周期、价格档位（如基础版/精修版），用前几个低价单换好评和案例，中期靠复购转介绍。从打零工变成有招牌的手艺人，时薪远高于上班。' },
+  { cat: '设计赚钱', title: '品牌全案：VI+官网高客单', src: '设计行业常识',
+    preview: '帮初创做Logo、VI、官网视觉，客单价高、易转介绍。一次全案顶几十次散单。',
+    detail: '散单时薪低，全案才赚得到钱。做法：打包"Logo+色彩规范+官网视觉+社媒模板"成套餐，定价按项目而非按小时。初创公司最舍得为"看起来专业"花钱。交付时附一份使用规范，客户满意度高、转介绍多。' },
+  { cat: '设计赚钱', title: '设计课程：经验固化成产品', src: '内容变现常识',
+    preview: '你擅长的（配色/排版/UI）做成课或训练营，边际成本趋零，卖一次设计卖千次。',
+    detail: '知识付费是把经验固化成可复制产品。做法：先用免费内容（小红书/抖音）验证有人要（看收藏评论），再做付费小课，用社群提客单。设计师教"小白也能学会的排版"类需求极大。先卖九块九轻课测需求，跑通再放大。' },
+  { cat: '设计赚钱', title: '设计+AI：单位时间产出翻倍', src: 'AI应用趋势 / 设计圈实践',
+    preview: '用Midjourney出灵感、即时AI修图、AI批量出稿，同样8小时交付翻倍，时薪直接涨。',
+    detail: 'AI不是抢设计师饭碗，是让会用的设计师产出翻倍。做法：把机械活（抠图、出多版配色、批量尺寸）交给AI，你把时间留给创意和审美判断——这是AI替代不了的部分。会AI的设计师报价可以更高，因为交付更快。' },
+  { cat: '设计赚钱', title: '素材站分成：上传就有被动收益', src: '图标/插画平台分成模式',
+    preview: '把图标、插画、纹理上传到素材平台，被人下载就分成，睡梦中也在进账。',
+    detail: '这是真正的被动收入。做法：挑一个你擅长的素材类型（如可爱图标、中国风插画），按平台规范批量上传，设好关键词。前期积累，后期下载量滚雪球。适合作为"顺手做"的资产线，和UI Kit、模板搭配卖。' },
+
+  // —— AI / 网上赚钱 / 风口（贴合当下）——
+  { cat: 'AI赚钱', title: 'AI代运营本地商家', src: 'AI应用趋势 / 副业分享',
+    preview: '用AI帮附近门店做图、写文案、剪视频、管账号，按月收服务费。需求大、门槛被AI拉低。',
+    detail: '大量本地商家想做抖音小红书但不会，你用AI工具批量产出，按店收每月几百到几千。做法：先拿一两家免费试跑出案例，再地推收付费。这是当下普通人离钱最近的AI副业之一，设计师做视觉尤其顺手。' },
+  { cat: 'AI赚钱', title: 'AI自媒体矩阵：批量出内容', src: '内容变现趋势',
+    preview: '用AI批量生成图文/视频，多平台分发赚流量分成和带货佣金，一份选题喂出十条。',
+    detail: '做法：选一个你懂的垂类，用AI写稿/做图/剪视频，一天铺多条到抖音、小红书、视频号，吃各平台流量分成和挂车佣金。关键是建立发布节奏和看数据优化，而不是盲目堆量。设计师用AI出图效率极高。' },
+  { cat: 'AI赚钱', title: '独立开发：一人做SaaS', src: 'Indie Hacker 社区',
+    preview: '一个人用AI写代码做小工具/SaaS，Stripe收款，睡后收入。设计师也能靠审美+AI做产品。',
+    detail: 'Indie Hacker（独立开发者）趋势：用AI辅助写代码，把小痛点做成订阅制小工具（如PDF处理、简历优化）。做法：找一个具体小需求，两周内做出MVP上线，用Twitter/小红书公开构建带流量。设计师的审美是拉开差距的利器。' },
+  { cat: 'AI赚钱', title: 'AI工具套利：本地化教程', src: '信息差变现',
+    preview: '海外火的AI工具，国内很多人不会用。做中文教程、社群、代开通，赚信息差的钱。',
+    detail: '做法：盯海外新出的好用AI工具，第一时间出中文上手教程（短视频/图文），引流到付费社群或代开通服务。你不用开发，只做"翻译+保姆式教学"。信息差窗口通常几个月，先入场者吃肉。' },
+  { cat: 'AI赚钱', title: '短视频带货：选品+内容', src: '抖音 / 小红书电商生态',
+    preview: '抖音小红书挂车，靠选题和内容把流量变佣金。设计师做种草视觉转化更高。',
+    detail: '做法：选一个你真懂且有搜索量的细分（如家居好物、美妆工具），稳定发测评/种草，挂商品链接赚佣金。关键不是粉丝多，是内容能激发下单。设计师懂视觉，封面点击率天然更高，这是你的优势。' },
+  { cat: 'AI赚钱', title: '跨境电商DTC：Shopify+TikTok', src: '出海电商报道',
+    preview: '用Shopify建站、TikTok引流，把小众品卖到海外，利润率常高于国内内卷。',
+    detail: '做法：选一个轻小、有差异化的品（如宠物周边、设计师周边），用TikTok短视频带独立站流量，Stripe/PayPal收款。难点在选品和物流，但一旦跑通，边际成本极低、面向全球市场。设计感强的产品溢价空间大。' },
+  { cat: 'AI赚钱', title: '知识付费+AI：产课成本趋零', src: '内容变现常识',
+    preview: 'AI辅助写大纲、做PPT、剪课，把产课成本压到极低，卖课利润空间拉满。',
+    detail: '做法：把你擅长的（设计/工具/方法）用AI辅助快速产成课程视频和讲义，上架小鹅通/知识星球等。AI把原本几周的产课压缩到几天，你专注内容和引流。卖一次设计卖千次，叠加AI效率，是当下最划算的知识变现路径。' },
+  { cat: 'AI赚钱', title: '风口判断：抢平台红利期', src: '增长 / 平台生态规律',
+    preview: '每个新平台早期流量免费且竞争小，先入场者吃肉。视频号、小红书早期都验证过。',
+    detail: '做法：盯新平台/新功能上线（如视频号刚开、小红书刚推某赛道），第一时间用你擅长的视觉内容占坑。红利期通常3-12个月，早进的账号靠平台推流白嫖流量。判断标准：大厂在补贴、规则在放宽、竞争对手还少。' },
+  { cat: 'AI赚钱', title: 'AI数字人直播：24小时无人卖', src: '直播电商趋势',
+    preview: '用数字人主播24小时循环播，降低人力成本，适合标品和已跑通的话术。',
+    detail: '做法：把验证过的直播话术交给AI数字人，配合自动回复和供应链，做到不间断直播。适合已有稳定货源和转化模型的品类。设计师可负责数字人形象和场景视觉，提升真实感转化。注意平台合规，别碰虚假宣传。' },
+  { cat: 'AI赚钱', title: 'Newsletter/私域：养熟了再变现', src: '邮件 / 社群变现模式',
+    preview: '用邮件或社群沉淀粉丝，靠广告、带货或会员变现。私域的人比公域粉值钱十倍。',
+    detail: '做法：围绕一个你专业的主题（如设计灵感、AI工具）做免费周刊，用社交平台引流订阅，再用广告、付费会员或带货变现。私域粉丝信任度高、可反复触达，是真正的资产。设计师做视觉 newsletter 天然好看、易转发。' },
+
+  // —— 副业路径（普通人可抄，去餐饮特指）——
   { cat: '副业路径', title: '种草账号：选细分领域持续发', src: '平台公开生态 / 创作者分享',
-    preview: '挑一个你真懂、有人搜的细分方向（穿搭/辅食/收纳/测评），稳定更新，粉丝起来接商单或带货。',
+    preview: '挑一个你真懂、有人搜的细分方向稳定更新，粉丝起来接商单或带货。',
     detail: '起号逻辑：垂直、稳定、利他。别今天发美食明天发吐槽，算法看不懂就不推。先想清楚谁会搜这个、我能帮ta什么，再用标题封面抢点击。千粉就能接置换，万粉后商单稳定。核心是持续二字。' },
   { cat: '副业路径', title: '闲鱼倒卖：信息差搬砖', src: '副业经验分享',
     preview: '在拼多多或1688找低价品，挂闲鱼加价卖，有人拍下你再去上家拍，零库存零房租。',
-    detail: '这是最轻的副业：不用囤货、不用旺旺客服（用自动回复）。关键是选有信息差、懒人愿意多花钱图省事的品（整理收纳、临期、小众配件）。平台红利期捡漏，单店月入几千到上万都有人跑通过。' },
+    detail: '这是最轻的副业：不用囤货、不用客服（用自动回复）。关键是选有信息差、懒人愿意多花钱图省事的品（整理收纳、小众配件、临期好物）。平台红利期捡漏，单店月入几千到上万都有人跑通过。' },
   { cat: '副业路径', title: '技能外包：设计/剪辑/翻译接单', src: '自由职业常识',
-    preview: '你会PPT、剪辑、外语、编程、文案？去Upwork、猪八戒、闲鱼挂服务，用技能换钱，时薪远高于上班。',
+    preview: '你会PPT、剪辑、外语、编程、文案？去Upwork、猪八戒、闲鱼挂服务，用技能换钱时薪高。',
     detail: '自由职业的本质是把技能产品化：做一个清晰的服务页面（能解决什么、交付什么、多少钱），积累好评就能源源不断接单。初期靠低价换案例，中期靠复购和转介绍。关键是从打零工变成有招牌的手艺人。' },
   { cat: '副业路径', title: '知识付费：把擅长做成专栏', src: '内容变现常识',
     preview: '你擅长的（育儿/Excel/考证/穿搭）做成课程或训练营，边际成本趋零，卖一次设计卖千次。',
     detail: '知识付费是把经验固化成可复制产品。先用免费内容验证有人要（看收藏、评论），再做付费小课，再用社群或训练营提客单。最怕没验证就重投入。先卖九块九轻课测需求，跑通再放大。' },
-  { cat: '副业路径', title: 'AI代运营：帮本地小店做内容', src: 'AI应用趋势 / 副业分享',
-    preview: '用AI帮附近餐馆、美容院做图、写文案、剪视频、管账号，按月收服务费。需求大、门槛被AI拉低。',
-    detail: '大量本地小店想做抖音、小红书但不会，你用AI工具（做图、写稿、数字人）批量产出，按店收每月几百到几千。先拿一两家免费试跑出案例，再地推收付费。这是当下普通人离钱最近的AI副业之一。' },
 
   // —— 穷人陷阱（避坑）——
   { cat: '穷人陷阱', title: '陷阱：只卖时间不攒资产', src: '《富爸爸穷爸爸》/ 财富思维',
@@ -14793,7 +14855,7 @@ const MONEY_MINDS = [
     preview: '拿到钱先留一块生钱的钱，剩下的才花。顺序反了，就永远在为过去消费买单。',
     detail: '长期跟踪研究都指向同一结论：能为了更大回报放弃即时满足的人，长期人生收益显著更高。落到钱上：工资到账先转走一两成到投资或学习账户，再把剩余当生活费。顺序一变，十年天差地别。' },
   { cat: '富人习惯', title: '习惯：给自己的时间标价', src: '效率 / 财富思维',
-    preview: '时薪低的事（排队、琐碎家务、重复搬运）能外包就外包，把时间留给高杠杆动作。',
+    preview: '时薪低的事（排队、琐碎家务）能外包就外包，把时间留给高杠杆动作。',
     detail: '很多人舍不得花五十块省两小时，却拿那两小时刷短视频。算笔账：你的一小时值多少？低于这价的杂事，外包或自动化；高于这价的动作（谈客户、做内容、学技能），全力投入。时间最不可再生。' },
   { cat: '富人习惯', title: '习惯：记账 + 复盘钱去哪了', src: '财富思维常识',
     preview: '不知道钱从哪来、被谁赚走，就永远在瞎忙。记账不是抠门，是把资源压到高回报处。',
@@ -14815,14 +14877,36 @@ function _hmmShuffle(arr, seed) {
   return a;
 }
 function _hmmToday() { const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function _hmmGetIdx(today) {
+  let idx = 0;
+  try {
+    const last = localStorage.getItem('hami_mm_lastdate');
+    let v = parseInt(localStorage.getItem('hami_mm_idx') || '0', 10);
+    if (isNaN(v)) v = 0;
+    if (last === today) idx = v;                              // 同一天：保持当前条
+    else { idx = (v + 1) % MONEY_MINDS.length;                // 跨天：自动推进一条（一轮内不重复）
+           localStorage.setItem('hami_mm_idx', String(idx));
+           localStorage.setItem('hami_mm_lastdate', today); }
+  } catch (e) {}
+  return idx;
+}
+function _hmmFillDetail(item) {
+  const d = document.getElementById('hmm-detail');
+  if (!d || !item) return;
+  d.innerHTML = '<span class="hmm-d-close" id="hmm-d-close">×</span>'
+    + '<span class="hmm-d-cat">' + item.cat + '</span>'
+    + '<div class="hmm-d-title">' + item.title + '</div>'
+    + '<div class="hmm-d-body">' + item.detail + '</div>'
+    + '<div class="hmm-d-src">来源：' + item.src + '</div>';
+  const c = document.getElementById('hmm-d-close');
+  if (c) c.onclick = function (ev) { ev.stopPropagation(); d.classList.remove('show'); };
+}
 function renderMoneyMind() {
   const card = document.getElementById('hami-money-mind');
   if (!card) return;
   const today = _hmmToday();
-  const key = 'hami_mm_idx_' + today;
-  let idx = 0;
-  try { const v = parseInt(localStorage.getItem(key) || '0', 10); if (!isNaN(v)) idx = v; } catch (e) {}
-  const list = _hmmShuffle(MONEY_MINDS, _hmmSeed(today));
+  const idx = _hmmGetIdx(today);
+  const list = _hmmShuffle(MONEY_MINDS, _hmmSeed(today)); // 当天洗牌固定，保当天点「换一条」不重复
   const item = list[idx % list.length];
   const cat = document.getElementById('hmm-cat');
   const pv = document.getElementById('hmm-preview');
@@ -14832,37 +14916,21 @@ function renderMoneyMind() {
   const next = document.getElementById('hmm-next');
   if (next) next.onclick = function (ev) {
     ev.stopPropagation();
-    idx = (idx + 1) % list.length;
-    try { localStorage.setItem(key, String(idx)); } catch (e2) {}
-    const it = list[idx];
+    const cur = (idx + 1) % list.length;                     // 「换一条」当天内循环，不重复
+    try { localStorage.setItem('hami_mm_idx', String(cur)); localStorage.setItem('hami_mm_lastdate', today); } catch (e2) {}
+    const it = list[cur];
     if (cat) cat.textContent = it.cat;
     if (pv) pv.textContent = it.preview;
     card._hmmItem = it;
+    const d = document.getElementById('hmm-detail');
+    if (d && d.classList.contains('show')) _hmmFillDetail(it);  // 展开状态下同步刷新
   };
-  card.onclick = function () { openHmmPop(card._hmmItem); };
-}
-function openHmmPop(item) {
-  if (!item) return;
-  const pop = document.getElementById('hmm-pop');
-  if (!pop) return;
-  pop.innerHTML = '<span class="hmm-pop-close" id="hmm-pop-close">×</span>'
-    + '<span class="hmm-pop-cat">' + item.cat + '</span>'
-    + '<div class="hmm-pop-title">' + item.title + '</div>'
-    + '<div class="hmm-pop-body">' + item.detail + '</div>'
-    + '<div class="hmm-pop-src">来源：' + item.src + '</div>';
-  pop.classList.add('show');
-  const c = document.getElementById('hmm-pop-close');
-  if (c) c.onclick = function (ev) { ev.stopPropagation(); pop.classList.remove('show'); };
-  setTimeout(function () {
-    document.addEventListener('click', function hmmClose(ev) {
-      if (!pop.classList.contains('show')) { document.removeEventListener('click', hmmClose); return; }
-      if (pop.contains(ev.target)) return;
-      const card = document.getElementById('hami-money-mind');
-      if (card && card.contains(ev.target)) return;
-      pop.classList.remove('show');
-      document.removeEventListener('click', hmmClose);
-    });
-  }, 0);
+  card.onclick = function () {
+    const d = document.getElementById('hmm-detail');
+    if (!d) return;
+    if (d.classList.contains('show')) d.classList.remove('show');
+    else { _hmmFillDetail(card._hmmItem); d.classList.add('show'); }
+  };
 }
 
 // ==================== 时钟 ====================
