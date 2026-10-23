@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-396">
+<meta name="hami-build" content="2026-10-24-397">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2234,7 +2234,10 @@
   .sp-fold-h.on .sp-fh-a { color: #5b6672; }
   .sp-fold-b { margin-top: 5px; padding: 9px 11px; border-radius: 8px; background: #fbfbfc; border: 1px solid #f1f1f4; }
   /* v396：区块三 口语打卡 */
-  .sp-speak { display: flex; align-items: center; gap: 10px; }
+  .sp-speak { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  /* v397：APP 唤起按钮（跳转类，打开 APP 或网页） */
+  .sp-btn.launch { color: #fff; background: #55697a; border-color: #55697a; }
+  .sp-btn.launch:hover { background: #4a5c6b; border-color: #4a5c6b; }
   .sp-speak-btn {
     border-radius: 9px; padding: 9px 15px; font-family: inherit; cursor: pointer;
     font-size: 12.5px; font-weight: 600; color: #5b6169; background: #fafafb; border: 1px solid #e2e2e7;
@@ -2338,10 +2341,6 @@
   .sp-item + .sp-item { margin-top: 12px; padding-top: 11px; border-top: 1px solid #f1f1f4; }
   .sp-item-head { font-size: 12.5px; font-weight: 700; color: #3d434a; margin-bottom: 6px; letter-spacing: .3px; }
   .sp-item-note { font-size: 11.5px; font-weight: 500; color: #8b9199; line-height: 1.7; }
-  .sp-preview {
-    margin-top: 9px; padding: 9px 11px; border-radius: 8px; background: #fafafb; border: 1px solid #efeff3;
-    font-size: 11.5px; font-weight: 500; color: #8b9199; line-height: 1.7;
-  }
   .sp-flow { margin-top: 12px; padding: 12px 13px; border-radius: 9px; background: #fafafb; border: 1px solid #efeff3; }
   .sp-flow-t { font-size: 11.5px; font-weight: 700; color: #3d434a; margin-bottom: 8px; }
   .sp-flow-i { display: flex; gap: 9px; font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.75; padding: 2px 0; }
@@ -26024,7 +26023,6 @@ var SP_STAGES = [
   { i: 3, name: '进阶期', range: '第 9–11 个月', desc: '尝试无中文字幕的入门音频；拓展生活化闲聊话题' },
   { i: 4, name: '达标期', range: '第 12 个月',   desc: '日常基础话题顺畅沟通，适应母语者慢速自然对话' }
 ];
-var SP_DUO_TEXT = '请手动打开手机/电脑多邻国APP，严格练习10分钟，稳步逐步提升难度，积累基础词汇、基础句型，不要长时间刷。';
 var SP_LINKS = [
   { name: 'Duolingo Podcast', sub: '多邻国播客', url: 'https://podcast.duolingo.com/' },
   { name: 'ESL Pod',          sub: '入门版 · 慢速讲解', url: 'https://www.eslpod.com/' },
@@ -26037,7 +26035,7 @@ var SP_TASKS = [
 ];
 var spShowProg = false, spShowHist = false;
 var spForceNote = null;         // 重置后强制清空备注框
-var spFolds = { rules: false, stages: false, flow: false, duo: false, gpt: false };
+var spFolds = { rules: false, stages: false, flow: false, gpt: false };
 
 function spData() {
   if (!store.studyPlan) store.studyPlan = { start: '', checks: {} };
@@ -26129,34 +26127,32 @@ function spSaveNote(v) {
   if (typeof commitToCloud === 'function') commitToCloud();
 }
 function spToggleFold(k) { spFolds[k] = !spFolds[k]; spRender(); }
-function spCopy(text, btn) {
-  const done = function () {
-    if (!btn) return;
-    const old = btn.getAttribute('data-label') || btn.textContent;
-    btn.setAttribute('data-label', old);
-    btn.textContent = '已复制';
-    btn.classList.add('copied');
-    setTimeout(function () { btn.textContent = old; btn.classList.remove('copied'); }, 1500);
-  };
+function spOpen(url) { try { window.open(url, '_blank', 'noopener'); } catch (e) {} }
+// v397：APP 唤起 —— 装了 APP 直达，没装/电脑自动开网页版（不做虚假跳转）
+function spUA() { try { return navigator.userAgent || ''; } catch (e) { return ''; } }
+function spIsMobile() { return /Android|iPhone|iPad|iPod|Mobile/i.test(spUA()); }
+function spIsAndroid() { return /Android/i.test(spUA()); }
+function spLaunch(scheme, path, pkg, web) {
+  if (!spIsMobile()) { spOpen(web); return; }              // 电脑：直接网页版，避免弹「无法打开」
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, fallback);
+    if (spIsAndroid() && pkg) {                            // 安卓：intent:// 自带 fallback_url，最稳
+      window.location.href = 'intent://' + (path || '') + '#Intent;scheme=' + scheme
+        + ';package=' + pkg + ';S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
       return;
     }
   } catch (e) {}
-  fallback();
-  function fallback() {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    } catch (e) {}
-    done();
-  }
+  let left = false;                                        // iOS：先试深链，没切走再兜底网页
+  const onHide = function () { left = true; };
+  try { document.addEventListener('visibilitychange', onHide); } catch (e) {}
+  const t0 = Date.now();
+  try { window.location.href = scheme + '://' + (path || ''); } catch (e) {}
+  setTimeout(function () {
+    try { document.removeEventListener('visibilitychange', onHide); } catch (e) {}
+    if (left || (document && document.hidden)) return;      // 已经跳走（APP 被唤起）就不再兜底
+    if (Date.now() - t0 > 5000) return;
+    spOpen(web);
+  }, 1400);
 }
-function spOpen(url) { try { window.open(url, '_blank', 'noopener'); } catch (e) {} }
 function spSubmit() {
   const d = spData();
   const el = document.getElementById('sp-note');
@@ -26304,18 +26300,14 @@ function spRender() {
   // —— 区块二：学习素材面板 ——
   h += '<div class="sp-block">'
     + '<div class="sp-block-head"><span class="sp-bh-idx">02</span><span class="sp-bh-title">学习素材面板</span>'
-    + '<span class="sp-bh-meta">↗ 打开网页 · ⧉ 复制文字</span></div>'
+    + '<span class="sp-bh-meta">↗ 打开网页或 APP</span></div>'
     + '<div class="sp-item">'
-    + '<div class="sp-item-head">多邻国<span class="sp-item-min">10 分钟 · 手动打开 APP</span></div>'
+    + '<div class="sp-item-head">多邻国<span class="sp-item-min">10 分钟</span></div>'
     + '<div class="sp-btn-row">'
-    + '<button class="sp-btn copy" type="button" onclick="spCopy(SP_DUO_TEXT, this)">⧉ 复制引导</button>'
+    + '<button class="sp-btn launch" type="button" onclick="spLaunch(\'duolingo\', \'\', \'com.duolingo\', \'https://www.duolingo.com/learn\')">📱 打开多邻国</button>'
     + '</div>'
-    + spFoldBtn('duo', '复制内容');
-  if (spFolds.duo) {
-    h += '<div class="sp-fold-b"><div class="sp-preview">' + escTodo(SP_DUO_TEXT) + '</div>'
-      + '<div class="sp-item-note">多邻国无网页稳定直达链接，需要手动启动 APP。</div></div>';
-  }
-  h += '</div>'
+    + '<div class="sp-item-note">装了 APP 直接唤起；没装或在电脑上，会自动打开网页版。</div>'
+    + '</div>'
     + '<div class="sp-item">'
     + '<div class="sp-item-head">分级听力素材库<span class="sp-item-min">7 分钟 · 网页直达</span></div>'
     + '<div class="sp-links">';
@@ -26343,8 +26335,10 @@ function spRender() {
     + '<div class="sp-speak">'
     + '<button class="sp-speak-btn' + (t.speak ? ' on' : '') + '" type="button" onclick="spToggleTask(\'speak\')">'
     + (t.speak ? '✓ 今日口语已完成' : '完成 3 分钟对话') + '</button>'
+    + '<button class="sp-btn launch" type="button" onclick="spLaunch(\'chatgpt\', \'voicemode\', \'com.openai.chatgpt\', \'https://chatgpt.com/\')">🎙️ 打开语音对话</button>'
     + '<span class="sp-speak-s">' + (t.speak ? '已记录' : '未记录') + '</span>'
     + '</div>'
+    + '<div class="sp-item-note">装了 ChatGPT APP 直接进语音模式；否则打开网页版。</div>'
     + spFoldBtn('gpt', '使用说明');
   if (spFolds.gpt) {
     h += '<div class="sp-fold-b"><div class="sp-item-note">手动打开 ChatGPT APP，新建对话开启麦克风语音对话；单次控制在 3 分钟左右，卡壳可以结束本轮。</div></div>';
