@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-382">
+<meta name="hami-build" content="2026-10-23-383">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4695,11 +4695,17 @@
   @media (max-width: 420px) { .hami-confirm { font-size: 13px; max-width: calc(100vw - 48px); } }
 
   /* ============ 倒计时条上下切换动画 ============ */
-  .countdown-page { width: 100%; overflow: hidden; }
+  .countdown-page { width: 100%; overflow: hidden; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .countdown-page:active { cursor: grabbing; }
   .countdown-page-out { animation: countdown-page-up .24s ease forwards; }
   .countdown-page-in  { animation: countdown-page-down .38s cubic-bezier(.22,.9,.34,1.2) both; }
+  /* v383：反向（往上拖动看上一页）*/
+  .countdown-page-out-rev { animation: countdown-page-down-out .24s ease forwards; }
+  .countdown-page-in-rev  { animation: countdown-page-up-in .38s cubic-bezier(.22,.9,.34,1.2) both; }
   @keyframes countdown-page-up   { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-18px); opacity: 0; } }
   @keyframes countdown-page-down { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes countdown-page-down-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(18px); opacity: 0; } }
+  @keyframes countdown-page-up-in { from { transform: translateY(-18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
   /* ============ 全端文字排版统一（桌面 + 移动）：转行均衡、防孤字、短文本居中 ============
    * 主人要求：所有字体若必须转行，上行下行字数尽量一致（text-wrap: balance）；
@@ -25090,7 +25096,7 @@ function renderCountdown() {
           <div style="font-size:10px;color:#d14b73;font-weight:600;white-space:nowrap;">${unit}</div>
         </div>`;
     const dateCol = isCheckin ? '' : `
-        <div style="text-align:center;flex-shrink:0;background:rgba(209,75,115,0.10);border-radius:8px;padding:5px 8px;line-height:1.2;min-width:46px;">
+        <div style="text-align:center;flex-shrink:0;background:rgba(209,75,115,0.10);border-radius:8px;padding:7px 8px;line-height:1.2;min-width:46px;">
           <div style="font-size:13px;font-weight:800;color:#d14b73;">${isPlaceholder ? '—' : ('周' + weekday)}</div>
           <div style="font-size:11px;color:#d14b73;font-weight:600;letter-spacing:0.3px;">${monthDay}</div>
         </div>`;
@@ -25098,7 +25104,7 @@ function renderCountdown() {
     // v327：提醒超过 4 页时改用「当前/总数」迷你数字（更宽），右侧再多留 16px 防重叠
     const padR = (isCheckin ? 20 : 16) + (pages.length > 4 ? 16 : 0);
     return `
-      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:8px ${padR}px 8px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);outline:1.5px dashed rgba(209,75,115,0.25);outline-offset:-5px;display:flex;align-items:center;gap:10px;overflow:hidden;">
+      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:11px ${padR}px 11px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);outline:1.5px dashed rgba(209,75,115,0.25);outline-offset:-5px;display:flex;align-items:center;gap:10px;overflow:hidden;">
         ${dateCol}
         <div style="flex:1;min-width:0;display:flex;align-items:center;">
           <div style="font-size:14px;color:#5a3a48;font-weight:600;line-height:1.45;word-break:break-word;text-wrap:balance;">${item.icon} ${item.label}</div>
@@ -25118,7 +25124,7 @@ function renderCountdown() {
     html += `<div class="countdown-dots" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;z-index:2;">`;
     pages.forEach((_, idx) => {
       const active = idx === pageIndex ? 'background:#d14b73;height:12px;' : 'background:rgba(209,75,115,0.4);height:4px;';
-      html += `<span class="countdown-dot" style="width:4px;border-radius:2px;transition:all .3s;${active}"></span>`;
+      html += `<span class="countdown-dot" data-idx="${idx}" style="width:4px;border-radius:2px;transition:all .3s;${active}"></span>`;
     });
     html += `</div>`;
   } else if (pages.length > 4) {
@@ -25128,30 +25134,118 @@ function renderCountdown() {
 
   wrap.innerHTML = html;
 
-  // 自动轮播：每 4 秒切到下一页（上下方向：旧页向上淡出，新页从下推上来）
+  // v383：总页数记到 window，供手动拖动/点小点翻页用（pages 是本次渲染的局部变量）
+  window.__countdownPages = pages.length;
+
+  // v383：统一翻页入口——自动轮播与手动拖动/点小点共用。
+  // dir=+1 下一页 / -1 上一页；传 target 则直达该页（点小点用）。动画中禁止连翻。
+  window.__countdownSwitch = function (dir, target) {
+    if (window.__countdownAnimating) return;
+    const total = window.__countdownPages || 1;
+    if (total < 1) return;
+    const cur = window.__countdownPage || 0;
+    let next;
+    if (typeof target === 'number') {
+      if (target < 0 || target >= total || target === cur) return;
+      next = target;
+    } else {
+      next = (cur + dir + total) % total;
+    }
+    const w = document.getElementById('desktop-countdown');
+    if (!w) return;
+    // 页码变大=前进：旧页向上淡出、新页从下推入；后退反之。单页轮播（v119）也按 dir 走
+    const fwd = (typeof target === 'number') ? next > cur : dir >= 0;
+    window.__countdownAnimating = true;
+    const curEl = w.firstElementChild;
+    if (curEl) curEl.classList.add(fwd ? 'countdown-page-out' : 'countdown-page-out-rev');
+    setTimeout(() => {
+      window.__countdownPage = next;
+      renderCountdown();
+      const nw = document.getElementById('desktop-countdown');
+      if (nw && nw.firstElementChild) {
+        nw.firstElementChild.classList.add(fwd ? 'countdown-page-in' : 'countdown-page-in-rev');
+        setTimeout(() => { try { nw.firstElementChild.classList.remove('countdown-page-in', 'countdown-page-in-rev'); } catch (e) {} }, 380);
+      }
+      window.__countdownAnimating = false;
+    }, 240);
+  };
+
+  // 自动轮播：每 4 秒切到下一页（手动翻页后 renderCountdown 会重建定时器，自然重新计时）
   // v119：即使只有 1 条提醒也持续滚动（主人反馈只有一条时静止不动，看着像坏了）
   if (pages.length >= 1) {
     if (window.__countdownTimer) clearInterval(window.__countdownTimer);
     window.__countdownTimer = setInterval(() => {
-      const w = document.getElementById('desktop-countdown');
-      if (!w) return;
-      // 给当前容器加 out 类做向上淡出
-      const cur = w.firstElementChild;
-      if (cur) {
-        cur.classList.add('countdown-page-out');
-      }
-      setTimeout(() => {
-        window.__countdownPage = (window.__countdownPage + 1) % pages.length;
-        renderCountdown();
-        // 新页做从下推入的动画
-        const nw = document.getElementById('desktop-countdown');
-        if (nw && nw.firstElementChild) {
-          nw.firstElementChild.classList.add('countdown-page-in');
-          setTimeout(() => { try { nw.firstElementChild.classList.remove('countdown-page-in'); } catch (e) {} }, 380);
-        }
-      }, 240);
+      if (window.__countdownAnimating) return;   // 手动拖动动画中不抢台
+      window.__countdownSwitch(1);
     }, 4000);
   }
+
+  // v383：手动拖动 + 点小点（wrap 节点不变，只绑一次）
+  bindCountdownDrag(wrap);
+}
+
+// v383：倒计时轮播手动拖动（鼠标+触摸）与点小点直达。
+// 手势判定：纵向位移 >8px 且大于横向，才认定为轮播手势——之后才 preventDefault，不劫持普通页面滚动；
+// 位移 ≥36px 才翻页（上滑=下一页，下拉=上一页）。
+function bindCountdownDrag(wrap) {
+  if (!wrap || wrap.__cdDragBound) return;
+  wrap.__cdDragBound = true;
+  let sy = 0, sx = 0, decided = null, dragged = 0;
+  function decide(dy, dx) {
+    if (decided) return decided;
+    if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) decided = 'v';
+    else if (Math.abs(dx) > 8) decided = 'h';
+    return decided;
+  }
+  // 鼠标（桌面）
+  wrap.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) return;
+    sy = e.clientY; sx = e.clientX; decided = null; dragged = 0;
+    function move(ev) {
+      const dy = ev.clientY - sy, dx = ev.clientX - sx;
+      if (decide(dy, dx) === 'v') { dragged = Math.abs(dy); ev.preventDefault(); }
+    }
+    function up(ev) {
+      wrap.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      const dy = ev.clientY - sy;
+      if (decided === 'v' && Math.abs(dy) >= 36) {
+        window.__countdownSwitch && window.__countdownSwitch(dy < 0 ? 1 : -1);
+      }
+    }
+    wrap.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
+  // 触摸（手机）
+  wrap.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) return;
+    sy = e.touches[0].clientY; sx = e.touches[0].clientX; decided = null; dragged = 0;
+  }, { passive: true });
+  wrap.addEventListener('touchmove', function (e) {
+    if (e.touches.length !== 1) return;
+    const dy = e.touches[0].clientY - sy, dx = e.touches[0].clientX - sx;
+    if (decide(dy, dx) === 'v') {
+      dragged = Math.abs(dy);
+      if (e.cancelable) e.preventDefault();
+    }
+  }, { passive: false });
+  wrap.addEventListener('touchend', function (e) {
+    if (decided !== 'v') return;
+    const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : sy;
+    const dy = t - sy;
+    if (Math.abs(dy) >= 36) {
+      window.__countdownSwitch && window.__countdownSwitch(dy < 0 ? 1 : -1);
+    }
+  });
+  // 点小点直达（拖动松手会附带 click，按位移过滤掉）
+  wrap.addEventListener('click', function (e) {
+    if (dragged > 8) { dragged = 0; return; }
+    const dot = e.target && e.target.closest ? e.target.closest('.countdown-dot') : null;
+    if (dot) {
+      const idx = parseInt(dot.getAttribute('data-idx') || '-1', 10);
+      if (idx >= 0) window.__countdownSwitch && window.__countdownSwitch(0, idx);
+    }
+  });
 }
 
 // 工具函数：从日期字符串中取今年的下一个日期（月-日相同）
