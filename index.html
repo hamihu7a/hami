@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-381">
+<meta name="hami-build" content="2026-10-23-382">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1813,6 +1813,15 @@
     font-size: 13px; font-weight: 800; color: #2fb350; margin: 14px 0 7px;
     display: flex; align-items: center; gap: 6px; letter-spacing: .3px;
   }
+  /* v382：折叠开关条——默认收起只露这一行，点一下展开全部 */
+  .todo-done-head.todo-done-bar {
+    background: #f6fff9; border: 1px solid #c8efd5; border-radius: 12px;
+    padding: 9px 12px; cursor: pointer; user-select: none;
+    transition: box-shadow .14s ease, background .14s ease;
+  }
+  .todo-done-head.todo-done-bar:hover { background: #ecfdf1; box-shadow: 0 3px 10px rgba(47,179,80,0.1); }
+  .todo-done-head.todo-done-bar:active { transform: scale(.99); }
+  .todo-done-caret { margin-left: auto; font-size: 11.5px; font-weight: 700; color: #2fb350; opacity: .85; white-space: nowrap; }
   .todo-done-count { background: #e8f7ec; color: #2fb350; font-size: 11px; font-weight: 700; padding: 1px 9px; border-radius: 12px; }
   .todo-done-item {
     display: flex; align-items: flex-start; gap: 9px;
@@ -5130,53 +5139,6 @@
 .sch-btn.del { color:#d46a6a; border-color:#f0cccc; }
 .sch-btn:hover { filter:brightness(.97); }
 
-/* ===== 定制单进度看板（v134 重设计：紧凑排版 + 制作中/已交付状态配色 + 渐变徽章） ===== */
-.kanban-stack { display:flex; flex-direction:column; gap:8px; margin-top:6px; }
-.kanban-section { border-radius:14px; padding:8px; border:1px solid transparent; }
-.kanban-section.making { background:linear-gradient(160deg,#fff3ec 0%,#ffeef3 100%); border-color:#ffd9c4; }
-.kanban-section.done   { background:linear-gradient(160deg,#f3efff 0%,#fdeff6 100%); border-color:#e3d6ff; }
-.kanban-sec-head { font-size:12.5px; font-weight:700; color:#5a3a48; margin-bottom:7px; display:flex; align-items:center; gap:6px; }
-.kb-sec-ico { font-size:14px; line-height:1; }
-.kb-sec-label { letter-spacing:.5px; }
-.kanban-count { min-width:18px; text-align:center; font-size:11px; font-weight:700; color:#fff; border-radius:20px; padding:1px 7px; }
-.kanban-section.making .kanban-count { background:linear-gradient(135deg,#ff9a76,#ff6f9c); box-shadow:0 2px 6px rgba(255,111,156,.35); }
-.kanban-section.done   .kanban-count { background:linear-gradient(135deg,#b79cff,#8f6fd8); box-shadow:0 2px 6px rgba(143,111,216,.35); }
-.kb-sec-sum { margin-left:auto; font-size:11px; font-weight:700; color:#c45c7c; background:rgba(255,255,255,.78); border:1px solid #ffd9e4; border-radius:20px; padding:1px 8px; white-space:nowrap; }
-.kanban-section.done .kb-sec-sum { color:#7a5fc0; border-color:#e3d6ff; }
-.kanban-sec-body { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; min-height:34px; }
-.kanban-empty { font-size:11.5px; color:#c9aeb9; text-align:center; padding:9px 0; }
-.kb-card { position:relative; background:#fff; border:1px solid #f3dde6; border-radius:10px; padding:7px 8px 7px 12px; box-shadow:0 1px 4px rgba(255,158,181,.10); transition:transform .15s ease, box-shadow .15s ease; overflow:hidden; }
-.kb-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; }
-.kb-card.st-making::before { background:linear-gradient(180deg,#ffb199,#ff7fa3); }
-.kb-card.st-done::before   { background:linear-gradient(180deg,#c3a6ff,#8f6fd8); }
-.kb-card.overdue { border-color:#f5b5b5; background:#fff7f7; }
-.kb-card.overdue::before { background:linear-gradient(180deg,#ff9a9a,#e85f5f); }
-.kb-card:hover { transform:translateY(-1px); box-shadow:0 4px 10px rgba(209,75,115,.16); }
-.kb-card-desc { font-size:12.5px; font-weight:600; color:#4a3540; line-height:1.35; word-break:break-word; }
-.kb-card-meta { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:5px; flex-wrap:wrap; }
-.kb-amt { font-size:11px; font-weight:700; color:#fff; background:linear-gradient(135deg,#ff8aa6,#ff6f9c); border-radius:20px; padding:1px 8px; box-shadow:0 1px 4px rgba(255,111,156,.30); white-space:nowrap; }
-.kb-dead { font-size:10.5px; color:#b06a80; background:#fff0f4; border:1px solid #ffd9e4; border-radius:20px; padding:1px 7px; white-space:nowrap; }
-.kb-dead.soon { color:#c77429; background:#fff6e8; border-color:#ffe3b8; }
-.kb-dead.late { color:#fff; font-weight:600; background:linear-gradient(135deg,#ff8f8f,#e85f5f); border-color:transparent; }
-.kb-dead.none { color:#c9aeb9; background:#faf4f7; border-color:#f0e2e8; }
-.kb-card-actions { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
-.kb-move, .kb-edit, .kb-del { height:22px; line-height:18px; border-radius:20px; border:1px solid transparent; background:#fff; cursor:pointer; font-size:11px; padding:0 9px; font-family:inherit; transition:filter .15s ease, transform .15s ease; }
-.kb-move { font-weight:600; }
-.kanban-section.making .kb-move { background:linear-gradient(135deg,#4cd08d,#2fae6e); color:#fff; box-shadow:0 2px 5px rgba(47,174,110,.30); }
-.kanban-section.done   .kb-move { background:#fff; border-color:#d8c8ff; color:#8f6fd8; }
-.kb-edit { border-color:#ffc0d0; background:#fff5f8; color:#d14b73; }
-.kb-del  { border-color:#f3c3c3; background:#fffafa; color:#d46a6a; }
-.kb-move:hover, .kb-edit:hover, .kb-del:hover { filter:brightness(.95); transform:translateY(-1px); }
-.kb-pager { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
-.kb-page-btn { border:1px solid #ffd0de; background:linear-gradient(135deg,#fff5f8,#ffeef4); color:#d14b73; border-radius:20px; padding:3px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; }
-.kb-page-btn:hover:not([disabled]) { background:linear-gradient(135deg,#ffe3ec,#ffd6e4); }
-.kb-page-info { font-size:11px; color:#b06a80; background:#fff; border:1px solid #f0d8e2; border-radius:20px; padding:2px 10px; }
-.kb-page-btn[disabled] { cursor:not-allowed; }
-
-@media (max-width: 480px) {
-  .kanban-sec-body { grid-template-columns:1fr; }
-}
-
 /* ===== 身体数据（三围） ===== */
 .body-latest { background:#fff; border:1px solid #f0d8e2; border-radius:12px; padding:10px; }
 .body-latest-title { font-size:12px; color:#9a6b7b; margin-bottom:8px; }
@@ -5473,9 +5435,9 @@ body.theme-vintage .modal {
 }
 
 /* —— 内容小块：白底卡片（全站唯一一层底色）；天气/黄历的 home-card 排除（保持透出背景图）；
-      定制单 kb-card / 如厕·面膜 toilet-card / 运动 ex-card / 经期 period-card / 旅行 travel-card 的子元素
+      如厕·面膜 toilet-card / 运动 ex-card / 经期 period-card / 旅行 travel-card 的子元素
       与 .card-actions 按钮容器都排除（类名含 "card" 的子元素会被误刷成一行一个小盒子）—— */
-body.theme-vintage [class*="card"]:not(.card):not([class*="title"]):not([class*="head"]):not([class*="icon"]):not([class*="img"]):not([class*="avatar"]):not([class*="thumb"]):not([class*="sticker"]):not(.hcp-card):not([class*="home-card"]):not([class*="kb-card"]):not([class*="toilet-card-"]):not([class*="ex-card-"]):not([class*="period-card-"]):not([class*="travel-card-"]):not(.card-actions) {
+body.theme-vintage [class*="card"]:not(.card):not([class*="title"]):not([class*="head"]):not([class*="icon"]):not([class*="img"]):not([class*="avatar"]):not([class*="thumb"]):not([class*="sticker"]):not(.hcp-card):not([class*="home-card"]):not([class*="toilet-card-"]):not([class*="ex-card-"]):not([class*="period-card-"]):not([class*="travel-card-"]):not(.card-actions) {
   background: #ffffff !important;
   border: none !important;
   box-shadow: 0 2px 10px rgba(233,120,158,0.12) !important;
@@ -5502,7 +5464,6 @@ body.theme-vintage .ex-row,
 body.theme-vintage .fin-flow-row,
 body.theme-vintage .rank-row,
 body.theme-vintage .cr-stat,
-body.theme-vintage .kb-edit,
 body.theme-vintage .goal-row {
   background: #ffffff !important;
 }
@@ -5727,7 +5688,6 @@ body.theme-vintage .month-selector button {
 }
 body.theme-vintage .flow-toggle-btn,
 body.theme-vintage .date-fold-btn,
-body.theme-vintage .kb-page-btn,
 body.theme-vintage .sch-page-btn {
   background: #ffffff !important;
   border: 1px solid #ffd0dc !important;
@@ -5737,7 +5697,6 @@ body.theme-vintage .month-selector { gap: 6px !important; margin-bottom: 8px !im
 /* —— 分页按钮：一行不转行 —— */
 body.theme-vintage .flow-toggle-btn,
 body.theme-vintage .date-fold-btn,
-body.theme-vintage .kb-page-btn,
 body.theme-vintage .sch-page-btn {
   white-space: nowrap !important;
   flex: 0 0 auto !important;
@@ -5793,14 +5752,8 @@ body.theme-vintage .media-record-list { gap: 5px !important; }
 body.theme-vintage .mh-item { padding: 6px 9px !important; margin-bottom: 4px !important; }
 body.theme-vintage .ex-row { padding: 6px 9px !important; margin-bottom: 4px !important; }
 body.theme-vintage .todo-card { margin-bottom: 4px !important; }
-/* —— 记录条底色统一纯白（如厕/面膜记录卡、定制单看板两区）—— */
+/* —— 记录条底色统一纯白（如厕/面膜记录卡）—— */
 body.theme-vintage .toilet-card { background: #ffffff !important; }
-body.theme-vintage .kanban-section.making,
-body.theme-vintage .kanban-section.done {
-  background: #ffffff !important;
-  border-color: #f6e0e8 !important;
-}
-body.theme-vintage .kb-card.overdue { background: #ffffff !important; }
 /* —— 使用说明行与工具条之间上下间距收紧 —— */
 body.theme-vintage .tip-box { padding: 4px 10px !important; margin-bottom: 3px !important; }
 body.theme-vintage .hami-help-toggle { padding: 4px 12px !important; }
@@ -6419,18 +6372,6 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div class="todo-filter-bar" id="todo-filter-bar"></div>
       <div id="todo-list-daily"></div>
       <div id="todo-done-daily" class="todo-done-section"></div>
-    </div>
-
-    <!-- v381：定制单进度看板（原在工作代办面板，随工作代办移除迁到这里） -->
-    <div class="card todo-section" id="custom-board-card">
-      <div class="todo-panel-head">
-        <div class="todo-panel-head-left">
-          <div class="todo-panel-title">定制单进度看板</div>
-          <div class="todo-panel-sub">制作 · 交付</div>
-        </div>
-        <button class="todo-add-btn" type="button" onclick="openCustomOrderModal()">➕ 加定制单</button>
-      </div>
-      <div class="kanban" id="custom-kanban"></div>
     </div>
   </div>
 
@@ -10260,7 +10201,7 @@ function hamiRenderAllNow() {
       'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext', 'renderTripPlans', 'renderAccount',
       'renderReminder', 'renderQuotes', 'renderBackupReminder', 'renderTodoPanel',
-      'renderCustomBoard', 'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo'];
+      'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
     });
@@ -15276,12 +15217,11 @@ function switchTodoCat(cat) {
 // v42 待办改每页 3 条翻页（主人要求所有记录列表每页 3 条、数据永不丢）
 const TODO_PAGE = 3;
 const __todoPage = {};
-const __todoDoneExpanded = { daily: false, work: false };
-// v171：已完成待办改成左右翻页（每页 3 条），记录每个分类当前页码
-const __todoDonePage = { daily: 0, work: 0 };
-function todoDoneGo(cat, delta) {
-  __todoDonePage[cat] = Math.max(0, (__todoDonePage[cat] || 0) + delta);
-  renderTodoPanel();
+// v382：已完成待办默认折叠——标题栏即开关，点一下展开全部，再点收起
+let __todoDoneOpen = false;
+function toggleTodoDone() {
+  __todoDoneOpen = !__todoDoneOpen;
+  renderTodoDoneForCat('daily');
 }
 function todoGo(cat, delta) {
   const items = (store.userTodos || [])
@@ -15360,7 +15300,7 @@ function renderTodoListForCat(cat) {
   });
   el.innerHTML = html;
 }
-// v85：已完成区块（照「已完成图文项目」模式——>3 条折叠，可一键恢复 / 删除）
+// v85：已完成区块（可一键恢复 / 删除）；v382：默认折叠，点标题栏一次展开全部
 function renderTodoDoneForCat(cat) {
   const el = document.getElementById('todo-done-' + cat);
   if (!el) return;
@@ -15372,28 +15312,40 @@ function renderTodoDoneForCat(cat) {
     el.innerHTML = '<div class="todo-done-head">✅ 已完成待办 <span class="todo-done-count">0</span></div><div class="todo-done-empty">暂无已完成项目，完成一条待办后会出现在这里~</div>';
     return;
   }
-  // v171：改成翻页式——每页固定 3 条，其余用 ‹ › 翻页查看，不再「展开全部」一次性铺开（照 v126 自媒体明细模式）
-  const TODO_PAGE = 3;
-  const totalPages = Math.ceil(items.length / TODO_PAGE);
-  if (typeof __todoDonePage[cat] !== 'number' || __todoDonePage[cat] < 0) __todoDonePage[cat] = 0;
-  if (__todoDonePage[cat] >= totalPages) __todoDonePage[cat] = totalPages - 1;
-  const start = __todoDonePage[cat] * TODO_PAGE;
-  const viewList = items.slice(start, start + TODO_PAGE);
-  let html = '<div class="todo-done-head">✅ 已完成待办 <span class="todo-done-count">' + items.length + '</span></div>';
-  viewList.forEach(o => {
-    const ut = o.ut;
-    const doneAt = ut.completedAt ? fmtDoneDate(ut.completedAt) : '';
-    const tg = todoTagInfo(ut.tag);
-    if (ut.type === 'group') {
-      const subs = ut.subtasks || [];
-      const subHtml = subs.map(function (s) {
-        return `<div class="todo-subitem done"><span class="todo-subcheck done">✓</span><span class="todo-subtext">${escTodo(s.text)}</span></div>`;
-      }).join('');
+  // v382：标题栏就是折叠开关——默认收起只露一行；展开后一次看全，不再翻页
+  let html = '<div class="todo-done-head todo-done-bar" onclick="toggleTodoDone()" title="点击' + (__todoDoneOpen ? '收起' : '展开') + '已完成待办">'
+    + '✅ 已完成待办 <span class="todo-done-count">' + items.length + '</span>'
+    + '<span class="todo-done-caret">' + (__todoDoneOpen ? '收起 ▴' : '展开 ▾') + '</span></div>';
+  if (__todoDoneOpen) {
+    items.forEach(o => {
+      const ut = o.ut;
+      const doneAt = ut.completedAt ? fmtDoneDate(ut.completedAt) : '';
+      const tg = todoTagInfo(ut.tag);
+      if (ut.type === 'group') {
+        const subs = ut.subtasks || [];
+        const subHtml = subs.map(function (s) {
+          return `<div class="todo-subitem done"><span class="todo-subcheck done">✓</span><span class="todo-subtext">${escTodo(s.text)}</span></div>`;
+        }).join('');
+        html += `<div class="todo-done-item">
+          <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
+          <div class="todo-body">
+            <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog all">✓ 全部完成 ${subs.length}/${subs.length}</span></div>
+            <div class="todo-sublist">${subHtml}</div>
+            <div class="todo-meta">
+              <span class="todo-tag" data-tag="${tg.key}">${tg.icon} ${tg.name}</span>
+              ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
+              <span class="todo-meta-sp"></span>
+              <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
+              <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
+            </div>
+          </div>
+        </div>`;
+        return;
+      }
       html += `<div class="todo-done-item">
         <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
         <div class="todo-body">
-          <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog all">✓ 全部完成 ${subs.length}/${subs.length}</span></div>
-          <div class="todo-sublist">${subHtml}</div>
+          <div class="todo-text">${escTodo(ut.text)}</div>
           <div class="todo-meta">
             <span class="todo-tag" data-tag="${tg.key}">${tg.icon} ${tg.name}</span>
             ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
@@ -15403,28 +15355,8 @@ function renderTodoDoneForCat(cat) {
           </div>
         </div>
       </div>`;
-      return;
-    }
-    html += `<div class="todo-done-item">
-      <span class="todo-check done" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">✓</span>
-      <div class="todo-body">
-        <div class="todo-text">${escTodo(ut.text)}</div>
-        <div class="todo-meta">
-          <span class="todo-tag" data-tag="${tg.key}">${tg.icon} ${tg.name}</span>
-          ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
-          <span class="todo-meta-sp"></span>
-          <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
-          <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
-        </div>
-      </div>
-    </div>`;
-  });
-  if (totalPages > 1) {
-    html += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
-      + '<button class="date-fold-btn" type="button" onclick="todoDoneGo(\'' + cat + '\',-1)"' + (__todoDonePage[cat] === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
-      + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__todoDonePage[cat] + 1) + '/' + totalPages + ' 页 · 共 ' + items.length + ' 条</span>'
-      + '<button class="date-fold-btn" type="button" onclick="todoDoneGo(\'' + cat + '\',1)"' + (__todoDonePage[cat] >= totalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
-      + '</div>';
+    });
+    html += '<button class="todo-done-toggle" type="button" onclick="toggleTodoDone()">收起 ▴</button>';
   }
   el.innerHTML = html;
 }
@@ -15448,96 +15380,6 @@ function renderTodoPanel() {
   renderTodoDoneForCat('daily');
 }
 
-// ==================== 定制单进度看板 ====================
-const CUSTOM_PHASES = [
-  { key: 'making', label: '制作中' },
-  { key: 'done', label: '已交付' }
-];
-function moveCustomOrder(idx, dir) {
-  if (!store.customOrders || !store.customOrders[idx]) return;
-  const o = store.customOrders[idx];
-  // 只有制作中 / 已交付两态：→ 交付，← 回制作中
-  if (o.status === 'done') {
-    if (dir < 0) o.status = 'making';
-  } else {
-    if (dir > 0) o.status = 'done';
-  }
-  saveData();
-  try { renderCustomBoard(); } catch (e) {}
-  try { renderIncome(); } catch (e) {}
-}
-let customBoardPages = { making: 0, done: 0 };
-const CUSTOM_PAGE = 4;
-function customBoardGo(phase, delta) {
-  customBoardPages[phase] = Math.max(0, (customBoardPages[phase] || 0) + delta);
-  renderCustomBoard();
-}
-function renderCustomBoard() {
-  if (!store.customOrders) store.customOrders = [];
-  const el = document.getElementById('custom-kanban');
-  if (!el) return;
-  const today = todayStr();
-
-  // 去掉待沟通：原 pending 的订单在制作中区显示，避免数据丢失
-  const isPhase = function (o, key) {
-    const st = o.status || 'making';
-    if (key === 'making') return st !== 'done';
-    return st === 'done';
-  };
-
-  let html = '<div class="kanban-stack">';
-  CUSTOM_PHASES.forEach(function (ph) {
-    const all = store.customOrders
-      .map(function (o, idx) { return { o: o, idx: idx }; })
-      .filter(function (x) { return isPhase(x.o, ph.key); })
-      .sort(function (a, b) { return (a.o.deadline || '9999-99-99').localeCompare(b.o.deadline || '9999-99-99'); });
-    const total = all.length;
-    const maxPg = Math.max(0, Math.ceil(total / CUSTOM_PAGE) - 1);
-    const page = Math.min(customBoardPages[ph.key] || 0, maxPg);
-    const list = all.slice(page * CUSTOM_PAGE, page * CUSTOM_PAGE + CUSTOM_PAGE);
-    const sumAmt = all.reduce(function (s, x) { return s + (Number(x.o.amount) || 0); }, 0);
-    const secIco = ph.key === 'making' ? '🎨' : '✅';
-    html += '<div class="kanban-section ' + ph.key + '"><div class="kanban-sec-head">'
-      + '<span class="kb-sec-ico">' + secIco + '</span><span class="kb-sec-label">' + ph.label + '</span>'
-      + '<span class="kanban-count">' + total + '</span>'
-      + (total > 0 ? '<span class="kb-sec-sum">¥' + (typeof fmtMoney === 'function' ? fmtMoney(sumAmt) : sumAmt) + '</span>' : '')
-      + '</div><div class="kanban-sec-body">';
-    if (total === 0) {
-      html += '<div class="kanban-empty">' + (ph.key === 'making' ? '🌱 暂无制作中的订单' : '🌸 暂无已交付订单') + '</div>';
-    } else {
-      list.forEach(function (x) {
-        const o = x.o; const idx = x.idx;
-        const dd = o.deadline || '';
-        const overdue = (ph.key !== 'done' && dd && dd < today);
-        const soon = (ph.key !== 'done' && dd && !overdue && ((new Date(dd) - new Date(today)) <= 3 * 86400000));
-        const ddShow = dd ? (dd.slice(0, 4) === today.slice(0, 4) ? dd.slice(5) : dd) : '';
-        const moveBtn = ph.key === 'making'
-          ? '<button class="kb-move" title="交付" onclick="moveCustomOrder(' + idx + ',1)">→ 交付</button>'
-          : '<button class="kb-move" title="回退制作中" onclick="moveCustomOrder(' + idx + ',-1)">← 重做</button>';
-        const deadPill = dd
-          ? '<span class="kb-dead' + (overdue ? ' late' : (soon ? ' soon' : '')) + '">' + (overdue ? '逾期 ' : '截止 ') + ddShow + '</span>'
-          : '<span class="kb-dead none">无期限</span>';
-        html += '<div class="kb-card st-' + ph.key + (overdue ? ' overdue' : '') + '">'
-          + '<div class="kb-card-desc">' + (o.desc || '定制单') + '</div>'
-          + '<div class="kb-card-meta"><span class="kb-amt">¥' + (typeof fmtMoney === 'function' ? fmtMoney(o.amount) : (o.amount || 0)) + '</span>' + deadPill + '</div>'
-          + '<div class="kb-card-actions">' + moveBtn
-          + '<button class="kb-edit" onclick="openCustomOrderModal(' + idx + ')">改</button>'
-          + '<button class="kb-del" onclick="deleteCustomOrder(' + idx + ')">删</button></div>'
-          + '</div>';
-      });
-      if (total > CUSTOM_PAGE) {
-        html += '<div class="kb-pager">'
-          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',-1)"' + (page <= 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
-          + '<span class="kb-page-info">第 ' + (page + 1) + '/' + (maxPg + 1) + ' 页 · 共 ' + total + ' 单</span>'
-          + '<button class="kb-page-btn" onclick="customBoardGo(\'' + ph.key + '\',1)"' + (page >= maxPg ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
-          + '</div>';
-      }
-    }
-    html += '</div></div>';
-  });
-  html += '</div>';
-  el.innerHTML = html;
-}
 function addUserTodo(cat) {
   cat = cat || 'daily';
   const inp = document.getElementById('todo-input-' + cat);
@@ -16114,7 +15956,6 @@ function switchPanel(name, navEl) {
   }
   if (name === 'todo' || name === 'todo-daily' || name === 'todo-work') {
     try { renderTodoPanel(); } catch (e) {}
-    try { renderCustomBoard(); } catch (e) {}
   }
   // 切到「经期记录 / 洗头记录」面板，强制重渲（renderPeriod 会同时刷新经期与洗头两块，按 id 落地到各自面板）
   if (name === 'period' || name === 'wash') {
@@ -25525,7 +25366,6 @@ try { bindWeightGoalInput(); } catch(e) { console.log('bindWeightGoalInput error
 try { renderFitness(); } catch(e) { console.log('renderFitness error:', e.message); }
 try { renderMedia(); } catch(e) { console.log('renderMedia error:', e.message); }
 try { renderPublishCalendar(); } catch(e) { console.log('renderPublishCalendar error:', e.message); }
-try { renderCustomBoard(); } catch(e) { console.log('renderCustomBoard error:', e.message); }
 try { renderInspire(); } catch(e) { console.log('renderInspire error:', e.message); }
 try { backfillFutureDoneToMedia(); } catch(e) { console.log('backfillFutureDoneToMedia error:', e.message); }
 try { fixMediaRecordsStampedByBackfill(); } catch(e) { console.log('fixMediaRecordsStampedByBackfill error:', e.message); }
