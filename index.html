@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-387">
+<meta name="hami-build" content="2026-10-24-388">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1935,79 +1935,36 @@
     #todo-list-daily .todo-act .todo-btn { font-size: 10px; padding: 3px 5px; }
   }
 
-  /* ============ v384 成长记录（马卡龙 5 分类：读书/学习/技能/电影/其他） ============ */
-  .growth-min-wrap { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; border: 1px solid #ffd0dc; border-radius: 9px; padding: 0 8px; background: #fff; }
-  .growth-min-wrap .todo-date-input { width: 72px; border: none; padding: 7px 2px; background: transparent; }
-  #growth-summary { display: flex; flex-wrap: wrap; gap: 5px; }
-  .growth-sum-chip { font-size: 10.5px; font-weight: 800; border-radius: 20px; padding: 2px 9px; white-space: nowrap; }
-  .growth-sum-chip.wk  { color: #7a5fc0; background: #f3efff; border: 1px solid #e3d6ff; }
-  .growth-sum-chip.all { color: #d14b73; background: #ffeef3; border: 1px solid #ffd9e4; }
-  .growth-sum-chip.min { color: #2f8a52; background: #e8f7ec; border: 1px solid #c8efd5; }
-  /* 本周汇总卡 */
-  .growth-week {
-    margin: 10px 0 4px; padding: 10px 12px; border-radius: 14px;
-    background: linear-gradient(135deg,#fff5f8,#f3efff); border: 1px solid #ffd9e4;
-  }
-  .growth-week-title { font-size: 12.5px; font-weight: 800; color: #6a4a58; margin-bottom: 6px; letter-spacing: .3px; }
-  .growth-week-nums { display: flex; flex-wrap: wrap; gap: 5px; }
-  .growth-week-chip { font-size: 11px; font-weight: 700; border-radius: 20px; padding: 2px 9px; background: rgba(255,255,255,.85); border: 1px solid #f0d8e2; color: #6a4a58; }
-  .growth-week-chip.none { color: #a38a98; }
-  /* 记录条 */
-  .growth-item {
-    display: flex; align-items: flex-start; gap: 9px;
-    background: #fff; border: 1px solid #f3dde6; border-radius: 12px;
-    padding: 10px 12px; margin-bottom: 7px; transition: box-shadow .14s ease;
-  }
-  .growth-item:hover { box-shadow: 0 3px 10px rgba(209,75,115,0.10); }
-  .growth-cat {
-    display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 800;
-    border-radius: 7px; padding: 2px 8px; white-space: nowrap; flex: 0 0 auto; margin-top: 1px;
-  }
-  .growth-cat[data-cat="read"]  { color: #d14b73; background: #ffe4ee; }
-  .growth-cat[data-cat="study"] { color: #3f6fd0; background: #e6efff; }
-  .growth-cat[data-cat="skill"] { color: #8a4fd0; background: #f1e8ff; }
-  .growth-cat[data-cat="movie"] { color: #c8860d; background: #fff3d6; }
-  .growth-cat[data-cat="other"] { color: #a07e8e; background: #f5edf1; }
-  .growth-body { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 4px; }
-  .growth-text { font-size: 14px; font-weight: 600; color: #4a3340; line-height: 1.45; word-break: break-word; }
-  .growth-meta { display: flex; align-items: center; gap: 6px; }
-  .growth-min { font-size: 11px; color: #2f8a52; font-weight: 700; background: #e8f7ec; border-radius: 20px; padding: 1px 8px; white-space: nowrap; }
-  .growth-meta-sp { flex: 1; }
-  .growth-grp-head { display: flex; align-items: center; gap: 7px; margin: 13px 0 7px; }
-  .growth-grp-head:first-child { margin-top: 6px; }
-  .growth-grp-name { font-size: 13px; font-weight: 800; color: #6a4a58; letter-spacing: .3px; }
-  .growth-grp-count { font-size: 10.5px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 10px; padding: 1px 8px; }
-  .growth-grp-line { flex: 1; height: 1px; background: linear-gradient(90deg,#f0d6e0,transparent); }
-  @media (max-width: 420px) {
-    .growth-meta { flex-wrap: wrap; row-gap: 4px; }
-    .growth-meta .todo-btn { padding: 3px 9px; }
-    .growth-min-wrap .todo-date-input { width: 60px; }
-  }
-
-  /* ============ v386 提升计划 2.0（三区：每日习惯 / 长期目标 / 每日笔记） ============ */
+  /* ============ v388 提升计划 2.0 顶部小计 chips ============ */
+  #plan-summary { display: flex; flex-wrap: wrap; gap: 5px; }
+  .plan-sum-chip { font-size: 10.5px; font-weight: 800; border-radius: 20px; padding: 2px 9px; white-space: nowrap; }
+  .plan-sum-chip.wk  { color: #7a5fc0; background: #f3efff; border: 1px solid #e3d6ff; }
+  .plan-sum-chip.all { color: #d14b73; background: #ffeef3; border: 1px solid #ffd9e4; }
+  .plan-sum-chip.min { color: #2f8a52; background: #e8f7ec; border: 1px solid #c8efd5; }
+  /* ============ v388 提升计划 2.0（三区：每日习惯 / 长期目标 / 技能提升） ============ */
   /* 分区 */
-  .plan-zone { margin-top: 16px; }
+  .plan-zone { margin-top: 11px; }
   .plan-zone:first-of-type { margin-top: 4px; }
   .plan-zone-title {
     display: flex; align-items: baseline; gap: 7px;
     font-size: 15px; font-weight: 800; color: #5a3a48; letter-spacing: .3px;
-    padding-bottom: 7px; border-bottom: 2px dashed #f3d3de; margin-bottom: 10px;
+    padding-bottom: 5px; border-bottom: 2px dashed #f3d3de; margin-bottom: 8px;
   }
   .plan-zone-ico { font-size: 16px; }
   .plan-zone-sub { font-size: 10.5px; font-weight: 700; color: #b08a9c; letter-spacing: 0; }
   /* 每日习惯三卡 */
-  .plan-habit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+  .plan-habit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .plan-habit {
-    position: relative; border-radius: 16px; padding: 12px 11px 11px;
+    position: relative; border-radius: 16px; padding: 10px 10px 9px;
     background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
-    display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+    display: flex; flex-direction: column; gap: 7px; overflow: hidden;
   }
   .plan-habit::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; }
   .plan-habit[data-habit="skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
   .plan-habit[data-habit="english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
   .plan-habit[data-habit="hair"]::before    { background: linear-gradient(90deg,#c9a8ff,#9d7bf0); }
   .plan-habit-head { display: flex; align-items: center; gap: 8px; }
-  .plan-habit-ico { font-size: 24px; line-height: 1; }
+  .plan-habit-ico { font-size: 22px; line-height: 1; }
   .plan-habit-name { font-size: 14.5px; font-weight: 800; color: #4a3340; line-height: 1.25; }
   .plan-habit-cadence {
     margin-left: auto; flex: 0 0 auto; font-size: 10px; font-weight: 800; border-radius: 20px;
@@ -2019,7 +1976,7 @@
   /* 打卡大按钮 */
   .plan-check-btn {
     width: 100%; border: none; cursor: pointer; font-family: inherit;
-    border-radius: 13px; padding: 10px 6px 9px; text-align: center;
+    border-radius: 13px; padding: 8px 6px 7px; text-align: center;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     transition: filter .15s ease, transform .15s ease;
   }
@@ -2071,18 +2028,18 @@
   .plan-hair-btn:hover { filter: brightness(.97); }
   .plan-hair-btn.primary { background: linear-gradient(135deg,#b79cff,#8f6fd8); color: #fff; border-color: transparent; box-shadow: 0 2px 6px rgba(143,111,216,.25); }
   /* 长期目标卡 */
-  .plan-goal-list { display: flex; flex-direction: column; gap: 9px; }
+  .plan-goal-list { display: flex; flex-direction: column; gap: 8px; }
   .plan-goal {
-    position: relative; border-radius: 16px; padding: 12px 13px;
+    position: relative; border-radius: 16px; padding: 10px 12px;
     background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
-    display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+    display: flex; flex-direction: column; gap: 7px; overflow: hidden;
   }
   .plan-goal::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
   .plan-goal[data-goal="drive"]::before   { background: linear-gradient(180deg,#ffb199,#ff7fa3); }
   .plan-goal[data-goal="health"]::before  { background: linear-gradient(180deg,#8fd0ff,#5aa8f0); }
   .plan-goal[data-goal="slim"]::before    { background: linear-gradient(180deg,#a8e6c1,#4cbf88); }
   .plan-goal-head { display: flex; align-items: center; gap: 9px; }
-  .plan-goal-ico { font-size: 22px; line-height: 1; }
+  .plan-goal-ico { font-size: 20px; line-height: 1; }
   .plan-goal-name { font-size: 14.5px; font-weight: 800; color: #4a3340; }
   .plan-goal-note { font-size: 10.5px; font-weight: 700; color: #b08a9c; margin-top: 1px; }
   .plan-goal-date-btn {
@@ -2146,7 +2103,7 @@
   .plan-ck-gline { flex: 1; height: 1px; background: linear-gradient(90deg,#f3dde6,rgba(243,221,230,0)); }
   .plan-ck-item {
     display: flex; gap: 9px; align-items: flex-start;
-    background: #fff; border: 1.5px solid #f3dde6; border-radius: 12px; padding: 8px 10px;
+    background: #fff; border: 1.5px solid #f3dde6; border-radius: 12px; padding: 7px 10px;
   }
   .plan-ck-item.done { background: #f7fdf9; border-color: #cdeed9; }
   .plan-ck-box {
@@ -2178,6 +2135,133 @@
   @media (max-width: 420px) {
     .plan-ck-item { padding: 7px 9px; }
     .plan-ck-name { font-size: 12.5px; }
+  }
+
+  /* ============ v388 技能提升卡（一个技能拆成步骤，一步步吃透） ============ */
+  .plan-skill-addbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .plan-skill-addhint { flex: 1; min-width: 0; font-size: 11px; font-weight: 700; color: #b08a9c; }
+  .plan-skill-add-btn {
+    flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit;
+    border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg,#b79cff,#8f6fd8); box-shadow: 0 2px 6px rgba(143,111,216,.25);
+    transition: filter .15s ease;
+  }
+  .plan-skill-add-btn:hover { filter: brightness(.97); }
+  .plan-skill-add {
+    display: none; flex-direction: column; gap: 7px;
+    background: #fbf9ff; border: 1.5px dashed #d8c8ff; border-radius: 13px; padding: 9px 10px; margin-bottom: 9px;
+  }
+  .plan-skill-add.show { display: flex; }
+  .plan-skill-addrow { display: flex; gap: 6px; flex-wrap: wrap; }
+  .plan-skill-addrow input {
+    border: 1px solid #e3d6ff; border-radius: 9px; background: #fff; padding: 6px 9px;
+    font-size: 12px; font-weight: 600; color: #5a3a48; font-family: inherit; outline: none;
+    transition: border-color .15s ease;
+  }
+  .plan-skill-addrow input:focus { border-color: #b79cff; }
+  .plan-skill-addrow .sk-ico { width: 46px; text-align: center; }
+  .plan-skill-addrow .sk-name { flex: 1 1 150px; min-width: 130px; }
+  .plan-skill-addrow .sk-date { flex: 1 1 120px; min-width: 110px; }
+  .plan-skill-addbtns { display: flex; gap: 6px; }
+  .sk-add-ok, .sk-add-cancel {
+    border-radius: 9px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit;
+  }
+  .sk-add-ok { border: none; color: #fff; background: linear-gradient(135deg,#b79cff,#8f6fd8); }
+  .sk-add-cancel { border: 1px solid #e3d6ff; background: #fff; color: #8f6fd8; }
+  .plan-skill-list { display: flex; flex-direction: column; gap: 8px; }
+  .plan-skill {
+    position: relative; border-radius: 16px; padding: 10px 12px;
+    background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
+    display: flex; flex-direction: column; gap: 7px; overflow: hidden;
+  }
+  .plan-skill::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(180deg,#c9a8ff,#8f6fd8); }
+  .plan-skill-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .plan-skill-ico { font-size: 22px; line-height: 1; }
+  .plan-skill-tname { min-width: 0; }
+  .plan-skill-name { font-size: 14.5px; font-weight: 800; color: #4a3340; }
+  .plan-skill-dates {
+    margin-left: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 800; color: #7a5fc0; background: #f5f1ff; border: 1px solid #e3d6ff;
+    border-radius: 20px; padding: 3px 10px; white-space: nowrap;
+  }
+  .plan-skill-dates.over { color: #d14b73; background: #ffeef3; border-color: #ffd9e4; }
+  .plan-skill-acts { display: flex; gap: 2px; flex: 0 0 auto; }
+  .plan-skill-act {
+    border: none; background: none; cursor: pointer; font-family: inherit;
+    font-size: 12px; padding: 3px 6px; border-radius: 8px; color: #b08a9c; transition: background .15s ease;
+  }
+  .plan-skill-act:hover { background: #faf0f5; color: #d14b73; }
+  .plan-skill-mid { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+  .plan-skill-big { display: flex; align-items: baseline; gap: 4px; }
+  .plan-skill-big .gb-label { font-size: 11px; font-weight: 700; color: #b08a9c; margin-right: 2px; }
+  .plan-skill-big .gb-num { font-size: 24px; font-weight: 800; line-height: 1; color: #7a5fc0; font-variant-numeric: tabular-nums; }
+  .plan-skill-big .gb-unit { font-size: 12px; font-weight: 800; color: #8a6270; }
+  .plan-skill-pct { font-size: 11.5px; font-weight: 800; color: #6a4a58; margin-left: auto; padding-bottom: 2px; }
+  .plan-skill-bar { height: 9px; border-radius: 20px; background: #f1e8f8; overflow: hidden; }
+  .plan-skill-bar .gbar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#c9a8ff,#8f6fd8); transition: width .3s ease; }
+  .plan-sk-steps { display: flex; flex-direction: column; gap: 4px; }
+  .plan-sk-step {
+    display: flex; align-items: center; gap: 7px;
+    background: #fbf9ff; border: 1.5px solid #efe7fc; border-radius: 10px; padding: 6px 9px;
+    transition: background .15s ease;
+  }
+  .plan-sk-step.done { background: #f7fdf9; border-color: #cdeed9; }
+  .plan-sk-box {
+    width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto; cursor: pointer;
+    border: 2px solid #d8c8ff; background: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; color: #fff; line-height: 1; transition: transform .15s ease;
+  }
+  .plan-sk-box:hover { transform: scale(1.12); }
+  .plan-sk-step.done .plan-sk-box { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; box-shadow: 0 2px 5px rgba(47,174,110,.30); }
+  .plan-sk-no {
+    flex: 0 0 auto; width: 17px; height: 17px; border-radius: 6px; background: #efe7fc; color: #7a5fc0;
+    font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  .plan-sk-step.done .plan-sk-no { background: #d8f0e2; color: #2f9a63; }
+  .plan-sk-sname { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 700; color: #4a3540; }
+  .plan-sk-step.done .plan-sk-sname { color: #9db8a8; text-decoration: line-through; text-decoration-color: rgba(47,163,110,.5); }
+  .plan-sk-sdate { flex: 0 0 auto; font-size: 10px; font-weight: 800; color: #2f9a63; }
+  .plan-sk-sdel {
+    flex: 0 0 auto; border: none; background: none; cursor: pointer; font-family: inherit;
+    color: #c9b8d6; font-size: 11px; padding: 2px 4px; border-radius: 6px;
+  }
+  .plan-sk-sdel:hover { color: #d14b73; background: #fdeef3; }
+  .plan-sk-addrow2 { display: flex; gap: 6px; }
+  .plan-sk-addrow2 input {
+    flex: 1; min-width: 0; border: 1px dashed #d8c8ff; border-radius: 9px; background: #fbf9ff;
+    padding: 6px 10px; font-size: 12px; font-weight: 600; color: #5a3a48; font-family: inherit; outline: none;
+    transition: border-color .15s ease;
+  }
+  .plan-sk-addrow2 input:focus { border-style: solid; border-color: #b79cff; }
+  .plan-sk-addrow2 button {
+    flex: 0 0 auto; border: none; border-radius: 9px; padding: 6px 13px; font-size: 12px; font-weight: 800;
+    color: #fff; background: linear-gradient(135deg,#b79cff,#8f6fd8); cursor: pointer; font-family: inherit;
+  }
+  .plan-skill-edit {
+    display: none; align-items: center; gap: 6px; flex-wrap: wrap;
+    background: #fbf9ff; border: 1px dashed #d8c8ff; border-radius: 11px; padding: 8px 10px;
+  }
+  .plan-skill-edit.show { display: flex; }
+  .plan-skill-edit input {
+    border: 1px solid #e3d6ff; border-radius: 8px; padding: 5px 8px; font-size: 12px;
+    font-family: inherit; color: #5a3a48; background: #fff;
+  }
+  .plan-skill-edit .sk-edit-ico { width: 42px; text-align: center; }
+  .plan-skill-edit .sk-edit-name { flex: 1 1 120px; min-width: 110px; }
+  .plan-skill-edit .sk-edit-date { flex: 1 1 120px; min-width: 110px; }
+  .plan-skill-edit .sk-edit-ok, .plan-skill-edit .sk-edit-cancel {
+    border-radius: 8px; padding: 5px 11px; font-size: 11.5px; font-weight: 800; cursor: pointer; font-family: inherit;
+  }
+  .plan-skill-edit .sk-edit-ok { border: none; color: #fff; background: linear-gradient(135deg,#b79cff,#8f6fd8); }
+  .plan-skill-edit .sk-edit-cancel { border: 1px solid #e3d6ff; background: #fff; color: #8f6fd8; }
+  .plan-skill-empty {
+    border: 1.5px dashed #e3d6ff; border-radius: 14px; padding: 18px 14px; text-align: center;
+    font-size: 12.5px; font-weight: 700; color: #a38ab8; line-height: 1.8;
+  }
+  @media (max-width: 420px) {
+    .plan-skill { padding: 9px 10px; }
+    .plan-skill-name { font-size: 14px; }
+    .plan-sk-sname { font-size: 12px; }
   }
 
   /* ============ 财务记录（支出/收入/转账） ============ */
@@ -7699,15 +7783,15 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     </div>
   </div>
 
-  <!-- ==================== 🚀 提升计划 2.0（v386：每日习惯 + 长期目标 + 每日笔记） ==================== -->
+  <!-- ==================== 🚀 提升计划 2.0（v388：每日习惯 + 长期目标 + 技能提升） ==================== -->
   <div id="panel-growth" class="panel">
     <div class="card todo-section">
       <div class="todo-panel-head">
         <div class="todo-panel-head-left">
           <div class="todo-panel-title">🚀 提升计划 2.0</div>
-          <div class="todo-panel-sub">每日习惯坚持打卡 · 长期目标盯进度 · 每天记一笔成长</div>
+          <div class="todo-panel-sub">每日习惯坚持打卡 · 长期目标盯进度 · 技能拆步骤吃透</div>
         </div>
-        <div class="todo-summary" id="growth-summary"></div>
+        <div class="todo-summary" id="plan-summary"></div>
       </div>
 
       <!-- 一区：每日习惯（三个，节奏各不相同） -->
@@ -7722,24 +7806,26 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <div class="plan-goal-list" id="plan-goal-list"></div>
       </div>
 
-      <!-- 三区：每日笔记（原成长记录） -->
+      <!-- 三区：技能提升（v388：想学什么就拆成步骤，一步步吃透） -->
       <div class="plan-zone">
-        <div class="plan-zone-title"><span class="plan-zone-ico">📖</span>每日笔记<span class="plan-zone-sub">今天读了什么 · 学了什么</span></div>
-        <div class="todo-add-row">
-          <textarea id="growth-input" class="todo-text-input" rows="2" placeholder="今天读了什么、学了什么~（如：读完《XX》第三章 / 学了 30 分钟英语）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addGrowthLog()}"></textarea>
-          <div class="todo-tag-picker" id="growth-tag-picker"></div>
-          <div class="todo-add-bottom">
-            <div class="todo-date-wrap">
-              <input type="date" id="growth-date" class="todo-date-input" title="选择日期（可选，默认今天）">
-            </div>
-            <div class="growth-min-wrap">
-              <input type="number" id="growth-minutes" class="todo-date-input" min="0" step="5" placeholder="分钟" title="时长（分钟，可选）">
-            </div>
-            <button class="todo-add-btn" onclick="addGrowthLog()">➕ 记录</button>
+        <div class="plan-zone-title"><span class="plan-zone-ico">🛠</span>技能提升<span class="plan-zone-sub">想学什么 · 拆成步骤 · 一步步吃透</span></div>
+        <div class="plan-skill-addbar">
+          <span class="plan-skill-addhint">想学新技能就开一张卡，把大目标拆成小步骤，完成一步打个勾</span>
+          <button class="plan-skill-add-btn" type="button" onclick="planSkillAddToggle()">➕ 新技能</button>
+        </div>
+        <div class="plan-skill-add" id="plan-skill-add">
+          <div class="plan-skill-addrow">
+            <input id="sk-add-ico" class="sk-ico" maxlength="2" placeholder="🎯" title="图标 emoji">
+            <input id="sk-add-name" class="sk-name" maxlength="20" placeholder="技能名，如：视频剪辑 / 烘焙 / 吉他">
+            <input type="date" id="sk-add-start" class="sk-date" title="开始日期（默认今天）">
+            <input type="date" id="sk-add-end" class="sk-date" title="目标完成日期">
+          </div>
+          <div class="plan-skill-addbtns">
+            <button class="sk-add-ok" type="button" onclick="planSkillAdd()">创建技能卡</button>
+            <button class="sk-add-cancel" type="button" onclick="planSkillAddToggle()">取消</button>
           </div>
         </div>
-        <div id="growth-week-card"></div>
-        <div id="growth-list"></div>
+        <div id="plan-skill-list"></div>
       </div>
     </div>
   </div>
@@ -7994,6 +8080,7 @@ let store = {
   weightGoal: null,   // 目标体重（斤），健康模块可设，用于进度环
   userTodos: [],      // 用户自定义待办 { date, text, done }
   growthLogs: [],     // v384 成长记录 { id, date, text, cat, minutes, createdAt }——今天学了什么
+  planSkills: [],     // v388 技能提升 { key, name, icon, start, end, steps:[{key,name,done,date}] }——想学什么拆成步骤
   // v386 提升计划 2.0：每日习惯（4 个，节奏不同）+ 长期目标（3 个，进度/清单/倒计时）
   planHabits: [
     // daily：history { 'YYYY-MM-DD': 1 }，打了卡就有
@@ -8391,7 +8478,7 @@ function countStoreRecords(s) {
   let n = 0;
   const arrKeys = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords', 'bodyRecords',
     'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'periodRecords', 'washRecords',
-    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords', 'benchmarkNotes', 'growthLogs', 'planHabits', 'planGoals'];
+    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords', 'benchmarkNotes', 'growthLogs', 'planHabits', 'planGoals', 'planSkills'];
   arrKeys.forEach(function (k) { if (Array.isArray(s[k])) n += s[k].length; });
   const objKeys = ['dailyCheckin', 'periodRestDays'];
   objKeys.forEach(function (k) { if (s[k] && typeof s[k] === 'object') n += Object.keys(s[k]).length; });
@@ -8558,6 +8645,7 @@ function hamiBackupManifest() {
     ['重要日期', cnt('importantDates')],
     ['游玩计划/行程', cnt('travelPlans') + cnt('trips')],
     ['成长记录', cnt('growthLogs')],
+    ['提升计划·技能', cnt('planSkills')],
     ['提升计划(习惯/目标)', cnt('planHabits') + cnt('planGoals')],
     ['自媒体账号', Object.keys(s.accounts || {}).length],
     ['背景图', bgN + ' 张'],
@@ -9725,6 +9813,7 @@ function _dedupKey(k, it) {
     case 'growthLogs': return 'gr_' + (it.id || it.date || '');
     case 'planHabits': return 'ph_' + (it.key || '');
     case 'planGoals': return 'pg_' + (it.key || '');
+    case 'planSkills': return 'psk_' + (it.key || '');
     case 'inspireRecords': return 'ir_' + (it.date || '') + '_' + (it.title || '');
     case 'periodRecords': return 'pr_' + (it.start || '') + '_' + (it.end || '');
     case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (typeof normDest === 'function' ? normDest(it.destination) : (it.destination || ''));
@@ -9799,6 +9888,7 @@ function _contentKey(k, it) {
   // history/steps 这类打卡态单独哈希：改期/改名/改节奏都能被识别为新内容，云同步才推得动。
   if (k === 'planHabits') return 'phC_' + (it.key || '') + '|' + JSON.stringify(it.history || {}) + '|' + JSON.stringify(it.steps || {}) + '|' + (it.cycleDays != null ? it.cycleDays : '') + '|' + (it.lastWash || '');
   if (k === 'planGoals') return 'pgC_' + (it.key || '') + '|' + (it.date || '') + '|' + (it.months != null ? it.months : '') + '|' + (it.note || '');
+  if (k === 'planSkills') return 'pskC_' + (it.name || '') + '|' + (it.start || '') + '|' + (it.end || '') + '|' + (it.steps || []).map(function (x) { return (x.done ? '1' : '0') + x.name; }).join(',');
   // 工作代办：文本+分类即身份（与 saveData/loadData 的去重语义一致）。之前这个函数漏掉了 userTodos，
   // 导致云端与本地 early 记录 id 不一致时合并认不出是同一条，把云端 done:false 的旧卡当新记录并进来，
   // 已完成被打回未完成（v166 修复）。
@@ -10489,7 +10579,7 @@ function _hamiNewId(listKey) {
     futurePosts: 'fp', topicLibrary: 'tl', benchmarkNotes: 'bn', inspireRecords: 'ir',
     periodRecords: 'pr', washRecords: 'ws', toiletRecords: 'tl2', maskRecords: 'mk',
     accountRecords: 'ar', importantDates: 'imp', travelPlans: 'tv', trips: 'trip',
-    publishSchedule: 'sch', growthLogs: 'gr', planHabits: 'ph', planGoals: 'pg'
+    publishSchedule: 'sch', growthLogs: 'gr', planHabits: 'ph', planGoals: 'pg', planSkills: 'psk'
   };
   return (P[listKey] || 'rec') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 }
@@ -10518,7 +10608,7 @@ function hamiPushRecord(listKey, item) {
 var HAMI_ID_LISTS = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords',
   'bodyRecords', 'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'benchmarkNotes',
   'inspireRecords', 'periodRecords', 'washRecords', 'toiletRecords', 'maskRecords', 'accountRecords',
-  'importantDates', 'travelPlans', 'trips', 'publishSchedule', 'growthLogs', 'planHabits', 'planGoals'];
+  'importantDates', 'travelPlans', 'trips', 'publishSchedule', 'growthLogs', 'planHabits', 'planGoals', 'planSkills'];
 function hamiEnsureIds() {
   try {
     for (let i = 0; i < HAMI_ID_LISTS.length; i++) {
@@ -10545,7 +10635,7 @@ function hamiRenderAllNow() {
       'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext', 'renderTripPlans', 'renderAccount',
       'renderReminder', 'renderQuotes', 'renderBackupReminder', 'renderTodoPanel',
-      'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo', 'renderGrowth'];
+      'renderBodyStats', 'renderPublishCalendar', 'renderHomeTodo', 'renderPlanPanel'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
     });
@@ -10666,7 +10756,7 @@ var _SYNC_LIST_NAME = {
   inspireRecords: '灵感', topicLibrary: '选题', importantDates: '生日/纪念日',
   mediaRecords: '自媒体更新', futurePosts: '待完成图文', travelPlans: '出行计划',
   trips: '出游记录', publishSchedule: '发布排期', benchmarkNotes: '对标笔记',
-  growthLogs: '成长记录', planHabits: '提升计划·习惯', planGoals: '提升计划·目标'
+  growthLogs: '成长记录', planHabits: '提升计划·习惯', planGoals: '提升计划·目标', planSkills: '提升计划·技能'
 };
 function markSyncAction(label) {
   try {
@@ -10803,7 +10893,7 @@ function renderAllFromCloud() {
     const fns = ['renderDesktop', 'renderIncome', 'renderFitness', 'renderMedia', 'renderInspire',
       'renderFuturePosts', 'renderPeriod', 'renderToilet', 'renderMask',
       'renderHabit', 'renderWashPredict', 'renderImpNext',
-      'renderTripPlans', 'renderAccount', 'renderReminder', 'renderQuotes', 'renderBackupReminder', 'renderGrowth'];
+      'renderTripPlans', 'renderAccount', 'renderReminder', 'renderQuotes', 'renderBackupReminder', 'renderPlanPanel'];
     fns.forEach(function (n) {
       try { if (typeof window[n] === 'function') window[n](); } catch (e) {}
     });
@@ -13203,7 +13293,7 @@ function sendHamiCmd() {
 
   // 防御：清掉各数组里可能残留的 null/undefined 脏数据（多由异常合并产生），
   // 否则下面的 find/findIndex(r => r.date===...) 会因 r 为 null 抛错，导致整条指令作废、记录"记了又消失"。
-  ['weightRecords','bodyRecords','periodRecords','washRecords','maskRecords','exerciseRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs','planHabits','planGoals'].forEach(function (k) {
+  ['weightRecords','bodyRecords','periodRecords','washRecords','maskRecords','exerciseRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs','planHabits','planGoals','planSkills'].forEach(function (k) {
     if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
   });
 
@@ -13753,7 +13843,7 @@ function loadData() {
     } catch (e) {}
     // 脏数据防护：清掉各数组里可能残留的 null/undefined（多由异常合并产生），
     // 避免后续 r.date 访问抛错导致面板崩溃、或记录"记了又消失"。一处净化、全局受益。
-    ['weightRecords','bodyRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs','planHabits','planGoals'].forEach(function (k) {
+    ['weightRecords','bodyRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs','planHabits','planGoals','planSkills'].forEach(function (k) {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
     // v57：启动加载阶段就按墓碑剔一遍被删记录（即使云端旧备份把幽灵塞回来也立刻清掉）
@@ -16306,7 +16396,7 @@ function switchPanel(name, navEl) {
   }
   // 切到「成长记录」面板，强制重渲（顺手把日期框默认回今天）
   if (name === 'growth') {
-    try { renderGrowth(); } catch (e) {}
+    try { renderPlanPanel(); } catch (e) {}
   }
   // 切到「经期记录 / 洗头记录」面板，强制重渲（renderPeriod 会同时刷新经期与洗头两块，按 id 落地到各自面板）
   if (name === 'period' || name === 'wash') {
@@ -25286,9 +25376,9 @@ function fillDateInputDefault(id) {
   } catch (e) {}
 }
 
-// ==================== 🚀 提升计划 2.0（v386：每日习惯 + 长期目标 + 每日笔记） ====================
-// 与「成长记录」（growthLogs）共存：本区是「坚持打卡 + 盯目标」，笔记区还是原来的「今天学了什么」。
-// 可移除性：删本段 JS + plan CSS 块 + 面板里两个 zone div + store 两个默认键 + 各清单接入点即可，不影响其他模块。
+// ==================== 🚀 提升计划 2.0（v388：每日习惯 + 长期目标 + 技能提升） ====================
+// 与「成长记录」（growthLogs）数据共存：老笔记原样留在 store/备份里，本区只做「打卡 + 盯目标 + 技能拆步」。
+// 可移除性：删本段 JS + plan CSS 块 + 面板三个 zone div + store 三个默认键 + 各清单接入点即可，不影响其他模块。
 function planEnsure() {
   const _p = function (n) { return String(n).padStart(2, '0'); };
   const _dstr = function (d) { return d.getFullYear() + '-' + _p(d.getMonth() + 1) + '-' + _p(d.getDate()); };
@@ -25363,6 +25453,8 @@ function planEnsure() {
   store.planGoals.forEach(function (g) {
     if (g.key === 'slim' && !g.date) { g.date = slimDefault; touched = true; }
   });
+  // 5) 技能卡（v388）：老用户没有就建空数组
+  if (!Array.isArray(store.planSkills)) { store.planSkills = []; touched = true; }
   return touched;
 }
 function planHabitByKey(k) {
@@ -25676,135 +25768,221 @@ function planGoalSave(key) {
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
 }
 
-// ==================== 五·成长记录（v384：记录每天学了什么，每周自动汇总） ====================
-const GROWTH_TAGS = [
-  { key: 'read',  icon: '📖', name: '读书' },
-  { key: 'study', icon: '🎓', name: '学习' },
-  { key: 'skill', icon: '🛠', name: '技能' },
-  { key: 'movie', icon: '🎬', name: '电影' },
-  { key: 'other', icon: '🌈', name: '其他' }
-];
-let __growthTagSel = 'read';
-function growthTagInfo(k) {
-  for (let i = 0; i < GROWTH_TAGS.length; i++) if (GROWTH_TAGS[i].key === k) return GROWTH_TAGS[i];
-  return GROWTH_TAGS[GROWTH_TAGS.length - 1];
+// ==================== v388 技能提升（想学什么 · 拆成步骤 · 一步步吃透） ====================
+function planSkillByKey(k) {
+  planEnsure();
+  const list = store.planSkills || [];
+  for (let i = 0; i < list.length; i++) if (list[i].key === k) return list[i];
+  return null;
 }
-function renderGrowthTagPicker() {
-  const el = document.getElementById('growth-tag-picker');
-  if (!el) return;
-  el.innerHTML = GROWTH_TAGS.map(function (t) {
-    return '<span class="todo-tag-chip' + (__growthTagSel === t.key ? ' on' : '') + '" data-tag="' + t.key + '" onclick="pickGrowthTag(\'' + t.key + '\')">' + t.icon + ' ' + t.name + '</span>';
-  }).join('');
+function planSkillIdx(k) {
+  const list = store.planSkills || [];
+  for (let i = 0; i < list.length; i++) if (list[i].key === k) return i;
+  return -1;
 }
-function pickGrowthTag(k) { __growthTagSel = k; renderGrowthTagPicker(); }
-// 本周一（「本周成长」汇总按周一起算）
-function growthWeekStart() {
-  const d = new Date(todayStr() + 'T00:00:00');
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // 周一=0 … 周日=6
-  const p = function (n) { return String(n).padStart(2, '0'); };
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+// 添加表单：展开时开始日默认今天、目标日默认一个月后
+function planSkillAddToggle() {
+  const box = document.getElementById('plan-skill-add');
+  if (!box) return;
+  box.classList.toggle('show');
+  if (box.classList.contains('show')) {
+    const sd = document.getElementById('sk-add-start');
+    const ed = document.getElementById('sk-add-end');
+    if (sd && !sd.value) sd.value = todayStr();
+    if (ed && !ed.value) {
+      const d = new Date(todayStr() + 'T00:00:00'); d.setMonth(d.getMonth() + 1);
+      const p = function (n) { return String(n).padStart(2, '0'); };
+      ed.value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+    const nm = document.getElementById('sk-add-name');
+    if (nm) nm.focus();
+  }
 }
-function addGrowthLog() {
-  const inp = document.getElementById('growth-input');
-  if (!inp) return;
-  const text = (inp.value || '').trim();
-  if (!text) { try { finToast('先写点今天学了什么吧~'); } catch (e) {} return; }
-  const dateEl = document.getElementById('growth-date');
-  const minEl = document.getElementById('growth-minutes');
-  const date = (dateEl && dateEl.value) ? dateEl.value : todayStr();
-  const minutes = (minEl && minEl.value !== '' && minEl.value != null) ? Math.max(0, parseInt(minEl.value, 10) || 0) : 0;
-  hamiPushRecord('growthLogs', { date: date, text: text, cat: __growthTagSel || 'other', minutes: minutes, createdAt: Date.now() });
+function planSkillAdd() {
+  const nm = document.getElementById('sk-add-name');
+  const name = (nm && nm.value || '').trim();
+  if (!name) { try { finToast('先给技能起个名吧~'); } catch (e) {} return; }
+  const icoEl = document.getElementById('sk-add-ico');
+  const sd = document.getElementById('sk-add-start');
+  const ed = document.getElementById('sk-add-end');
+  store.planSkills.push({
+    key: 'sk' + Date.now().toString(36),
+    name: name.slice(0, 20),
+    icon: ((icoEl && icoEl.value || '').trim() || '🎯').slice(0, 2),
+    start: (sd && sd.value) || todayStr(),
+    end: (ed && ed.value) || '',
+    steps: []
+  });
   saveData();
-  inp.value = '';
-  if (minEl) minEl.value = '';
-  try { finToast('已记下今天的成长 🌱'); } catch (e) {}
-  try { renderGrowth(); } catch (e) {}
-}
-function removeGrowthLog(idx) {
-  if (!store.growthLogs || !store.growthLogs[idx]) return;
-  hamiDeleteRecord('growthLogs', idx, { render: function () { try { renderGrowth(); } catch (e) {} } });
+  if (nm) nm.value = '';
+  if (icoEl) icoEl.value = '';
+  planSkillAddToggle();
+  renderPlanSkills();
+  try { finToast('技能卡建好了，把大目标拆成步骤吧 🛠'); } catch (e) {}
   try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
 }
-function renderGrowth() {
-  renderGrowthTagPicker();
-  // v386：提升计划三区——先渲染习惯卡与目标卡（数据补齐/默认日期也在这里落库）
+function planSkillEdit(key) {
+  const box = document.getElementById('sk-edit-' + key);
+  if (box) box.classList.add('show');
+}
+function planSkillCancelEdit(key) {
+  const box = document.getElementById('sk-edit-' + key);
+  if (box) box.classList.remove('show');
+}
+function planSkillSaveEdit(key) {
+  const sk = planSkillByKey(key);
+  if (!sk) return;
+  const nm = document.getElementById('sk-edit-name-' + key);
+  const ico = document.getElementById('sk-edit-ico-' + key);
+  const sd = document.getElementById('sk-edit-start-' + key);
+  const ed = document.getElementById('sk-edit-end-' + key);
+  const name = (nm && nm.value || '').trim();
+  if (!name) { try { finToast('技能名不能空着哦'); } catch (e) {} return; }
+  sk.name = name.slice(0, 20);
+  if (ico && ico.value.trim()) sk.icon = ico.value.trim().slice(0, 2);
+  if (sd && sd.value) sk.start = sd.value;
+  sk.end = (ed && ed.value) || '';
+  saveData();
+  renderPlanSkills();
+  try { finToast('已保存 ✏️'); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+function planSkillRemove(key) {
+  const idx = planSkillIdx(key);
+  if (idx < 0) return;
+  const sk = store.planSkills[idx];
+  if (!confirm('删除技能卡「' + sk.name + '」？里面的步骤记录会一起删掉。')) return;
+  hamiDeleteRecord('planSkills', idx, { render: function () { try { renderPlanSkills(); } catch (e) {} } });
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+function planStepAdd(key) {
+  const sk = planSkillByKey(key);
+  if (!sk) return;
+  const inp = document.getElementById('sk-step-input-' + key);
+  const name = (inp && inp.value || '').trim();
+  if (!name) { try { finToast('先写这一步要做什么~'); } catch (e) {} return; }
+  if (!Array.isArray(sk.steps)) sk.steps = [];
+  sk.steps.push({ key: 's' + Date.now().toString(36) + '_' + sk.steps.length, name: name.slice(0, 40), done: false, date: '' });
+  saveData();
+  if (inp) inp.value = '';
+  renderPlanSkills();
+  try { finToast('加好了，完成这一步就打个勾 ✅'); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// 步骤打卡：打勾记日期，再点取消
+function planStepToggle(skillKey, stepKey) {
+  const sk = planSkillByKey(skillKey);
+  if (!sk || !Array.isArray(sk.steps)) return;
+  let st = null;
+  sk.steps.forEach(function (x) { if (x.key === stepKey) st = x; });
+  if (!st) return;
+  if (st.done) { st.done = false; st.date = ''; }
+  else { st.done = true; st.date = todayStr(); }
+  saveData();
+  renderPlanSkills();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+function planStepRemove(skillKey, stepKey) {
+  const sk = planSkillByKey(skillKey);
+  if (!sk || !Array.isArray(sk.steps)) return;
+  let i = -1;
+  for (let j = 0; j < sk.steps.length; j++) if (sk.steps[j].key === stepKey) { i = j; break; }
+  if (i < 0) return;
+  sk.steps.splice(i, 1);
+  saveData();
+  renderPlanSkills();
+  try { finToast('步骤已删'); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// 日期小签：同年只显 月/日，跨年显全年
+function planSkDateLabel(dstr) {
+  if (!dstr) return '';
+  const today = todayStr();
+  return dstr.slice(0, 4) === today.slice(0, 4) ? dstr.slice(5).replace('-', ' / ') : dstr.replace(/-/g, ' / ');
+}
+function renderPlanSkills() {
+  const el = document.getElementById('plan-skill-list');
+  if (!el) return;
+  planEnsure();
+  const list = store.planSkills || [];
+  if (!list.length) {
+    el.innerHTML = '<div class="plan-skill-empty">还没有技能卡~<br>点上面的「➕ 新技能」，把想学的大目标拆成一步步小任务<br>完成一步打个勾，进度条自己会往前走 🌈</div>';
+    return;
+  }
+  const today = todayStr();
+  let html = '';
+  list.forEach(function (sk) {
+    const steps = Array.isArray(sk.steps) ? sk.steps : [];
+    const doneN = 0;
+    let doneCount = 0;
+    steps.forEach(function (x) { if (x.done) doneCount++; });
+    const pct = steps.length ? Math.round(doneCount / steps.length * 100) : 0;
+    const remain = sk.end ? Math.round((new Date(sk.end + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
+    const over = remain != null && remain < 0 && doneCount < steps.length;
+    const dateTxt = (sk.start || sk.end)
+      ? ('📅 ' + (sk.start ? planSkDateLabel(sk.start) : '?') + ' → ' + (sk.end ? planSkDateLabel(sk.end) : '不定')
+        + (remain == null ? '' : (remain >= 0 ? ' · 剩 ' + remain + ' 天' : ' · 超期 ' + (-remain) + ' 天')))
+      : '';
+    let stepsHtml = '';
+    if (steps.length) {
+      stepsHtml = '<div class="plan-sk-steps">' + steps.map(function (s, i) {
+        const dl = s.date ? planSkDateLabel(s.date) : '';
+        return '<div class="plan-sk-step' + (s.done ? ' done' : '') + '">'
+          + '<span class="plan-sk-box" role="checkbox" aria-checked="' + (s.done ? 'true' : 'false') + '" onclick="planStepToggle(\'' + sk.key + '\',\'' + s.key + '\')">' + (s.done ? '✓' : '') + '</span>'
+          + '<span class="plan-sk-no">' + (i + 1) + '</span>'
+          + '<span class="plan-sk-sname">' + escTodo(s.name) + '</span>'
+          + (s.done && dl ? '<span class="plan-sk-sdate">✓ ' + dl + '</span>' : '')
+          + '<button class="plan-sk-sdel" type="button" title="删掉这一步" onclick="planStepRemove(\'' + sk.key + '\',\'' + s.key + '\')">✕</button>'
+          + '</div>';
+      }).join('') + '</div>';
+    }
+    html += '<div class="plan-skill" data-skill="' + sk.key + '">'
+      + '<div class="plan-skill-head"><span class="plan-skill-ico">' + escTodo(sk.icon || '🎯') + '</span>'
+      + '<div class="plan-skill-tname"><div class="plan-skill-name">' + escTodo(sk.name) + '</div></div>'
+      + (dateTxt ? '<span class="plan-skill-dates' + (over ? ' over' : '') + '">' + dateTxt + '</span>' : '')
+      + '<span class="plan-skill-acts">'
+      + '<button class="plan-skill-act" type="button" title="改一改" onclick="planSkillEdit(\'' + sk.key + '\')">✏️</button>'
+      + '<button class="plan-skill-act" type="button" title="删除技能卡" onclick="planSkillRemove(\'' + sk.key + '\')">🗑</button>'
+      + '</span></div>'
+      + '<div class="plan-skill-mid"><div class="plan-skill-big"><span class="gb-label">已吃透</span><span class="gb-num">' + doneCount + '</span><span class="gb-unit">/ ' + steps.length + ' 步</span></div>'
+      + '<span class="plan-skill-pct">' + (steps.length ? (pct + '%' + (doneCount === steps.length ? ' · 全部吃透 🎉' : '')) : '还没拆步骤，先加几步吧') + '</span></div>'
+      + '<div class="plan-skill-bar"><span class="gbar-fill" style="width:' + pct + '%;"></span></div>'
+      + stepsHtml
+      + '<div class="plan-sk-addrow2"><input id="sk-step-input-' + sk.key + '" maxlength="40" placeholder="加一步：如「跟着教程剪出第一条 vlog」" onkeydown="if(event.key===\'Enter\'){event.preventDefault();planStepAdd(\'' + sk.key + '\')}">'
+      + '<button type="button" onclick="planStepAdd(\'' + sk.key + '\')">加一步</button></div>'
+      + '<div class="plan-skill-edit" id="sk-edit-' + sk.key + '">'
+      + '<input class="sk-edit-ico" id="sk-edit-ico-' + sk.key + '" maxlength="2" value="' + escTodo(sk.icon || '🎯') + '">'
+      + '<input class="sk-edit-name" id="sk-edit-name-' + sk.key + '" maxlength="20" value="' + escTodo(sk.name) + '">'
+      + '<input class="sk-edit-date" type="date" id="sk-edit-start-' + sk.key + '" value="' + (sk.start || '') + '" title="开始日期">'
+      + '<input class="sk-edit-date" type="date" id="sk-edit-end-' + sk.key + '" value="' + (sk.end || '') + '" title="目标完成日期">'
+      + '<button class="sk-edit-ok" type="button" onclick="planSkillSaveEdit(\'' + sk.key + '\')">保存</button>'
+      + '<button class="sk-edit-cancel" type="button" onclick="planSkillCancelEdit(\'' + sk.key + '\')">取消</button>'
+      + '</div>'
+      + '</div>';
+  });
+  el.innerHTML = html;
+}
+// ==================== 提升计划面板总渲染（v388：习惯 + 目标 + 技能 + 顶部小计） ====================
+function renderPlanPanel() {
   try { if (planEnsure()) saveData(); } catch (e) {}
   try { renderPlanHabits(); } catch (e) {}
   try { renderPlanGoals(); } catch (e) {}
-  const listEl = document.getElementById('growth-list');
-  const weekEl = document.getElementById('growth-week-card');
-  const sumEl = document.getElementById('growth-summary');
-  const dateEl = document.getElementById('growth-date');
-  if (!listEl) return;
-  if (dateEl && !dateEl.value) dateEl.value = todayStr();   // 默认今天，省得主人每次选
-  const items = (store.growthLogs || [])
-    .map(function (g, i) { return { g: g, i: i }; })
-    .sort(function (a, b) {
-      const dc = (b.g.date || '').localeCompare(a.g.date || '');
-      if (dc !== 0) return dc;
-      return (b.g.createdAt || 0) - (a.g.createdAt || 0);
-    });
-  const today = todayStr();
-  const weekStart = growthWeekStart();
-  const weekItems = items.filter(function (o) { return o.g.date >= weekStart && o.g.date <= today; });
-  const totalMin = function (arr) { return arr.reduce(function (s, o) { return s + (parseInt(o.g.minutes) || 0); }, 0); };
-  // 顶部小计：本周 / 累计 / 本周时长
+  try { renderPlanSkills(); } catch (e) {}
+  const sumEl = document.getElementById('plan-summary');
   if (sumEl) {
-    sumEl.innerHTML = '<span class="growth-sum-chip wk">本周 ' + weekItems.length + ' 条</span>'
-      + '<span class="growth-sum-chip all">累计 ' + items.length + ' 条</span>'
-      + (totalMin(weekItems) > 0 ? '<span class="growth-sum-chip min">本周 ' + totalMin(weekItems) + ' 分钟</span>' : '');
+    const sk = store.planSkills || [];
+    let stepsAll = 0, doneAll = 0, going = 0;
+    sk.forEach(function (x) {
+      const st = x.steps || [];
+      const d = st.filter(function (y) { return y.done; }).length;
+      stepsAll += st.length; doneAll += d;
+      if (st.length && d < st.length) going++;
+    });
+    let h = '<span class="plan-sum-chip all">技能 ' + sk.length + ' 个</span>';
+    if (going) h += '<span class="plan-sum-chip wk">进行中 ' + going + '</span>';
+    if (stepsAll) h += '<span class="plan-sum-chip min">已完成 ' + doneAll + ' / ' + stepsAll + ' 步</span>';
+    sumEl.innerHTML = h;
   }
-  // 本周汇总卡（按分类点数）
-  if (weekEl) {
-    if (weekItems.length === 0) {
-      weekEl.innerHTML = '<div class="growth-week"><div class="growth-week-title">🌱 本周成长</div><div class="growth-week-nums"><span class="growth-week-chip none">本周还没记录，今天就开始第一条吧~</span></div></div>';
-    } else {
-      const cnt = {};
-      weekItems.forEach(function (o) { const c = o.g.cat || 'other'; cnt[c] = (cnt[c] || 0) + 1; });
-      const chips = GROWTH_TAGS.filter(function (t) { return cnt[t.key]; }).map(function (t) {
-        return '<span class="growth-week-chip">' + t.icon + ' ' + t.name + ' ' + cnt[t.key] + '</span>';
-      }).join('');
-      const minTxt = totalMin(weekItems) > 0 ? ' · 共 ' + totalMin(weekItems) + ' 分钟' : '';
-      weekEl.innerHTML = '<div class="growth-week"><div class="growth-week-title">🌱 本周成长 · ' + weekItems.length + ' 条' + minTxt + '</div><div class="growth-week-nums">' + chips + '</div></div>';
-    }
-  }
-  // 列表：按日期分组（今天 / 昨天 / M月D日）
-  if (items.length === 0) {
-    listEl.innerHTML = '<div class="todo-empty">还没有成长记录~<br><span style="font-size:12px;font-weight:600;">记下第一条，每周自动汇总给你看 🌷</span></div>';
-    return;
-  }
-  const yest = (function () {
-    const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() - 1);
-    const p = function (n) { return String(n).padStart(2, '0'); };
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-  })();
-  function dateLabel(dstr) {
-    if (dstr === today) return '今天';
-    if (dstr === yest) return '昨天';
-    return parseInt(dstr.slice(5, 7), 10) + '月' + parseInt(dstr.slice(8, 10), 10) + '日';
-  }
-  let html = '';
-  let lastDate = '';
-  items.forEach(function (o) {
-    const g = o.g;
-    if (g.date !== lastDate) {
-      lastDate = g.date;
-      const dayCnt = items.filter(function (x) { return x.g.date === g.date; }).length;
-      html += '<div class="growth-grp-head"><span class="growth-grp-name">' + dateLabel(g.date || '') + '</span>'
-        + '<span class="growth-grp-count">' + dayCnt + '</span><span class="growth-grp-line"></span></div>';
-    }
-    const tg = growthTagInfo(g.cat);
-    const min = parseInt(g.minutes) || 0;
-    html += '<div class="growth-item">'
-      + '<span class="growth-cat" data-cat="' + tg.key + '">' + tg.icon + ' ' + tg.name + '</span>'
-      + '<div class="growth-body"><div class="growth-text">' + escTodo(g.text) + '</div>'
-      + '<div class="growth-meta">'
-      + (min > 0 ? '<span class="growth-min">⏱ ' + min + ' 分钟</span>' : '<span class="growth-min" style="color:#a38a98;background:#faf4f7;">未记时长</span>')
-      + '<span class="growth-meta-sp"></span>'
-      + '<button class="todo-btn del" onclick="removeGrowthLog(' + o.i + ')" title="删除">删</button>'
-      + '</div></div></div>';
-  });
-  listEl.innerHTML = html;
 }
 
 // ==================== 倒计时组件（2卡轮播：所有提醒合并，按规则轮番展示）====================
@@ -26133,7 +26311,7 @@ function getNextAnniversary(dateStr) {
 function renderDesktop() {
   const safeRender = (fn, name) => { try { fn(); } catch(e) { console.log('[' + name + '] 渲染出错:', e.message); } };
   safeRender(renderCountdown, 'countdown');
-  safeRender(renderGrowth, 'growth');
+  safeRender(renderPlanPanel, 'growth');
   safeRender(renderWeatherFortune, 'weather');
   safeRender(renderDesktopCheckin, 'checkin');
   safeRender(renderDesktopAccounts, 'accounts');
