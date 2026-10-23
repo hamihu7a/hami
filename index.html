@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-22-378">
+<meta name="hami-build" content="2026-10-23-379">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -4143,7 +4143,6 @@
       grid-column: 1 / -1;
     }
     .panel.active #home-weight-cal,
-    .panel.active #home-daily-todo-card,
     .panel.active #custom-order-card,
     .panel.active #account-disposable-card,
     .panel.active .todo-card[id] {
@@ -4170,7 +4169,6 @@
       grid-column: 1 / -1;
     }
     .panel.active #home-weight-cal,
-    .panel.active #home-daily-todo-card,
     .panel.active #custom-order-card,
     .panel.active #account-disposable-card,
     .panel.active .todo-card[id] {
@@ -4272,7 +4270,6 @@
     grid-column: 1 / -1;
   }
   body.hami-force-desktop .panel.active #home-weight-cal,
-  body.hami-force-desktop .panel.active #home-daily-todo-card,
   body.hami-force-desktop .panel.active #custom-order-card,
   body.hami-force-desktop .panel.active #account-disposable-card,
   body.hami-force-desktop .panel.active .todo-card[id] {
@@ -4304,7 +4301,6 @@
     grid-column: 1 / -1;
   }
   body.hami-force-narrow .panel.active #home-weight-cal,
-  body.hami-force-narrow .panel.active #home-daily-todo-card,
   body.hami-force-narrow .panel.active #custom-order-card,
   body.hami-force-narrow .panel.active #account-disposable-card,
   body.hami-force-narrow .panel.active .todo-card[id] {
@@ -6065,91 +6061,15 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div id="desktop-weight"></div>
     </div>
 
-    <!-- 日常代办（纯展示，修改请进左侧四·待办事项；只显示用户手动添加的待办） -->
-    <div class="todo-card" id="home-daily-todo-card">
-      <h3>🏠 日常代办</h3>
-      <div id="desktop-todo-daily"></div>
-    </div>
-
-    <!-- 工作代办（纯展示，修改请进左侧四·待办事项）；v374 便签墙版式，两块整体删除即可无痕移除 -->
+    <!-- v379：主页「日常代办/工作代办」便签墙 + 「本周完成度」圆环已整体删除；仅保留主页其余卡片的去底框规则 -->
     <style>
-      /* v374 便签墙（日常代办 + 工作代办共用） */
-      .hnote-wall { display: flex; flex-wrap: wrap; gap: 12px 10px; padding-top: 6px; }
-      .hnote {
-        position: relative; flex: 1 1 150px; min-width: 140px; max-width: 100%; box-sizing: border-box;
-        background: #fffbe8; border-radius: 3px 12px 10px 12px;
-        padding: 15px 12px 11px; margin: 6px 3px 3px;
-        box-shadow: 0 3px 8px rgba(150,104,64,.16), 0 1px 3px rgba(150,104,64,.10);
-        font-size: 13px; font-weight: 600; line-height: 1.5; color: #4a3340;
-        word-break: break-word; transition: transform .18s ease, box-shadow .18s ease;
-      }
-      .hnote:hover { transform: rotate(0deg) translateY(-2px) !important; box-shadow: 0 6px 14px rgba(209,75,115,.18); }
-      .hnote::before { /* 顶部小圆钉 */
-        content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
-        width: 11px; height: 11px; border-radius: 50%;
-        background: radial-gradient(circle at 35% 30%, #ffd9e6, #e88aa8 72%);
-        box-shadow: 0 1px 2px rgba(0,0,0,.20);
-      }
-      .hnote.c1 { background: linear-gradient(160deg,#fff0f5,#ffe3ee); }
-      .hnote.c2 { background: linear-gradient(160deg,#fffbe8,#fff3c9); }
-      .hnote.c3 { background: linear-gradient(160deg,#f6efff,#eadffd); }
-      .hnote.c4 { background: linear-gradient(160deg,#edfaf3,#d9f4e5); }
-      .hnote.c5 { background: linear-gradient(160deg,#eef6ff,#ddeafd); }
-      .hnote.is-done { opacity: .62; }
-      .hnote.is-done::before { background: radial-gradient(circle at 35% 30%, #ffe9a8, #e0b53e 72%); }
-      .hnote.is-done .hnote-text { text-decoration: line-through; color: #a8909c; font-weight: 500; }
-      /* v375 日常代办竖条便签：一排三条，多了向右滑 */
-      .vstrip-wall { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding: 10px 2px 12px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #e8b8c8 transparent; }
-      .vstrip-wall::-webkit-scrollbar { height: 6px; }
-      .vstrip-wall::-webkit-scrollbar-thumb { background: #f0c4d4; border-radius: 3px; }
-      .hnote.vstrip { flex: 0 0 calc((100% - 24px) / 3); min-width: 92px; min-height: 116px; display: flex; flex-direction: column; margin: 6px 2px; padding: 16px 11px 10px; }
-      .hnote.vstrip .hnote-big { font-size: 15px; font-weight: 800; line-height: 1.42; color: #4a3340; display: block; }
-      .hnote.vstrip .hnote-time { margin-top: auto; padding-top: 9px; font-size: 10.5px; font-weight: 600; color: #a3808f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .hnote.vstrip .hnote-subs { margin-top: 8px; }
-      .hnote-text { display: block; }
-      .hnote-chip { display: inline-block; font-size: 10.5px; font-weight: 800; border-radius: 8px; padding: 1px 8px; margin: 0 0 5px; background: rgba(255,255,255,.75); color: #9b7b8c; }
-      .hnote-chip.hot { background: #ffe0e0; color: #e0413e; }
-      .hnote-chip.due { background: #fff0d6; color: #c8860d; }
-      .hnote-chip.okchip { background: #fff3c9; color: #b98a1d; }
-      .hnote-subs { margin-top: 7px; display: flex; flex-direction: column; gap: 4px; }
-      .hnote-sub { font-size: 12px; font-weight: 500; color: #6a4f5c; display: flex; gap: 5px; align-items: flex-start; }
-      .hnote-sub.done { text-decoration: line-through; color: #b0a0a8; }
-      .hnote-sub .hk { flex: 0 0 auto; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid #e3a6bb; background: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; box-sizing: border-box; margin-top: 1px; }
-      .hnote-sub.done .hk { background: #d14b73; border-color: #d14b73; }
-      #hwt-work-card .hwt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
-      #hwt-work-card .hwt-sub { font-size: 11px; color: #b48a9a; font-weight: 700; letter-spacing: 2px; }
-      #hwt-work-card .hwt-count { font-size: 12px; color: #8d6478; font-weight: 700; white-space: nowrap; }
-      #hwt-work-card .hwt-count b { font-size: 17px; color: #d14b73; font-weight: 900; }
-      /* v378：便签墙去掉大白底框——主页全部 todo-card 统一透明浮空（v376 只覆盖了两张代办卡，赚钱思维/体重日历/笔记推荐/圆环全漏网），便签直接浮在面板上，版面更紧凑（标题保留，模块照样认得） */
-      #home-daily-todo-card, #hwt-work-card, #hami-money-mind, #home-weight-cal, #hwr-card, #home-inspire-card {
+      /* v378：主页卡片去掉大白底框——便签直接浮在面板上，版面更紧凑（标题保留，模块照样认得）；v379：日常/工作代办卡与本周圆环已删，规则继续覆盖赚钱思维/体重日历/笔记推荐 */
+      #hami-money-mind, #home-weight-cal, #home-inspire-card {
         background: transparent !important; border: none !important; box-shadow: none !important;
         padding: 0 !important; margin-bottom: 12px;
       }
-      #home-daily-todo-card h3, #hwt-work-card h3, #hami-money-mind h3, #home-weight-cal h3, #home-inspire-card h3 { margin: 0 0 2px; font-size: 14.5px; }
-      #hwr-card { text-align: center; }
-      #hwr-card .hwr-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #b48a9a; }
-      #hwr-card .hwr-wrap { position: relative; width: 150px; height: 150px; margin: 12px auto 8px; }
-      #hwr-card .hwr-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-      #hwr-card .hwr-pct { font-size: 30px; font-weight: 900; color: #5a3a48; line-height: 1.1; }
-      #hwr-card .hwr-frac { font-size: 12px; color: #a98a99; font-weight: 600; margin-top: 2px; }
-      #hwr-card .hwr-quote { font-size: 12px; color: #8d6478; font-weight: 600; }
+      #hami-money-mind h3, #home-weight-cal h3, #home-inspire-card h3 { margin: 0 0 2px; font-size: 14.5px; }
     </style>
-    <div class="todo-card" id="hwt-work-card">
-      <h3>💼 工作代办</h3>
-      <div id="desktop-todo-work"></div>
-    </div>
-    <div class="todo-card" id="hwr-card" style="display:none;">
-      <div class="hwr-label">THIS WEEK · 本周完成度</div>
-      <div class="hwr-wrap">
-        <svg viewBox="0 0 150 150" width="150" height="150">
-          <defs><linearGradient id="hwr-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7a8c4"/><stop offset="1" stop-color="#c58ae6"/></linearGradient></defs>
-          <circle cx="75" cy="75" r="62" fill="none" stroke="#f6e3ec" stroke-width="12"/>
-          <circle id="hwr-arc" cx="75" cy="75" r="62" fill="none" stroke="url(#hwr-grad)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 75 75)" style="transition:stroke-dashoffset .6s ease;"/>
-        </svg>
-        <div class="hwr-center"><div id="hwr-pct" class="hwr-pct">0%</div><div id="hwr-frac" class="hwr-frac">0 / 0 项</div></div>
-      </div>
-      <div id="hwr-quote" class="hwr-quote"></div>
-    </div>
 
     <!-- v376：🚀 赚钱思维（不再折叠，全量直接展示；整段（含下方 style）可删，不影响其它功能） -->
     <style>
@@ -15247,8 +15167,6 @@ function renderDesktopCheckin() {
   const eTodayTrue = eTodayAll.filter(e => e.aerobics || e.cardio || e.weights);
   const eTodayCancel = eTodayAll.length > 0 && eTodayTrue.length === 0;
   const hasExercise = eTodayTrue.length > 0;
-  const pendingOrders = store.customOrders.filter(o => o.status === 'pending');
-  const allOrders = store.customOrders || [];
 
   const wToday = (store.weightRecords || []).filter(w => w.date === today);
   const getW = (w) => w && (w.value != null ? w.value : (w.after != null ? w.after : w.before));
@@ -15278,24 +15196,14 @@ function renderDesktopCheckin() {
     exFact = '未打卡';
     exStatus = 'pending';
   }
-  const createdToday = allOrders.filter(o => o.date === today);
-  const pendingToday = pendingOrders.filter(o => o.date === today);
-  const customDone = createdToday.length > 0 && pendingToday.length === 0;
-  const customFact = createdToday.length === 0
-    ? '今日无订单'
-    : pendingToday.length > 0
-      ? ('还有 ' + pendingToday.length + ' 单')
-      : ('今日 ' + createdToday.length + ' 单完成');
-
   const cards = [
     { icon: '⚖️', label: '量体重', done: hasWeight, fact: wFact, statusText: hasWeight ? '✓ 已完成' : '待打卡', statusKind: hasWeight ? 'done' : 'pending' },
-    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, fact: exFact, statusText: exStatus === 'done' ? '✓ 已完成' : (exStatus === 'rest' ? '🌙 休息日' : '待打卡'), statusKind: exStatus },
-    { icon: '📝', label: '定制单', done: customDone, fact: customFact, statusText: customDone ? '✓ 已完成' : '待打卡', statusKind: customDone ? 'done' : 'pending' }
+    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, fact: exFact, statusText: exStatus === 'done' ? '✓ 已完成' : (exStatus === 'rest' ? '🌙 休息日' : '待打卡'), statusKind: exStatus }
   ];
 
   let html = '';
   cards.forEach((c, i) => {
-    const target = i === 0 ? 'fitness' : (i === 1 ? 'fitness' : 'income');
+    const target = 'fitness';
     html += `<div class="checkin-card ${c.done ? 'done' : (c.statusKind === 'rest' ? 'rest' : '')}" onclick="switchPanel('${target}', this)">
       <div class="ci-icon">${c.icon}</div>
       <div class="ci-label">${c.label}</div>
@@ -15339,13 +15247,6 @@ function showCheckinDetail(label, rawJson) {
         body += '  ' + (i+1) + ') ' + (parts.join('+')||'已打卡') + '\n';
       });
     }
-  } else if (label === '定制单') {
-    const all = raw.allOrders || [];
-    const pnd = raw.pending || [];
-    body += '📦 订单总数：' + all.length + ' 单\n';
-    body += '⏳ 待完成：' + pnd.length + ' 单\n';
-    if (pnd.length > 0) body += '（点 "📝" 卡片进入收入面板看具体哪几单）';
-    else body += '✅ 所有订单都已处理完';
   }
   hamiToast(body);
 }
@@ -15395,153 +15296,9 @@ function sortTodos(items) {
   });
 }
 
-// 主页【代办事项】卡片：按「日常 / 工作」两类展示未完成项（含期限）
-function renderHomeTodo() {
-  const today = todayStr();
-  const pendingOrders = (store.customOrders || []).filter(o => o.status === 'pending');
-
-  // 定制单（pending）→ 归「工作」
-  const orders = pendingOrders.map(o => {
-    const isOverdue = new Date(o.deadline) < new Date(today);
-    return { icon: '📝', text: `定制单 ¥${o.amount} · ${o.deadline}前`, urgent: isOverdue, jump: 'income' };
-  });
-
-  // 用户自定义待办（未完成），按 category 分两类，附期限；v216：最新添加的排最前
-  const userDaily = [], userWork = [];
-  for (let i = (store.userTodos || []).length - 1; i >= 0; i--) {
-    const ut = store.userTodos[i];
-    if (!ut || isTodoDone(ut)) continue;
-    const info = todoDeadlineInfo(ut);
-    const dl = info.has ? ' · ' + info.label.replace('⏰ ', '') : '';
-    let icon = '📌', text;
-    if (ut.type === 'group') {
-      const subs = ut.subtasks || [];
-      const done = subs.filter(function (s) { return s.done; }).length;
-      icon = '📋';
-      text = ut.text + ' (' + done + '/' + subs.length + ')' + dl;
-    } else {
-      text = ut.text + dl;
-    }
-    const item = { icon: icon, text: text, userIdx: i, urgent: info.overdue, group: ut.type === 'group', subs: ut.type === 'group' ? ut.subtasks : null, raw: ut.text, time: info.has ? info.label.replace('⏰ ', '') : '无期限' };
-    if ((ut.category || 'daily') === 'work') userWork.push(item); else userDaily.push(item);
-  }
-
-  const daily = userDaily;   // 日常代办只显示用户手动输入的内容，不含系统打卡提醒
-  const work = orders.concat(userWork);
-
-  // v374 便签墙：固定歪斜序列（按序号取，刷新不跳）；颜色5色轮换
-  const HNOTE_ROT = [-1.6, 1.2, -0.9, 1.5, -1.2, 0.9];
-  const hnoteStyle = function (i) { return ' style="transform:rotate(' + HNOTE_ROT[i % 6] + 'deg)"'; };
-
-  const catHtml = (title, items) => {
-    if (items.length === 0) return '';
-    let h = '<div class="hnote-wall vstrip-wall">';
-    items.forEach((t, i) => {
-      h += '<div class="hnote vstrip c' + (i % 5 + 1) + '"' + hnoteStyle(i) + '>'
-        + '<span class="hnote-big">' + (t.icon ? t.icon + ' ' : '') + escTodo(t.raw || t.text) + '</span>'
-        + '<span class="hnote-time">🕐 ' + escTodo(t.time || '') + '</span>';
-      if (t.group && t.subs) {
-        h += '<div class="hnote-subs">';
-        t.subs.forEach(function (s) {
-          h += '<div class="hnote-sub' + (s.done ? ' done' : '') + '"><span class="hk">' + (s.done ? '✓' : '') + '</span><span>' + escTodo(s.text) + '</span></div>';
-        });
-        h += '</div>';
-      }
-      h += '</div>';
-    });
-    return h + '</div>';
-  };
-
-  const dailyEl = document.getElementById('desktop-todo-daily');
-  const workEl = document.getElementById('desktop-todo-work');
-  if (dailyEl) {
-    dailyEl.innerHTML = catHtml('日常代办', daily);
-    const card = dailyEl.closest('.todo-card');
-    if (card) card.style.display = daily.length ? '' : 'none';
-  }
-  if (workEl) {
-    // v373：工作代办高级版——周几圆片 + 圆圈勾 + 本周完成计数（纯展示）；本周完成度圆环
-    const mondayTs = (function () { const d = new Date(); const w = (d.getDay() + 6) % 7; d.setDate(d.getDate() - w); d.setHours(0, 0, 0, 0); return d.getTime(); })();
-    const WK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const rows = [];
-    for (let i = (store.userTodos || []).length - 1; i >= 0; i--) {
-      const ut = store.userTodos[i];
-      if (!ut || (ut.category || 'daily') !== 'work') continue;
-      if (isTodoDone(ut)) {
-        if ((ut.completedAt || 0) >= mondayTs) rows.push({ done: true, text: ut.text });
-      } else {
-        const info = todoDeadlineInfo(ut);
-        let chip = '待定', chipCls = '';
-        if (info.has && ut.deadline) {
-          if (info.overdue) { chip = '逾期'; chipCls = 'hot'; }
-          else if (info.due) { chip = '今天'; chipCls = 'due'; }
-          else chip = WK[new Date(ut.deadline + 'T00:00:00').getDay()];
-        }
-        let text = ut.text;
-        if (ut.type === 'group') {
-          const subs = ut.subtasks || [];
-          const dn = subs.filter(s => s.done).length;
-          text += ' (' + dn + '/' + subs.length + ')';
-        } else if (info.has) {
-          text += ' · ' + info.label.replace('⏰ ', '');
-        }
-        rows.push({ done: false, text: text, chip: chip, chipCls: chipCls, group: ut.type === 'group', subs: ut.type === 'group' ? ut.subtasks : null });
-      }
-    }
-    for (const o of pendingOrders) {
-      const od = new Date(o.deadline + 'T00:00:00');
-      const over = od < new Date(today + 'T00:00:00');
-      rows.push({ done: false, text: '定制单 ¥' + o.amount + ' · ' + o.deadline + '前', chip: over ? '逾期' : WK[od.getDay()], chipCls: over ? 'hot' : '' });
-    }
-    rows.sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0));
-    const doneN = rows.filter(r => r.done).length;
-    // v374 便签墙版式；v375：已完成项不再上墙，只在头部计数保留
-    const notes = rows.filter(r => !r.done);
-    let h = '<div class="hwt-head"><span class="hwt-sub">本 周 任 务</span><span class="hwt-count">已完成 <b>' + doneN + '</b> / ' + rows.length + '</span></div>';
-    if (notes.length === 0) h += '<div class="todo-empty" style="padding:14px 0;">本周待办都搞定啦，去贴几张新便签吧 🎉</div>';
-    else {
-      h += '<div class="hnote-wall">';
-      notes.forEach((r, i) => {
-        h += '<div class="hnote c' + (i % 5 + 1) + '"' + hnoteStyle(i) + '>'
-          + ((r.chip ? '<span class="hnote-chip' + (r.chipCls ? ' ' + r.chipCls : '') + '">' + r.chip + '</span>' : '') + '<span class="hnote-text">' + escTodo(r.text) + '</span>');
-        if (r.group && r.subs) {
-          h += '<div class="hnote-subs">';
-          r.subs.forEach(s => {
-            h += '<div class="hnote-sub' + (s.done ? ' done' : '') + '"><span class="hk">' + (s.done ? '✓' : '') + '</span><span>' + escTodo(s.text) + '</span></div>';
-          });
-          h += '</div>';
-        }
-        h += '</div>';
-      });
-      h += '</div>';
-    }
-    workEl.innerHTML = h;
-    const card = workEl.closest('.todo-card');
-    if (card) card.style.display = rows.length ? '' : 'none';
-    // 本周完成度圆环（日常+工作一起算：本周完成数 / (本周完成+未完成)）
-    const ring = document.getElementById('hwr-card');
-    if (ring) {
-      let dw = 0, pd = 0;
-      for (const ut of (store.userTodos || [])) {
-        if (!ut) continue;
-        if (isTodoDone(ut)) { if ((ut.completedAt || 0) >= mondayTs) dw++; }
-        else pd++;
-      }
-      const total = dw + pd;
-      ring.style.display = total ? '' : 'none';
-      if (total) {
-        const pct = Math.round(dw / total * 100);
-        const C = 2 * Math.PI * 62;
-        const arc = document.getElementById('hwr-arc');
-        if (arc) { arc.style.strokeDasharray = String(C); arc.style.strokeDashoffset = String(C * (1 - pct / 100)); }
-        const pe = document.getElementById('hwr-pct'); if (pe) pe.textContent = pct + '%';
-        const fe = document.getElementById('hwr-frac'); if (fe) fe.textContent = dw + ' / ' + total + ' 项';
-        const Q = ['按自己的节奏来，别慌 ♪', '完成比完美重要，先勾掉一个', '每勾掉一项，都在给未来的自己发工资', '别贪多，今天做完三件就是赢', '复利不只存钱，也存做完的事', '今天的进度，就是明天的底气', '稳住，你能勾完的', '赚钱的路上，执行力最值钱'];
-        const qe = document.getElementById('hwr-quote'); if (qe) qe.textContent = Q[Math.floor(Date.now() / 86400000) % Q.length];
-      }
-    }
-  }
-}
+// v379：主页「日常代办 / 工作代办」便签墙卡与「本周完成度」圆环卡已整体删除；
+// 待办数据仍完整保存在左侧「四·待办事项」面板，本函数停用（保留空壳，12 处调用点零改动）。
+function renderHomeTodo() {}
 
 // ==================== 类目待办（一条类目 + 多条小点，全勾才算完成）====================
 let __grpCurCat = 'daily';
