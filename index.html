@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-394">
+<meta name="hami-build" content="2026-10-24-395">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2191,6 +2191,136 @@
     .plan-habit-grid { grid-template-columns: 1fr; }
   }
 
+  /* ============ v395 英语学习计划（高级极简 · 低饱和 · 长线陪伴） ============ */
+  #study-plan-root { margin-top: 2px; }
+  .sp-block {
+    background: #fff; border: 1px solid #e9e9ee; border-radius: 12px;
+    padding: 18px 20px 16px;
+  }
+  .sp-block + .sp-block { margin-top: 22px; }
+  .sp-block-head {
+    display: flex; align-items: baseline; gap: 10px;
+    padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid #f1f1f4;
+  }
+  .sp-bh-idx { font-size: 11px; font-weight: 700; color: #aeb3ba; letter-spacing: 1.5px; font-variant-numeric: tabular-nums; }
+  .sp-bh-title { font-size: 14px; font-weight: 700; color: #2f3438; letter-spacing: .6px; }
+  .sp-bh-meta { margin-left: auto; font-size: 10.5px; font-weight: 600; color: #9aa0a8; letter-spacing: .3px; }
+  /* 规则表 */
+  .sp-rules { display: flex; flex-direction: column; }
+  .sp-rule { display: flex; gap: 14px; padding: 6px 0; border-bottom: 1px dashed #f4f4f7; }
+  .sp-rule:last-child { border-bottom: none; }
+  .sp-rk { flex: 0 0 84px; font-size: 11.5px; font-weight: 700; color: #8b9199; letter-spacing: .3px; }
+  .sp-rv { flex: 1; font-size: 12.5px; font-weight: 500; color: #41474e; line-height: 1.7; }
+  /* 今日打卡 */
+  .sp-today { margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f1f4; }
+  .sp-today-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 11px; }
+  .sp-date { font-size: 13.5px; font-weight: 700; color: #2f3438; font-variant-numeric: tabular-nums; }
+  .sp-state { font-size: 11px; font-weight: 600; color: #9aa0a8; }
+  .sp-state.done { color: #5d8a6f; }
+  .sp-modes { display: flex; gap: 8px; margin-bottom: 9px; }
+  .sp-mode {
+    flex: 1; border-radius: 8px; padding: 8px 6px; font-family: inherit; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: #6b7178;
+    background: #fafafb; border: 1px solid #e6e6ea; transition: all .15s ease;
+  }
+  .sp-mode:hover { border-color: #d3d6db; }
+  .sp-mode.on { color: #fff; background: #5b6672; border-color: #5b6672; }
+  .sp-note {
+    width: 100%; box-sizing: border-box; border: 1px solid #e6e6ea; border-radius: 8px;
+    padding: 8px 11px; font-size: 12.5px; font-family: inherit; color: #41474e; background: #fcfcfd; outline: none;
+  }
+  .sp-note:focus { border-color: #c9ced5; }
+  /* 按钮：三类 —— 动作 / 复制 / 跳转 */
+  .sp-btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+  .sp-btn {
+    border-radius: 8px; padding: 8px 14px; font-family: inherit; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: #5b6169;
+    background: #fafafb; border: 1px solid #e2e2e7; transition: all .15s ease;
+  }
+  .sp-btn:hover { background: #f3f4f6; border-color: #d3d6db; }
+  .sp-btn.primary { color: #fff; background: #4b5561; border-color: #4b5561; }
+  .sp-btn.primary:hover { background: #414a55; }
+  .sp-btn.ghost { color: #9aa0a8; background: transparent; border-color: #ececf0; }
+  .sp-btn.ghost:hover { color: #6b7178; background: #fafafb; }
+  .sp-btn.copy { color: #6b7178; background: #fff; border: 1px dashed #c9ced5; }
+  .sp-btn.copy:hover { border-color: #a9aeb5; background: #fafafb; }
+  .sp-btn.copied { color: #5d8a6f; border-style: solid; border-color: #bcd8c5; background: #f4faf6; }
+  /* 跳转链接按钮 */
+  .sp-links { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
+  .sp-btn.link {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 10px 13px; color: #55697a; background: #f7f9fa; border: 1px solid #e2e8ec;
+  }
+  .sp-btn.link:hover { background: #f1f5f7; border-color: #cdd8de; }
+  .sp-lk-n { font-size: 12.5px; font-weight: 700; }
+  .sp-lk-s { font-size: 10.5px; font-weight: 500; color: #9aa0a8; }
+  .sp-lk-a { margin-left: auto; font-size: 13px; color: #8fa2b0; }
+  /* 阶段进度 / 历史面板 */
+  .sp-panel { margin-top: 13px; padding: 13px 14px; border-radius: 10px; background: #fafafb; border: 1px solid #efeff3; }
+  .sp-panel-title { font-size: 11.5px; font-weight: 700; color: #6b7178; margin-bottom: 8px; letter-spacing: .3px; }
+  .sp-pv-line { display: flex; align-items: baseline; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .sp-pv-k { color: #8b9199; font-weight: 600; }
+  .sp-pv-v { color: #2f3438; font-weight: 700; }
+  .sp-bar { height: 6px; border-radius: 20px; background: #eeeef2; overflow: hidden; margin: 6px 0 11px; }
+  .sp-week-bar { height: 5px; border-radius: 20px; background: #eeeef2; overflow: hidden; margin-top: 10px; }
+  .sp-bar-fill { display: block; height: 100%; border-radius: 20px; background: #8b96a3; transition: width .35s ease; }
+  .sp-pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .sp-pv-cell { display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; border-radius: 8px; background: #fff; border: 1px solid #efeff3; }
+  .sp-pv-cell b { font-size: 15px; font-weight: 700; color: #3d434a; font-variant-numeric: tabular-nums; }
+  .sp-pv-cell span { font-size: 10px; font-weight: 500; color: #9aa0a8; }
+  .sp-start-row { display: flex; align-items: center; gap: 10px; margin-top: 11px; }
+  .sp-date-input {
+    border: 1px solid #e6e6ea; border-radius: 7px; padding: 5px 9px; font-size: 12px;
+    font-family: inherit; color: #41474e; background: #fff; outline: none;
+  }
+  .sp-hist-row { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #f1f1f4; font-size: 12px; }
+  .sp-hist-row:last-child { border-bottom: none; }
+  .sp-hd { font-variant-numeric: tabular-nums; color: #6b7178; font-weight: 600; flex: 0 0 84px; }
+  .sp-hf { font-size: 10.5px; font-weight: 700; border-radius: 20px; padding: 1px 8px; flex: 0 0 auto; }
+  .sp-hf.full { color: #5d8a6f; background: #f2f8f4; }
+  .sp-hf.base { color: #8b9199; background: #f4f4f6; }
+  .sp-hn { flex: 1; color: #8b9199; font-weight: 500; word-break: break-word; }
+  .sp-empty { font-size: 12px; color: #a8adb5; padding: 4px 0; }
+  /* 四阶段 */
+  .sp-stages { margin-top: 15px; padding-top: 13px; border-top: 1px solid #f1f1f4; }
+  .sp-stage-title { font-size: 11.5px; font-weight: 700; color: #8b9199; margin-bottom: 9px; letter-spacing: .4px; }
+  .sp-stage {
+    display: grid; grid-template-columns: 52px 52px 84px 1fr; align-items: baseline; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; border-left: 2px solid transparent; margin-bottom: 5px;
+  }
+  .sp-stage.cur { background: #f7f8f9; border-left-color: #5b6672; }
+  .sp-sg-i { font-size: 10.5px; font-weight: 700; color: #aeb3ba; }
+  .sp-sg-n { font-size: 12px; font-weight: 700; color: #3d434a; }
+  .sp-sg-r { font-size: 10.5px; font-weight: 600; color: #9aa0a8; }
+  .sp-sg-d { font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.65; }
+  /* 素材项 / 流程 / 提示词 */
+  .sp-item + .sp-item { margin-top: 16px; padding-top: 15px; border-top: 1px solid #f1f1f4; }
+  .sp-item-head { font-size: 12.5px; font-weight: 700; color: #3d434a; margin-bottom: 6px; letter-spacing: .3px; }
+  .sp-item-note { font-size: 11.5px; font-weight: 500; color: #8b9199; line-height: 1.7; }
+  .sp-preview {
+    margin-top: 9px; padding: 9px 11px; border-radius: 8px; background: #fafafb; border: 1px solid #efeff3;
+    font-size: 11.5px; font-weight: 500; color: #8b9199; line-height: 1.7;
+  }
+  .sp-flow { margin-top: 12px; padding: 12px 13px; border-radius: 9px; background: #fafafb; border: 1px solid #efeff3; }
+  .sp-flow-t { font-size: 11.5px; font-weight: 700; color: #3d434a; margin-bottom: 8px; }
+  .sp-flow-i { display: flex; gap: 9px; font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.75; padding: 2px 0; }
+  .sp-flow-i span { flex: 0 0 auto; font-size: 10px; font-weight: 700; color: #b2b7be; padding-top: 2px; font-variant-numeric: tabular-nums; }
+  .sp-flow-note { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e9e9ee; font-size: 11px; font-weight: 600; color: #8b9199; line-height: 1.65; }
+  .sp-prompt {
+    padding: 13px 14px; border-radius: 9px; background: #fafafb; border: 1px solid #efeff3;
+    font-size: 12px; font-weight: 500; color: #4a5058; line-height: 1.85; letter-spacing: .1px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .sp-foot { margin-top: 22px; text-align: center; font-size: 11px; font-weight: 500; color: #aeb3ba; letter-spacing: .5px; }
+  @media (max-width: 620px) {
+    .sp-block { padding: 15px 14px 14px; }
+    .sp-block + .sp-block { margin-top: 16px; }
+    .sp-rule { flex-direction: column; gap: 2px; }
+    .sp-rk { flex: none; }
+    .sp-pv-grid { grid-template-columns: repeat(2, 1fr); }
+    .sp-stage { grid-template-columns: 1fr; gap: 3px; }
+    .sp-btn-row .sp-btn { flex: 1 1 auto; }
+  }
   /* v387 健康管理清单卡（打勾记日期 · 检查项可填结果） */
   .plan-ck-group { display: flex; align-items: center; gap: 8px; margin: 4px 2px 0; }
   .plan-ck-glabel { font-size: 11px; font-weight: 800; color: #b06a80; letter-spacing: .5px; white-space: nowrap; }
@@ -7898,6 +8028,12 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         </div>
         <div id="plan-skill-list"></div>
       </div>
+
+      <!-- 四区：英语学习计划（v395：打卡控制 / 学习素材 / AI 口语对话） -->
+      <div class="plan-zone">
+        <div class="plan-zone-title"><span class="plan-zone-ico">📘</span>英语学习计划<span class="plan-zone-sub">12 个月 · 日常基础无障碍沟通</span></div>
+        <div id="study-plan-root"></div>
+      </div>
     </div>
   </div>
 
@@ -8216,6 +8352,7 @@ let store = {
   ],      // 洗头记录 { date }
   toiletRecords: [],   // 如厕记录 { date, count }  count=当天上厕所次数（不再预填演示数据）
   maskRecords: [],     // 敷面膜记录 { date }
+  studyPlan: { start: '', checks: {} },   // v395 英语学习计划：起始日 + 打卡日志 { 'YYYY-MM-DD': { full, note } }
   driveLearn: {     // 学车进度（临时模块：科目一~四 各填知识点，知识点全勾完=该科目完成；四科全完成=拿证通关）
     subjects: {
       '1': { name: '科目一', points: [] },
@@ -25825,6 +25962,252 @@ function renderPlanSkills() {
   });
   el.innerHTML = html;
 }
+// ==================== 英语学习计划（v395：12 个月 · 打卡控制 / 学习素材 / AI 口语对话） ====================
+var SP_STAGES = [
+  { i: 1, name: '筑基期', range: '第 1–4 个月',  desc: '听力允许双语字幕；AI 对话仅限简短问答、Yes/No 短句，优先建立开口习惯' },
+  { i: 2, name: '过渡期', range: '第 5–8 个月',  desc: '有意识减少依赖中文字幕，优先看英文字幕；尝试输出 2–3 句连贯短句' },
+  { i: 3, name: '进阶期', range: '第 9–11 个月', desc: '尝试无中文字幕的入门音频；拓展生活化闲聊话题' },
+  { i: 4, name: '达标期', range: '第 12 个月',   desc: '日常基础话题顺畅沟通，适应母语者慢速自然对话' }
+];
+var SP_DUO_TEXT = '请手动打开手机/电脑多邻国APP，严格练习10分钟，稳步逐步提升难度，积累基础词汇、基础句型，不要长时间刷。';
+var SP_GPT_TEXT = 'You are my English conversation partner. My English is weak, below CET4.\nRule1: Use very simple, short sentences, speak slowly. Use basic words only.\nRule2: After I speak, tell me my error briefly, give the corrected short sentence.\nRule3: Ask only one easy follow-up question.\nRule4: No Chinese. We talk about simple daily things. Start.';
+var SP_LINKS = [
+  { name: 'Duolingo Podcast', sub: '多邻国播客', url: 'https://podcast.duolingo.com/' },
+  { name: 'ESL Pod',          sub: '入门版 · 慢速讲解', url: 'https://www.eslpod.com/' },
+  { name: 'Real Easy English', sub: 'BBC 入门对话', url: 'https://www.bbc.co.uk/learningenglish/english/features/real-easy-english' }
+];
+var spMode = 'full';            // 当日填写（未提交）：full = 完成全套 / base = 仅保底
+var spShowProg = false, spShowHist = false;
+var spForceNote = null;         // 提交或重置后强制清空备注框
+
+function spData() {
+  if (!store.studyPlan) store.studyPlan = { start: '', checks: {} };
+  if (!store.studyPlan.checks) store.studyPlan.checks = {};
+  if (!store.studyPlan.start) store.studyPlan.start = todayStr();
+  return store.studyPlan;
+}
+// 当前处于第几个月（1–12）
+function spMonth() {
+  const d = spData();
+  const s = new Date(d.start + 'T00:00:00');
+  const n = new Date(todayStr() + 'T00:00:00');
+  const m = (n.getFullYear() - s.getFullYear()) * 12 + (n.getMonth() - s.getMonth()) + (n.getDate() >= s.getDate() ? 1 : 0);
+  return Math.max(1, Math.min(12, m));
+}
+function spStage() {
+  const m = spMonth();
+  const i = m <= 4 ? 1 : (m <= 8 ? 2 : (m <= 11 ? 3 : 4));
+  return SP_STAGES[i - 1];
+}
+// 本周（周一起）已打卡天数
+function spWeekDone() {
+  const d = spData();
+  const t = new Date(todayStr() + 'T00:00:00');
+  t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+  const p = function (n) { return String(n).padStart(2, '0'); };
+  let n = 0;
+  for (let i = 0; i < 7; i++) {
+    const dd = new Date(t); dd.setDate(dd.getDate() + i);
+    const ds = dd.getFullYear() + '-' + p(dd.getMonth() + 1) + '-' + p(dd.getDate());
+    if (d.checks[ds]) n++;
+  }
+  return n;
+}
+function spTotalDays() { return Object.keys(spData().checks).length; }
+// 累计练习分钟：全套 20 / 保底 10
+function spTotalMin() {
+  const c = spData().checks;
+  let m = 0;
+  Object.keys(c).forEach(function (k) { m += (c[k] && c[k].full) ? 20 : 10; });
+  return m;
+}
+function spCopy(text, btn) {
+  const done = function () {
+    if (!btn) return;
+    const old = btn.getAttribute('data-label') || btn.textContent;
+    btn.setAttribute('data-label', old);
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(function () { btn.textContent = old; btn.classList.remove('copied'); }, 1500);
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+      return;
+    }
+  } catch (e) {}
+  fallback();
+  function fallback() {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+    done();
+  }
+}
+function spOpen(url) { try { window.open(url, '_blank', 'noopener'); } catch (e) {} }
+function spSetMode(m) { spMode = m; spRender(); }
+function spSubmit() {
+  const d = spData();
+  const el = document.getElementById('sp-note');
+  const note = (el && el.value ? el.value : '').slice(0, 60);
+  d.checks[todayStr()] = { full: spMode === 'full', note: note, ts: Date.now() };
+  if (el) el.value = '';
+  if (typeof saveData === 'function') saveData();
+  if (typeof commitToCloud === 'function') commitToCloud();
+  if (typeof hamiToast === 'function') hamiToast('已记录今日打卡');
+  spForceNote = '';
+  spRender();
+}
+function spReset() {
+  spMode = 'full';
+  spForceNote = '';
+  const el = document.getElementById('sp-note');
+  if (el) el.value = '';
+  spRender();
+}
+function spSetStart(v) {
+  if (!v) return;
+  spData().start = v;
+  if (typeof saveData === 'function') saveData();
+  if (typeof commitToCloud === 'function') commitToCloud();
+  spRender();
+}
+function spToggleProgress() { spShowProg = !spShowProg; spRender(); }
+function spToggleHistory() { spShowHist = !spShowHist; spRender(); }
+function spRuleRow(k, v) {
+  return '<div class="sp-rule"><span class="sp-rk">' + k + '</span><span class="sp-rv">' + v + '</span></div>';
+}
+function spRender() {
+  const root = document.getElementById('study-plan-root');
+  if (!root) return;
+  const cur = document.getElementById('sp-note');
+  const noteVal = (spForceNote !== null) ? spForceNote : (cur ? cur.value : '');
+  spForceNote = null;
+  const d = spData();
+  const today = todayStr();
+  const rec = d.checks[today];
+  const st = spStage();
+  const m = spMonth();
+  const week = spWeekDone();
+  const days = spTotalDays();
+  const pct = Math.round(m / 12 * 100);
+
+  // —— 区块一：打卡控制面板 ——
+  let h = '<div class="sp-block">'
+    + '<div class="sp-block-head"><span class="sp-bh-idx">01</span><span class="sp-bh-title">打卡控制面板</span>'
+    + '<span class="sp-bh-meta">' + (rec ? '今日已记录' : '今日未记录') + '</span></div>'
+    + '<div class="sp-rules">'
+    + spRuleRow('总周期', '12 个月长线学习')
+    + spRuleRow('每日时长上限', '20 分钟 · 不额外加量')
+    + spRuleRow('每日任务', '多邻国 10 分钟 / 分级听力 7 分钟 / ChatGPT 语音口语对话 3 分钟')
+    + spRuleRow('弹性规则', '每周最低打卡 5 天，每周允许 2 天休息日，休息日不标记欠卡')
+    + spRuleRow('保底机制', '状态差、疲惫当天，仅完成多邻国 10 分钟即判定有效打卡，听力与口语可跳过')
+    + spRuleRow('记录字段', '打卡日期 / 是否完成全套 / 简短备注')
+    + '</div>'
+    + '<div class="sp-today">'
+    + '<div class="sp-today-head"><span class="sp-date">' + today + '</span>'
+    + (rec ? '<span class="sp-state done">' + (rec.full ? '已完成全套' : '仅保底（多邻国）') + '</span>'
+           : '<span class="sp-state">未打卡</span>')
+    + '</div>'
+    + '<div class="sp-modes">'
+    + '<button class="sp-mode' + (spMode === 'full' ? ' on' : '') + '" type="button" onclick="spSetMode(\'full\')">完成全套</button>'
+    + '<button class="sp-mode' + (spMode === 'base' ? ' on' : '') + '" type="button" onclick="spSetMode(\'base\')">仅保底（多邻国）</button>'
+    + '</div>'
+    + '<input id="sp-note" class="sp-note" type="text" maxlength="60" value="' + escTodo(noteVal).replace(/"/g, '&quot;') + '" placeholder="简短备注（可选）">'
+    + '<div class="sp-btn-row">'
+    + '<button class="sp-btn primary" type="button" onclick="spSubmit()">今日打卡</button>'
+    + '<button class="sp-btn" type="button" onclick="spToggleProgress()">' + (spShowProg ? '收起阶段进度' : '查看阶段进度') + '</button>'
+    + '<button class="sp-btn" type="button" onclick="spToggleHistory()">' + (spShowHist ? '收起历史记录' : '历史打卡记录') + '</button>'
+    + '<button class="sp-btn ghost" type="button" onclick="spReset()">重置当日</button>'
+    + '</div>';
+
+  if (spShowProg) {
+    const wpc = Math.min(100, Math.round(week / 5 * 100));
+    h += '<div class="sp-panel">'
+      + '<div class="sp-pv-line"><span class="sp-pv-k">当前阶段</span><span class="sp-pv-v">阶段 ' + st.i + ' · ' + st.name + '（' + st.range + '）</span></div>'
+      + '<div class="sp-pv-line"><span class="sp-pv-k">第 ' + m + ' / 12 个月</span><span class="sp-pv-v">' + pct + '%</span></div>'
+      + '<div class="sp-bar"><span class="sp-bar-fill" style="width:' + pct + '%;"></span></div>'
+      + '<div class="sp-pv-grid">'
+      + '<div class="sp-pv-cell"><b>' + days + '</b><span>累计打卡天数</span></div>'
+      + '<div class="sp-pv-cell"><b>' + week + ' / 5</b><span>本周达成（可休 2 天）</span></div>'
+      + '<div class="sp-pv-cell"><b>' + spTotalMin() + '</b><span>累计分钟</span></div>'
+      + '<div class="sp-pv-cell"><b>' + (days ? Math.round(days / Math.max(1, m) / 30 * 100) : 0) + '%</b><span>当月稳定度</span></div>'
+      + '</div>'
+      + '<div class="sp-week-bar"><span class="sp-bar-fill" style="width:' + wpc + '%;"></span></div>'
+      + '<div class="sp-start-row"><span class="sp-pv-k">起始日</span>'
+      + '<input type="date" class="sp-date-input" value="' + escTodo(d.start) + '" onchange="spSetStart(this.value)"></div>'
+      + '</div>';
+  }
+  if (spShowHist) {
+    const ks = Object.keys(d.checks).sort().reverse();
+    let rows = '';
+    ks.slice(0, 120).forEach(function (k) {
+      const r = d.checks[k];
+      rows += '<div class="sp-hist-row"><span class="sp-hd">' + k + '</span>'
+        + '<span class="sp-hf ' + (r.full ? 'full' : 'base') + '">' + (r.full ? '全套' : '保底') + '</span>'
+        + '<span class="sp-hn">' + (r.note ? escTodo(r.note) : '—') + '</span></div>';
+    });
+    h += '<div class="sp-panel"><div class="sp-panel-title">历史打卡记录（共 ' + ks.length + ' 天）</div>'
+      + (rows || '<div class="sp-empty">暂无记录</div>') + '</div>';
+  }
+  // 四阶段固定展示
+  h += '<div class="sp-stages"><div class="sp-stage-title">12 个月四阶段 · 进度追溯</div>';
+  SP_STAGES.forEach(function (x) {
+    h += '<div class="sp-stage' + (x.i === st.i ? ' cur' : '') + '">'
+      + '<span class="sp-sg-i">阶段 ' + x.i + '</span>'
+      + '<span class="sp-sg-n">' + x.name + '</span>'
+      + '<span class="sp-sg-r">' + x.range + '</span>'
+      + '<span class="sp-sg-d">' + x.desc + '</span></div>';
+  });
+  h += '</div></div>';
+
+  // —— 区块二：学习素材面板 ——
+  h += '<div class="sp-block">'
+    + '<div class="sp-block-head"><span class="sp-bh-idx">02</span><span class="sp-bh-title">学习素材面板</span>'
+    + '<span class="sp-bh-meta">↗ 打开网页 · ⧉ 复制文字</span></div>'
+    + '<div class="sp-item">'
+    + '<div class="sp-item-head">多邻国</div>'
+    + '<div class="sp-item-note">多邻国无网页稳定直达链接，需要手动启动 APP。</div>'
+    + '<div class="sp-btn-row">'
+    + '<button class="sp-btn copy" type="button" onclick="spCopy(SP_DUO_TEXT, this)">⧉ 复制引导：打开多邻国</button>'
+    + '</div>'
+    + '<div class="sp-preview">' + escTodo(SP_DUO_TEXT) + '</div>'
+    + '</div>'
+    + '<div class="sp-item">'
+    + '<div class="sp-item-head">分级听力素材库</div>'
+    + '<div class="sp-links">';
+  SP_LINKS.forEach(function (l) {
+    h += '<button class="sp-btn link" type="button" onclick="spOpen(\'' + l.url + '\')">'
+      + '<span class="sp-lk-n">' + l.name + '</span><span class="sp-lk-s">' + l.sub + '</span><span class="sp-lk-a">↗</span></button>';
+  });
+  h += '</div>'
+    + '<div class="sp-flow">'
+    + '<div class="sp-flow-t">听力流程 · 每次只用 1 分钟左右短音频片段</div>'
+    + '<div class="sp-flow-i"><span>01</span>第一轮盲听一遍，抓取关键词即可，听不懂属于正常情况</div>'
+    + '<div class="sp-flow-i"><span>02</span>第二轮打开双语字幕对照，只摘录 1 句实用口语短句，不大量摘抄笔记</div>'
+    + '<div class="sp-flow-i"><span>03</span>第三轮关闭字幕再听一遍</div>'
+    + '<div class="sp-flow-note">阶段约束：前 4 个月允许双语字幕；进入第 5 个月之后主动减少中文依赖</div>'
+    + '</div></div></div>';
+
+  // —— 区块三：AI 口语对话面板 ——
+  h += '<div class="sp-block">'
+    + '<div class="sp-block-head"><span class="sp-bh-idx">03</span><span class="sp-bh-title">AI 口语对话面板</span>'
+    + '<span class="sp-bh-meta">ChatGPT 语音对话</span></div>'
+    + '<div class="sp-item">'
+    + '<div class="sp-prompt">' + escTodo(SP_GPT_TEXT).replace(/\n/g, '<br>') + '</div>'
+    + '<div class="sp-btn-row">'
+    + '<button class="sp-btn copy" type="button" onclick="spCopy(SP_GPT_TEXT, this)">⧉ 复制对话提示词</button>'
+    + '</div>'
+    + '<div class="sp-item-note">复制提示词后，手动打开 ChatGPT APP，新建对话粘贴提示词，开启麦克风语音对话；单次对话控制在 3 分钟左右，卡壳可以结束本轮。</div>'
+    + '</div></div>'
+    + '<div class="sp-foot">本计划核心是稳定坚持，追求循序渐进，不追求速成</div>';
+
+  root.innerHTML = h;
+}
 // ==================== 提升计划面板总渲染（v388：习惯 + 目标 + 技能 + 顶部小计） ====================
 function renderPlanPanel() {
   try { if (planEnsure()) saveData(); } catch (e) {}
@@ -25832,6 +26215,7 @@ function renderPlanPanel() {
   try { renderPlanGoals(); } catch (e) {}
   try { renderPlanSkills(); } catch (e) {}
   try { renderPlanHero(); } catch (e) {}
+  try { spRender(); } catch (e) {}
   const sumEl = document.getElementById('plan-summary');
   if (sumEl) {
     const sk = store.planSkills || [];
