@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-391">
+<meta name="hami-build" content="2026-10-24-392">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1181,6 +1181,20 @@
     outline: 1.5px dashed rgba(209,75,115,0.28);   /* v257：内侧虚线描边（手账卡片段式，与其它卡片一致） */
     outline-offset: -4px;
   }
+
+  /* v392：主页打卡卡内的习惯 chips（养皮肤/学英语，点击即打卡） */
+  .ci-chips { display: flex; gap: 5px; margin-top: 7px; }
+  .ci-chip {
+    flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px;
+    border-radius: 9px; padding: 4px 2px; font-family: inherit; cursor: pointer;
+    border: 1.5px dashed #ffb9cd; background: #fff8fa; color: #a0688a;
+    font-size: 10px; font-weight: 800; transition: all .15s ease;
+  }
+  .ci-chip:active { transform: translateY(1px); }
+  .ci-chip .cc-ico { font-size: 12px; line-height: 1; }
+  .ci-chip .cc-mark { display: none; }
+  .ci-chip.on { border: 1.5px solid transparent; background: linear-gradient(135deg,#4cd08d,#2fae6e); color: #fff; box-shadow: 0 2px 6px rgba(47,174,110,.25); }
+  .ci-chip.on .cc-mark { display: inline; }
 
   /* 打卡卡 ⓘ 按钮：右上角小图标，点击弹出今日真实记录详情 */
   .checkin-card { position: relative; }
@@ -14979,14 +14993,46 @@ function renderDesktopCheckin() {
     exFact = '未打卡';
     exStatus = 'pending';
   }
+  // v392：提升计划 2.0 的习惯打卡搬上主页——养皮肤（身体/面部）+ 学英语（多邻国/磨耳朵），chips 点击即打卡
+  const _habitOn = function (key) {
+    try { planEnsure(); } catch (e) {}
+    const h = planHabitByKey(key);
+    return !!(h && h.history && h.history[today]);
+  };
+  const _mkPlanCard = function (icon, label, list) {
+    const dones = list.filter(x => _habitOn(x.key)).length;
+    const all = list.length;
+    return {
+      icon: icon, label: label, plan: true,
+      done: dones === all,
+      fact: list.map(x => x.icon + (_habitOn(x.key) ? '✓' : '·')).join(' '),
+      statusText: dones === all ? '✓ 已完成' : (dones === 0 ? '待打卡' : '还差 ' + (all - dones) + ' 个'),
+      statusKind: dones === all ? 'done' : 'pending',
+      chips: list.map(x => ({ key: x.key, icon: x.icon, label: x.label, on: _habitOn(x.key) }))
+    };
+  };
   const cards = [
     { icon: '⚖️', label: '量体重', done: hasWeight, fact: wFact, statusText: hasWeight ? '✓ 已完成' : '待打卡', statusKind: hasWeight ? 'done' : 'pending' },
-    { icon: '🏃‍♀️', label: '运动打卡', done: hasExercise, fact: exFact, statusText: exStatus === 'done' ? '✓ 已完成' : (exStatus === 'rest' ? '🌙 休息日' : '待打卡'), statusKind: exStatus }
+    _mkPlanCard('🩸', '养皮肤打卡', [
+      { key: 'skin', icon: '🧴', label: '身体' },
+      { key: 'face', icon: '🧖', label: '面部' }
+    ]),
+    _mkPlanCard('🦊', '学英语打卡', [
+      { key: 'english', icon: '🦊', label: '多邻国' },
+      { key: 'ears', icon: '🎧', label: '磨耳朵' }
+    ])
   ];
 
   let html = '';
   cards.forEach((c, i) => {
-    const target = 'fitness';
+    const target = c.plan ? 'growth' : 'fitness';
+    let chipsHtml = '';
+    if (c.chips) {
+      chipsHtml = '<div class="ci-chips">' + c.chips.map(ch =>
+        '<button type="button" class="ci-chip' + (ch.on ? ' on' : '') + '" onclick="event.stopPropagation();planHomeToggle(\'' + ch.key + '\')">'
+        + '<span class="cc-ico">' + ch.icon + '</span><span class="cc-label">' + ch.label + '</span><span class="cc-mark">' + (ch.on ? '✓' : '') + '</span>'
+        + '</button>').join('') + '</div>';
+    }
     html += `<div class="checkin-card ${c.done ? 'done' : (c.statusKind === 'rest' ? 'rest' : '')}" onclick="switchPanel('${target}', this)">
       <div class="ci-head">
         <span class="ci-icon">${c.icon}</span>
@@ -14996,9 +15042,17 @@ function renderDesktopCheckin() {
         <div class="ci-line ci-status-line ${c.statusKind}">${c.statusText}</div>
         <div class="ci-line ci-fact-line">${c.fact}</div>
       </div>
+      ${chipsHtml}
     </div>`;
   });
   document.getElementById('desktop-checkin').innerHTML = html;
+}
+
+// v392：主页打卡 chip——直接切换提升计划 2.0 习惯的今日打卡，并刷新主页卡与面板
+function planHomeToggle(key) {
+  try { planHabitCheck(key); } catch (e) {}
+  try { renderDesktopCheckin(); } catch (e) {}
+  try { if (typeof renderPlanPanel === 'function') renderPlanPanel(); } catch (e) {}
 }
 
 // 弹窗显示打卡卡对应的"今日 store 真实内容"，让主人立即看到事实
