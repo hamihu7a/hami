@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-389">
+<meta name="hami-build" content="2026-10-24-390">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1963,6 +1963,27 @@
   .plan-habit[data-habit="skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
   .plan-habit[data-habit="english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
   .plan-habit[data-habit="hair"]::before    { background: linear-gradient(90deg,#c9a8ff,#9d7bf0); }
+  /* v390：合并卡左右排版（养皮肤 / 学英语） */
+  .plan-habit[data-habit="pair-skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
+  .plan-habit[data-habit="pair-english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
+  .plan-habit[data-habit="pair-skin"] .plan-habit-cadence    { color: #d14b73; background: #ffeef3; }
+  .plan-habit[data-habit="pair-english"] .plan-habit-cadence { color: #3f6fd0; background: #e9f1ff; }
+  .plan-pair-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .plan-half { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .plan-half-head { display: flex; align-items: center; gap: 5px; }
+  .plan-half-ico { font-size: 16px; line-height: 1; }
+  .plan-half-name { font-size: 12.5px; font-weight: 800; color: #6a4a58; }
+  .plan-half .plan-check-btn { padding: 7px 4px 6px; border-radius: 11px; }
+  .plan-half .plan-check-btn .pc-main { font-size: 13px; }
+  .plan-half .plan-check-btn .pc-sub { font-size: 9.5px; }
+  .plan-half .plan-habit-streak { font-size: 10.5px; }
+  .plan-half .plan-habit-streak .st-num { font-size: 14px; }
+  .plan-half .plan-habit-week { gap: 2px; }
+  .plan-half .plan-hdot .d { max-width: 16px; }
+  .plan-half .plan-hdot .w { font-size: 8px; }
+  @media (max-width: 380px) {
+    .plan-half .plan-hdot .d { max-width: 13px; }
+  }
   .plan-habit-head { display: flex; align-items: center; gap: 8px; }
   .plan-habit-ico { font-size: 22px; line-height: 1; }
   .plan-habit-name { font-size: 14.5px; font-weight: 800; color: #4a3340; line-height: 1.25; }
@@ -8061,6 +8082,8 @@ let store = {
     { key: 'skin',    name: '养皮肤 · 身体护理',  icon: '🧴', type: 'daily', history: {} },
     { key: 'face',    name: '养皮肤 · 面部护肤',  icon: '🧖', type: 'daily', history: {} },
     { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
+    // v390：磨耳朵（听力输入，和多邻国并排左右排版）
+    { key: 'ears',    name: '磨耳朵 · 听力输入',  icon: '🎧', type: 'daily', history: {} },
     // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
     { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
   ],
@@ -8069,12 +8092,12 @@ let store = {
     { key: 'drive',   name: '学车拿证',     icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
     // v387：原「手术」换成健康管理清单——2 个检查 + 2 个待安排，逐项打勾
     { key: 'health',  name: '健康管理',     icon: '🩺', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
-      { key: 'blood', name: '体检抽血',     note: '看指标适不适合打减肥针', kind: 'check', done: false, date: '', result: '' },
+      { key: 'blood', name: '体检抽血',     note: '看指标适不适合用身体补剂', kind: 'check', done: false, date: '', result: '' },
       { key: 'anal',  name: '肛肠科检查',   note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
       { key: 'mole',  name: '点痣',         note: '恢复期别抠痂 · 注意防晒',   kind: 'todo',  done: false, date: '' },
       { key: 'ear',   name: '打耳洞',       note: '认准正规店 · 银针养耳',   kind: 'todo',  done: false, date: '' }
     ] },
-    { key: 'slim',    name: '减肥针计划',   icon: '💉', type: 'phase', date: '', months: 6, note: '每月一针 · 配合饮食运动' }
+    { key: 'slim',    name: '身体补剂计划', icon: '💊', type: 'phase', date: '', months: 6, note: '每月一次 · 配合饮食运动' }
   ],
   exerciseItems: [],  // 运动详细记录 { id, date, type, name, duration, sets, note }
   customOrders: [
@@ -25012,17 +25035,25 @@ function planEnsure() {
       { key: 'skin',    name: '养皮肤 · 身体护理',  icon: '🧴', type: 'daily', history: {} },
       { key: 'face',    name: '养皮肤 · 面部护肤',  icon: '🧖', type: 'daily', history: {} },
       { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
+      { key: 'ears',    name: '磨耳朵 · 听力输入',  icon: '🎧', type: 'daily', history: {} },
       { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
     ];
     touched = true;
   } else {
     const _need = [
-      { key: 'face', name: '养皮肤 · 面部护肤', icon: '🧖', type: 'daily', history: {} }
+      { key: 'face', name: '养皮肤 · 面部护肤', icon: '🧖', type: 'daily', history: {} },
+      // v390：磨耳朵（老用户补一条，插在多邻国后面，学英语两张挨着）
+      { key: 'ears', name: '磨耳朵 · 听力输入', icon: '🎧', type: 'daily', history: {}, after: 'english' }
     ];
     _need.forEach(function (h) {
       let has = false;
       for (let i = 0; i < store.planHabits.length; i++) if (store.planHabits[i].key === h.key) has = true;
-      if (!has) { store.planHabits.splice(1, 0, JSON.parse(JSON.stringify(h))); touched = true; }   // 插在身体护理后面，两条养皮肤挨着
+      if (!has) {
+        let pos = 1;
+        if (h.after) { for (let i = 0; i < store.planHabits.length; i++) if (store.planHabits[i].key === h.after) { pos = i + 1; break; } }
+        else { pos = 1; }   // face：插在身体护理后面，两条养皮肤挨着
+        store.planHabits.splice(pos, 0, JSON.parse(JSON.stringify(h))); touched = true;
+      }
     });
     // v384→v386 旧名迁移（身体油→身体护理）
     store.planHabits.forEach(function (h) { if (h.key === 'skin' && h.name === '养皮肤 · 身体油') { h.name = '养皮肤 · 身体护理'; touched = true; } });
@@ -25030,7 +25061,7 @@ function planEnsure() {
   // —— 目标：v387 起「手术」系卡片（v386 单张手术卡 / 早期拆分的术前体检·点痣·痔疮手术）统一换成一张「健康管理」清单卡 ——
   const _healthDef = function () {
     return { key: 'health', name: '健康管理', icon: '🩺', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
-      { key: 'blood', name: '体检抽血',   note: '看指标适不适合打减肥针', kind: 'check', done: false, date: '', result: '' },
+      { key: 'blood', name: '体检抽血',   note: '看指标适不适合用身体补剂', kind: 'check', done: false, date: '', result: '' },
       { key: 'anal',  name: '肛肠科检查', note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
       { key: 'mole',  name: '点痣',       note: '恢复期别抠痂 · 注意防晒',   kind: 'todo',  done: false, date: '' },
       { key: 'ear',   name: '打耳洞',     note: '认准正规店 · 银针养耳',   kind: 'todo',  done: false, date: '' }
@@ -25040,7 +25071,7 @@ function planEnsure() {
     store.planGoals = [
       { key: 'drive',   name: '学车拿证',   icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
       _healthDef(),
-      { key: 'slim',    name: '减肥针计划', icon: '💉', type: 'phase', date: slimDefault, months: 6, note: '每月一针 · 配合饮食运动' }
+      { key: 'slim',    name: '身体补剂计划', icon: '💊', type: 'phase', date: slimDefault, months: 6, note: '每月一次 · 配合饮食运动' }
     ];
     return true;
   }
@@ -25053,7 +25084,7 @@ function planEnsure() {
     const k = store.planGoals[i].key;
     if (k === 'surgery' || k === 'checkup' || k === 'mole') { store.planGoals.splice(i, 1); touched = true; }
   }
-  // 2) 补「健康管理」清单卡，插在学车后面、减肥针前面
+  // 2) 补「健康管理」清单卡，插在学车后面、身体补剂前面
   if (!_hasGoal('health')) {
     let idx = store.planGoals.length;
     for (let i = 0; i < store.planGoals.length; i++) if (store.planGoals[i].key === 'slim') { idx = i; break; }
@@ -25070,7 +25101,7 @@ function planEnsure() {
       if (!has) { g.items.push(JSON.parse(JSON.stringify(def))); touched = true; }
     });
   });
-  // 4) 减肥针默认开始日
+  // 4) 身体补剂默认开始日
   store.planGoals.forEach(function (g) {
     if (g.key === 'slim' && !g.date) { g.date = slimDefault; touched = true; }
   });
@@ -25122,19 +25153,38 @@ function planRenderWeekDots(h) {
   }
   return html;
 }
-function planRenderDailyCard(h) {
+// v390：半栏习惯渲染（合并卡左右两栏用，紧凑版）
+function planHalfName(h) {
+  const map = { skin: '身体护理', face: '面部护肤', english: '多邻国', ears: '磨耳朵' };
+  return map[h.key] || h.name;
+}
+function planHalfSub(h, done, streak) {
+  if (done) return '连续 ' + streak + ' 天 · 继续保持';
+  if (h.key === 'ears') return '播客 · 无字幕视频 20 分钟';
+  return '坚持一天是一天';
+}
+function planRenderHalfCard(h) {
   const today = todayStr();
   const done = !!(h.history && h.history[today]);
   const streak = planStreak(h);
-  return '<div class="plan-habit" data-habit="' + h.key + '">'
-    + '<div class="plan-habit-head"><span class="plan-habit-ico">' + h.icon + '</span>'
-    + '<span class="plan-habit-name">' + h.name + '</span>'
-    + '<span class="plan-habit-cadence">每天</span></div>'
+  return '<div class="plan-half" data-half="' + h.key + '">'
+    + '<div class="plan-half-head"><span class="plan-half-ico">' + h.icon + '</span>'
+    + '<span class="plan-half-name">' + planHalfName(h) + '</span></div>'
     + '<button class="plan-check-btn ' + (done ? 'on' : 'off') + '" type="button" onclick="planHabitCheck(\'' + h.key + '\')">'
     + '<span class="pc-main">' + (done ? '✓ 今日已打卡' : '点我打卡') + '</span>'
-    + '<span class="pc-sub">' + (done ? '连续 ' + streak + ' 天 · 继续保持' : '坚持一天是一天') + '</span></button>'
+    + '<span class="pc-sub">' + planHalfSub(h, done, streak) + '</span></button>'
     + '<div class="plan-habit-streak">🔥 连续 <span class="st-num">' + streak + '</span> 天</div>'
     + '<div class="plan-habit-week">' + planRenderWeekDots(h) + '</div>'
+    + '</div>';
+}
+// v390：合并卡（一张卡内左右两栏：养皮肤=身体+面部，学英语=多邻国+磨耳朵）
+function planRenderPairCard(key, icon, title, habits) {
+  const cols = habits.filter(Boolean).map(planRenderHalfCard).join('');
+  return '<div class="plan-habit plan-habit-pair" data-habit="' + key + '">'
+    + '<div class="plan-habit-head"><span class="plan-habit-ico">' + icon + '</span>'
+    + '<span class="plan-habit-name">' + title + '</span>'
+    + '<span class="plan-habit-cadence">每天</span></div>'
+    + '<div class="plan-pair-cols">' + cols + '</div>'
     + '</div>';
 }
 function planRenderHairCard(h) {
@@ -25182,10 +25232,16 @@ function renderPlanHabits() {
   const el = document.getElementById('plan-habit-grid');
   if (!el) return;
   planEnsure();
+  const byKey = {};
+  store.planHabits.forEach(function (h) { byKey[h.key] = h; });
   let html = '';
+  // v390：养皮肤合并卡（身体护理 + 面部护肤，左右排版）
+  if (byKey.skin || byKey.face) html += planRenderPairCard('pair-skin', '🧖', '养皮肤', [byKey.skin, byKey.face]);
+  // v390：学英语合并卡（多邻国 + 磨耳朵，左右排版）
+  if (byKey.english || byKey.ears) html += planRenderPairCard('pair-english', '🦊', '学英语', [byKey.english, byKey.ears]);
+  // 养头发：周期卡，独立一张
   store.planHabits.forEach(function (h) {
     if (h.type === 'cycle') html += planRenderHairCard(h);
-    else html += planRenderDailyCard(h);
   });
   el.innerHTML = html;
 }
