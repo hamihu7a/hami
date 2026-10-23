@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-386">
+<meta name="hami-build" content="2026-10-23-387">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2079,7 +2079,7 @@
   }
   .plan-goal::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
   .plan-goal[data-goal="drive"]::before   { background: linear-gradient(180deg,#ffb199,#ff7fa3); }
-  .plan-goal[data-goal="surgery"]::before { background: linear-gradient(180deg,#8fd0ff,#5aa8f0); }
+  .plan-goal[data-goal="health"]::before  { background: linear-gradient(180deg,#8fd0ff,#5aa8f0); }
   .plan-goal[data-goal="slim"]::before    { background: linear-gradient(180deg,#a8e6c1,#4cbf88); }
   .plan-goal-head { display: flex; align-items: center; gap: 9px; }
   .plan-goal-ico { font-size: 22px; line-height: 1; }
@@ -2093,7 +2093,7 @@
   .plan-goal-mid { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
   .plan-goal-big { display: flex; align-items: baseline; gap: 4px; }
   .plan-goal-big .gb-num { font-size: 26px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-  .plan-goal[data-goal="surgery"] .plan-goal-big .gb-num { color: #3f8fd0; }
+  .plan-goal[data-goal="health"] .plan-goal-big .gb-num { color: #3f8fd0; }
   .plan-goal[data-goal="slim"] .plan-goal-big .gb-num    { color: #2f9a63; }
   .plan-goal[data-goal="drive"] .plan-goal-big .gb-num   { color: #d14b73; }
   .plan-goal-big .gb-unit { font-size: 12px; font-weight: 800; color: #8a6270; }
@@ -2102,7 +2102,7 @@
   .plan-goal-bar { height: 9px; border-radius: 20px; background: #f6e7ed; overflow: hidden; }
   .plan-goal-bar .gbar-fill { height: 100%; border-radius: 20px; transition: width .3s ease; }
   .plan-goal[data-goal="drive"] .plan-goal-bar .gbar-fill   { background: linear-gradient(90deg,#ffb199,#ff7fa3); }
-  .plan-goal[data-goal="surgery"] .plan-goal-bar .gbar-fill { background: linear-gradient(90deg,#8fd0ff,#5aa8f0); }
+  .plan-goal[data-goal="health"] .plan-goal-bar .gbar-fill { background: linear-gradient(90deg,#8fd0ff,#5aa8f0); }
   .plan-goal[data-goal="slim"] .plan-goal-bar .gbar-fill    { background: linear-gradient(90deg,#a8e6c1,#4cbf88); }
   .plan-goal-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
   .plan-goal-chip {
@@ -2138,6 +2138,46 @@
   }
   @media (max-width: 720px) {
     .plan-habit-grid { grid-template-columns: 1fr; }
+  }
+
+  /* v387 健康管理清单卡（打勾记日期 · 检查项可填结果） */
+  .plan-ck-group { display: flex; align-items: center; gap: 8px; margin: 4px 2px 0; }
+  .plan-ck-glabel { font-size: 11px; font-weight: 800; color: #b06a80; letter-spacing: .5px; white-space: nowrap; }
+  .plan-ck-gline { flex: 1; height: 1px; background: linear-gradient(90deg,#f3dde6,rgba(243,221,230,0)); }
+  .plan-ck-item {
+    display: flex; gap: 9px; align-items: flex-start;
+    background: #fff; border: 1.5px solid #f3dde6; border-radius: 12px; padding: 8px 10px;
+  }
+  .plan-ck-item.done { background: #f7fdf9; border-color: #cdeed9; }
+  .plan-ck-box {
+    width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto; margin-top: 1px;
+    border: 2px solid #f0c4d4; background: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: #fff; line-height: 1;
+    transition: transform .15s ease;
+  }
+  .plan-ck-box:hover { transform: scale(1.12); }
+  .plan-ck-item.done .plan-ck-box { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; box-shadow: 0 2px 5px rgba(47,174,110,.30); }
+  .plan-ck-body { flex: 1; min-width: 0; }
+  .plan-ck-nrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .plan-ck-name { font-size: 13px; font-weight: 800; color: #4a3540; }
+  .plan-ck-item.done .plan-ck-name { color: #9db8a8; text-decoration: line-through; text-decoration-color: rgba(47,163,110,.5); }
+  .plan-ck-chip { font-size: 10px; font-weight: 800; border-radius: 20px; padding: 1px 8px; white-space: nowrap; }
+  .plan-ck-chip.check { color: #3a7ab8; background: #eef5fd; border: 1px solid #d6e7f8; }
+  .plan-ck-chip.todo  { color: #8f6fd8; background: #f5f1ff; border: 1px solid #e3d6ff; }
+  .plan-ck-date { font-size: 10.5px; font-weight: 800; color: #2f9a63; }
+  .plan-ck-note { font-size: 11px; color: #b08a9c; margin-top: 2px; line-height: 1.45; }
+  .plan-ck-result { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .plan-ck-result label { font-size: 10.5px; font-weight: 800; color: #7a5fc0; flex: 0 0 auto; }
+  .plan-ck-result input {
+    flex: 1; min-width: 0; height: 25px; border: 1px dashed #d8c8ff; border-radius: 8px;
+    background: #fbf9ff; padding: 0 9px; font-size: 11.5px; font-weight: 600;
+    color: #5a3a48; font-family: inherit; outline: none; transition: border-color .15s ease;
+  }
+  .plan-ck-result input:focus { border-style: solid; border-color: #b79cff; }
+  @media (max-width: 420px) {
+    .plan-ck-item { padding: 7px 9px; }
+    .plan-ck-name { font-size: 12.5px; }
   }
 
   /* ============ 财务记录（支出/收入/转账） ============ */
@@ -7954,19 +7994,26 @@ let store = {
   weightGoal: null,   // 目标体重（斤），健康模块可设，用于进度环
   userTodos: [],      // 用户自定义待办 { date, text, done }
   growthLogs: [],     // v384 成长记录 { id, date, text, cat, minutes, createdAt }——今天学了什么
-  // v386 提升计划 2.0：每日习惯（3 个，节奏不同）+ 长期目标（3 个，进度条/倒计时）
+  // v386 提升计划 2.0：每日习惯（4 个，节奏不同）+ 长期目标（3 个，进度/清单/倒计时）
   planHabits: [
     // daily：history { 'YYYY-MM-DD': 1 }，打了卡就有
-    { key: 'skin',    name: '养皮肤 · 身体油',  icon: '🧴', type: 'daily', history: {} },
+    { key: 'skin',    name: '养皮肤 · 身体护理',  icon: '🧴', type: 'daily', history: {} },
+    { key: 'face',    name: '养皮肤 · 面部护肤',  icon: '🧖', type: 'daily', history: {} },
     { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
     // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
     { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
   ],
   planGoals: [
-    // link：关联学车模块只读算进度；date：一次性事件倒计时（可改期）；phase：分阶段计划（开始日+期数）
-    { key: 'drive',    name: '学车拿证',     icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
-    { key: 'surgery',  name: '手术',         icon: '🏥', type: 'date',  date: '', note: '术前遵医嘱 · 术后好好休息' },
-    { key: 'slim',     name: '减肥针计划',   icon: '💉', type: 'phase', date: '', months: 6, note: '每月一针 · 配合饮食运动' }
+    // link：关联学车模块只读算进度；checklist：一组待办清单（打勾记日期）；phase：分阶段计划（开始日+期数）
+    { key: 'drive',   name: '学车拿证',     icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
+    // v387：原「手术」换成健康管理清单——2 个检查 + 2 个待安排，逐项打勾
+    { key: 'health',  name: '健康管理',     icon: '🩺', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
+      { key: 'blood', name: '体检抽血',     note: '看指标适不适合打减肥针', kind: 'check', done: false, date: '', result: '' },
+      { key: 'anal',  name: '肛肠科检查',   note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
+      { key: 'mole',  name: '点痣',         note: '恢复期别抠痂 · 注意防晒',   kind: 'todo',  done: false, date: '' },
+      { key: 'ear',   name: '打耳洞',       note: '认准正规店 · 银针养耳',   kind: 'todo',  done: false, date: '' }
+    ] },
+    { key: 'slim',    name: '减肥针计划',   icon: '💉', type: 'phase', date: '', months: 6, note: '每月一针 · 配合饮食运动' }
   ],
   exerciseItems: [],  // 运动详细记录 { id, date, type, name, duration, sets, note }
   customOrders: [
@@ -25243,31 +25290,78 @@ function fillDateInputDefault(id) {
 // 与「成长记录」（growthLogs）共存：本区是「坚持打卡 + 盯目标」，笔记区还是原来的「今天学了什么」。
 // 可移除性：删本段 JS + plan CSS 块 + 面板里两个 zone div + store 两个默认键 + 各清单接入点即可，不影响其他模块。
 function planEnsure() {
-  if (!Array.isArray(store.planHabits) || !store.planHabits.length) {
-    store.planHabits = [
-      { key: 'skin',    name: '养皮肤 · 身体油',  icon: '🧴', type: 'daily', history: {} },
-      { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
-      { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
-    ];
-  }
-  if (!Array.isArray(store.planGoals) || !store.planGoals.length) {
-    store.planGoals = [
-      { key: 'drive',   name: '学车拿证',   icon: '🚗', type: 'link',  note: '四科知识点全勾完 = 拿证' },
-      { key: 'surgery', name: '手术',       icon: '🏥', type: 'date',  date: '', note: '术前遵医嘱 · 术后好好休息' },
-      { key: 'slim',    name: '减肥针计划', icon: '💉', type: 'phase', date: '', months: 6, note: '每月一针 · 配合饮食运动' }
-    ];
-  }
   const _p = function (n) { return String(n).padStart(2, '0'); };
   const _dstr = function (d) { return d.getFullYear() + '-' + _p(d.getMonth() + 1) + '-' + _p(d.getDate()); };
   const today = new Date(todayStr() + 'T00:00:00');
-  // 目标默认日期：手术=下个月 15 号；减肥针=下下个月 1 号（都可改）
-  const surgeryDefault = (function () { const d = new Date(today); d.setMonth(d.getMonth() + 1, 15); return _dstr(d); })();
   const slimDefault = (function () { const d = new Date(today); d.setMonth(d.getMonth() + 2, 1); return _dstr(d); })();
   let touched = false;
+  // —— 习惯：v387 起养皮肤拆成「身体护理 + 面部护肤」两条；老用户缺 face 就补上 ——
+  if (!Array.isArray(store.planHabits) || !store.planHabits.length) {
+    store.planHabits = [
+      { key: 'skin',    name: '养皮肤 · 身体护理',  icon: '🧴', type: 'daily', history: {} },
+      { key: 'face',    name: '养皮肤 · 面部护肤',  icon: '🧖', type: 'daily', history: {} },
+      { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
+      { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
+    ];
+    touched = true;
+  } else {
+    const _need = [
+      { key: 'face', name: '养皮肤 · 面部护肤', icon: '🧖', type: 'daily', history: {} }
+    ];
+    _need.forEach(function (h) {
+      let has = false;
+      for (let i = 0; i < store.planHabits.length; i++) if (store.planHabits[i].key === h.key) has = true;
+      if (!has) { store.planHabits.splice(1, 0, JSON.parse(JSON.stringify(h))); touched = true; }   // 插在身体护理后面，两条养皮肤挨着
+    });
+    // v384→v386 旧名迁移（身体油→身体护理）
+    store.planHabits.forEach(function (h) { if (h.key === 'skin' && h.name === '养皮肤 · 身体油') { h.name = '养皮肤 · 身体护理'; touched = true; } });
+  }
+  // —— 目标：v387 起「手术」系卡片（v386 单张手术卡 / 早期拆分的术前体检·点痣·痔疮手术）统一换成一张「健康管理」清单卡 ——
+  const _healthDef = function () {
+    return { key: 'health', name: '健康管理', icon: '🩺', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
+      { key: 'blood', name: '体检抽血',   note: '看指标适不适合打减肥针', kind: 'check', done: false, date: '', result: '' },
+      { key: 'anal',  name: '肛肠科检查', note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
+      { key: 'mole',  name: '点痣',       note: '恢复期别抠痂 · 注意防晒',   kind: 'todo',  done: false, date: '' },
+      { key: 'ear',   name: '打耳洞',     note: '认准正规店 · 银针养耳',   kind: 'todo',  done: false, date: '' }
+    ] };
+  };
+  if (!Array.isArray(store.planGoals) || !store.planGoals.length) {
+    store.planGoals = [
+      { key: 'drive',   name: '学车拿证',   icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
+      _healthDef(),
+      { key: 'slim',    name: '减肥针计划', icon: '💉', type: 'phase', date: slimDefault, months: 6, note: '每月一针 · 配合饮食运动' }
+    ];
+    return true;
+  }
+  const _hasGoal = function (k) {
+    for (let i = 0; i < store.planGoals.length; i++) if (store.planGoals[i].key === k) return true;
+    return false;
+  };
+  // 1) 删掉旧「手术」系卡片（术前体检 / 点痣 / 痔疮手术）
+  for (let i = store.planGoals.length - 1; i >= 0; i--) {
+    const k = store.planGoals[i].key;
+    if (k === 'surgery' || k === 'checkup' || k === 'mole') { store.planGoals.splice(i, 1); touched = true; }
+  }
+  // 2) 补「健康管理」清单卡，插在学车后面、减肥针前面
+  if (!_hasGoal('health')) {
+    let idx = store.planGoals.length;
+    for (let i = 0; i < store.planGoals.length; i++) if (store.planGoals[i].key === 'slim') { idx = i; break; }
+    store.planGoals.splice(idx, 0, _healthDef());
+    touched = true;
+  }
+  // 3) 健康卡条目兜底：老数据缺项就按默认补全
   store.planGoals.forEach(function (g) {
-    if (g.key === 'surgery' && !g.date) { g.date = surgeryDefault; touched = true; }
+    if (g.key !== 'health') return;
+    if (!Array.isArray(g.items)) { g.items = _healthDef().items; touched = true; return; }
+    _healthDef().items.forEach(function (def) {
+      let has = false;
+      g.items.forEach(function (it) { if (it.key === def.key) has = true; });
+      if (!has) { g.items.push(JSON.parse(JSON.stringify(def))); touched = true; }
+    });
+  });
+  // 4) 减肥针默认开始日
+  store.planGoals.forEach(function (g) {
     if (g.key === 'slim' && !g.date) { g.date = slimDefault; touched = true; }
-    if (g.type === 'date' && g.date && !g._start) { g._start = todayStr(); touched = true; }
   });
   return touched;
 }
@@ -25416,23 +25510,76 @@ function planGoalCardDrive(g) {
     + '<div class="plan-goal-foot"><button class="plan-goal-btn go" type="button" onclick="switchPanel(\'drive\', this)">🚗 去学车面板</button></div>'
     + '</div>';
 }
-function planGoalCardDate(g) {
+// v387 健康管理清单卡：一组 4 项（2 检查 + 2 待安排），打勾记日期；检查项完成后可填一句结果
+function planGoalCardChecklist(g) {
+  const items = Array.isArray(g.items) ? g.items : [];
+  const doneN = items.filter(function (it) { return it.done; }).length;
+  const pct = items.length ? Math.round(doneN / items.length * 100) : 0;
   const today = todayStr();
-  const days = Math.round((new Date(g.date + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
-  const start = g._start || today;
-  const span = Math.max(1, Math.round((new Date(g.date + 'T00:00:00') - new Date(start + 'T00:00:00')) / 86400000));
-  const pct = Math.max(0, Math.min(100, Math.round((span - Math.max(0, days)) / span * 100)));
-  const dLabel = g.date.slice(0, 4) === today.slice(0, 4) ? g.date.slice(5).replace('-', ' / ') : g.date.replace(/-/g, ' / ');
-  return '<div class="plan-goal" data-goal="surgery">'
+  const row = function (it) {
+    const dt = it.date || '';
+    const dLabel = dt ? (dt.slice(0, 4) === today.slice(0, 4) ? dt.slice(5).replace('-', ' / ') : dt.replace(/-/g, ' / ')) : '';
+    let h = '<div class="plan-ck-item' + (it.done ? ' done' : '') + '">'
+      + '<span class="plan-ck-box" role="checkbox" aria-checked="' + (it.done ? 'true' : 'false') + '" onclick="planHealthCheck(\'' + it.key + '\')">' + (it.done ? '✓' : '') + '</span>'
+      + '<div class="plan-ck-body">'
+      + '<div class="plan-ck-nrow"><span class="plan-ck-name">' + escTodo(it.name) + '</span>'
+      + '<span class="plan-ck-chip ' + (it.kind === 'check' ? 'check' : 'todo') + '">' + (it.kind === 'check' ? '检查' : '待安排') + '</span>'
+      + (dLabel ? '<span class="plan-ck-date">✓ ' + dLabel + ' 完成</span>' : '')
+      + '</div>'
+      + (it.note ? '<div class="plan-ck-note">' + escTodo(it.note) + '</div>' : '');
+    if (it.kind === 'check' && it.done) {
+      h += '<div class="plan-ck-result"><label>结果</label>'
+        + '<input type="text" maxlength="30" placeholder="如：适合 / 不适合 / 医嘱…" value="' + escTodo(it.result || '') + '" onchange="planHealthResult(\'' + it.key + '\', this.value)">'
+        + '</div>';
+    }
+    h += '</div></div>';
+    return h;
+  };
+  const group = function (label, list) {
+    if (!list.length) return '';
+    return '<div class="plan-ck-group"><span class="plan-ck-glabel">' + label + '</span><span class="plan-ck-gline"></span></div>'
+      + list.map(row).join('');
+  };
+  const checks = items.filter(function (it) { return it.kind === 'check'; });
+  const todos = items.filter(function (it) { return it.kind !== 'check'; });
+  return '<div class="plan-goal" data-goal="health">'
     + '<div class="plan-goal-head"><span class="plan-goal-ico">' + g.icon + '</span>'
-    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + ' · 定在 ' + dLabel + '</div></div>'
-    + '<button class="plan-goal-date-btn" type="button" onclick="planGoalEdit(\'surgery\')">📅 改期</button></div>'
-    + '<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">还有</span><span class="gb-num">' + Math.max(0, days) + '</span><span class="gb-unit">天</span></div>'
-    + '<span class="plan-goal-pct">' + (days === 0 ? '就是今天 · 放轻松，一切顺利 💪' : (days < 0 ? '已过去 ' + Math.abs(days) + ' 天' : '')) + '</span></div>'
+    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + '</div></div></div>'
+    + '<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">已完成</span><span class="gb-num">' + doneN + '</span><span class="gb-unit">/ ' + items.length + ' 项</span></div>'
+    + '<span class="plan-goal-pct">' + (doneN === items.length && items.length ? '全部搞定 🎉' : '点一下打勾 · 再点取消') + '</span></div>'
     + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:' + pct + '%;"></span></div>'
-    + '<div class="plan-goal-foot"><button class="plan-goal-btn" type="button" onclick="planGoalEdit(\'surgery\')">改手术日期</button></div>'
-    + '<div class="plan-goal-edit" id="plan-goal-edit-surgery"><input type="date" id="plan-goal-date-surgery" value="' + g.date + '"><button class="pg-edit-save" type="button" onclick="planGoalSave(\'surgery\')">保存</button><button class="pg-edit-cancel" type="button" onclick="planGoalCancel(\'surgery\')">取消</button></div>'
+    + group('🔍 先检查', checks)
+    + group('📅 再安排', todos)
     + '</div>';
+}
+// —— 健康管理交互：打勾/取消（记日期）、检查项结果保存 ——
+function planHealthCheck(itemKey) {
+  const g = planGoalByKey('health');
+  if (!g || !Array.isArray(g.items)) return;
+  let it = null;
+  g.items.forEach(function (x) { if (x.key === itemKey) it = x; });
+  if (!it) return;
+  if (it.done) {
+    it.done = false; it.date = '';
+    try { finToast('已取消「' + it.name + '」'); } catch (e) {}
+  } else {
+    it.done = true; it.date = todayStr();
+    try { finToast('「' + it.name + '」完成 ✅'); } catch (e) {}
+  }
+  saveData();
+  renderPlanGoals();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+function planHealthResult(itemKey, val) {
+  const g = planGoalByKey('health');
+  if (!g || !Array.isArray(g.items)) return;
+  let it = null;
+  g.items.forEach(function (x) { if (x.key === itemKey) it = x; });
+  if (!it) return;
+  it.result = String(val == null ? '' : val).slice(0, 30);
+  saveData();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+  // 不重渲，保住输入框焦点
 }
 function planGoalCardPhase(g) {
   const today = todayStr();
@@ -25443,10 +25590,11 @@ function planGoalCardPhase(g) {
   const phaseNo = Math.min(dayNo, months);
   const phasePct = started ? Math.round(((-days) % 30) / 30 * 100) : 0;
   const dLabel = g.date.slice(0, 4) === today.slice(0, 4) ? g.date.slice(5).replace('-', ' / ') : g.date.replace(/-/g, ' / ');
-  return '<div class="plan-goal" data-goal="slim">'
+  const gk = g.key;
+  return '<div class="plan-goal" data-goal="' + gk + '">'
     + '<div class="plan-goal-head"><span class="plan-goal-ico">' + g.icon + '</span>'
-    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + ' · ' + (started ? dLabel + ' 开始' : dLabel + ' 开始') + '</div></div>'
-    + '<button class="plan-goal-date-btn" type="button" onclick="planGoalEdit(\'slim\')">📅 改开始日</button></div>'
+    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + ' · ' + dLabel + ' 开始</div></div>'
+    + '<button class="plan-goal-date-btn" type="button" onclick="planGoalEdit(\'' + gk + '\')">📅 改开始日</button></div>'
     + (started
       ? ('<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">第</span><span class="gb-num">' + phaseNo + '</span><span class="gb-unit">期 / 共 ' + months + ' 期</span></div>'
         + '<span class="plan-goal-pct">本期进度 ' + phasePct + '%</span></div>'
@@ -25454,8 +25602,8 @@ function planGoalCardPhase(g) {
       : ('<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">距开始</span><span class="gb-num">' + days + '</span><span class="gb-unit">天</span></div>'
         + '<span class="plan-goal-pct">共 ' + months + ' 期 · 每期 30 天</span></div>'
         + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:0%;"></span></div>'))
-    + '<div class="plan-goal-foot"><button class="plan-goal-btn" type="button" onclick="planGoalEdit(\'slim\')">改开始日期</button></div>'
-    + '<div class="plan-goal-edit" id="plan-goal-edit-slim"><input type="date" id="plan-goal-date-slim" value="' + g.date + '"><button class="pg-edit-save" type="button" onclick="planGoalSave(\'slim\')">保存</button><button class="pg-edit-cancel" type="button" onclick="planGoalCancel(\'slim\')">取消</button></div>'
+    + '<div class="plan-goal-foot"><button class="plan-goal-btn" type="button" onclick="planGoalEdit(\'' + gk + '\')">改开始日期</button></div>'
+    + '<div class="plan-goal-edit" id="plan-goal-edit-' + gk + '"><input type="date" id="plan-goal-date-' + gk + '" value="' + g.date + '"><button class="pg-edit-save" type="button" onclick="planGoalSave(\'' + gk + '\')">保存</button><button class="pg-edit-cancel" type="button" onclick="planGoalCancel(\'' + gk + '\')">取消</button></div>'
     + '</div>';
 }
 function renderPlanGoals() {
@@ -25465,7 +25613,7 @@ function renderPlanGoals() {
   let html = '';
   store.planGoals.forEach(function (g) {
     if (g.type === 'link') html += planGoalCardDrive(g);
-    else if (g.type === 'date') html += planGoalCardDate(g);
+    else if (g.type === 'checklist') html += planGoalCardChecklist(g);
     else if (g.type === 'phase') html += planGoalCardPhase(g);
   });
   el.innerHTML = html;
