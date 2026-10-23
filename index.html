@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-380">
+<meta name="hami-build" content="2026-10-23-381">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1832,10 +1832,79 @@
   .todo-done-empty { padding: 12px 0 6px; text-align: center; font-size: 13px; color: #a38a98; }
   .todo-btn.done-btn { background: linear-gradient(135deg, #34c759, #2fb350); color: #fff; border: none; }
   .todo-btn.done-btn:hover { filter: brightness(1.05); }
+
+  /* ============ v381 日常待办分类版：tag 小签 + 添加区选分类 + 筛选条 + 分组 + 进度条 ============ */
+  /* 6 个马卡龙分类：生活琐事/财务正事/健康管理/学习成长/出门办事/其他杂项 */
+  .todo-tag-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .todo-tag-chip {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid #ffd0dc; background: #fff; color: #a0687c;
+    border-radius: 20px; padding: 4px 11px; cursor: pointer; user-select: none;
+    transition: transform .12s ease, background .14s ease, color .14s ease;
+  }
+  .todo-tag-chip:active { transform: scale(.94); }
+  .todo-tag-chip.on { color: #fff; border-color: transparent; }
+  .todo-tag-chip.on[data-tag="life"]   { background: linear-gradient(135deg,#ff8fab,#ff6b9e); }
+  .todo-tag-chip.on[data-tag="money"]  { background: linear-gradient(135deg,#ffc94d,#f5a623); }
+  .todo-tag-chip.on[data-tag="health"] { background: linear-gradient(135deg,#5ad07a,#34c759); }
+  .todo-tag-chip.on[data-tag="study"]  { background: linear-gradient(135deg,#7ba6f5,#5b8def); }
+  .todo-tag-chip.on[data-tag="out"]    { background: linear-gradient(135deg,#c08af0,#a66ae0); }
+  .todo-tag-chip.on[data-tag="other"]  { background: linear-gradient(135deg,#c4a3b2,#a07e8e); }
+  /* 待办项上的分类小签 */
+  .todo-tag {
+    display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 800;
+    border-radius: 7px; padding: 1px 7px; white-space: nowrap; flex: 0 0 auto;
+  }
+  .todo-tag[data-tag="life"]   { color: #d14b73; background: #ffe4ee; }
+  .todo-tag[data-tag="money"]  { color: #c8860d; background: #fff3d6; }
+  .todo-tag[data-tag="health"] { color: #2fb350; background: #e3f8e9; }
+  .todo-tag[data-tag="study"]  { color: #3b6fd4; background: #e5eeff; }
+  .todo-tag[data-tag="out"]    { color: #8a4bd0; background: #f3e8ff; }
+  .todo-tag[data-tag="other"]  { color: #8a6a7a; background: #f6eef2; }
+  /* 分类筛选条 */
+  .todo-filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+  .todo-filter-chip {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid #ead3dd; background: rgba(255,255,255,.72); color: #8a6a7a;
+    border-radius: 20px; padding: 4px 11px; cursor: pointer; user-select: none;
+    transition: transform .12s ease, background .14s ease;
+  }
+  .todo-filter-chip:active { transform: scale(.94); }
+  .todo-filter-chip.on { background: linear-gradient(135deg,#ff7e9c,#ff6b9e); border-color: transparent; color: #fff; }
+  .todo-filter-chip .tfc-n { font-size: 10.5px; font-weight: 800; opacity: .75; }
+  /* 分组小标题 */
+  .todo-grp-head { display: flex; align-items: center; gap: 7px; margin: 13px 0 7px; }
+  .todo-grp-head:first-child { margin-top: 6px; }
+  .todo-grp-ico { font-size: 14px; }
+  .todo-grp-name { font-size: 13px; font-weight: 800; color: #6a4a58; letter-spacing: .3px; }
+  .todo-grp-count {
+    font-size: 10.5px; font-weight: 800; color: #fff; border-radius: 10px; padding: 1px 8px;
+  }
+  .todo-grp-count[data-tag="life"]   { background: #ff8fab; }
+  .todo-grp-count[data-tag="money"]  { background: #f5a623; }
+  .todo-grp-count[data-tag="health"] { background: #34c759; }
+  .todo-grp-count[data-tag="study"]  { background: #5b8def; }
+  .todo-grp-count[data-tag="out"]    { background: #a66ae0; }
+  .todo-grp-count[data-tag="other"]  { background: #a07e8e; }
+  .todo-grp-line { flex: 1; height: 1px; background: linear-gradient(90deg,#f0d6e0,transparent); }
+  /* 总进度条（头部统计下方） */
+  .todo-progress { margin: 8px 0 2px; }
+  .todo-progress-track { height: 8px; border-radius: 8px; background: #f6e3ec; overflow: hidden; }
+  .todo-progress-in { height: 100%; border-radius: 8px; background: linear-gradient(90deg,#f7a8c4,#c58ae6); transition: width .45s ease; }
+  .todo-progress-txt { font-size: 11px; color: #a0687c; font-weight: 700; margin-top: 4px; }
+  /* 已完成区里的分类小签也要能看 */
+  .todo-done-item .todo-tag { margin-left: 0; }
   @media (max-width: 420px) {
     .todo-panel-title { font-size: 15px; }
     .todo-panel-head { align-items: flex-start; }
     .todo-sum-chip { font-size: 10px; padding: 2px 7px; }
+    /* v381：窄屏下 meta 行（分类签+期限+按钮）允许换行，绝不横向溢出 */
+    #todo-list-daily .todo-meta,
+    #todo-list-daily .todo-group-item .todo-meta,
+    #todo-done-daily .todo-meta { flex-wrap: wrap; row-gap: 4px; }
+    #todo-list-daily .todo-meta .todo-btn,
+    #todo-done-daily .todo-meta .todo-btn { padding: 3px 9px; }
+    .todo-grp-name { font-size: 12px; }
   }
 
   @media (max-width: 420px) {
@@ -5871,16 +5940,12 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     </button>
   </div>
 
-  <!-- 三·待办事项：日常代办 / 工作代办 独立两点 -->
+  <!-- 三·待办事项：日常代办（v381：工作代办整块移除，待办数据合并进日常，不再分工作/日常） -->
   <div class="nav-group">
     <img class="nav-group-sticker" draggable="false" onclick="navStickerGo(this)" alt="" src="data:image/webp;base64,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"><div class="nav-group-title">四·待办事项</div>
     <button class="nav-item" type="button" onclick="switchPanel('todo-daily', this)">
-      <span class="nav-icon">🏠</span>
-      <span class="nav-text">日常代办</span>
-    </button>
-    <button class="nav-item" type="button" onclick="switchPanel('todo-work', this)">
-      <span class="nav-icon">💼</span>
-      <span class="nav-text">工作代办</span>
+      <span class="nav-icon">📋</span>
+      <span class="nav-text">日常待办</span>
     </button>
   </div>
 
@@ -6330,16 +6395,19 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
 
   </div>
 
-  <!-- ==================== 代办事项（日常 / 工作 分类 + 打卡） ==================== -->
-  <!-- ==================== 日常代办 ==================== -->
+  <!-- ==================== 待办事项（v381：只留日常待办，工作待办整块移除、数据合并进日常） ==================== -->
   <div id="panel-todo-daily" class="panel">
     <div class="card todo-section">
-      <div class="todo-section-head">
-        <div class="card-title">🏠 日常代办</div>
-        <span class="todo-section-tip">生活琐事 · 轻松记</span>
+      <div class="todo-panel-head">
+        <div class="todo-panel-head-left">
+          <div class="todo-panel-title">📋 日常待办</div>
+          <div class="todo-panel-sub">生活正事 · 分类打理</div>
+        </div>
+        <div class="todo-summary" id="todo-summary-daily"></div>
       </div>
       <div class="todo-add-row">
-        <textarea id="todo-input-daily" class="todo-text-input" rows="2" placeholder="写点日常要做的事…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('daily')}"></textarea>
+        <textarea id="todo-input-daily" class="todo-text-input" rows="2" placeholder="写点要做的事…（自动识别分类，也可手动选）" oninput="autoSuggestTodoTag(this.value)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('daily')}"></textarea>
+        <div class="todo-tag-picker" id="todo-tag-picker"></div>
         <div class="todo-add-bottom">
           <div class="todo-date-wrap">
             <input type="date" id="todo-date-daily" class="todo-date-input" title="选择日期（可选，留空=无期限）">
@@ -6348,35 +6416,12 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
           <button class="todo-add-btn" onclick="openGroupModal('daily')" title="新建「一个类目 + 多条小点」的待办">📋 类目</button>
         </div>
       </div>
+      <div class="todo-filter-bar" id="todo-filter-bar"></div>
       <div id="todo-list-daily"></div>
       <div id="todo-done-daily" class="todo-done-section"></div>
     </div>
-  </div>
 
-  <!-- ==================== 工作代办 ==================== -->
-  <div id="panel-todo-work" class="panel">
-    <div class="card todo-section">
-      <div class="todo-panel-head">
-        <div class="todo-panel-head-left">
-          <div class="todo-panel-title">工作代办</div>
-          <div class="todo-panel-sub">自媒体 · 接单 · 运营</div>
-        </div>
-        <div class="todo-summary" id="todo-summary-work"></div>
-      </div>
-      <div class="todo-add-row">
-        <textarea id="todo-input-work" class="todo-text-input" rows="2" placeholder="要推进什么事？" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('work')}"></textarea>
-        <div class="todo-add-bottom">
-          <div class="todo-date-wrap">
-            <input type="date" id="todo-date-work" class="todo-date-input" title="选择日期（可选，留空=无期限）">
-          </div>
-          <button class="todo-add-btn" onclick="addUserTodo('work')">➕ 添加</button>
-          <button class="todo-add-btn" onclick="openGroupModal('work')" title="新建「一个类目 + 多条小点」的待办">📋 类目</button>
-        </div>
-      </div>
-      <div id="todo-list-work"></div>
-      <div id="todo-done-work" class="todo-done-section"></div>
-    </div>
-
+    <!-- v381：定制单进度看板（原在工作代办面板，随工作代办移除迁到这里） -->
     <div class="card todo-section" id="custom-board-card">
       <div class="todo-panel-head">
         <div class="todo-panel-head-left">
@@ -7248,6 +7293,10 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
           <label>📅 完成期限（可选，留空=无期限）</label>
           <input type="date" id="te-todo-date" title="点击选择日期，手机上会弹出日历">
         </div>
+        <div class="co-field">
+          <label>🏷️ 分类</label>
+          <div class="todo-tag-picker" id="te-tag-picker" style="margin-top:2px;"></div>
+        </div>
       </div>
       <div class="co-actions">
         <button class="co-cancel" onclick="closeTodoEditModal()">取消</button>
@@ -7273,6 +7322,10 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <div class="co-field">
           <label>📅 完成期限（可选，留空=无期限）</label>
           <input type="date" id="gt-deadline" title="点击选择日期，手机上会弹出日历">
+        </div>
+        <div class="co-field">
+          <label>🏷️ 分类</label>
+          <div class="todo-tag-picker" id="gt-tag-picker" style="margin-top:2px;"></div>
         </div>
         <div class="co-field">
           <label>✅ 小点（逐条勾选，<b>全部勾完才算完成</b>）</label>
@@ -13037,7 +13090,7 @@ function sendHamiCmd() {
       }
       case 'todo':
         if (!store.userTodos) store.userTodos = [];
-        hamiPushRecord('userTodos', { date: date, text: it.text, done: false, category: getTodoCat(it.text) });
+        hamiPushRecord('userTodos', { date: date, text: it.text, done: false, category: 'daily', tag: getTodoTag(it.text) });
         hints.push('待办');
         acted = true;
         break;
@@ -13743,7 +13796,7 @@ function applyWorkTodoSeedV1() {
   const existing = new Set((store.userTodos || []).map(t => t.text));
   seed.forEach(function (text) {
     if (!existing.has(text)) {
-      hamiPushRecord('userTodos', { date: todayStr(), text: text, done: false, category: 'work' });
+      hamiPushRecord('userTodos', { date: todayStr(), text: text, done: false, category: 'daily', tag: getTodoTag(text) });
     }
   });
   store.workTodosSeedV1Applied = true;
@@ -14943,11 +14996,78 @@ function showCheckinDetail(label, rawJson) {
   hamiToast(body);
 }
 
-// 判断一句话属于「工作」还是「日常」待办
+// 判断一句话属于「工作」还是「日常」待办（v381：工作代办已移除，此函数仅老数据兼容保留）
 function getTodoCat(text) {
   const workKw = ['工作','公司','上班','项目','客户','开会','会议','汇报','周报','月报','报表','邮件','老板','同事','加班','出差','合同','甲方','乙方','deadline','截止','提交','交付','方案','策划','任务','对接','商务','加班'];
   for (const k of workKw) { if (text.indexOf(k) >= 0) return 'work'; }
   return 'daily';
+}
+
+// ==================== v381 日常待办分类体系（6 个马卡龙分类） ====================
+const TODO_TAGS = [
+  { key: 'life',   icon: '🛒', name: '生活琐事' },
+  { key: 'money',  icon: '💰', name: '财务正事' },
+  { key: 'health', icon: '💪', name: '健康管理' },
+  { key: 'study',  icon: '📚', name: '学习成长' },
+  { key: 'out',    icon: '🚗', name: '出门办事' },
+  { key: 'other',  icon: '📌', name: '其他杂事' }
+];
+function todoTagInfo(key) {
+  for (const t of TODO_TAGS) { if (t.key === key) return t; }
+  return TODO_TAGS[TODO_TAGS.length - 1];
+}
+// 按关键词智能推断分类（添加时自动推荐，主人可手动改）
+function getTodoTag(text) {
+  const t = String(text || '');
+  const rules = [
+    ['money',  ['缴费','话费','水费','电费','燃气','账单','还款','花呗','信用卡','工资','报销','理财','存钱','转账','记账','保险','税','续费','订阅']],
+    ['health', ['体检','吃药','复诊','疫苗','早睡','喝水','跑步','瑜伽','散步','减肥','空腹','血糖','血压','看牙','护肤','面膜','运动','挂号','体检报告']],
+    ['study',  ['学习','看书','读书','课程','网课','背单词','作业','论文','考试','复习','教程','练字','学设计','灵感库','素材整理','b站学习']],
+    ['out',    ['快递','取件','寄快递','买菜','购物','超市','逛街','出门','加油','洗车','维修','退换','取钱','办事','逛','采购','拿外卖']],
+    ['life',   ['打扫','家务','洗衣','拖地','洗碗','晒被子','整理','断舍离','做饭','聚餐','生日','纪念日','打电话','问候','宠物','喂猫','铲屎','浇花','换季','收纳']]
+  ];
+  for (const r of rules) { for (const w of r[1]) { if (t.indexOf(w) >= 0) return r[0]; } }
+  return 'other';
+}
+let __todoTagSel = 'other';        // 添加区当前选中的分类
+let __todoTagTouched = false;      // 主人是否手动选过（没选过=跟随智能推荐）
+let __todoTagFilter = 'all';       // 筛选条当前筛选
+function renderTodoTagPicker() {
+  const el = document.getElementById('todo-tag-picker');
+  if (!el) return;
+  el.innerHTML = TODO_TAGS.map(function (t) {
+    return '<span class="todo-tag-chip' + (__todoTagSel === t.key ? ' on' : '') + '" data-tag="' + t.key + '" onclick="pickTodoTag(\'' + t.key + '\')" title="分到「' + t.name + '」">' + t.icon + ' ' + t.name + '</span>';
+  }).join('');
+}
+function pickTodoTag(k) { __todoTagSel = k; __todoTagTouched = true; renderTodoTagPicker(); }
+// 输入时智能高亮推荐分类（主人没手动选过才自动跟）
+function autoSuggestTodoTag(v) {
+  if (__todoTagTouched) return;
+  __todoTagSel = (v && v.trim()) ? getTodoTag(v) : 'other';
+  renderTodoTagPicker();
+}
+// 分类筛选条（只列有未完成条目的分类）
+function renderTodoFilterBar(items) {
+  const el = document.getElementById('todo-filter-bar');
+  if (!el) return;
+  const cnt = {};
+  TODO_TAGS.forEach(function (t) { cnt[t.key] = 0; });
+  items.forEach(function (o) { const k = o.ut.tag || 'other'; cnt[k] = (cnt[k] || 0) + 1; });
+  let h = '<span class="todo-filter-chip' + (__todoTagFilter === 'all' ? ' on' : '') + '" onclick="setTodoTagFilter(\'all\')">🌈 全部 <span class="tfc-n">' + items.length + '</span></span>';
+  TODO_TAGS.forEach(function (t) {
+    if (!cnt[t.key]) return;
+    h += '<span class="todo-filter-chip' + (__todoTagFilter === t.key ? ' on' : '') + '" onclick="setTodoTagFilter(\'' + t.key + '\')">' + t.icon + ' ' + t.name + ' <span class="tfc-n">' + cnt[t.key] + '</span></span>';
+  });
+  el.innerHTML = h;
+}
+function setTodoTagFilter(k) { __todoTagFilter = k; renderTodoPanel(); }
+// 通用「选分类小签」渲染器（编辑弹窗 / 类目弹窗复用）
+function renderTagPickerInto(elId, sel, fnName) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = TODO_TAGS.map(function (t) {
+    return '<span class="todo-tag-chip' + (sel === t.key ? ' on' : '') + '" data-tag="' + t.key + '" onclick="' + fnName + '(\'' + t.key + '\')">' + t.icon + ' ' + t.name + '</span>';
+  }).join('');
 }
 
 // 两个 YYYY-MM-DD 相差天数（a - b；正数表示 a 在 b 之后）
@@ -14998,6 +15118,15 @@ let __grpEditIdx = -1;
 // 旧数据兼容：补 type 默认、按小点重算 group 的 done，保证「全部勾完才算完成」状态不串
 function normalizeUserTodos() {
   if (!Array.isArray(store.userTodos)) return;
+  // v381：一次性把旧的「工作」分类待办合并进「日常」（工作代办整块移除，数据一条不丢）
+  if (!store.workMergedV381) {
+    let n = 0;
+    store.userTodos.forEach(function (ut) {
+      if (ut && (ut.category || 'daily') === 'work') { ut.category = 'daily'; n++; }
+    });
+    store.workMergedV381 = true;
+    if (n > 0) { try { saveData(); } catch (e) {} }
+  }
   store.userTodos.forEach(function (ut) {
     if (!ut) return;
     if (ut.type === 'group') {
@@ -15011,6 +15140,8 @@ function normalizeUserTodos() {
       if (ut.type === undefined) ut.type = 'single';
       if (typeof ut.done !== 'boolean') ut.done = false;
     }
+    // v381：老数据补分类 tag（智能推断）
+    if (!ut.tag) ut.tag = getTodoTag(ut.text);
   });
 }
 // 渲染一条类目待办（标题 + 进度 + 可勾选小点列表 + 操作）
@@ -15020,6 +15151,7 @@ function groupTodoHtml(o, cat, info) {
   const done = subs.filter(function (s) { return s.done; }).length;
   const allDone = subs.length > 0 && done === subs.length;
   const overdueCls = (info.overdue && !allDone) ? ' todo-item-overdue' : '';
+  const tg = todoTagInfo(ut.tag);
   const subHtml = subs.map(function (s, k) {
     return `<div class="todo-subitem${s.done ? ' done' : ''}">
       <span class="todo-subcheck${s.done ? ' done' : ''}" onclick="toggleSubtask(${o.i},${k})" title="勾选这条小点">${s.done ? '✓' : ''}</span>
@@ -15034,7 +15166,8 @@ function groupTodoHtml(o, cat, info) {
       <div class="todo-grp-bar"><div class="todo-grp-bar-in" style="width:${subs.length ? Math.round(done / subs.length * 100) : 0}%;${allDone ? 'background:linear-gradient(90deg,#7fe0a0,#34c759);' : ''}"></div></div>
       <div class="todo-sublist">${subHtml}</div>
       <div class="todo-meta">
-        ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
+        <span class="todo-tag" data-tag="${tg.key}">${tg.icon} ${tg.name}</span>
+        ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline nodead">无期限</span>'}
         <span class="todo-meta-sp"></span>
         <button class="todo-btn mini" onclick="openGroupModal('${cat}',${o.i})" title="增删小点 / 改名称期限">编辑类目</button>
         <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除整个类目">删类目</button>
@@ -15043,6 +15176,8 @@ function groupTodoHtml(o, cat, info) {
   </div>`;
 }
 // 打开类目弹窗：cat=当前区；idx 不传=新建，传=编辑
+let __grpTagSel = 'other';
+function pickGrpTag(k) { __grpTagSel = k; renderTagPickerInto('gt-tag-picker', __grpTagSel, 'pickGrpTag'); }
 function openGroupModal(cat, idx) {
   __grpCurCat = cat || 'daily';
   __grpEditIdx = (typeof idx === 'number' && idx >= 0) ? idx : -1;
@@ -15059,6 +15194,7 @@ function openGroupModal(cat, idx) {
     if (dEl) dEl.style.display = '';
     titleEl.value = ut.text || '';
     deadEl.value = ut.deadline || '';
+    __grpTagSel = ut.tag || 'other';
     (ut.subtasks || []).forEach(function (s) { addGroupSubInput(s.text); });
   } else {
     const tEl = document.getElementById('group-modal-title');
@@ -15067,8 +15203,10 @@ function openGroupModal(cat, idx) {
     if (dEl) dEl.style.display = 'none';
     titleEl.value = '';
     deadEl.value = '';
+    __grpTagSel = 'other';
     addGroupSubInput(''); addGroupSubInput(''); addGroupSubInput('');
   }
+  renderTagPickerInto('gt-tag-picker', __grpTagSel, 'pickGrpTag');
   const m = document.getElementById('group-todo-modal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
   setTimeout(function () { try { titleEl && titleEl.focus(); } catch (e) {} }, 50);
@@ -15111,12 +15249,12 @@ function submitGroupModal() {
     if (!ut) { closeGroupModal(); return; }
     // 编辑时按位置保留已勾状态，新加的小点默认未完成
     subs.forEach(function (s, k) { if (ut.subtasks && ut.subtasks[k]) s.done = ut.subtasks[k].done; });
-    ut.text = title; ut.deadline = deadline; ut.subtasks = subs;
+    ut.text = title; ut.deadline = deadline; ut.subtasks = subs; ut.tag = __grpTagSel || 'other';
     recomputeGroupDone(ut);
     saveData(); closeGroupModal(); try { renderHomeTodo(); } catch (e) {} try { renderTodoPanel(); } catch (e) {}
     try { finToast('已保存类目'); } catch (e) {}
   } else {
-    hamiPushRecord('userTodos', { date: todayStr(), text: title, done: false, type: 'group', category: __grpCurCat, deadline: deadline, createdAt: Date.now(), subtasks: subs });
+    hamiPushRecord('userTodos', { date: todayStr(), text: title, done: false, type: 'group', category: 'daily', deadline: deadline, createdAt: Date.now(), tag: __grpTagSel || 'other', subtasks: subs });
     saveData(); closeGroupModal(); try { renderHomeTodo(); } catch (e) {} try { renderTodoPanel(); } catch (e) {}
     try { finToast('已添加类目待办'); } catch (e) {}
   }
@@ -15161,7 +15299,7 @@ function renderTodoListForCat(cat) {
     .filter(o => (o.ut.category || 'daily') === cat);
   // 主列表只显示「未完成」项（已完成项落到下方「已完成」区块）
   const items = allItems.filter(o => !isTodoDone(o.ut));
-  // 顶部小计：未完成 / 已完成 / 逾期
+  // 顶部小计：待办 / 已完成 / 逾期 + 总进度条
   const sumEl = document.getElementById('todo-summary-' + cat);
   if (sumEl) {
     const undone = items.length;
@@ -15173,47 +15311,53 @@ function renderTodoListForCat(cat) {
       ${late > 0 ? '<span class="todo-sum-chip late">逾期 ' + late + '</span>' : ''}
     `;
   }
+  // v381：分类筛选条
+  renderTodoFilterBar(items);
   if (items.length === 0) {
     __todoPage[cat] = 0;
-    el.innerHTML = `<div class="todo-empty">太棒了，${cat === 'work' ? '工作' : '日常'}待办都清空啦 🎉</div>`;
+    el.innerHTML = `<div class="todo-empty">太棒了，待办都清空啦 🎉<br><span style="font-size:12px;font-weight:600;">写一条要做的事，自动帮你分好类~</span></div>`;
     return;
   }
-  const sorted = sortTodos(items);
-  // 分页：一页 TODO_PAGE 条，翻到底看全不丢
-  const maxPage = Math.max(0, Math.ceil(sorted.length / TODO_PAGE) - 1);
-  if ((__todoPage[cat] || 0) > maxPage) __todoPage[cat] = maxPage;
-  const start = (__todoPage[cat] || 0) * TODO_PAGE;
-  const pageList = sorted.slice(start, start + TODO_PAGE);
-  let html = '';
-  pageList.forEach(o => {
-    const ut = o.ut;
-    const info = todoDeadlineInfo(ut);
-    if (ut.type === 'group') {
-      html += groupTodoHtml(o, cat, info);
-    } else {
-      const overdueCls = (info.overdue && !ut.done) ? ' todo-item-overdue' : '';
-      html += `<div class="todo-item${overdueCls}">
+  const filtered = __todoTagFilter === 'all' ? items : items.filter(o => (o.ut.tag || 'other') === __todoTagFilter);
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="todo-empty">「${todoTagInfo(__todoTagFilter).name}」暂时没有待办 🎀</div>`;
+    return;
+  }
+  const sorted = sortTodos(filtered);
+  // v381：按分类分组渲染（分组全显、不再分页，信息完整一目了然）
+  const total = allItems.length;
+  const doneTotal = total - items.length;
+  const pct = total ? Math.round(doneTotal / total * 100) : 0;
+  let html = '<div class="todo-progress"><div class="todo-progress-track"><div class="todo-progress-in" style="width:' + pct + '%;"></div></div>'
+    + '<div class="todo-progress-txt">今日整体完成度 ' + pct + '% · 已完成 ' + doneTotal + ' / ' + total + ' 条</div></div>';
+  TODO_TAGS.forEach(function (t) {
+    const g = sorted.filter(o => (o.ut.tag || 'other') === t.key);
+    if (!g.length) return;
+    html += '<div class="todo-grp-head"><span class="todo-grp-ico">' + t.icon + '</span><span class="todo-grp-name">' + t.name + '</span>'
+      + '<span class="todo-grp-count" data-tag="' + t.key + '">' + g.length + '</span><span class="todo-grp-line"></span></div>';
+    g.forEach(o => {
+      const ut = o.ut;
+      const info = todoDeadlineInfo(ut);
+      if (ut.type === 'group') {
+        html += groupTodoHtml(o, cat, info);
+      } else {
+        const overdueCls = (info.overdue && !ut.done) ? ' todo-item-overdue' : '';
+        html += `<div class="todo-item${overdueCls}">
         <span class="todo-check" onclick="toggleUserTodo(${o.i})" title="点击打卡完成">${ut.done ? '✓' : ''}</span>
         <div class="todo-body">
           <div class="todo-text">${escTodo(ut.text)}</div>
           <div class="todo-meta">
-            ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline" style="color:#b0a0a8;">无期限</span>'}
+            <span class="todo-tag" data-tag="${t.key}">${t.icon} ${t.name}</span>
+            ${ut.deadline ? '<span class="todo-deadline ' + info.cls + '">' + info.label + '</span>' : '<span class="todo-deadline nodead">无期限</span>'}
             <span class="todo-meta-sp"></span>
             <button class="todo-btn mini" onclick="openTodoEditModal(${o.i})" title="修改内容或期限">修改</button>
             <button class="todo-btn del" onclick="removeUserTodo(${o.i})" title="删除">删</button>
           </div>
         </div>
       </div>`;
-    }
+      }
+    });
   });
-  if (sorted.length > TODO_PAGE) {
-    html += `<div class="flow-toggle-wrap" style="justify-content:center;gap:10px;display:flex;align-items:center;flex-wrap:wrap;padding-top:6px;">
-      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',-1)" ${(__todoPage[cat] || 0) === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button>
-      <span style="font-size:12px;color:#8a6270;">第 ${(__todoPage[cat] || 0) + 1}/${maxPage + 1} 页 · 共 ${sorted.length} 条</span>
-      <button class="flow-toggle-btn" type="button" onclick="todoGo('${cat}',1)" ${(__todoPage[cat] || 0) >= maxPage ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button>
-    </div>`;
-  }
-
   el.innerHTML = html;
 }
 // v85：已完成区块（照「已完成图文项目」模式——>3 条折叠，可一键恢复 / 删除）
@@ -15225,7 +15369,7 @@ function renderTodoDoneForCat(cat) {
     .filter(o => (o.ut.category || 'daily') === cat && isTodoDone(o.ut))
     .sort((a, b) => (b.ut.completedAt || b.ut.createdAt || 0) - (a.ut.completedAt || a.ut.createdAt || 0));
   if (!items.length) {
-    el.innerHTML = '<div class="todo-done-head">✅ 已完成' + (cat === 'work' ? '工作' : '日常') + '待办 <span class="todo-done-count">0</span></div><div class="todo-done-empty">暂无已完成项目，完成一条待办后会出现在这里~</div>';
+    el.innerHTML = '<div class="todo-done-head">✅ 已完成待办 <span class="todo-done-count">0</span></div><div class="todo-done-empty">暂无已完成项目，完成一条待办后会出现在这里~</div>';
     return;
   }
   // v171：改成翻页式——每页固定 3 条，其余用 ‹ › 翻页查看，不再「展开全部」一次性铺开（照 v126 自媒体明细模式）
@@ -15235,10 +15379,11 @@ function renderTodoDoneForCat(cat) {
   if (__todoDonePage[cat] >= totalPages) __todoDonePage[cat] = totalPages - 1;
   const start = __todoDonePage[cat] * TODO_PAGE;
   const viewList = items.slice(start, start + TODO_PAGE);
-  let html = '<div class="todo-done-head">✅ 已完成' + (cat === 'work' ? '工作' : '日常') + '待办 <span class="todo-done-count">' + items.length + '</span></div>';
+  let html = '<div class="todo-done-head">✅ 已完成待办 <span class="todo-done-count">' + items.length + '</span></div>';
   viewList.forEach(o => {
     const ut = o.ut;
     const doneAt = ut.completedAt ? fmtDoneDate(ut.completedAt) : '';
+    const tg = todoTagInfo(ut.tag);
     if (ut.type === 'group') {
       const subs = ut.subtasks || [];
       const subHtml = subs.map(function (s) {
@@ -15250,6 +15395,7 @@ function renderTodoDoneForCat(cat) {
           <div class="todo-text todo-group-title">${escTodo(ut.text)} <span class="todo-grp-prog all">✓ 全部完成 ${subs.length}/${subs.length}</span></div>
           <div class="todo-sublist">${subHtml}</div>
           <div class="todo-meta">
+            <span class="todo-tag" data-tag="${tg.key}">${tg.icon} ${tg.name}</span>
             ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
             <span class="todo-meta-sp"></span>
             <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
@@ -15264,6 +15410,7 @@ function renderTodoDoneForCat(cat) {
       <div class="todo-body">
         <div class="todo-text">${escTodo(ut.text)}</div>
         <div class="todo-meta">
+          <span class="todo-tag" data-tag="${tg.key}">${tg.icon} ${tg.name}</span>
           ${doneAt ? '<span class="todo-done-date">完成于 ' + doneAt + '</span>' : ''}
           <span class="todo-meta-sp"></span>
           <button class="todo-btn mini" onclick="toggleUserTodo(${o.i})" title="恢复为未完成">恢复</button>
@@ -15294,11 +15441,11 @@ function fmtTsMonthDay(ts) {
     return (d.getMonth() + 1) + '月' + d.getDate() + '日';
   } catch (e) { return '未记录'; }
 }
+// v381：只渲染「日常待办」（工作代办整块移除，待办已全部合并进日常）
 function renderTodoPanel() {
+  renderTodoTagPicker();
   renderTodoListForCat('daily');
-  renderTodoListForCat('work');
   renderTodoDoneForCat('daily');
-  renderTodoDoneForCat('work');
 }
 
 // ==================== 定制单进度看板 ====================
@@ -15400,7 +15547,9 @@ function addUserTodo(cat) {
   const dateEl = document.getElementById('todo-date-' + cat);
   const deadline = (dateEl && dateEl.value) ? dateEl.value : '';
   if (!store.userTodos) store.userTodos = [];
-  hamiPushRecord('userTodos', { date: todayStr(), text: text, done: false, category: cat, deadline: deadline, createdAt: Date.now() });
+  // v381：写分类 tag——主人手动选过就听主人的，没选过用智能推荐
+  let tag = __todoTagTouched ? __todoTagSel : getTodoTag(text);
+  hamiPushRecord('userTodos', { date: todayStr(), text: text, done: false, category: 'daily', deadline: deadline, createdAt: Date.now(), tag: tag });
   // v91：添加后自动跳转到新项所在页（TODO_PAGE=3 分页时，新项可能落到第 2 页被藏起来，导致主人以为「记录不了」）
   try {
     const newI = store.userTodos.length - 1;
@@ -15413,9 +15562,12 @@ function addUserTodo(cat) {
   saveData();
   inp.value = '';
   if (dateEl) dateEl.value = '';
+  // v381：重置分类选择（回到智能推荐态）
+  __todoTagSel = 'other'; __todoTagTouched = false;
+  renderTodoTagPicker();
   renderTodoPanel();
   try { renderHomeTodo(); } catch (e) {}
-  try { finToast('已添加' + (cat === 'work' ? '工作' : '日常') + '待办'); } catch (e) {}
+  try { finToast('已添加到「' + todoTagInfo(tag).name + '」'); } catch (e) {}
 }
 // 设置 / 修改 / 取消某条待办的完成期限（支持 MM-DD 简写自动补成年 / YYYY-MM-DD）
 function setTodoDeadline(i) {
@@ -15445,8 +15597,10 @@ function setTodoDeadline(i) {
   try { finToast(ut.deadline ? ('已设期限：' + ut.deadline) : '已取消期限'); } catch (e) {}
 }
 
-// ==================== 待办 编辑弹窗（v95：完整编辑页，文本+日历，替代原生 prompt）====================
+// ==================== 待办 编辑弹窗（v95：完整编辑页，文本+日历；v381：加分类选择） ====================
 let __teEditIdx = -1;
+let __teTagSel = 'other';
+function pickTeTag(k) { __teTagSel = k; renderTagPickerInto('te-tag-picker', __teTagSel, 'pickTeTag'); }
 function openTodoEditModal(idx) {
   if (!store.userTodos || !store.userTodos[idx]) return;
   const ut = store.userTodos[idx];
@@ -15457,6 +15611,8 @@ function openTodoEditModal(idx) {
   const dEl = document.getElementById('te-todo-date');
   if (tEl) tEl.value = ut.text || '';
   if (dEl) dEl.value = ut.deadline || '';
+  __teTagSel = ut.tag || 'other';
+  renderTagPickerInto('te-tag-picker', __teTagSel, 'pickTeTag');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
   setTimeout(function () { try { tEl && tEl.focus(); } catch (e) {} }, 50);
 }
@@ -15478,6 +15634,7 @@ function submitTodoEdit() {
   try { hamiTombSnapshot('userTodos', hamiSnapshot('userTodos', idx), ut); } catch (e) {}
   ut.text = text;
   ut.deadline = date;
+  ut.tag = __teTagSel || 'other';   // v381：分类一起保存
   try { hamiDeleteSync(); } catch (e) {}
   saveData();
   closeTodoEditModal();
@@ -15524,7 +15681,7 @@ function toggleUserTodo(idx) {
     ut.done = !ut.done;
   }
   if (isTodoDone(ut)) { ut.completedAt = Date.now(); } else { ut.completedAt = 0; }
-  __todoPage.daily = 0; __todoPage.work = 0;   // 勾选会改变排序位置，回到第1页最直观
+  __todoPage.daily = 0;   // 勾选会改变排序位置，回到第1页最直观
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
 }
@@ -15535,7 +15692,7 @@ function toggleSubtask(gIdx, k) {
   ut.subtasks[k].done = !ut.subtasks[k].done;
   recomputeGroupDone(ut);
   if (isTodoDone(ut)) { ut.completedAt = Date.now(); } else { ut.completedAt = 0; }
-  __todoPage.daily = 0; __todoPage.work = 0;
+  __todoPage.daily = 0;
   saveData(); try { renderHomeTodo(); } catch (e) {}
   try { renderTodoPanel(); } catch (e) {}
 }
