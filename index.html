@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-384">
+<meta name="hami-build" content="2026-10-23-385">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1172,7 +1172,7 @@
     background: rgba(255,255,255,0.75);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    padding: 11px 5px;   /* v312：上下加长（原 7px 4px 太扁），卡片更饱满 */
+    padding: 10px 6px;   /* v312：上下加长（原 7px 4px 太扁），卡片更饱满 */
     text-align: center;
     box-shadow: 0 2px 8px rgba(255, 158, 181, 0.08);
     cursor: pointer;
@@ -1352,22 +1352,31 @@
     border-color: #ff9eb5;
     background: linear-gradient(135deg, #fff0f5, var(--c-pink-soft));
   }
+  /* v385：图标+标题横排一行——标题是主角（放大加粗），图标退为辅助（缩小），不再四层竖排互相挤 */
+  .checkin-card .ci-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 7px;
+  }
   .checkin-card .ci-icon {
-    font-size: 23px;   /* v312：20px → 23px */
-    margin-bottom: 3px;   /* v312：1px → 3px */
-    line-height: 1.1;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
   }
   .checkin-card .ci-label {
-    font-size: 12.5px;   /* v312：11px → 12.5px */
-    color: var(--c-text-2);
-    margin-bottom: 5px;   /* v312：2px → 5px */
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #5a3a48;
     line-height: 1.2;
+    letter-spacing: .5px;
   }
   .checkin-card .ci-lines {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;   /* v312：1px → 2px */
+    gap: 3px;   /* v312：1px → 2px */
     margin-top: 0;
   }
   .checkin-card .ci-line {
@@ -1445,7 +1454,7 @@
     position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    height: 60px; min-width: 0; padding: 3px 2px 2px;
+    height: 48px; min-width: 0; padding: 3px 2px 2px;
     border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
     display: flex; flex-direction: column; align-items: stretch;
     box-sizing: border-box; overflow: hidden; cursor: pointer;
@@ -1476,18 +1485,18 @@
   .weight-cal-main.weight-cal-main-sm { font-size: 11px; letter-spacing: -.5px; }
   .weight-cal-main.weight-cal-main-xs { font-size: 10px; letter-spacing: -.6px; }
   .weight-cal-main.weight-cal-main-fill { color: #b6a0ac; font-weight: 600; font-size: 12px; }
-  /* 底部两行（v93）：体重变化在上、运动圆点在下，格子高度维持原样不改高 */
+  /* 底部一行（v385）：涨跌+运动圆点改横排（原竖排两行太挤），格子从四行内容变三行 */
   .weight-cal-foot {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 1px; min-height: 16px; padding: 0 1px;
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 4px; min-height: 12px; padding: 0 1px;
   }
   .weight-cal-change {
-    font-size: 8px; font-weight: 700; line-height: 1;
+    font-size: 9px; font-weight: 700; line-height: 1;
     white-space: nowrap; font-variant-numeric: tabular-nums;
   }
   .weight-cal-change.weight-cal-change-empty { visibility: hidden; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; align-items: center; }
-  .weight-cal-ex-dot { font-size: 7px; }
+  .weight-cal-ex-dot { font-size: 8px; }
   /* 旧 class 兼容：外部响应式块可能还引用 .weight-cal-stack / .weight-cal-weight */
   .weight-cal-stack { display: none !important; }
   .weight-cal-weight { font-size: 13px; font-weight: 800; color: #4a3340; background: transparent; }
@@ -4067,14 +4076,14 @@
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
       .weight-cal-grid { gap: 1px; }
-      .weight-cal-cell { height: 50px !important; border-radius: 6px; padding: 1px 0 1px !important; }
+      .weight-cal-cell { height: 44px !important; border-radius: 6px; padding: 1px 0 1px !important; }
       .weight-cal-day { font-size: 10px !important; }
       .weight-cal-main { font-size: 11px !important; }
       /* v199：体重单位改斤后数字变 5 位（如 177.8），按位数自动收字号，保证数字完整落在格子里 */
       .weight-cal-main.weight-cal-main-sm { font-size: 10px !important; letter-spacing: -.5px; }
       .weight-cal-main.weight-cal-main-xs { font-size: 9px !important; letter-spacing: -.6px; }
       .weight-cal-main.weight-cal-main-empty, .weight-cal-main.weight-cal-main-fill { font-size: 10px !important; }
-      .weight-cal-change, .weight-cal-weight { font-size: 8px !important; padding: 0 !important; line-height: 1.15; }
+      .weight-cal-change, .weight-cal-weight { font-size: 9px !important; padding: 0 !important; line-height: 1.15; }
       .weight-cal-ex { gap: 0; transform: scale(0.9); transform-origin: center center; }
       .weight-cal-legend { font-size: 10px; margin-top: 3px; padding-top: 3px; }
 
@@ -4221,7 +4230,7 @@
       grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
       gap: 2px !important;
     }
-    .weight-cal-cell { height: 46px !important; padding: 2px 2px !important; }
+    .weight-cal-cell { height: 42px !important; padding: 2px 2px !important; }
     .weight-cal-day { font-size: 12px !important; }
     .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
@@ -4276,7 +4285,7 @@
       grid-column: 1 / -1;
     }
     .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 2px !important; }
-    .weight-cal-cell { height: 46px !important; }
+    .weight-cal-cell { height: 42px !important; }
     .weight-cal-day { font-size: 11px !important; }
     .weight-cal-main { font-size: 12px !important; }
     th, td { padding: 5px 4px; }
@@ -4344,7 +4353,7 @@
     gap: 2px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    height: 46px !important; padding: 2px 2px !important; min-width: 0;
+    height: 42px !important; padding: 2px 2px !important; min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 11px !important; line-height: 1.1 !important; }
   body.hami-force-desktop .weight-cal-main { font-size: 13px !important; line-height: 1.1 !important; }
@@ -4455,7 +4464,7 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { height: 46px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 42px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
@@ -4544,7 +4553,7 @@
     grid-template-columns: repeat(7, minmax(50px, 1fr)) !important;
     gap: 3px !important;
   }
-  body.hami-force-mini .weight-cal-cell { height: 60px !important; padding: 2px 2px !important; }
+  body.hami-force-mini .weight-cal-cell { height: 52px !important; padding: 2px 2px !important; }
   body.hami-force-mini .weight-cal-day { font-size: 12px !important; }
   body.hami-force-mini .weight-cal-main { font-size: 13px !important; }
   body.hami-force-mini .weight-cal-weight { font-size: 11px !important; padding: 0 3px; }
@@ -4702,8 +4711,9 @@
     /* 打卡卡片：横向 3 列空间宝贵，再小一档 */
     .checkin-grid { gap: 5px; }
     .checkin-card { padding: 8px 4px; border-radius: 9px; }
-    .checkin-card .ci-icon { font-size: 19px; margin-bottom: 2px; }
-    .checkin-card .ci-label { font-size: 11.5px; margin-bottom: 3px; }
+    .checkin-card .ci-head { gap: 4px; margin-bottom: 5px; }
+    .checkin-card .ci-icon { font-size: 14px; }
+    .checkin-card .ci-label { font-size: 13px; }
     .checkin-card .ci-line { font-size: 9.5px; line-height: 1.2; max-width: 100%; }
     .checkin-card .ci-status-line { font-size: 9.5px; padding: 1px 5px; border-radius: 5px; margin-bottom: 1px; }
     .checkin-card .ci-fact-line { font-size: 9.5px; }
@@ -4766,7 +4776,7 @@
   .card-title, .top-bar h1, .nav-group-title, .nav-item, .nav-text, .nav-motto,
   .modal-title, .drawer-title,
   .stat-card .label, .stat-card .value, .stat-card .unit,
-  .checkin-card, .checkin-card .ci-label, .checkin-card .ci-status,
+  .checkin-card, .checkin-card .ci-label, .checkin-card .ci-status-line,
   .account-card .ac-header, .account-card .ac-followers, .account-card .ac-detail,
   .weight-calendar-title, .calendar-day,
   .backup-tip, .backup-dismiss, .tip, .motto, .desktop-hero .motto, .desktop-time,
@@ -14989,8 +14999,10 @@ function renderDesktopCheckin() {
   cards.forEach((c, i) => {
     const target = 'fitness';
     html += `<div class="checkin-card ${c.done ? 'done' : (c.statusKind === 'rest' ? 'rest' : '')}" onclick="switchPanel('${target}', this)">
-      <div class="ci-icon">${c.icon}</div>
-      <div class="ci-label">${c.label}</div>
+      <div class="ci-head">
+        <span class="ci-icon">${c.icon}</span>
+        <span class="ci-label">${c.label}</span>
+      </div>
       <div class="ci-lines">
         <div class="ci-line ci-status-line ${c.statusKind}">${c.statusText}</div>
         <div class="ci-line ci-fact-line">${c.fact}</div>
