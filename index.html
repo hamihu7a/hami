@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-23-385">
+<meta name="hami-build" content="2026-10-23-386">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1982,6 +1982,162 @@
     .growth-meta { flex-wrap: wrap; row-gap: 4px; }
     .growth-meta .todo-btn { padding: 3px 9px; }
     .growth-min-wrap .todo-date-input { width: 60px; }
+  }
+
+  /* ============ v386 提升计划 2.0（三区：每日习惯 / 长期目标 / 每日笔记） ============ */
+  /* 分区 */
+  .plan-zone { margin-top: 16px; }
+  .plan-zone:first-of-type { margin-top: 4px; }
+  .plan-zone-title {
+    display: flex; align-items: baseline; gap: 7px;
+    font-size: 15px; font-weight: 800; color: #5a3a48; letter-spacing: .3px;
+    padding-bottom: 7px; border-bottom: 2px dashed #f3d3de; margin-bottom: 10px;
+  }
+  .plan-zone-ico { font-size: 16px; }
+  .plan-zone-sub { font-size: 10.5px; font-weight: 700; color: #b08a9c; letter-spacing: 0; }
+  /* 每日习惯三卡 */
+  .plan-habit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+  .plan-habit {
+    position: relative; border-radius: 16px; padding: 12px 11px 11px;
+    background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
+    display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+  }
+  .plan-habit::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; }
+  .plan-habit[data-habit="skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
+  .plan-habit[data-habit="english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
+  .plan-habit[data-habit="hair"]::before    { background: linear-gradient(90deg,#c9a8ff,#9d7bf0); }
+  .plan-habit-head { display: flex; align-items: center; gap: 8px; }
+  .plan-habit-ico { font-size: 24px; line-height: 1; }
+  .plan-habit-name { font-size: 14.5px; font-weight: 800; color: #4a3340; line-height: 1.25; }
+  .plan-habit-cadence {
+    margin-left: auto; flex: 0 0 auto; font-size: 10px; font-weight: 800; border-radius: 20px;
+    padding: 2px 8px; white-space: nowrap; align-self: flex-start; margin-top: 1px;
+  }
+  .plan-habit[data-habit="skin"] .plan-habit-cadence    { color: #d14b73; background: #ffeef3; }
+  .plan-habit[data-habit="english"] .plan-habit-cadence { color: #3f6fd0; background: #e9f1ff; }
+  .plan-habit[data-habit="hair"] .plan-habit-cadence    { color: #7a5fc0; background: #f1ecff; }
+  /* 打卡大按钮 */
+  .plan-check-btn {
+    width: 100%; border: none; cursor: pointer; font-family: inherit;
+    border-radius: 13px; padding: 10px 6px 9px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    transition: filter .15s ease, transform .15s ease;
+  }
+  .plan-check-btn:hover { filter: brightness(.96); transform: translateY(-1px); }
+  .plan-check-btn .pc-main { font-size: 15px; font-weight: 800; letter-spacing: .3px; }
+  .plan-check-btn .pc-sub  { font-size: 10.5px; font-weight: 700; opacity: .82; }
+  .plan-check-btn.off { color: #a0688a; background: linear-gradient(135deg,#fff5f8,#ffe9f1); border: 1.5px dashed #ffb9cd; }
+  .plan-check-btn.on  { color: #fff; background: linear-gradient(135deg,#4cd08d,#2fae6e); box-shadow: 0 3px 8px rgba(47,174,110,.28); }
+  /* 连续天数 + 本周圆点 */
+  .plan-habit-streak { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: #c45c7c; }
+  .plan-habit-streak .st-num { font-size: 16px; font-weight: 800; color: #d14b73; font-variant-numeric: tabular-nums; }
+  .plan-habit-week { display: flex; justify-content: space-between; gap: 3px; }
+  .plan-hdot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .plan-hdot .d { width: 100%; aspect-ratio: 1/1; max-width: 20px; border-radius: 50%; background: #f6e7ed; border: 1px solid #efd5e0; }
+  .plan-hdot .d.on { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; }
+  .plan-hdot .d.today { box-shadow: 0 0 0 2px rgba(209,75,115,.28); }
+  .plan-hdot .w { font-size: 9px; font-weight: 700; color: #b08a9c; }
+  /* 头发周期卡 */
+  .plan-cycle-num { display: flex; align-items: baseline; gap: 5px; }
+  .plan-cycle-num .cn-big { font-size: 22px; font-weight: 800; color: #7a5fc0; font-variant-numeric: tabular-nums; line-height: 1; }
+  .plan-cycle-num .cn-all { font-size: 11px; font-weight: 700; color: #a38ab8; }
+  .plan-cycle-num .cn-label { margin-left: auto; font-size: 10.5px; font-weight: 700; color: #b08a9c; }
+  .plan-cycle-bar { height: 8px; border-radius: 20px; background: #f1e8f8; overflow: hidden; }
+  .plan-cycle-bar .cb-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#c9a8ff,#9d7bf0); transition: width .3s ease; }
+  .plan-cycle-tip { font-size: 11px; font-weight: 700; color: #8a6a9c; line-height: 1.4; }
+  .plan-wash-steps { display: flex; flex-direction: column; gap: 6px; }
+  .plan-wash-step {
+    display: flex; align-items: center; gap: 8px; border-radius: 11px; padding: 8px 10px;
+    background: #faf6ff; border: 1.5px solid #e8dcf7; cursor: pointer; font-family: inherit;
+    text-align: left; transition: filter .15s ease;
+  }
+  .plan-wash-step:hover { filter: brightness(.97); }
+  .plan-wash-step .ws-box {
+    width: 20px; height: 20px; border-radius: 7px; flex: 0 0 auto;
+    border: 2px solid #c9a8ff; background: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: #fff; line-height: 1;
+  }
+  .plan-wash-step.done { background: linear-gradient(135deg,#f3efff,#efe7fc); border-color: #c9a8ff; }
+  .plan-wash-step.done .ws-box { background: linear-gradient(135deg,#b79cff,#8f6fd8); border-color: transparent; }
+  .plan-wash-step .ws-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .plan-wash-step .ws-t { font-size: 12.5px; font-weight: 800; color: #5a3a48; }
+  .plan-wash-step .ws-s { font-size: 10px; font-weight: 600; color: #a38ab8; }
+  .plan-hair-btns { display: flex; gap: 6px; }
+  .plan-hair-btn {
+    flex: 1; border-radius: 10px; padding: 7px 4px; font-size: 11.5px; font-weight: 800;
+    cursor: pointer; font-family: inherit; border: 1.5px solid #d8c8ff; background: #fff; color: #8f6fd8;
+    transition: filter .15s ease;
+  }
+  .plan-hair-btn:hover { filter: brightness(.97); }
+  .plan-hair-btn.primary { background: linear-gradient(135deg,#b79cff,#8f6fd8); color: #fff; border-color: transparent; box-shadow: 0 2px 6px rgba(143,111,216,.25); }
+  /* 长期目标卡 */
+  .plan-goal-list { display: flex; flex-direction: column; gap: 9px; }
+  .plan-goal {
+    position: relative; border-radius: 16px; padding: 12px 13px;
+    background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
+    display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+  }
+  .plan-goal::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+  .plan-goal[data-goal="drive"]::before   { background: linear-gradient(180deg,#ffb199,#ff7fa3); }
+  .plan-goal[data-goal="surgery"]::before { background: linear-gradient(180deg,#8fd0ff,#5aa8f0); }
+  .plan-goal[data-goal="slim"]::before    { background: linear-gradient(180deg,#a8e6c1,#4cbf88); }
+  .plan-goal-head { display: flex; align-items: center; gap: 9px; }
+  .plan-goal-ico { font-size: 22px; line-height: 1; }
+  .plan-goal-name { font-size: 14.5px; font-weight: 800; color: #4a3340; }
+  .plan-goal-note { font-size: 10.5px; font-weight: 700; color: #b08a9c; margin-top: 1px; }
+  .plan-goal-date-btn {
+    margin-left: auto; flex: 0 0 auto; font-size: 10.5px; font-weight: 800; border-radius: 20px;
+    padding: 3px 10px; border: 1px solid #f0d8e2; background: #fff8fa; color: #b06a80; cursor: pointer; font-family: inherit;
+  }
+  .plan-goal-date-btn:hover { filter: brightness(.97); }
+  .plan-goal-mid { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .plan-goal-big { display: flex; align-items: baseline; gap: 4px; }
+  .plan-goal-big .gb-num { font-size: 26px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .plan-goal[data-goal="surgery"] .plan-goal-big .gb-num { color: #3f8fd0; }
+  .plan-goal[data-goal="slim"] .plan-goal-big .gb-num    { color: #2f9a63; }
+  .plan-goal[data-goal="drive"] .plan-goal-big .gb-num   { color: #d14b73; }
+  .plan-goal-big .gb-unit { font-size: 12px; font-weight: 800; color: #8a6270; }
+  .plan-goal-big .gb-label { font-size: 11px; font-weight: 700; color: #b08a9c; margin-right: 2px; }
+  .plan-goal-pct { font-size: 11.5px; font-weight: 800; color: #6a4a58; margin-left: auto; padding-bottom: 2px; }
+  .plan-goal-bar { height: 9px; border-radius: 20px; background: #f6e7ed; overflow: hidden; }
+  .plan-goal-bar .gbar-fill { height: 100%; border-radius: 20px; transition: width .3s ease; }
+  .plan-goal[data-goal="drive"] .plan-goal-bar .gbar-fill   { background: linear-gradient(90deg,#ffb199,#ff7fa3); }
+  .plan-goal[data-goal="surgery"] .plan-goal-bar .gbar-fill { background: linear-gradient(90deg,#8fd0ff,#5aa8f0); }
+  .plan-goal[data-goal="slim"] .plan-goal-bar .gbar-fill    { background: linear-gradient(90deg,#a8e6c1,#4cbf88); }
+  .plan-goal-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .plan-goal-chip {
+    font-size: 10.5px; font-weight: 800; border-radius: 20px; padding: 2px 9px;
+    background: #faf4f7; border: 1px solid #f0e2e8; color: #a07e8e; white-space: nowrap;
+  }
+  .plan-goal-chip.done { color: #2f8a52; background: #e8f7ec; border-color: #c8efd5; }
+  .plan-goal-chip.doing { color: #d14b73; background: #ffeef3; border-color: #ffd9e4; }
+  .plan-goal-foot { display: flex; gap: 6px; flex-wrap: wrap; }
+  .plan-goal-btn {
+    border-radius: 10px; padding: 6px 13px; font-size: 11.5px; font-weight: 800;
+    cursor: pointer; font-family: inherit; border: 1px solid #f0d8e2; background: #fff8fa; color: #b06a80;
+    transition: filter .15s ease;
+  }
+  .plan-goal-btn:hover { filter: brightness(.97); }
+  .plan-goal-btn.go { color: #fff; border-color: transparent; background: linear-gradient(135deg,#ff8aa6,#ff6f9c); box-shadow: 0 2px 6px rgba(255,111,156,.25); }
+  .plan-goal-edit {
+    display: none; align-items: center; gap: 6px; flex-wrap: wrap;
+    background: #fff8fa; border: 1px dashed #ffb9cd; border-radius: 11px; padding: 8px 10px;
+  }
+  .plan-goal-edit.show { display: flex; }
+  .plan-goal-edit input {
+    border: 1px solid #ffd0de; border-radius: 8px; padding: 5px 8px; font-size: 12px;
+    font-family: inherit; color: #5a3a48; background: #fff;
+  }
+  .plan-goal-edit .pg-edit-save {
+    border: none; border-radius: 8px; padding: 5px 12px; font-size: 11.5px; font-weight: 800;
+    background: linear-gradient(135deg,#ff8aa6,#ff6f9c); color: #fff; cursor: pointer; font-family: inherit;
+  }
+  .plan-goal-edit .pg-edit-cancel {
+    border: 1px solid #f0d8e2; border-radius: 8px; padding: 5px 10px; font-size: 11.5px; font-weight: 700;
+    background: #fff; color: #a07e8e; cursor: pointer; font-family: inherit;
+  }
+  @media (max-width: 720px) {
+    .plan-habit-grid { grid-template-columns: 1fr; }
   }
 
   /* ============ 财务记录（支出/收入/转账） ============ */
@@ -5923,11 +6079,15 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
   <!-- 点击头像回主页 -->
   <div style="display:none;" id="home-btn" onclick="switchPanel('desktop', this)"></div>
 
-  <!-- 学车（临时模块：学完即删） -->
+  <!-- 学车 + 提升计划（v386：提升计划从独立组挪到学车下） -->
   <div class="nav-group">
     <button class="nav-item" type="button" onclick="switchPanel('drive', this)">
       <span class="nav-icon">🚗</span>
       <span class="nav-text">学车进度</span>
+    </button>
+    <button class="nav-item" type="button" onclick="switchPanel('growth', this)">
+      <span class="nav-icon">🚀</span>
+      <span class="nav-text">提升计划<br>2.0</span>
     </button>
   </div>
 
@@ -5988,15 +6148,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     </button>
   </div>
 
-  <!-- 五·成长记录（v384：记录每天学了什么，提升自己） -->
-  <div class="nav-group">
-    <button class="nav-item" type="button" onclick="switchPanel('growth', this)">
-      <span class="nav-icon">📈</span>
-      <span class="nav-text">成长记录</span>
-    </button>
-  </div>
-
-  <!-- 六·日期与出行 -->
+  <!-- 五·日期与出行 -->
   <div class="nav-group">
     <img class="nav-group-sticker" draggable="false" onclick="navStickerGo(this)" alt="" src="data:image/webp;base64,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"><div class="nav-group-title">六·日期与出行</div>
     <button class="nav-item" type="button" onclick="switchPanel('reminder', this)">
@@ -6009,7 +6161,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     </button>
   </div>
 
-  <!-- 七·设置工具 -->
+  <!-- 六·设置工具 -->
   <div class="nav-group">
     <img class="nav-group-sticker" draggable="false" onclick="navStickerGo(this)" alt="" src="data:image/webp;base64,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"><div class="nav-group-title">七·设置工具</div>
     <button class="nav-item" type="button" onclick="switchPanel('settings', this)">
@@ -7507,31 +7659,48 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
     </div>
   </div>
 
-  <!-- ==================== 五·成长记录（v384：记录每天学了什么，每周自动汇总） ==================== -->
+  <!-- ==================== 🚀 提升计划 2.0（v386：每日习惯 + 长期目标 + 每日笔记） ==================== -->
   <div id="panel-growth" class="panel">
     <div class="card todo-section">
       <div class="todo-panel-head">
         <div class="todo-panel-head-left">
-          <div class="todo-panel-title">📈 成长记录</div>
-          <div class="todo-panel-sub">今天学了什么 · 每周自动汇总</div>
+          <div class="todo-panel-title">🚀 提升计划 2.0</div>
+          <div class="todo-panel-sub">每日习惯坚持打卡 · 长期目标盯进度 · 每天记一笔成长</div>
         </div>
         <div class="todo-summary" id="growth-summary"></div>
       </div>
-      <div class="todo-add-row">
-        <textarea id="growth-input" class="todo-text-input" rows="2" placeholder="今天读了什么、学了什么~（如：读完《XX》第三章 / 学了 30 分钟英语）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addGrowthLog()}"></textarea>
-        <div class="todo-tag-picker" id="growth-tag-picker"></div>
-        <div class="todo-add-bottom">
-          <div class="todo-date-wrap">
-            <input type="date" id="growth-date" class="todo-date-input" title="选择日期（可选，默认今天）">
-          </div>
-          <div class="growth-min-wrap">
-            <input type="number" id="growth-minutes" class="todo-date-input" min="0" step="5" placeholder="分钟" title="时长（分钟，可选）">
-          </div>
-          <button class="todo-add-btn" onclick="addGrowthLog()">➕ 记录</button>
-        </div>
+
+      <!-- 一区：每日习惯（三个，节奏各不相同） -->
+      <div class="plan-zone">
+        <div class="plan-zone-title"><span class="plan-zone-ico">🌞</span>每日习惯<span class="plan-zone-sub">天天做 · 养起来</span></div>
+        <div class="plan-habit-grid" id="plan-habit-grid"></div>
       </div>
-      <div id="growth-week-card"></div>
-      <div id="growth-list"></div>
+
+      <!-- 二区：长期目标（三个，进度条 / 倒计时） -->
+      <div class="plan-zone">
+        <div class="plan-zone-title"><span class="plan-zone-ico">🎯</span>长期目标<span class="plan-zone-sub">盯着进度条 · 一天天靠近</span></div>
+        <div class="plan-goal-list" id="plan-goal-list"></div>
+      </div>
+
+      <!-- 三区：每日笔记（原成长记录） -->
+      <div class="plan-zone">
+        <div class="plan-zone-title"><span class="plan-zone-ico">📖</span>每日笔记<span class="plan-zone-sub">今天读了什么 · 学了什么</span></div>
+        <div class="todo-add-row">
+          <textarea id="growth-input" class="todo-text-input" rows="2" placeholder="今天读了什么、学了什么~（如：读完《XX》第三章 / 学了 30 分钟英语）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addGrowthLog()}"></textarea>
+          <div class="todo-tag-picker" id="growth-tag-picker"></div>
+          <div class="todo-add-bottom">
+            <div class="todo-date-wrap">
+              <input type="date" id="growth-date" class="todo-date-input" title="选择日期（可选，默认今天）">
+            </div>
+            <div class="growth-min-wrap">
+              <input type="number" id="growth-minutes" class="todo-date-input" min="0" step="5" placeholder="分钟" title="时长（分钟，可选）">
+            </div>
+            <button class="todo-add-btn" onclick="addGrowthLog()">➕ 记录</button>
+          </div>
+        </div>
+        <div id="growth-week-card"></div>
+        <div id="growth-list"></div>
+      </div>
     </div>
   </div>
 
@@ -7785,6 +7954,20 @@ let store = {
   weightGoal: null,   // 目标体重（斤），健康模块可设，用于进度环
   userTodos: [],      // 用户自定义待办 { date, text, done }
   growthLogs: [],     // v384 成长记录 { id, date, text, cat, minutes, createdAt }——今天学了什么
+  // v386 提升计划 2.0：每日习惯（3 个，节奏不同）+ 长期目标（3 个，进度条/倒计时）
+  planHabits: [
+    // daily：history { 'YYYY-MM-DD': 1 }，打了卡就有
+    { key: 'skin',    name: '养皮肤 · 身体油',  icon: '🧴', type: 'daily', history: {} },
+    { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
+    // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
+    { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
+  ],
+  planGoals: [
+    // link：关联学车模块只读算进度；date：一次性事件倒计时（可改期）；phase：分阶段计划（开始日+期数）
+    { key: 'drive',    name: '学车拿证',     icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
+    { key: 'surgery',  name: '手术',         icon: '🏥', type: 'date',  date: '', note: '术前遵医嘱 · 术后好好休息' },
+    { key: 'slim',     name: '减肥针计划',   icon: '💉', type: 'phase', date: '', months: 6, note: '每月一针 · 配合饮食运动' }
+  ],
   exerciseItems: [],  // 运动详细记录 { id, date, type, name, duration, sets, note }
   customOrders: [
     { date: "2026-07-31", deadline: "2026-08-01", amount: 40, status: "done", desc: "人物+二套服装" },
@@ -8161,7 +8344,7 @@ function countStoreRecords(s) {
   let n = 0;
   const arrKeys = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords', 'bodyRecords',
     'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'periodRecords', 'washRecords',
-    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords', 'benchmarkNotes', 'growthLogs'];
+    'toiletRecords', 'maskRecords', 'accountRecords', 'importantDates', 'travelPlans', 'trips', 'inspireRecords', 'benchmarkNotes', 'growthLogs', 'planHabits', 'planGoals'];
   arrKeys.forEach(function (k) { if (Array.isArray(s[k])) n += s[k].length; });
   const objKeys = ['dailyCheckin', 'periodRestDays'];
   objKeys.forEach(function (k) { if (s[k] && typeof s[k] === 'object') n += Object.keys(s[k]).length; });
@@ -8328,6 +8511,7 @@ function hamiBackupManifest() {
     ['重要日期', cnt('importantDates')],
     ['游玩计划/行程', cnt('travelPlans') + cnt('trips')],
     ['成长记录', cnt('growthLogs')],
+    ['提升计划(习惯/目标)', cnt('planHabits') + cnt('planGoals')],
     ['自媒体账号', Object.keys(s.accounts || {}).length],
     ['背景图', bgN + ' 张'],
     ['界面设置(主题/字号/侧栏宽度等)', '全部'],
@@ -9492,6 +9676,8 @@ function _dedupKey(k, it) {
     case 'accountRecords': return 'ar_' + (it.date || '') + '_' + (it.type || '') + '_' + (it.amount || '') + '_' + (it.note || '');
     case 'customOrders': return 'co_' + (it.id || it.date || '');
     case 'growthLogs': return 'gr_' + (it.id || it.date || '');
+    case 'planHabits': return 'ph_' + (it.key || '');
+    case 'planGoals': return 'pg_' + (it.key || '');
     case 'inspireRecords': return 'ir_' + (it.date || '') + '_' + (it.title || '');
     case 'periodRecords': return 'pr_' + (it.start || '') + '_' + (it.end || '');
     case 'travelPlans': return 'tp_' + (it.date || '') + '_' + (typeof normDest === 'function' ? normDest(it.destination) : (it.destination || ''));
@@ -9562,6 +9748,10 @@ function _contentKey(k, it) {
   // v384：成长记录身份 = 日期 + 文字 + 分类 + 时长。同一天记两条同分类同时长同文字才算同一条；
   // 带上时长，避免「早上读书30分钟、晚上读书45分钟」被云端合并去重误吞一条。
   if (k === 'growthLogs') return 'grC_' + (it.date || '') + '|' + String(it.text || '') + '|' + (it.cat || 'other') + '|' + (it.minutes != null ? it.minutes : '');
+  // v386：习惯/目标以 key 为身份；但内容键要把「可变字段」也带上，否则只改个日期不算变化。
+  // history/steps 这类打卡态单独哈希：改期/改名/改节奏都能被识别为新内容，云同步才推得动。
+  if (k === 'planHabits') return 'phC_' + (it.key || '') + '|' + JSON.stringify(it.history || {}) + '|' + JSON.stringify(it.steps || {}) + '|' + (it.cycleDays != null ? it.cycleDays : '') + '|' + (it.lastWash || '');
+  if (k === 'planGoals') return 'pgC_' + (it.key || '') + '|' + (it.date || '') + '|' + (it.months != null ? it.months : '') + '|' + (it.note || '');
   // 工作代办：文本+分类即身份（与 saveData/loadData 的去重语义一致）。之前这个函数漏掉了 userTodos，
   // 导致云端与本地 early 记录 id 不一致时合并认不出是同一条，把云端 done:false 的旧卡当新记录并进来，
   // 已完成被打回未完成（v166 修复）。
@@ -10252,7 +10442,7 @@ function _hamiNewId(listKey) {
     futurePosts: 'fp', topicLibrary: 'tl', benchmarkNotes: 'bn', inspireRecords: 'ir',
     periodRecords: 'pr', washRecords: 'ws', toiletRecords: 'tl2', maskRecords: 'mk',
     accountRecords: 'ar', importantDates: 'imp', travelPlans: 'tv', trips: 'trip',
-    publishSchedule: 'sch', growthLogs: 'gr'
+    publishSchedule: 'sch', growthLogs: 'gr', planHabits: 'ph', planGoals: 'pg'
   };
   return (P[listKey] || 'rec') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 }
@@ -10281,7 +10471,7 @@ function hamiPushRecord(listKey, item) {
 var HAMI_ID_LISTS = ['userTodos', 'exerciseItems', 'customOrders', 'beautyRecords', 'weightRecords',
   'bodyRecords', 'exerciseRecords', 'mediaRecords', 'futurePosts', 'topicLibrary', 'benchmarkNotes',
   'inspireRecords', 'periodRecords', 'washRecords', 'toiletRecords', 'maskRecords', 'accountRecords',
-  'importantDates', 'travelPlans', 'trips', 'publishSchedule', 'growthLogs'];
+  'importantDates', 'travelPlans', 'trips', 'publishSchedule', 'growthLogs', 'planHabits', 'planGoals'];
 function hamiEnsureIds() {
   try {
     for (let i = 0; i < HAMI_ID_LISTS.length; i++) {
@@ -10429,7 +10619,7 @@ var _SYNC_LIST_NAME = {
   inspireRecords: '灵感', topicLibrary: '选题', importantDates: '生日/纪念日',
   mediaRecords: '自媒体更新', futurePosts: '待完成图文', travelPlans: '出行计划',
   trips: '出游记录', publishSchedule: '发布排期', benchmarkNotes: '对标笔记',
-  growthLogs: '成长记录'
+  growthLogs: '成长记录', planHabits: '提升计划·习惯', planGoals: '提升计划·目标'
 };
 function markSyncAction(label) {
   try {
@@ -12966,7 +13156,7 @@ function sendHamiCmd() {
 
   // 防御：清掉各数组里可能残留的 null/undefined 脏数据（多由异常合并产生），
   // 否则下面的 find/findIndex(r => r.date===...) 会因 r 为 null 抛错，导致整条指令作废、记录"记了又消失"。
-  ['weightRecords','bodyRecords','periodRecords','washRecords','maskRecords','exerciseRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs'].forEach(function (k) {
+  ['weightRecords','bodyRecords','periodRecords','washRecords','maskRecords','exerciseRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs','planHabits','planGoals'].forEach(function (k) {
     if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
   });
 
@@ -13516,7 +13706,7 @@ function loadData() {
     } catch (e) {}
     // 脏数据防护：清掉各数组里可能残留的 null/undefined（多由异常合并产生），
     // 避免后续 r.date 访问抛错导致面板崩溃、或记录"记了又消失"。一处净化、全局受益。
-    ['weightRecords','bodyRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs'].forEach(function (k) {
+    ['weightRecords','bodyRecords','exerciseRecords','periodRecords','washRecords','maskRecords','toiletRecords','accountRecords','customOrders','beautyRecords','userTodos','inspireRecords','topicLibrary','benchmarkNotes','importantDates','mediaRecords','futurePosts','travelPlans','trips','growthLogs','planHabits','planGoals'].forEach(function (k) {
       if (Array.isArray(store[k])) store[k] = store[k].filter(function (x) { return x != null; });
     });
     // v57：启动加载阶段就按墓碑剔一遍被删记录（即使云端旧备份把幽灵塞回来也立刻清掉）
@@ -25049,6 +25239,295 @@ function fillDateInputDefault(id) {
   } catch (e) {}
 }
 
+// ==================== 🚀 提升计划 2.0（v386：每日习惯 + 长期目标 + 每日笔记） ====================
+// 与「成长记录」（growthLogs）共存：本区是「坚持打卡 + 盯目标」，笔记区还是原来的「今天学了什么」。
+// 可移除性：删本段 JS + plan CSS 块 + 面板里两个 zone div + store 两个默认键 + 各清单接入点即可，不影响其他模块。
+function planEnsure() {
+  if (!Array.isArray(store.planHabits) || !store.planHabits.length) {
+    store.planHabits = [
+      { key: 'skin',    name: '养皮肤 · 身体油',  icon: '🧴', type: 'daily', history: {} },
+      { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
+      { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
+    ];
+  }
+  if (!Array.isArray(store.planGoals) || !store.planGoals.length) {
+    store.planGoals = [
+      { key: 'drive',   name: '学车拿证',   icon: '🚗', type: 'link',  note: '四科知识点全勾完 = 拿证' },
+      { key: 'surgery', name: '手术',       icon: '🏥', type: 'date',  date: '', note: '术前遵医嘱 · 术后好好休息' },
+      { key: 'slim',    name: '减肥针计划', icon: '💉', type: 'phase', date: '', months: 6, note: '每月一针 · 配合饮食运动' }
+    ];
+  }
+  const _p = function (n) { return String(n).padStart(2, '0'); };
+  const _dstr = function (d) { return d.getFullYear() + '-' + _p(d.getMonth() + 1) + '-' + _p(d.getDate()); };
+  const today = new Date(todayStr() + 'T00:00:00');
+  // 目标默认日期：手术=下个月 15 号；减肥针=下下个月 1 号（都可改）
+  const surgeryDefault = (function () { const d = new Date(today); d.setMonth(d.getMonth() + 1, 15); return _dstr(d); })();
+  const slimDefault = (function () { const d = new Date(today); d.setMonth(d.getMonth() + 2, 1); return _dstr(d); })();
+  let touched = false;
+  store.planGoals.forEach(function (g) {
+    if (g.key === 'surgery' && !g.date) { g.date = surgeryDefault; touched = true; }
+    if (g.key === 'slim' && !g.date) { g.date = slimDefault; touched = true; }
+    if (g.type === 'date' && g.date && !g._start) { g._start = todayStr(); touched = true; }
+  });
+  return touched;
+}
+function planHabitByKey(k) {
+  planEnsure();
+  for (let i = 0; i < store.planHabits.length; i++) if (store.planHabits[i].key === k) return store.planHabits[i];
+  return null;
+}
+function planGoalByKey(k) {
+  planEnsure();
+  for (let i = 0; i < store.planGoals.length; i++) if (store.planGoals[i].key === k) return store.planGoals[i];
+  return null;
+}
+// daily 习惯：连续打卡天数（今天没打就从昨天往前算，不断链）
+function planStreak(h) {
+  if (!h.history) return 0;
+  const d = new Date(todayStr() + 'T00:00:00');
+  const p = function (n) { return String(n).padStart(2, '0'); };
+  if (!h.history[_d2(d)]) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (h.history[_d2(d)]) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+  function _d2(dd) { return dd.getFullYear() + '-' + p(dd.getMonth() + 1) + '-' + p(dd.getDate()); }
+}
+// 本周一起始日
+function planWeekStart() {
+  const d = new Date(todayStr() + 'T00:00:00');
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const p = function (n) { return String(n).padStart(2, '0'); };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function planRenderWeekDots(h) {
+  const wk = ['一', '二', '三', '四', '五', '六', '日'];
+  const today = todayStr();
+  const start = new Date(planWeekStart() + 'T00:00:00');
+  const p = function (n) { return String(n).padStart(2, '0'); };
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const ds = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    const on = !!(h.history && h.history[ds]);
+    const isToday = ds === today;
+    const future = ds > today;
+    html += '<span class="plan-hdot"><span class="d' + (on ? ' on' : '') + (isToday ? ' today' : '') + '"' + (future ? ' style="opacity:.55;"' : '') + '></span><span class="w">' + wk[i] + '</span></span>';
+  }
+  return html;
+}
+function planRenderDailyCard(h) {
+  const today = todayStr();
+  const done = !!(h.history && h.history[today]);
+  const streak = planStreak(h);
+  return '<div class="plan-habit" data-habit="' + h.key + '">'
+    + '<div class="plan-habit-head"><span class="plan-habit-ico">' + h.icon + '</span>'
+    + '<span class="plan-habit-name">' + h.name + '</span>'
+    + '<span class="plan-habit-cadence">每天</span></div>'
+    + '<button class="plan-check-btn ' + (done ? 'on' : 'off') + '" type="button" onclick="planHabitCheck(\'' + h.key + '\')">'
+    + '<span class="pc-main">' + (done ? '✓ 今日已打卡' : '点我打卡') + '</span>'
+    + '<span class="pc-sub">' + (done ? '连续 ' + streak + ' 天 · 继续保持' : '坚持一天是一天') + '</span></button>'
+    + '<div class="plan-habit-streak">🔥 连续 <span class="st-num">' + streak + '</span> 天</div>'
+    + '<div class="plan-habit-week">' + planRenderWeekDots(h) + '</div>'
+    + '</div>';
+}
+function planRenderHairCard(h) {
+  const today = todayStr();
+  const cycle = Math.max(1, parseInt(h.cycleDays) || 5);
+  const diff = h.lastWash ? Math.round((new Date(today + 'T00:00:00') - new Date(h.lastWash + 'T00:00:00')) / 86400000) : -1;
+  const isWashDay = diff >= cycle;          // 距上次洗头已满一个周期
+  const dayNo = diff < 0 ? 1 : Math.min(diff + 1, cycle);   // 本周期第几天
+  const remain = isWashDay ? 0 : (cycle - dayNo);
+  const steps = (h.steps && h.steps[today]) || {};
+  let midHtml = '';
+  if (diff < 0) {
+    midHtml = '<div class="plan-cycle-tip">🌱 还没有开始，今天洗第一次吧（记得先预涂护发素~）</div>';
+  } else if (isWashDay) {
+    midHtml = '<div class="plan-cycle-tip" style="color:#8f4fd0;">💧 今天是洗头日！按顺序勾完两步，再点「洗完了」~</div>';
+  } else {
+    midHtml = '<div class="plan-cycle-tip">🌷 距下次洗头还有 <b style="color:#7a5fc0;">' + remain + '</b> 天' + (remain === 1 ? '（明天洗）' : '') + '</div>';
+  }
+  // 洗头日双步骤
+  let stepsHtml = '';
+  if (isWashDay) {
+    stepsHtml = '<div class="plan-wash-steps">'
+      + '<button class="plan-wash-step' + (steps.pre ? ' done' : '') + '" type="button" onclick="planHairStep(\'pre\')">'
+      + '<span class="ws-box">' + (steps.pre ? '✓' : '1') + '</span>'
+      + '<span class="ws-text"><span class="ws-t">预涂调配好的护发素</span><span class="ws-s">等它吸收一会儿再洗</span></span></button>'
+      + '<button class="plan-wash-step' + (steps.wash ? ' done' : '') + '" type="button" onclick="planHairStep(\'wash\')">'
+      + '<span class="ws-box">' + (steps.wash ? '✓' : '2') + '</span>'
+      + '<span class="ws-text"><span class="ws-t">洗头</span><span class="ws-s">周期重新开始计算</span></span></button>'
+      + '</div>'
+      + '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash()">🫧 洗完了</button></div>';
+  } else if (diff >= 0) {
+    stepsHtml = '<div class="plan-hair-btns"><button class="plan-hair-btn" type="button" onclick="planHairWash(\'early\')">⏩ 提前洗头</button></div>';
+  }
+  return '<div class="plan-habit" data-habit="hair">'
+    + '<div class="plan-habit-head"><span class="plan-habit-ico">' + h.icon + '</span>'
+    + '<span class="plan-habit-name">' + h.name + '</span>'
+    + '<span class="plan-habit-cadence">' + cycle + ' 天一洗</span></div>'
+    + '<div class="plan-cycle-num"><span class="cn-big">' + (isWashDay ? cycle : dayNo) + '</span><span class="cn-all">/ ' + cycle + ' 天</span>'
+    + '<span class="cn-label">' + (isWashDay ? '洗头日 🛁' : '本周期第 ' + dayNo + ' 天') + '</span></div>'
+    + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + Math.round((isWashDay ? cycle : dayNo) / cycle * 100) + '%;"></span></div>'
+    + midHtml + stepsHtml
+    + '</div>';
+}
+function renderPlanHabits() {
+  const el = document.getElementById('plan-habit-grid');
+  if (!el) return;
+  planEnsure();
+  let html = '';
+  store.planHabits.forEach(function (h) {
+    if (h.type === 'cycle') html += planRenderHairCard(h);
+    else html += planRenderDailyCard(h);
+  });
+  el.innerHTML = html;
+}
+// 学车进度（只读算）：四科知识点完成度
+function planDriveStat() {
+  const dl = store.driveLearn;
+  const subs = (dl && dl.subjects) || {};
+  const keys = ['1', '2', '3', '4'];
+  let done = 0, total = 0;
+  const per = [];
+  keys.forEach(function (k) {
+    const s = subs[k];
+    const pts = (s && s.points) || [];
+    const d = pts.filter(function (p) { return p.done; }).length;
+    done += d; total += pts.length;
+    per.push({ name: (s && s.name) || ('科目' + k), done: d, total: pts.length });
+  });
+  return { done: done, total: total, per: per, pct: total ? Math.round(done / total * 100) : 0 };
+}
+function planGoalCardDrive(g) {
+  const st = planDriveStat();
+  const chips = st.per.map(function (p) {
+    const fin = p.total > 0 && p.done === p.total;
+    const cls = fin ? 'done' : (p.done > 0 ? 'doing' : '');
+    return '<span class="plan-goal-chip ' + cls + '">' + p.name + ' ' + p.done + '/' + p.total + '</span>';
+  }).join('');
+  return '<div class="plan-goal" data-goal="drive">'
+    + '<div class="plan-goal-head"><span class="plan-goal-ico">' + g.icon + '</span>'
+    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + '</div></div>'
+    + '</div>'
+    + '<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">总进度</span><span class="gb-num">' + st.pct + '</span><span class="gb-unit">%</span></div>'
+    + '<span class="plan-goal-pct">已勾 ' + st.done + ' / ' + st.total + ' 个知识点</span></div>'
+    + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:' + st.pct + '%;"></span></div>'
+    + '<div class="plan-goal-chips">' + chips + '</div>'
+    + '<div class="plan-goal-foot"><button class="plan-goal-btn go" type="button" onclick="switchPanel(\'drive\', this)">🚗 去学车面板</button></div>'
+    + '</div>';
+}
+function planGoalCardDate(g) {
+  const today = todayStr();
+  const days = Math.round((new Date(g.date + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+  const start = g._start || today;
+  const span = Math.max(1, Math.round((new Date(g.date + 'T00:00:00') - new Date(start + 'T00:00:00')) / 86400000));
+  const pct = Math.max(0, Math.min(100, Math.round((span - Math.max(0, days)) / span * 100)));
+  const dLabel = g.date.slice(0, 4) === today.slice(0, 4) ? g.date.slice(5).replace('-', ' / ') : g.date.replace(/-/g, ' / ');
+  return '<div class="plan-goal" data-goal="surgery">'
+    + '<div class="plan-goal-head"><span class="plan-goal-ico">' + g.icon + '</span>'
+    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + ' · 定在 ' + dLabel + '</div></div>'
+    + '<button class="plan-goal-date-btn" type="button" onclick="planGoalEdit(\'surgery\')">📅 改期</button></div>'
+    + '<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">还有</span><span class="gb-num">' + Math.max(0, days) + '</span><span class="gb-unit">天</span></div>'
+    + '<span class="plan-goal-pct">' + (days === 0 ? '就是今天 · 放轻松，一切顺利 💪' : (days < 0 ? '已过去 ' + Math.abs(days) + ' 天' : '')) + '</span></div>'
+    + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:' + pct + '%;"></span></div>'
+    + '<div class="plan-goal-foot"><button class="plan-goal-btn" type="button" onclick="planGoalEdit(\'surgery\')">改手术日期</button></div>'
+    + '<div class="plan-goal-edit" id="plan-goal-edit-surgery"><input type="date" id="plan-goal-date-surgery" value="' + g.date + '"><button class="pg-edit-save" type="button" onclick="planGoalSave(\'surgery\')">保存</button><button class="pg-edit-cancel" type="button" onclick="planGoalCancel(\'surgery\')">取消</button></div>'
+    + '</div>';
+}
+function planGoalCardPhase(g) {
+  const today = todayStr();
+  const months = Math.max(1, parseInt(g.months) || 6);
+  const days = Math.round((new Date(g.date + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+  const started = days <= 0;
+  const dayNo = started ? Math.floor((-days) / 30) + 1 : 0;      // 第几期（每 30 天一期）
+  const phaseNo = Math.min(dayNo, months);
+  const phasePct = started ? Math.round(((-days) % 30) / 30 * 100) : 0;
+  const dLabel = g.date.slice(0, 4) === today.slice(0, 4) ? g.date.slice(5).replace('-', ' / ') : g.date.replace(/-/g, ' / ');
+  return '<div class="plan-goal" data-goal="slim">'
+    + '<div class="plan-goal-head"><span class="plan-goal-ico">' + g.icon + '</span>'
+    + '<div><div class="plan-goal-name">' + g.name + '</div><div class="plan-goal-note">' + escTodo(g.note || '') + ' · ' + (started ? dLabel + ' 开始' : dLabel + ' 开始') + '</div></div>'
+    + '<button class="plan-goal-date-btn" type="button" onclick="planGoalEdit(\'slim\')">📅 改开始日</button></div>'
+    + (started
+      ? ('<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">第</span><span class="gb-num">' + phaseNo + '</span><span class="gb-unit">期 / 共 ' + months + ' 期</span></div>'
+        + '<span class="plan-goal-pct">本期进度 ' + phasePct + '%</span></div>'
+        + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:' + Math.round((phaseNo - 1 + phasePct / 100) / months * 100) + '%;"></span></div>')
+      : ('<div class="plan-goal-mid"><div class="plan-goal-big"><span class="gb-label">距开始</span><span class="gb-num">' + days + '</span><span class="gb-unit">天</span></div>'
+        + '<span class="plan-goal-pct">共 ' + months + ' 期 · 每期 30 天</span></div>'
+        + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:0%;"></span></div>'))
+    + '<div class="plan-goal-foot"><button class="plan-goal-btn" type="button" onclick="planGoalEdit(\'slim\')">改开始日期</button></div>'
+    + '<div class="plan-goal-edit" id="plan-goal-edit-slim"><input type="date" id="plan-goal-date-slim" value="' + g.date + '"><button class="pg-edit-save" type="button" onclick="planGoalSave(\'slim\')">保存</button><button class="pg-edit-cancel" type="button" onclick="planGoalCancel(\'slim\')">取消</button></div>'
+    + '</div>';
+}
+function renderPlanGoals() {
+  const el = document.getElementById('plan-goal-list');
+  if (!el) return;
+  planEnsure();
+  let html = '';
+  store.planGoals.forEach(function (g) {
+    if (g.type === 'link') html += planGoalCardDrive(g);
+    else if (g.type === 'date') html += planGoalCardDate(g);
+    else if (g.type === 'phase') html += planGoalCardPhase(g);
+  });
+  el.innerHTML = html;
+}
+// —— 每日习惯交互 ——
+function planHabitCheck(key) {
+  const h = planHabitByKey(key);
+  if (!h || h.type !== 'daily') return;
+  if (!h.history) h.history = {};
+  const today = todayStr();
+  if (h.history[today]) { delete h.history[today]; try { finToast('已取消今天的打卡'); } catch (e) {} }
+  else { h.history[today] = 1; try { finToast('打卡成功 🔥 连续 ' + planStreak(h) + ' 天'); } catch (e) {} }
+  saveData();
+  renderPlanHabits();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// 洗头日双步骤：预涂护发素 / 洗头
+function planHairStep(step) {
+  const h = planHabitByKey('hair');
+  if (!h) return;
+  const today = todayStr();
+  if (!h.steps) h.steps = {};
+  if (!h.steps[today]) h.steps[today] = {};
+  if (h.steps[today][step]) delete h.steps[today][step];
+  else h.steps[today][step] = 1;
+  saveData();
+  renderPlanHabits();
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// 洗头完成（early=提前洗）：周期从今天重新起算
+function planHairWash(early) {
+  const h = planHabitByKey('hair');
+  if (!h) return;
+  const today = todayStr();
+  h.lastWash = today;
+  if (h.steps && h.steps[today]) delete h.steps[today];
+  saveData();
+  renderPlanHabits();
+  try { finToast(early ? '已提前洗头 🫧 周期重新开始' : '洗头完成 🫧 头发香香，周期重新开始'); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// —— 长期目标交互（改期/改开始日） ——
+function planGoalEdit(key) {
+  const box = document.getElementById('plan-goal-edit-' + key);
+  if (box) box.classList.add('show');
+}
+function planGoalCancel(key) {
+  const box = document.getElementById('plan-goal-edit-' + key);
+  if (box) box.classList.remove('show');
+}
+function planGoalSave(key) {
+  const g = planGoalByKey(key);
+  const inp = document.getElementById('plan-goal-date-' + key);
+  if (!g || !inp || !inp.value) return;
+  g.date = inp.value;
+  if (g.type === 'date') g._start = todayStr();   // 改期后进度条从今天重新计
+  saveData();
+  renderPlanGoals();
+  try { finToast('已更新 📅'); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+
 // ==================== 五·成长记录（v384：记录每天学了什么，每周自动汇总） ====================
 const GROWTH_TAGS = [
   { key: 'read',  icon: '📖', name: '读书' },
@@ -25100,6 +25579,10 @@ function removeGrowthLog(idx) {
 }
 function renderGrowth() {
   renderGrowthTagPicker();
+  // v386：提升计划三区——先渲染习惯卡与目标卡（数据补齐/默认日期也在这里落库）
+  try { if (planEnsure()) saveData(); } catch (e) {}
+  try { renderPlanHabits(); } catch (e) {}
+  try { renderPlanGoals(); } catch (e) {}
   const listEl = document.getElementById('growth-list');
   const weekEl = document.getElementById('growth-week-card');
   const sumEl = document.getElementById('growth-summary');
@@ -25514,6 +25997,16 @@ function renderDesktop() {
 
 // ==================== 初始化 ====================
 loadData();
+// ===== v386：注册 Service Worker——第二次访问起本地缓存秒开（治 GitHub Pages 国内链路 ~12KB/s）=====
+// sw.js 与 index.html 同目录；SW 只拦同源 GET，version.txt 走 no-store 拿真值，Supabase 跨域不碰；
+// 首次访问照旧走网络（绕不开），成功后写缓存，之后一律先吐缓存、后台静默换新
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () {
+    try {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* 注册失败：静默降级，不影响使用 */ });
+    } catch (e) {}
+  });
+}
 try { _initSyncBadge(); } catch (e) {}   // 顶部常驻同步小标：先显示「上次同步·时间」或「未同步」
 tryRecoverStoreFromIDB(); // 从 IndexedDB 兜底恢复全部数据（防 localStorage 5MB 配额写爆）
 // 数据急救：比对内部备份是否比当前数据更全，是则弹出一键找回提示
