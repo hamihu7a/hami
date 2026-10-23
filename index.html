@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-393">
+<meta name="hami-build" content="2026-10-24-394">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1949,6 +1949,31 @@
     #todo-list-daily .todo-act .todo-btn { font-size: 10px; padding: 3px 5px; }
   }
 
+  /* ============ v394 今日总览条 ============ */
+  .plan-hero {
+    display: flex; align-items: center; gap: 11px; margin-bottom: 10px;
+    padding: 9px 13px; border-radius: 16px;
+    background: linear-gradient(115deg,#fff1f6 0%,#f7efff 55%,#eef5ff 100%);
+    border: 1.5px solid #f6e0ea; box-shadow: 0 3px 12px rgba(209,75,115,.08);
+  }
+  .plan-hero-num { display: flex; align-items: baseline; gap: 2px; flex: 0 0 auto; }
+  .plan-hero-num .hn-big { font-size: 26px; font-weight: 800; color: #d14b73; font-variant-numeric: tabular-nums; line-height: 1; }
+  .plan-hero-num .hn-all { font-size: 12px; font-weight: 800; color: #b08a9c; }
+  .plan-hero-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .plan-hero-lbl { font-size: 10px; font-weight: 800; color: #a07e8e; letter-spacing: .6px; }
+  .plan-hero-bar { height: 7px; border-radius: 20px; background: rgba(255,255,255,.8); overflow: hidden; }
+  .plan-hero-bar .hb-fill { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg,#ffb3c7,#ff8fab); transition: width .35s ease; }
+  .plan-hero-chips { display: flex; gap: 5px; flex-wrap: wrap; flex: 0 0 auto; }
+  .plan-hero-chip {
+    font-size: 10px; font-weight: 800; border-radius: 20px; padding: 3px 9px; white-space: nowrap;
+    background: rgba(255,255,255,.86); border: 1px solid #f6e0ea; color: #8a6270;
+  }
+  .plan-hero-chip.all-done { color: #2f8a52; background: #e8f7ec; border-color: #c8efd5; }
+  @media (max-width: 560px) {
+    .plan-hero { flex-wrap: wrap; gap: 8px; }
+    .plan-hero-mid { order: 3; flex-basis: 100%; }
+    .plan-hero-chips { flex: 1; }
+  }
   /* ============ v388 提升计划 2.0 顶部小计 chips ============ */
   #plan-summary { display: flex; flex-wrap: wrap; gap: 5px; }
   .plan-sum-chip { font-size: 10.5px; font-weight: 800; border-radius: 20px; padding: 2px 9px; white-space: nowrap; }
@@ -1959,18 +1984,33 @@
   /* 分区 */
   .plan-zone { margin-top: 11px; }
   .plan-zone:first-of-type { margin-top: 4px; }
+  /* v394：分区标题——左侧渐变竖条 + 底部渐隐分隔线 */
   .plan-zone-title {
-    display: flex; align-items: baseline; gap: 7px;
-    font-size: 15px; font-weight: 800; color: #5a3a48; letter-spacing: .3px;
-    padding-bottom: 5px; border-bottom: 2px dashed #f3d3de; margin-bottom: 8px;
+    position: relative; display: flex; align-items: center; gap: 7px;
+    font-size: 14.5px; font-weight: 800; color: #5a3a48; letter-spacing: .4px;
+    padding: 0 0 8px 11px; margin-bottom: 9px;
   }
-  .plan-zone-ico { font-size: 16px; }
-  .plan-zone-sub { font-size: 10.5px; font-weight: 700; color: #b08a9c; letter-spacing: 0; }
+  .plan-zone-title::before {
+    content: ''; position: absolute; left: 0; top: 1px; bottom: 10px; width: 4px; border-radius: 4px;
+    background: linear-gradient(180deg,#ffb3c7,#c9a8ff);
+  }
+  .plan-zone-title::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(90deg,#f3d3de,rgba(243,211,222,0));
+  }
+  .plan-zone-ico { font-size: 15px; }
+  .plan-zone-sub {
+    margin-left: auto; font-size: 10px; font-weight: 800; color: #a07e8e; letter-spacing: 0;
+    background: #fff6f9; border: 1px solid #f6e2ea; border-radius: 20px; padding: 2px 9px; white-space: nowrap;
+  }
   /* 每日习惯三卡 */
-  .plan-habit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  /* v394：两列主卡 + 养头发通栏，视觉重心更稳 */
+  .plan-habit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .plan-habit[data-habit="hair"] { grid-column: span 2; }
   .plan-habit {
-    position: relative; border-radius: 16px; padding: 10px 10px 9px;
-    background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
+    position: relative; border-radius: 17px; padding: 11px 11px 10px;
+    background: linear-gradient(165deg,#fffdfd,#fff7fa 70%,#fff9fb);
+    border: 1.5px solid #f6e2ea; box-shadow: 0 3px 12px rgba(209,75,115,.09);
     display: flex; flex-direction: column; gap: 7px; overflow: hidden;
   }
   .plan-habit::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; }
@@ -1982,7 +2022,8 @@
   .plan-habit[data-habit="pair-english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
   .plan-habit[data-habit="pair-skin"] .plan-habit-cadence    { color: #d14b73; background: #ffeef3; }
   .plan-habit[data-habit="pair-english"] .plan-habit-cadence { color: #3f6fd0; background: #e9f1ff; }
-  .plan-pair-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .plan-pair-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 9px; }
+  .plan-half + .plan-half { border-left: 1px dashed #f2dbe5; padding-left: 9px; }
   .plan-half { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .plan-half-head { display: flex; align-items: center; gap: 5px; }
   .plan-half-ico { font-size: 16px; line-height: 1; }
@@ -2025,13 +2066,29 @@
   /* 连续天数 + 本周圆点 */
   .plan-habit-streak { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: #c45c7c; }
   .plan-habit-streak .st-num { font-size: 16px; font-weight: 800; color: #d14b73; font-variant-numeric: tabular-nums; }
+  .plan-habit-streak .st-sep { color: #e0c4d1; font-weight: 800; }
+  .plan-habit-streak .st-best { font-size: 10.5px; font-weight: 800; color: #a07e8e; white-space: nowrap; }
+  .plan-habit-cadence.cadence-btn { cursor: pointer; font-family: inherit; border: 1px solid #f0d8e2; }
+  .plan-habit-cadence.cadence-btn:hover { filter: brightness(.96); }
   .plan-habit-week { display: flex; justify-content: flex-start; gap: 6px; }
   .plan-hdot { flex: 0 0 auto; width: 20px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .plan-hdot .d { width: 100%; aspect-ratio: 1/1; max-width: 20px; border-radius: 50%; background: #f6e7ed; border: 1px solid #efd5e0; }
   .plan-hdot .d.on { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; }
   .plan-hdot .d.today { box-shadow: 0 0 0 2px rgba(209,75,115,.28); }
   .plan-hdot .w { font-size: 9px; font-weight: 700; color: #b08a9c; }
-  /* 头发周期卡 */
+  /* 头发周期卡（v394：左右两栏） */
+  .plan-hair-body { display: grid; grid-template-columns: minmax(120px, 0.85fr) 1fr; gap: 12px; align-items: start; }
+  .plan-hair-left { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .plan-hair-right { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .plan-cycle-label { font-size: 11px; font-weight: 800; color: #8a6a9c; letter-spacing: .3px; }
+  .plan-cycle-tip.hot { color: #8f4fd0; }
+  .plan-hair-last { font-size: 10px; font-weight: 700; color: #b6a0c4; }
+  .plan-hair-idle { font-size: 10.5px; font-weight: 700; color: #b6a0c4; line-height: 1.45; }
+  @media (max-width: 720px) {
+    .plan-habit-grid { grid-template-columns: 1fr; }
+    .plan-habit[data-habit="hair"] { grid-column: span 1; }
+    .plan-hair-body { grid-template-columns: 1fr; gap: 8px; }
+  }
   .plan-cycle-num { display: flex; align-items: baseline; gap: 5px; }
   .plan-cycle-num .cn-big { font-size: 22px; font-weight: 800; color: #7a5fc0; font-variant-numeric: tabular-nums; line-height: 1; }
   .plan-cycle-num .cn-all { font-size: 11px; font-weight: 700; color: #a38ab8; }
@@ -7804,6 +7861,9 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         </div>
         <div class="todo-summary" id="plan-summary"></div>
       </div>
+
+      <!-- v394：今日总览条 -->
+      <div id="plan-hero"></div>
 
       <!-- 一区：每日习惯（三个，节奏各不相同） -->
       <div class="plan-zone">
@@ -25210,10 +25270,16 @@ function planHalfName(h) {
   const map = { skin: '身体护理', face: '面部护肤', english: '多邻国', ears: '磨耳朵' };
   return map[h.key] || h.name;
 }
+// v394：去掉鸡汤文案，改成这条习惯具体做什么
 function planHalfSub(h, done, streak) {
   if (done) return '连续 ' + streak + ' 天 · 继续保持';
-  if (h.key === 'ears') return '播客 · 无字幕视频 20 分钟';
-  return '坚持一天是一天';
+  const m = {
+    skin:    '涂身体油 · 全身保湿',
+    face:    '清洁 + 水乳精华',
+    english: '今天这一课别落下',
+    ears:    '播客 · 无字幕视频 20 分钟'
+  };
+  return m[h.key] || '今天还没打卡';
 }
 function planRenderHalfCard(h) {
   const today = todayStr();
@@ -25225,7 +25291,8 @@ function planRenderHalfCard(h) {
     + '<button class="plan-check-btn ' + (done ? 'on' : 'off') + '" type="button" onclick="planHabitCheck(\'' + h.key + '\')">'
     + '<span class="pc-main">' + (done ? '✓ 今日已打卡' : '点我打卡') + '</span>'
     + '<span class="pc-sub">' + planHalfSub(h, done, streak) + '</span></button>'
-    + '<div class="plan-habit-streak">🔥 连续 <span class="st-num">' + streak + '</span> 天</div>'
+    + '<div class="plan-habit-streak">🔥 <span class="st-num">' + streak + '</span> 天'
+    + '<span class="st-sep">·</span><span class="st-best">最长 ' + planBestStreak(h) + '</span></div>'
     + '<div class="plan-habit-week">' + planRenderWeekDots(h) + '</div>'
     + '</div>';
 }
@@ -25239,26 +25306,27 @@ function planRenderPairCard(key, icon, title, habits) {
     + '<div class="plan-pair-cols">' + cols + '</div>'
     + '</div>';
 }
+// v394：养头发卡重写——首日也有按钮 + 左右两栏版面
 function planRenderHairCard(h) {
   const today = todayStr();
   const cycle = Math.max(1, parseInt(h.cycleDays) || 5);
   const diff = h.lastWash ? Math.round((new Date(today + 'T00:00:00') - new Date(h.lastWash + 'T00:00:00')) / 86400000) : -1;
-  const isWashDay = diff >= cycle;          // 距上次洗头已满一个周期
-  const dayNo = diff < 0 ? 1 : Math.min(diff + 1, cycle);   // 本周期第几天
+  const isWashDay = (diff < 0) || (diff >= cycle);   // 没记录过 = 今天就是第一次洗头日
+  const dayNo = diff < 0 ? 1 : Math.min(diff + 1, cycle);
   const remain = isWashDay ? 0 : (cycle - dayNo);
   const steps = (h.steps && h.steps[today]) || {};
-  let midHtml = '';
+  let tip = '';
   if (diff < 0) {
-    midHtml = '<div class="plan-cycle-tip">🌱 还没有开始，今天洗第一次吧（记得先预涂护发素~）</div>';
+    tip = '<div class="plan-cycle-tip">🌱 还没记录过～今天洗第一次，记得先预涂护发素</div>';
   } else if (isWashDay) {
-    midHtml = '<div class="plan-cycle-tip" style="color:#8f4fd0;">💧 今天是洗头日！按顺序勾完两步，再点「洗完了」~</div>';
+    tip = '<div class="plan-cycle-tip hot">💧 今天是洗头日！勾完两步再点「洗完了」</div>';
   } else {
-    midHtml = '<div class="plan-cycle-tip">🌷 距下次洗头还有 <b style="color:#7a5fc0;">' + remain + '</b> 天' + (remain === 1 ? '（明天洗）' : '') + '</div>';
+    tip = '<div class="plan-cycle-tip">🌷 距下次洗头还有 <b>' + remain + '</b> 天' + (remain === 1 ? '（明天洗）' : '') + '</div>';
   }
-  // 洗头日双步骤
-  let stepsHtml = '';
+  const lastLine = h.lastWash ? '<div class="plan-hair-last">上次洗头 ' + h.lastWash.slice(5).replace('-', '/') + '</div>' : '';
+  let rightHtml = '';
   if (isWashDay) {
-    stepsHtml = '<div class="plan-wash-steps">'
+    rightHtml = '<div class="plan-wash-steps">'
       + '<button class="plan-wash-step' + (steps.pre ? ' done' : '') + '" type="button" onclick="planHairStep(\'pre\')">'
       + '<span class="ws-box">' + (steps.pre ? '✓' : '1') + '</span>'
       + '<span class="ws-text"><span class="ws-t">预涂调配好的护发素</span><span class="ws-s">等它吸收一会儿再洗</span></span></button>'
@@ -25267,18 +25335,84 @@ function planRenderHairCard(h) {
       + '<span class="ws-text"><span class="ws-t">洗头</span><span class="ws-s">周期重新开始计算</span></span></button>'
       + '</div>'
       + '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash()">🫧 洗完了</button></div>';
-  } else if (diff >= 0) {
-    stepsHtml = '<div class="plan-hair-btns"><button class="plan-hair-btn" type="button" onclick="planHairWash(\'early\')">⏩ 提前洗头</button></div>';
+  } else {
+    rightHtml = '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash(\'early\')">⏩ 提前洗头</button></div>'
+      + '<div class="plan-hair-idle">还没到日子，按周期养着就好～</div>';
   }
   return '<div class="plan-habit" data-habit="hair">'
     + '<div class="plan-habit-head"><span class="plan-habit-ico">' + h.icon + '</span>'
     + '<span class="plan-habit-name">' + h.name + '</span>'
-    + '<span class="plan-habit-cadence">' + cycle + ' 天一洗</span></div>'
-    + '<div class="plan-cycle-num"><span class="cn-big">' + (isWashDay ? cycle : dayNo) + '</span><span class="cn-all">/ ' + cycle + ' 天</span>'
-    + '<span class="cn-label">' + (isWashDay ? '洗头日 🛁' : '本周期第 ' + dayNo + ' 天') + '</span></div>'
+    + '<button class="plan-habit-cadence cadence-btn" type="button" onclick="planHairCycle()" title="点这里改洗头周期">' + cycle + ' 天一洗 ✏️</button></div>'
+    + '<div class="plan-hair-body">'
+    + '<div class="plan-hair-left">'
+    + '<div class="plan-cycle-num"><span class="cn-big">' + (isWashDay ? cycle : dayNo) + '</span><span class="cn-all">/ ' + cycle + ' 天</span></div>'
     + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + Math.round((isWashDay ? cycle : dayNo) / cycle * 100) + '%;"></span></div>'
-    + midHtml + stepsHtml
-    + '</div>';
+    + '<div class="plan-cycle-label">' + (isWashDay ? '洗头日 🛁' : '本周期第 ' + dayNo + ' 天') + '</div>'
+    + tip + lastLine
+    + '</div>'
+    + '<div class="plan-hair-right">' + rightHtml + '</div>'
+    + '</div></div>';
+}
+// v394：历史最长连续天数
+function planBestStreak(h) {
+  const ds = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
+  let best = 0, cur = 0, prev = null;
+  ds.forEach(function (d) {
+    if (prev) {
+      const gap = Math.round((new Date(d + 'T00:00:00') - new Date(prev + 'T00:00:00')) / 86400000);
+      cur = (gap === 1) ? cur + 1 : 1;
+    } else { cur = 1; }
+    if (cur > best) best = cur;
+    prev = d;
+  });
+  return best;
+}
+// v394：改洗头周期（天）
+function planHairCycle() {
+  const h = (store.planHabits || []).filter(function (x) { return x.type === 'cycle'; })[0];
+  if (!h) return;
+  const cur = parseInt(h.cycleDays) || 5;
+  if (typeof prompt !== 'function') return;
+  const v = prompt('几天洗一次头？（1-14 天）', String(cur));
+  if (v === null) return;
+  const n = parseInt(v, 10);
+  if (!n || n < 1 || n > 14) {
+    if (typeof hamiToast === 'function') hamiToast('请填 1-14 之间的天数～');
+    return;
+  }
+  h.cycleDays = n;
+  if (typeof saveData === 'function') saveData();
+  if (typeof commitToCloud === 'function') commitToCloud();
+  if (typeof renderPlanPanel === 'function') renderPlanPanel();
+}
+// v394：今日总览统计
+function planHeroStat() {
+  const today = todayStr();
+  const daily = (store.planHabits || []).filter(function (x) { return x.type === 'daily'; });
+  const days = {};
+  let best = 0;
+  daily.forEach(function (h) {
+    Object.keys(h.history || {}).forEach(function (d) { if (h.history[d]) days[d] = 1; });
+    const b = planBestStreak(h);
+    if (b > best) best = b;
+  });
+  const done = daily.filter(function (h) { return h.history && h.history[today]; }).length;
+  return { done: done, total: daily.length, days: Object.keys(days).length, best: best };
+}
+function renderPlanHero() {
+  const el = document.getElementById('plan-hero');
+  if (!el) return;
+  const st = planHeroStat();
+  const pct = st.total ? Math.round(st.done / st.total * 100) : 0;
+  el.innerHTML = '<div class="plan-hero">'
+    + '<div class="plan-hero-num"><span class="hn-big">' + st.done + '</span><span class="hn-all">/ ' + st.total + '</span></div>'
+    + '<div class="plan-hero-mid"><div class="plan-hero-lbl">今日习惯打卡</div>'
+    + '<div class="plan-hero-bar"><span class="hb-fill" style="width:' + pct + '%;"></span></div></div>'
+    + '<div class="plan-hero-chips">'
+    + '<span class="plan-hero-chip">🔥 最长 ' + st.best + ' 天</span>'
+    + '<span class="plan-hero-chip">📅 累计 ' + st.days + ' 天</span>'
+    + '<span class="plan-hero-chip' + (st.total && st.done === st.total ? ' all-done' : '') + '">' + (st.total && st.done === st.total ? '🎉 今日全勤' : pct + '% 完成') + '</span>'
+    + '</div></div>';
 }
 function renderPlanHabits() {
   const el = document.getElementById('plan-habit-grid');
@@ -25697,6 +25831,7 @@ function renderPlanPanel() {
   try { renderPlanHabits(); } catch (e) {}
   try { renderPlanGoals(); } catch (e) {}
   try { renderPlanSkills(); } catch (e) {}
+  try { renderPlanHero(); } catch (e) {}
   const sumEl = document.getElementById('plan-summary');
   if (sumEl) {
     const sk = store.planSkills || [];
