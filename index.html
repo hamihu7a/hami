@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-390">
+<meta name="hami-build" content="2026-10-24-391">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -25052,7 +25052,9 @@ function planEnsure() {
         let pos = 1;
         if (h.after) { for (let i = 0; i < store.planHabits.length; i++) if (store.planHabits[i].key === h.after) { pos = i + 1; break; } }
         else { pos = 1; }   // face：插在身体护理后面，两条养皮肤挨着
-        store.planHabits.splice(pos, 0, JSON.parse(JSON.stringify(h))); touched = true;
+        const clone = JSON.parse(JSON.stringify(h));
+        delete clone.after;   // after 仅定位用，不落库
+        store.planHabits.splice(pos, 0, clone); touched = true;
       }
     });
     // v384→v386 旧名迁移（身体油→身体护理）
