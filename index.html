@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-392">
+<meta name="hami-build" content="2026-10-24-393">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1993,6 +1993,8 @@
   .plan-half .plan-habit-streak { font-size: 10.5px; }
   .plan-half .plan-habit-streak .st-num { font-size: 14px; }
   .plan-half .plan-habit-week { gap: 2px; }
+  .plan-half .plan-hdot { width: 16px; }
+  .plan-half .plan-habit-week { gap: 4px; }
   .plan-half .plan-hdot .d { max-width: 16px; }
   .plan-half .plan-hdot .w { font-size: 8px; }
   @media (max-width: 380px) {
@@ -2023,8 +2025,8 @@
   /* 连续天数 + 本周圆点 */
   .plan-habit-streak { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: #c45c7c; }
   .plan-habit-streak .st-num { font-size: 16px; font-weight: 800; color: #d14b73; font-variant-numeric: tabular-nums; }
-  .plan-habit-week { display: flex; justify-content: space-between; gap: 3px; }
-  .plan-hdot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .plan-habit-week { display: flex; justify-content: flex-start; gap: 6px; }
+  .plan-hdot { flex: 0 0 auto; width: 20px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .plan-hdot .d { width: 100%; aspect-ratio: 1/1; max-width: 20px; border-radius: 50%; background: #f6e7ed; border: 1px solid #efd5e0; }
   .plan-hdot .d.on { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; }
   .plan-hdot .d.today { box-shadow: 0 0 0 2px rgba(209,75,115,.28); }
@@ -8111,7 +8113,7 @@ let store = {
       { key: 'mole',  name: '点痣',         note: '恢复期别抠痂 · 注意防晒',   kind: 'todo',  done: false, date: '' },
       { key: 'ear',   name: '打耳洞',       note: '认准正规店 · 银针养耳',   kind: 'todo',  done: false, date: '' }
     ] },
-    { key: 'slim',    name: '身体补剂计划', icon: '💊', type: 'phase', date: '', months: 6, note: '每月一次 · 配合饮食运动' }
+    { key: 'slim',    name: '身体补剂计划', icon: '💉', type: 'phase', date: '', months: 6, note: '每月一次 · 配合饮食运动' }
   ],
   exerciseItems: [],  // 运动详细记录 { id, date, type, name, duration, sets, note }
   customOrders: [
@@ -25127,7 +25129,7 @@ function planEnsure() {
     store.planGoals = [
       { key: 'drive',   name: '学车拿证',   icon: '🚗', type: 'link',  note: 'C2 四科全过就拿证' },
       _healthDef(),
-      { key: 'slim',    name: '身体补剂计划', icon: '💊', type: 'phase', date: slimDefault, months: 6, note: '每月一次 · 配合饮食运动' }
+      { key: 'slim',    name: '身体补剂计划', icon: '💉', type: 'phase', date: slimDefault, months: 6, note: '每月一次 · 配合饮食运动' }
     ];
     return true;
   }
@@ -25186,26 +25188,20 @@ function planStreak(h) {
   return n;
   function _d2(dd) { return dd.getFullYear() + '-' + p(dd.getMonth() + 1) + '-' + p(dd.getDate()); }
 }
-// 本周一起始日
-function planWeekStart() {
-  const d = new Date(todayStr() + 'T00:00:00');
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  const p = function (n) { return String(n).padStart(2, '0'); };
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-}
+// v393：只显示最近 4 天（含今天），7 个圈太挤
 function planRenderWeekDots(h) {
-  const wk = ['一', '二', '三', '四', '五', '六', '日'];
+  const wk = ['日', '一', '二', '三', '四', '五', '六'];
   const today = todayStr();
-  const start = new Date(planWeekStart() + 'T00:00:00');
+  const base = new Date(today + 'T00:00:00');
   const p = function (n) { return String(n).padStart(2, '0'); };
   let html = '';
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start); d.setDate(d.getDate() + i);
+  for (let back = 3; back >= 0; back--) {
+    const d = new Date(base); d.setDate(d.getDate() - back);
     const ds = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
     const on = !!(h.history && h.history[ds]);
-    const isToday = ds === today;
-    const future = ds > today;
-    html += '<span class="plan-hdot"><span class="d' + (on ? ' on' : '') + (isToday ? ' today' : '') + '"' + (future ? ' style="opacity:.55;"' : '') + '></span><span class="w">' + wk[i] + '</span></span>';
+    const isToday = back === 0;
+    html += '<span class="plan-hdot"><span class="d' + (on ? ' on' : '') + (isToday ? ' today' : '') + '"></span>'
+         +  '<span class="w">' + (isToday ? '今' : wk[d.getDay()]) + '</span></span>';
   }
   return html;
 }
