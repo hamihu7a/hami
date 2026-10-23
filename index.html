@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-395">
+<meta name="hami-build" content="2026-10-24-396">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2195,13 +2195,54 @@
   #study-plan-root { margin-top: 2px; }
   .sp-block {
     background: #fff; border: 1px solid #e9e9ee; border-radius: 12px;
-    padding: 18px 20px 16px;
+    padding: 14px 16px 13px;
   }
-  .sp-block + .sp-block { margin-top: 22px; }
+  .sp-block + .sp-block { margin-top: 13px; }
   .sp-block-head {
     display: flex; align-items: baseline; gap: 10px;
-    padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid #f1f1f4;
+    padding-bottom: 9px; margin-bottom: 11px; border-bottom: 1px solid #f1f1f4;
   }
+  /* v396：三项任务纯打卡行 */
+  .sp-tasks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .sp-task {
+    display: flex; align-items: center; gap: 7px; text-align: left; cursor: pointer;
+    border-radius: 9px; padding: 8px 10px; font-family: inherit;
+    background: #fafafb; border: 1px solid #e6e6ea; transition: all .15s ease;
+  }
+  .sp-task:hover { border-color: #d3d6db; }
+  .sp-task.on { background: #f4faf6; border-color: #c7e2d0; }
+  .sp-tk-box {
+    width: 17px; height: 17px; border-radius: 50%; flex: 0 0 auto;
+    border: 2px solid #d8dce1; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff; line-height: 1;
+  }
+  .sp-task.on .sp-tk-box { background: #5d8a6f; border-color: #5d8a6f; }
+  .sp-tk-n { font-size: 12px; font-weight: 700; color: #3d434a; }
+  .sp-tk-m { margin-left: auto; font-size: 10.5px; font-weight: 700; color: #a8adb5; }
+  /* v396：折叠条 */
+  .sp-fold-h {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; cursor: pointer;
+    margin-top: 8px; padding: 6px 10px; border-radius: 8px; font-family: inherit;
+    background: #fafafb; border: 1px solid #efeff3; transition: all .15s ease;
+  }
+  .sp-fold-h:hover { background: #f4f5f7; }
+  .sp-fh-t { font-size: 11.5px; font-weight: 700; color: #5b6169; }
+  .sp-fh-x { flex: 1; font-size: 10.5px; font-weight: 500; color: #a8adb5; }
+  .sp-fh-a { font-size: 10.5px; font-weight: 700; color: #9aa0a8; }
+  .sp-fold-h.on { background: #f4f5f7; }
+  .sp-fold-h.on .sp-fh-a { color: #5b6672; }
+  .sp-fold-b { margin-top: 5px; padding: 9px 11px; border-radius: 8px; background: #fbfbfc; border: 1px solid #f1f1f4; }
+  /* v396：区块三 口语打卡 */
+  .sp-speak { display: flex; align-items: center; gap: 10px; }
+  .sp-speak-btn {
+    border-radius: 9px; padding: 9px 15px; font-family: inherit; cursor: pointer;
+    font-size: 12.5px; font-weight: 600; color: #5b6169; background: #fafafb; border: 1px solid #e2e2e7;
+    transition: all .15s ease;
+  }
+  .sp-speak-btn.on { color: #fff; background: #5d8a6f; border-color: #5d8a6f; }
+  .sp-speak-s { font-size: 11px; font-weight: 600; color: #9aa0a8; }
+  .sp-item-min { margin-left: 6px; font-size: 10.5px; font-weight: 600; color: #a8adb5; }
   .sp-bh-idx { font-size: 11px; font-weight: 700; color: #aeb3ba; letter-spacing: 1.5px; font-variant-numeric: tabular-nums; }
   .sp-bh-title { font-size: 14px; font-weight: 700; color: #2f3438; letter-spacing: .6px; }
   .sp-bh-meta { margin-left: auto; font-size: 10.5px; font-weight: 600; color: #9aa0a8; letter-spacing: .3px; }
@@ -2294,7 +2335,7 @@
   .sp-sg-r { font-size: 10.5px; font-weight: 600; color: #9aa0a8; }
   .sp-sg-d { font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.65; }
   /* 素材项 / 流程 / 提示词 */
-  .sp-item + .sp-item { margin-top: 16px; padding-top: 15px; border-top: 1px solid #f1f1f4; }
+  .sp-item + .sp-item { margin-top: 12px; padding-top: 11px; border-top: 1px solid #f1f1f4; }
   .sp-item-head { font-size: 12.5px; font-weight: 700; color: #3d434a; margin-bottom: 6px; letter-spacing: .3px; }
   .sp-item-note { font-size: 11.5px; font-weight: 500; color: #8b9199; line-height: 1.7; }
   .sp-preview {
@@ -2306,15 +2347,12 @@
   .sp-flow-i { display: flex; gap: 9px; font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.75; padding: 2px 0; }
   .sp-flow-i span { flex: 0 0 auto; font-size: 10px; font-weight: 700; color: #b2b7be; padding-top: 2px; font-variant-numeric: tabular-nums; }
   .sp-flow-note { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e9e9ee; font-size: 11px; font-weight: 600; color: #8b9199; line-height: 1.65; }
-  .sp-prompt {
-    padding: 13px 14px; border-radius: 9px; background: #fafafb; border: 1px solid #efeff3;
-    font-size: 12px; font-weight: 500; color: #4a5058; line-height: 1.85; letter-spacing: .1px;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-  }
-  .sp-foot { margin-top: 22px; text-align: center; font-size: 11px; font-weight: 500; color: #aeb3ba; letter-spacing: .5px; }
+  /* v396：提示词块已移除（区块三改为纯打卡） */
+  .sp-foot { margin-top: 13px; text-align: center; font-size: 11px; font-weight: 500; color: #aeb3ba; letter-spacing: .5px; }
   @media (max-width: 620px) {
-    .sp-block { padding: 15px 14px 14px; }
-    .sp-block + .sp-block { margin-top: 16px; }
+    .sp-block { padding: 13px 12px 12px; }
+    .sp-block + .sp-block { margin-top: 11px; }
+    .sp-tasks { grid-template-columns: 1fr; }
     .sp-rule { flex-direction: column; gap: 2px; }
     .sp-rk { flex: none; }
     .sp-pv-grid { grid-template-columns: repeat(2, 1fr); }
@@ -6437,6 +6475,10 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <span class="nav-icon">🚀</span>
       <span class="nav-text">提升计划<br>2.0</span>
     </button>
+    <button class="nav-item" type="button" onclick="switchPanel('study', this)">
+      <span class="nav-icon">📘</span>
+      <span class="nav-text">英语学习<br>计划</span>
+    </button>
   </div>
 
   <!-- 一·财务记录 -->
@@ -8029,11 +8071,20 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
         <div id="plan-skill-list"></div>
       </div>
 
-      <!-- 四区：英语学习计划（v395：打卡控制 / 学习素材 / AI 口语对话） -->
-      <div class="plan-zone">
-        <div class="plan-zone-title"><span class="plan-zone-ico">📘</span>英语学习计划<span class="plan-zone-sub">12 个月 · 日常基础无障碍沟通</span></div>
-        <div id="study-plan-root"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 📘 英语学习计划（v396：独立面板 · 学车 → 提升计划2.0 → 英语学习） ==================== -->
+  <div id="panel-study" class="panel">
+    <div class="card todo-section">
+      <div class="todo-panel-head">
+        <div class="todo-panel-head-left">
+          <div class="todo-panel-title">📘 英语学习计划</div>
+          <div class="todo-panel-sub">12 个月 · 每日 20 分钟 · 面向四级以下 · 日常基础无障碍沟通</div>
+        </div>
+        <div class="todo-summary" id="study-summary"></div>
       </div>
+      <div id="study-plan-root"></div>
     </div>
   </div>
 
@@ -16231,6 +16282,10 @@ function switchPanel(name, navEl) {
     // 学车进度面板（临时模块）：进入时渲染
     if (name === 'drive') {
       try { ensureDriveLearn(); renderDriveLearn(); } catch (e) {}
+    }
+    // v396：英语学习计划独立面板，进入时渲染
+    if (name === 'study') {
+      try { spRender(); } catch (e) {}
     }
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     // 兼容 iPhone 点中子元素导致 navEl 不是 button：向上找 .nav-item
@@ -25970,15 +26025,19 @@ var SP_STAGES = [
   { i: 4, name: '达标期', range: '第 12 个月',   desc: '日常基础话题顺畅沟通，适应母语者慢速自然对话' }
 ];
 var SP_DUO_TEXT = '请手动打开手机/电脑多邻国APP，严格练习10分钟，稳步逐步提升难度，积累基础词汇、基础句型，不要长时间刷。';
-var SP_GPT_TEXT = 'You are my English conversation partner. My English is weak, below CET4.\nRule1: Use very simple, short sentences, speak slowly. Use basic words only.\nRule2: After I speak, tell me my error briefly, give the corrected short sentence.\nRule3: Ask only one easy follow-up question.\nRule4: No Chinese. We talk about simple daily things. Start.';
 var SP_LINKS = [
   { name: 'Duolingo Podcast', sub: '多邻国播客', url: 'https://podcast.duolingo.com/' },
   { name: 'ESL Pod',          sub: '入门版 · 慢速讲解', url: 'https://www.eslpod.com/' },
   { name: 'Real Easy English', sub: 'BBC 入门对话', url: 'https://www.bbc.co.uk/learningenglish/english/features/real-easy-english' }
 ];
-var spMode = 'full';            // 当日填写（未提交）：full = 完成全套 / base = 仅保底
+var SP_TASKS = [
+  { key: 'duo',    name: '多邻国',     min: 10, sub: 'APP 手动打开' },
+  { key: 'listen', name: '分级听力',   min: 7,  sub: '网页素材跳转' },
+  { key: 'speak',  name: 'AI 口语对话', min: 3,  sub: 'ChatGPT 语音' }
+];
 var spShowProg = false, spShowHist = false;
-var spForceNote = null;         // 提交或重置后强制清空备注框
+var spForceNote = null;         // 重置后强制清空备注框
+var spFolds = { rules: false, stages: false, flow: false, duo: false, gpt: false };
 
 function spData() {
   if (!store.studyPlan) store.studyPlan = { start: '', checks: {} };
@@ -26014,13 +26073,62 @@ function spWeekDone() {
   return n;
 }
 function spTotalDays() { return Object.keys(spData().checks).length; }
-// 累计练习分钟：全套 20 / 保底 10
+// 累计练习分钟：按实际完成项累加（多邻国10 + 听力7 + 口语3）
 function spTotalMin() {
   const c = spData().checks;
   let m = 0;
-  Object.keys(c).forEach(function (k) { m += (c[k] && c[k].full) ? 20 : 10; });
+  Object.keys(c).forEach(function (k) {
+    const t = spRecTasks(c[k]);
+    SP_TASKS.forEach(function (x) { if (t[x.key]) m += x.min; });
+  });
   return m;
 }
+// 今日打卡明细（兼容老数据：full=三项全打，保底=仅多邻国）
+function spRecTasks(rec) {
+  const t = { duo: false, listen: false, speak: false };
+  if (!rec) return t;
+  if (rec.tasks) {
+    SP_TASKS.forEach(function (x) { t[x.key] = !!rec.tasks[x.key]; });
+    return t;
+  }
+  t.duo = true; t.listen = !!rec.full; t.speak = !!rec.full;
+  return t;
+}
+function spTaskCount(rec) {
+  const t = spRecTasks(rec);
+  return SP_TASKS.filter(function (x) { return t[x.key]; }).length;
+}
+// 点一下即打卡 / 再点取消（纯打卡，直接落库）
+function spToggleTask(key) {
+  const d = spData();
+  const k = todayStr();
+  let rec = d.checks[k];
+  if (!rec) rec = d.checks[k] = { full: false, note: '', ts: 0, tasks: { duo: false, listen: false, speak: false } };
+  const t = spRecTasks(rec);
+  t[key] = !t[key];
+  rec.tasks = t;
+  rec.full = !!(t.duo && t.listen && t.speak);
+  rec.ts = Date.now();
+  if (!t.duo && !t.listen && !t.speak && !rec.note) delete d.checks[k];
+  if (typeof saveData === 'function') saveData();
+  if (typeof commitToCloud === 'function') commitToCloud();
+  spRender();
+}
+// 备注：输入完失焦即存，不整块重渲（保住焦点）
+function spSaveNote(v) {
+  const d = spData();
+  const k = todayStr();
+  const note = String(v || '').slice(0, 60);
+  if (!d.checks[k]) {
+    if (!note) return;
+    d.checks[k] = { full: false, note: note, ts: 0, tasks: { duo: false, listen: false, speak: false } };
+  } else {
+    d.checks[k].note = note;
+  }
+  if (typeof saveData === 'function') saveData();
+  if (typeof commitToCloud === 'function') commitToCloud();
+}
+function spToggleFold(k) { spFolds[k] = !spFolds[k]; spRender(); }
 function spCopy(text, btn) {
   const done = function () {
     if (!btn) return;
@@ -26049,24 +26157,33 @@ function spCopy(text, btn) {
   }
 }
 function spOpen(url) { try { window.open(url, '_blank', 'noopener'); } catch (e) {} }
-function spSetMode(m) { spMode = m; spRender(); }
 function spSubmit() {
   const d = spData();
   const el = document.getElementById('sp-note');
   const note = (el && el.value ? el.value : '').slice(0, 60);
-  d.checks[todayStr()] = { full: spMode === 'full', note: note, ts: Date.now() };
-  if (el) el.value = '';
+  const k = todayStr();
+  let rec = d.checks[k];
+  if (!rec) rec = d.checks[k] = { full: true, note: note, ts: 0, tasks: { duo: false, listen: false, speak: false } };
+  rec.tasks = { duo: true, listen: true, speak: true };
+  rec.full = true;
+  rec.note = note;
+  rec.ts = Date.now();
   if (typeof saveData === 'function') saveData();
   if (typeof commitToCloud === 'function') commitToCloud();
   if (typeof hamiToast === 'function') hamiToast('已记录今日打卡');
-  spForceNote = '';
   spRender();
 }
 function spReset() {
-  spMode = 'full';
+  try {
+    if (window.confirm && !window.confirm('清除今天的打卡记录与备注？')) return;
+  } catch (e) {}
+  const d = spData();
+  delete d.checks[todayStr()];
   spForceNote = '';
   const el = document.getElementById('sp-note');
   if (el) el.value = '';
+  if (typeof saveData === 'function') saveData();
+  if (typeof commitToCloud === 'function') commitToCloud();
   spRender();
 }
 function spSetStart(v) {
@@ -26081,6 +26198,13 @@ function spToggleHistory() { spShowHist = !spShowHist; spRender(); }
 function spRuleRow(k, v) {
   return '<div class="sp-rule"><span class="sp-rk">' + k + '</span><span class="sp-rv">' + v + '</span></div>';
 }
+function spFoldBtn(k, label, extra) {
+  const on = !!spFolds[k];
+  return '<button class="sp-fold-h' + (on ? ' on' : '') + '" type="button" onclick="spToggleFold(\'' + k + '\')">'
+    + '<span class="sp-fh-t">' + label + '</span>'
+    + (extra ? '<span class="sp-fh-x">' + extra + '</span>' : '<span class="sp-fh-x"></span>')
+    + '<span class="sp-fh-a">' + (on ? '收起' : '展开') + '</span></button>';
+}
 function spRender() {
   const root = document.getElementById('study-plan-root');
   if (!root) return;
@@ -26089,7 +26213,9 @@ function spRender() {
   spForceNote = null;
   const d = spData();
   const today = todayStr();
-  const rec = d.checks[today];
+  const rec = d.checks[today] || null;
+  const t = spRecTasks(rec);
+  const doneN = spTaskCount(rec);
   const st = spStage();
   const m = spMonth();
   const week = spWeekDone();
@@ -26099,25 +26225,17 @@ function spRender() {
   // —— 区块一：打卡控制面板 ——
   let h = '<div class="sp-block">'
     + '<div class="sp-block-head"><span class="sp-bh-idx">01</span><span class="sp-bh-title">打卡控制面板</span>'
-    + '<span class="sp-bh-meta">' + (rec ? '今日已记录' : '今日未记录') + '</span></div>'
-    + '<div class="sp-rules">'
-    + spRuleRow('总周期', '12 个月长线学习')
-    + spRuleRow('每日时长上限', '20 分钟 · 不额外加量')
-    + spRuleRow('每日任务', '多邻国 10 分钟 / 分级听力 7 分钟 / ChatGPT 语音口语对话 3 分钟')
-    + spRuleRow('弹性规则', '每周最低打卡 5 天，每周允许 2 天休息日，休息日不标记欠卡')
-    + spRuleRow('保底机制', '状态差、疲惫当天，仅完成多邻国 10 分钟即判定有效打卡，听力与口语可跳过')
-    + spRuleRow('记录字段', '打卡日期 / 是否完成全套 / 简短备注')
-    + '</div>'
-    + '<div class="sp-today">'
-    + '<div class="sp-today-head"><span class="sp-date">' + today + '</span>'
-    + (rec ? '<span class="sp-state done">' + (rec.full ? '已完成全套' : '仅保底（多邻国）') + '</span>'
-           : '<span class="sp-state">未打卡</span>')
-    + '</div>'
-    + '<div class="sp-modes">'
-    + '<button class="sp-mode' + (spMode === 'full' ? ' on' : '') + '" type="button" onclick="spSetMode(\'full\')">完成全套</button>'
-    + '<button class="sp-mode' + (spMode === 'base' ? ' on' : '') + '" type="button" onclick="spSetMode(\'base\')">仅保底（多邻国）</button>'
-    + '</div>'
-    + '<input id="sp-note" class="sp-note" type="text" maxlength="60" value="' + escTodo(noteVal).replace(/"/g, '&quot;') + '" placeholder="简短备注（可选）">'
+    + '<span class="sp-bh-meta">今日 ' + doneN + ' / 3</span></div>'
+    + '<div class="sp-tasks">';
+  SP_TASKS.forEach(function (x) {
+    const on = !!t[x.key];
+    h += '<button class="sp-task' + (on ? ' on' : '') + '" type="button" onclick="spToggleTask(\'' + x.key + '\')">'
+      + '<span class="sp-tk-box">' + (on ? '✓' : '') + '</span>'
+      + '<span class="sp-tk-n">' + x.name + '</span>'
+      + '<span class="sp-tk-m">' + x.min + '′</span></button>';
+  });
+  h += '</div>'
+    + '<input id="sp-note" class="sp-note" type="text" maxlength="60" value="' + escTodo(noteVal).replace(/"/g, '&quot;') + '" placeholder="简短备注（可选，失焦自动保存）" onchange="spSaveNote(this.value)">'
     + '<div class="sp-btn-row">'
     + '<button class="sp-btn primary" type="button" onclick="spSubmit()">今日打卡</button>'
     + '<button class="sp-btn" type="button" onclick="spToggleProgress()">' + (spShowProg ? '收起阶段进度' : '查看阶段进度') + '</button>'
@@ -26128,14 +26246,14 @@ function spRender() {
   if (spShowProg) {
     const wpc = Math.min(100, Math.round(week / 5 * 100));
     h += '<div class="sp-panel">'
-      + '<div class="sp-pv-line"><span class="sp-pv-k">当前阶段</span><span class="sp-pv-v">阶段 ' + st.i + ' · ' + st.name + '（' + st.range + '）</span></div>'
+      + '<div class="sp-pv-line"><span class="sp-pv-k">当前阶段</span><span class="sp-pv-v">阶段 ' + st.i + ' · ' + st.name + '</span></div>'
       + '<div class="sp-pv-line"><span class="sp-pv-k">第 ' + m + ' / 12 个月</span><span class="sp-pv-v">' + pct + '%</span></div>'
       + '<div class="sp-bar"><span class="sp-bar-fill" style="width:' + pct + '%;"></span></div>'
       + '<div class="sp-pv-grid">'
       + '<div class="sp-pv-cell"><b>' + days + '</b><span>累计打卡天数</span></div>'
-      + '<div class="sp-pv-cell"><b>' + week + ' / 5</b><span>本周达成（可休 2 天）</span></div>'
+      + '<div class="sp-pv-cell"><b>' + week + ' / 5</b><span>本周达成</span></div>'
       + '<div class="sp-pv-cell"><b>' + spTotalMin() + '</b><span>累计分钟</span></div>'
-      + '<div class="sp-pv-cell"><b>' + (days ? Math.round(days / Math.max(1, m) / 30 * 100) : 0) + '%</b><span>当月稳定度</span></div>'
+      + '<div class="sp-pv-cell"><b>' + Math.round(days / Math.max(1, m) / 30 * 100) + '%</b><span>月度稳定度</span></div>'
       + '</div>'
       + '<div class="sp-week-bar"><span class="sp-bar-fill" style="width:' + wpc + '%;"></span></div>'
       + '<div class="sp-start-row"><span class="sp-pv-k">起始日</span>'
@@ -26147,67 +26265,104 @@ function spRender() {
     let rows = '';
     ks.slice(0, 120).forEach(function (k) {
       const r = d.checks[k];
+      const n = spTaskCount(r);
       rows += '<div class="sp-hist-row"><span class="sp-hd">' + k + '</span>'
-        + '<span class="sp-hf ' + (r.full ? 'full' : 'base') + '">' + (r.full ? '全套' : '保底') + '</span>'
+        + '<span class="sp-hf ' + (n === 3 ? 'full' : 'base') + '">' + n + ' / 3</span>'
         + '<span class="sp-hn">' + (r.note ? escTodo(r.note) : '—') + '</span></div>';
     });
     h += '<div class="sp-panel"><div class="sp-panel-title">历史打卡记录（共 ' + ks.length + ' 天）</div>'
       + (rows || '<div class="sp-empty">暂无记录</div>') + '</div>';
   }
-  // 四阶段固定展示
-  h += '<div class="sp-stages"><div class="sp-stage-title">12 个月四阶段 · 进度追溯</div>';
-  SP_STAGES.forEach(function (x) {
-    h += '<div class="sp-stage' + (x.i === st.i ? ' cur' : '') + '">'
-      + '<span class="sp-sg-i">阶段 ' + x.i + '</span>'
-      + '<span class="sp-sg-n">' + x.name + '</span>'
-      + '<span class="sp-sg-r">' + x.range + '</span>'
-      + '<span class="sp-sg-d">' + x.desc + '</span></div>';
-  });
-  h += '</div></div>';
+
+  // 折叠：计划规则
+  h += spFoldBtn('rules', '计划规则', '12 个月 · 每日 20 分钟 · 每周 5 天');
+  if (spFolds.rules) {
+    h += '<div class="sp-fold-b"><div class="sp-rules">'
+      + spRuleRow('总周期', '12 个月长线学习')
+      + spRuleRow('每日上限', '20 分钟 · 不额外加量')
+      + spRuleRow('任务拆分', '多邻国 10 / 分级听力 7 / AI 口语对话 3')
+      + spRuleRow('弹性规则', '每周最低打卡 5 天，允许 2 天休息日，休息日不标记欠卡')
+      + spRuleRow('保底机制', '状态差当天，仅完成多邻国 10 分钟即判有效打卡，听力与口语可跳过')
+      + spRuleRow('记录字段', '打卡日期 / 完成项 / 简短备注')
+      + '</div></div>';
+  }
+  // 折叠：四阶段
+  h += spFoldBtn('stages', '12 个月四阶段', '当前 阶段 ' + st.i + ' · ' + st.name);
+  if (spFolds.stages) {
+    h += '<div class="sp-fold-b"><div class="sp-stages">';
+    SP_STAGES.forEach(function (x) {
+      h += '<div class="sp-stage' + (x.i === st.i ? ' cur' : '') + '">'
+        + '<span class="sp-sg-i">阶段 ' + x.i + '</span>'
+        + '<span class="sp-sg-n">' + x.name + '</span>'
+        + '<span class="sp-sg-r">' + x.range + '</span>'
+        + '<span class="sp-sg-d">' + x.desc + '</span></div>';
+    });
+    h += '</div></div>';
+  }
+  h += '</div>';
 
   // —— 区块二：学习素材面板 ——
   h += '<div class="sp-block">'
     + '<div class="sp-block-head"><span class="sp-bh-idx">02</span><span class="sp-bh-title">学习素材面板</span>'
     + '<span class="sp-bh-meta">↗ 打开网页 · ⧉ 复制文字</span></div>'
     + '<div class="sp-item">'
-    + '<div class="sp-item-head">多邻国</div>'
-    + '<div class="sp-item-note">多邻国无网页稳定直达链接，需要手动启动 APP。</div>'
+    + '<div class="sp-item-head">多邻国<span class="sp-item-min">10 分钟 · 手动打开 APP</span></div>'
     + '<div class="sp-btn-row">'
-    + '<button class="sp-btn copy" type="button" onclick="spCopy(SP_DUO_TEXT, this)">⧉ 复制引导：打开多邻国</button>'
+    + '<button class="sp-btn copy" type="button" onclick="spCopy(SP_DUO_TEXT, this)">⧉ 复制引导</button>'
     + '</div>'
-    + '<div class="sp-preview">' + escTodo(SP_DUO_TEXT) + '</div>'
-    + '</div>'
+    + spFoldBtn('duo', '复制内容');
+  if (spFolds.duo) {
+    h += '<div class="sp-fold-b"><div class="sp-preview">' + escTodo(SP_DUO_TEXT) + '</div>'
+      + '<div class="sp-item-note">多邻国无网页稳定直达链接，需要手动启动 APP。</div></div>';
+  }
+  h += '</div>'
     + '<div class="sp-item">'
-    + '<div class="sp-item-head">分级听力素材库</div>'
+    + '<div class="sp-item-head">分级听力素材库<span class="sp-item-min">7 分钟 · 网页直达</span></div>'
     + '<div class="sp-links">';
   SP_LINKS.forEach(function (l) {
     h += '<button class="sp-btn link" type="button" onclick="spOpen(\'' + l.url + '\')">'
       + '<span class="sp-lk-n">' + l.name + '</span><span class="sp-lk-s">' + l.sub + '</span><span class="sp-lk-a">↗</span></button>';
   });
   h += '</div>'
-    + '<div class="sp-flow">'
-    + '<div class="sp-flow-t">听力流程 · 每次只用 1 分钟左右短音频片段</div>'
-    + '<div class="sp-flow-i"><span>01</span>第一轮盲听一遍，抓取关键词即可，听不懂属于正常情况</div>'
-    + '<div class="sp-flow-i"><span>02</span>第二轮打开双语字幕对照，只摘录 1 句实用口语短句，不大量摘抄笔记</div>'
-    + '<div class="sp-flow-i"><span>03</span>第三轮关闭字幕再听一遍</div>'
-    + '<div class="sp-flow-note">阶段约束：前 4 个月允许双语字幕；进入第 5 个月之后主动减少中文依赖</div>'
-    + '</div></div></div>';
+    + spFoldBtn('flow', '听力流程');
+  if (spFolds.flow) {
+    h += '<div class="sp-fold-b"><div class="sp-flow">'
+      + '<div class="sp-flow-t">每次只用 1 分钟左右短音频片段</div>'
+      + '<div class="sp-flow-i"><span>01</span>盲听一遍，抓关键词即可，听不懂是正常情况</div>'
+      + '<div class="sp-flow-i"><span>02</span>开双语字幕对照，只摘 1 句实用口语短句</div>'
+      + '<div class="sp-flow-i"><span>03</span>关掉字幕再听一遍</div>'
+      + '<div class="sp-flow-note">阶段约束：前 4 个月允许双语字幕；第 5 个月起主动减少中文依赖</div>'
+      + '</div></div>';
+  }
+  h += '</div></div>';
 
-  // —— 区块三：AI 口语对话面板 ——
+  // —— 区块三：AI 口语对话（v396：去掉提示词，纯打卡） ——
   h += '<div class="sp-block">'
-    + '<div class="sp-block-head"><span class="sp-bh-idx">03</span><span class="sp-bh-title">AI 口语对话面板</span>'
-    + '<span class="sp-bh-meta">ChatGPT 语音对话</span></div>'
-    + '<div class="sp-item">'
-    + '<div class="sp-prompt">' + escTodo(SP_GPT_TEXT).replace(/\n/g, '<br>') + '</div>'
-    + '<div class="sp-btn-row">'
-    + '<button class="sp-btn copy" type="button" onclick="spCopy(SP_GPT_TEXT, this)">⧉ 复制对话提示词</button>'
+    + '<div class="sp-block-head"><span class="sp-bh-idx">03</span><span class="sp-bh-title">AI 口语对话</span>'
+    + '<span class="sp-bh-meta">3 分钟 · 手动打开 APP</span></div>'
+    + '<div class="sp-speak">'
+    + '<button class="sp-speak-btn' + (t.speak ? ' on' : '') + '" type="button" onclick="spToggleTask(\'speak\')">'
+    + (t.speak ? '✓ 今日口语已完成' : '完成 3 分钟对话') + '</button>'
+    + '<span class="sp-speak-s">' + (t.speak ? '已记录' : '未记录') + '</span>'
     + '</div>'
-    + '<div class="sp-item-note">复制提示词后，手动打开 ChatGPT APP，新建对话粘贴提示词，开启麦克风语音对话；单次对话控制在 3 分钟左右，卡壳可以结束本轮。</div>'
-    + '</div></div>'
+    + spFoldBtn('gpt', '使用说明');
+  if (spFolds.gpt) {
+    h += '<div class="sp-fold-b"><div class="sp-item-note">手动打开 ChatGPT APP，新建对话开启麦克风语音对话；单次控制在 3 分钟左右，卡壳可以结束本轮。</div></div>';
+  }
+  h += '</div>'
     + '<div class="sp-foot">本计划核心是稳定坚持，追求循序渐进，不追求速成</div>';
 
   root.innerHTML = h;
+
+  const sumEl = document.getElementById('study-summary');
+  if (sumEl) {
+    sumEl.innerHTML = '<span class="plan-sum-chip all">阶段 ' + st.i + ' · ' + st.name + '</span>'
+      + '<span class="plan-sum-chip wk">第 ' + m + ' / 12 月</span>'
+      + '<span class="plan-sum-chip min">累计 ' + days + ' 天</span>'
+      + '<span class="plan-sum-chip wk">今日 ' + doneN + ' / 3</span>';
+  }
 }
+
 // ==================== 提升计划面板总渲染（v388：习惯 + 目标 + 技能 + 顶部小计） ====================
 function renderPlanPanel() {
   try { if (planEnsure()) saveData(); } catch (e) {}
@@ -26215,7 +26370,6 @@ function renderPlanPanel() {
   try { renderPlanGoals(); } catch (e) {}
   try { renderPlanSkills(); } catch (e) {}
   try { renderPlanHero(); } catch (e) {}
-  try { spRender(); } catch (e) {}
   const sumEl = document.getElementById('plan-summary');
   if (sumEl) {
     const sk = store.planSkills || [];
