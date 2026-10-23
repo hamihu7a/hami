@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-388">
+<meta name="hami-build" content="2026-10-24-389">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6397,12 +6397,6 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div id="desktop-accounts"></div>
     </div>
 
-    <!-- 模拟人生笔记推荐 -->
-    <div class="todo-card" id="home-inspire-card">
-      <h3>📚 模拟人生笔记推荐：</h3>
-      <div id="desktop-inspire"></div>
-    </div>
-
     <!-- 三张打卡卡片 -->
     <div class="checkin-grid" id="desktop-checkin"></div>
 
@@ -6412,35 +6406,15 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div id="desktop-weight"></div>
     </div>
 
-    <!-- v379：主页「日常代办/工作代办」便签墙 + 「本周完成度」圆环已整体删除；仅保留主页其余卡片的去底框规则 -->
+    <!-- v379：主页「日常代办/工作代办」便签墙 + 「本周完成度」圆环已整体删除；v389：笔记推荐卡与赚钱思维卡也已删除；仅保留主页其余卡片的去底框规则 -->
     <style>
-      /* v378：主页卡片去掉大白底框——便签直接浮在面板上，版面更紧凑（标题保留，模块照样认得）；v379：日常/工作代办卡与本周圆环已删，规则继续覆盖赚钱思维/体重日历/笔记推荐 */
-      #hami-money-mind, #home-weight-cal, #home-inspire-card {
+      /* v378：主页卡片去掉大白底框——便签直接浮在面板上，版面更紧凑（标题保留，模块照样认得）；v379：日常/工作代办卡与本周圆环已删，规则继续覆盖体重日历；v389：笔记推荐/赚钱思维已删 */
+      #home-weight-cal {
         background: transparent !important; border: none !important; box-shadow: none !important;
         padding: 0 !important; margin-bottom: 12px;
       }
-      #hami-money-mind h3, #home-weight-cal h3, #home-inspire-card h3 { margin: 0 0 2px; font-size: 14.5px; }
+      #home-weight-cal h3 { margin: 0 0 2px; font-size: 14.5px; }
     </style>
-
-    <!-- v376：🚀 赚钱思维（不再折叠，全量直接展示；整段（含下方 style）可删，不影响其它功能） -->
-    <style>
-      #hami-money-mind .hmm-cat { font-size: 11px; font-weight: 800; color: #fff; background: #c58ae6; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
-      #hmm-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
-      #hmm-next { border: 1px solid #ffd7e5; background: #fff; color: #c0537a; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
-      #hmm-next:active { transform: translateY(1px); }
-      /* v376：详情全量常驻展示，不再有点击展开/折叠 */
-      #hmm-detail { margin-top: 8px; padding: 10px 12px; background: #fff4f9; border: 1px solid #ffd9e6; border-radius: 12px; text-align: left; }
-      #hmm-detail .hmm-d-title { font-size: 14px; font-weight: 800; color: #d14b73; margin-bottom: 6px; line-height: 1.35; }
-      #hmm-detail .hmm-d-body { font-size: 13px; line-height: 1.75; color: #5b3a47; white-space: pre-line; }
-      #hmm-detail .hmm-d-src { font-size: 11px; color: #a988a0; margin-top: 8px; }
-    </style>
-    <div class="todo-card" id="hami-money-mind">
-      <h3>🚀 赚钱思维<span id="hmm-cat" class="hmm-cat"></span></h3>
-      <div id="hmm-detail"></div>
-      <div id="hmm-foot">
-        <button id="hmm-next">换一条 ↻</button>
-      </div>
-    </div>
 
     <!-- v276：双倒计时卡（人生剩余天数 + 今日时光），整体删除本 div 即可无痕移除 -->
     <style>
@@ -13253,11 +13227,6 @@ function parseHamiCommand(raw, today) {
     if (todo) push({ type: 'todo', text: todo });
   }
 
-  // 18) 刷新模拟人生笔记
-  if (/(刷新|更新|换一条|换一换|换一个|重新生成|重刷).*(模拟人生|笔记|推荐|灵感|小红书)|(模拟人生|笔记|推荐|灵感|小红书).*(刷新|更新|换一条|换一换|重新生成)/i.test(text)) {
-    push({ type: 'refreshInspire' });
-  }
-
   // 兜底：整句仅一个数字且落在体重合理区间 → 当作体重
   if (intents.length === 0) {
     const single = text.match(/^(\d+\.?\d*)$/);
@@ -13307,14 +13276,6 @@ function sendHamiCmd() {
   const hints = [];
   let queryMsg = '';
   const dateLabel = (date === today) ? '今天' : date;
-
-  // 刷新笔记（独立早退）
-  if (plan.intents.some(i => i.type === 'refreshInspire')) {
-    try { window.refreshInspireToday(); } catch (e) {}
-    showCmdToast('🔄 已刷新模拟人生笔记推荐，换了一条新草稿~');
-    input.value = '';
-    return;
-  }
 
   for (const it of plan.intents) {
     switch (it.type) {
@@ -13489,7 +13450,7 @@ function sendHamiCmd() {
   try { renderIncome(); } catch (e) {}
   try { renderPeriod(); } catch (e) {}
   try { renderInspire(); } catch (e) {}
-  try { renderDesktopInspire(); } catch (e) {}
+  try { renderInspire(); } catch (e) {}
   try { renderReminder(); } catch (e) {}
   try { renderHomeTodo(); } catch (e) {}
   try { checkCheckinAlerts(); } catch (e) {}   // 首页顶部提醒（含量体重）同步
@@ -14816,229 +14777,6 @@ function renderQuotes() {
     <div class="quote-line">💪 ${q.fitness}</div>`;
 }
 
-// ==================== v370：🚀 赚钱思维（真实可查案例/方法论，纯展示，不进云端同步） ====================
-// 内容均基于公开报道、企业财报、已出版方法论与公认商业常识，不编造具体数字；每条附来源锚点。
-const MONEY_MINDS = [
-  // —— 狠人案例（聚焦：他成就了什么 + 他的核心思维，去餐饮类）——
-  { cat: '狠人案例', title: '巴菲特：年化20%滚了60年', src: '伯克希尔年报 / 公开报道',
-    preview: '他把一家小纺织厂变成近万亿美元帝国，一生年化约两成。思维：只投看得懂的、绝不亏本金、让时间替自己赚钱。',
-    detail: '成就：伯克希尔市值从几千万做到近万亿美元，他自己是史上最富之一却极简生活。核心思维有三条——能力圈（不懂不碰）、规则一不亏钱规则二记住规则一、用保险浮存金当零成本杠杆长期复利。今天能用的一招：别追热点，把买的东西当成持有一辈子的生意去挑。' },
-  { cat: '狠人案例', title: '贝索斯：押注十年不变的事', src: '亚马逊股东信 / 公开报道',
-    preview: '他把书店做成全球最大电商，AWS又养出利润奶牛。思维：长期自由现金流重于短期利润，把资源压在不变的需求上。',
-    detail: '成就：亚马逊从在线书店到全球电商+云霸主，个人曾登顶世界首富。核心思维：顾客永远要更低价、更快配送，这些十年不变，所以敢长年不盈利也要砸物流和降价，用飞轮（低价→多客→多卖家→更低价的循环）越转越快。今天能用的一招：做内容或产品时，盯住用户永远不变的需求而不是追潮流。' },
-  { cat: '狠人案例', title: '马斯克：第一性原理重算账', src: '马斯克公开访谈 / 公开报道',
-    preview: '特斯拉、SpaceX、推特多线颠覆。思维：不被向来如此绑架，回到物理和成本最底层重新算，敢下大注。',
-    detail: '成就：把电动车做成主流、把火箭回收复用把发射费降一个量级、用极高产出密度同时管多家公司。核心思维是第一性原理——火箭贵？拆到铝钛铜原材料发现成本只有售价几个点，于是自己造。今天能用的一招：遇到贵的东西，先问它原材料和真实成本到底多少，别被行业定价吓住。' },
-  { cat: '狠人案例', title: '张一鸣：算法即注意力分配权', src: '公开报道 / 行业分析',
-    preview: '抖音/TikTok全球数十亿用户。思维：延迟满足、数据驱动、用算法把对的内容推给对的人。',
-    detail: '成就：字节从房产搜索转型做出抖音、TikTok，成了全球最大的注意力工厂之一。核心思维：Stay young stay simple（始终归零心态）、用极少人工靠算法匹配、把用户时长当成要极致优化的指标。今天能用的一招：做内容别凭感觉，看数据哪个选题完播率高就加倍做哪个。' },
-  { cat: '狠人案例', title: 'SHEIN：小单快反卖遍150国', src: '多家媒体报道',
-    preview: '把中国供应链卖到全球百亿美元估值。思维：先小批试款、爆了再加单，用数据选品+社媒流量。',
-    detail: '成就：SHEIN用柔性供应链把上新速度做到传统快时尚数倍，覆盖一百五十多国。核心思维是小单快反——每款先产几百件测数据，爆了立刻翻单，库存风险极低；再用实时数据选款和KOL投放拧成一股绳。今天能用的一招：做任何生意先小成本测需求，数据说行再放大，别一上来重投入。' },
-  { cat: '狠人案例', title: 'Canva：让每个人都会设计', src: '公司资料 / 公开报道',
-    preview: '估值数百亿、数亿用户。思维：把专业设计的门槛降到零，不会用PS的人也能出图=最大市场。',
-    detail: '成就：Melanie Perkins把高端设计软件做成拖拽即用的网页工具，全球数亿用户、估值数百亿美元。核心思维：普通人想做好看的东西但被专业软件劝退，把门槛降到零就是巨大的未被满足的市场。今天能用的一招：你做的设计产品/模板，越让小白零门槛上手，受众越广。' },
-  { cat: '狠人案例', title: 'Figma：浏览器里颠覆Sketch', src: '公开报道 / Adobe收购案',
-    preview: '被Adobe用约200亿美元收购。思维：web原生+实时协作+免费起步，先占习惯再变现。',
-    detail: '成就：Dylan Field把设计工具搬进浏览器，多人实时协作彻底改变工作方式，最终被Adobe以约200亿美元收购。核心思维：不跟桌面软件拼功能，而是用web协作这个对方做不到的点切入，免费让团队先用起来、占住工作流。今天能用的一招：想切一个老市场，找巨头做不了的新形态（如协作/云端）切入。' },
-  { cat: '狠人案例', title: 'Pieter Levels：一人公司年入百万刀', src: '其公开博客 / 独立开发者社区',
-    preview: '一个人做几十个产品。思维：公开构建、快速发布、SEO+AI杠杆，睡后收入滚雪球。',
-    detail: '成就：独立开发者Pieter Levels不雇人，靠做小工具（如住宿、健康监测类）一年赚数百万美元，全远程一人搞定。核心思维：ship fast（先发布再迭代）、build in public（公开做给人看换流量）、用SEO和现在的AI把产出放大。今天能用的一招：你也会设计，完全能仿他——做个小工具上线，用内容带流量，一份时间卖万次。' },
-  { cat: '狠人案例', title: '纳瓦尔：专长×杠杆×责任', src: '《纳瓦尔宝典》',
-    preview: '天使投资人+思想产品化。思维：找到不可替代的专长，用代码和媒体这两种零许可杠杆放大。',
-    detail: '成就：纳瓦尔从穷移民到顶尖天使投资人，又把赚钱认知写成能广泛传播的思想产品。核心思维：财富=专长（你天生擅长且难被培训替代的）×杠杆（代码/媒体，不需别人批准）×责任（以自己名义承担风险）。今天能用的一招：把你设计师的专长，用媒体（账号/课程）放大成可复制的资产。' },
-  { cat: '狠人案例', title: '安克：中国充电品牌卖全球', src: '公司财报 / 出海报道',
-    preview: '把充电配件做成全球品牌年收百亿。思维：产品力+品牌化+吃透亚马逊红利期。',
-    detail: '成就：安克从亚马逊卖充电宝起家，做成全球知名充电与音频品牌，年营收数百亿人民币。核心思维：不拼低价山寨，而是把产品体验和品牌做上去、吃透早期亚马逊流量红利、用口碑复购滚雪球。今天能用的一招：出海或做电商，先把一个品类产品力打磨到口碑级，比铺量更重要。' },
-
-  // —— 赚钱底层逻辑 ——
-  { cat: '赚钱逻辑', title: '信息差：你知道别人不知道', src: '商业常识',
-    preview: 'A地便宜B地贵，搬一下就赚差价。跨境选品、平台红利期、需求刚冒头，本质都是信息差。',
-    detail: '赚钱最朴素的形态就是低买高卖，而价差来自信息不对等。别人不知道某平台有补贴、某货在另一个国家卖三倍价、某个需求刚冒头，你先知道就能撮合。保持信息敏感加行动快，是普通人最容易上手的第一桶金路径。' },
-  { cat: '赚钱逻辑', title: '杠杆：代码 / 媒体是零许可杠杆', src: '《纳瓦尔宝典》',
-    preview: '纳瓦尔说普通人最便宜的杠杆是代码和媒体——写一次卖万次，不用许可、不用管人。',
-    detail: '古老杠杆是人力（雇人）和资本（钱生钱），门槛高。互联网给了两种新杠杆：代码（软件一次写好卖无限次）和媒体（账号、课程、视频，一份内容触达千万人）。想脱离一份时间卖一次，就靠这两种杠杆，设计师尤其适合用媒体杠杆。' },
-  { cat: '赚钱逻辑', title: '复利：钱 / 技能 / 信誉都复利', src: '数学事实 / 《穷查理宝典》',
-    preview: '每天进步1%，一年约38倍（1.01的365次方）。技能、人脉、信誉全复利，关键是别中断别归零。',
-    detail: '复利不只指利息。你每天攒一点能力、口碑、资产，三年后和原地踏步的人差出一个数量级。最怕归零：一次大亏、一次信用破产，前面全白搭。所以保住本金、保住信誉，是复利的前提。' },
-  { cat: '赚钱逻辑', title: '流量漏斗：公域→私域→转化', src: '营销常识',
-    preview: '自媒体赚钱都一样：公域引流量，沉淀私域，再用信任卖货卖课。流量不是目的，转化才是。',
-    detail: '在抖音、小红书发内容吸引陌生人（公域），加到微信或社群（私域），持续价值输出建信任，最后卖产品/服务/课程。关键指标不是粉丝数，是能变现的私域人数。没有私域的流量，等于在租别人的地。' },
-  { cat: '赚钱逻辑', title: '销售：最被低估的印钞技能', src: '巴菲特公开言论 / 商业常识',
-    preview: '不管你是设计师还是老板，能把东西或自己卖出去的人，永远比只会做的人赚得多。',
-    detail: '巴菲特说他年轻时花一百美元学卡耐基演讲课，比任何MBA都值。销售的本质是把别人的需求和你有的东西对齐。会做不会卖，价值被严重低估；会卖，哪怕产品普通也能变现。这是人人该练的底层能力，设计师报价、谈单都用得上。' },
-  { cat: '赚钱逻辑', title: '边际成本趋零：卖一次设计卖万次', src: '商业常识',
-    preview: '模板、课程、插件——做一次卖无限次，多卖一份几乎不增成本。这是互联网给普通人最大红利。',
-    detail: '传统生意卖一件赚一份，边际成本不降。但数字产品（课程、UI Kit、模板、AI工具）第一份最难，之后复制成本接近零。把你的设计技能固化成可复制的数字产品，就从一个卖时间的人变成有资产的人。' },
-
-  // —— 狠话金句 ——
-  { cat: '狠话金句', title: '穷人用时间换钱，富人用系统换钱', src: '财富思维常识',
-    preview: '差别不在谁更努力，在结构：你是把一份时间卖一次，还是让一份时间、一份资产反复卖？',
-    detail: '工资是线性收入，停手就停。富人在建系统——内容、产品、团队、投资，让钱和资产替自己干活。你不用立刻辞职，但要开始把一部分精力从出卖时间挪到搭建资产，比如做一个能持续卖的模板库。' },
-  { cat: '狠话金句', title: '别等准备好，先开枪再瞄准', src: '行动力常识',
-    preview: '等我学好了再开始，是拖延的遮羞布。你永远准备不好，市场只奖励先上场的人。',
-    detail: '完美主义是行动力的天敌。第一版烂没关系，先发出去、先接第一单、先跑通最小闭环，再迭代。大多数机会窗口就几个月，等你想清楚，红利期早过了。完成永远优于完美，设计师发作品也是早发早有反馈。' },
-  { cat: '狠话金句', title: '你刷手机羡慕别人时，别人在琢磨怎么被刷到', src: '内容变现常识',
-    preview: '同样是刷，有人消耗时间，有人研究怎么让更多人刷到我、然后买单。视角差，就是贫富差。',
-    detail: '注意力是当下最稀缺的资源。与其嫉妒别人的结果，不如拆解别人的路径：他发什么、什么时候发、怎么变现。把消费者视角切到生产者视角，你刷的每一分钟都在偷师，顺手收集选题灵感。' },
-
-  // —— 设计赚钱（设计师视角，真实可落地）——
-  { cat: '设计赚钱', title: 'UI Kit 售卖：一份组件卖万次', src: 'Gumroad / 即时设计市场生态',
-    preview: '把常用的按钮、卡片、图标做成组件库，挂 Gumroad 或即时设计市场，一次做好反复卖。',
-    detail: '这是设计师最稳的睡后收入之一。做法：挑一个高频风格（如玻璃拟态、可爱少女风），做一套高质量可商用组件，定价十几到几十美元，配好预览图。关键是持续更新和做好SEO标题，让搜得到。一份设计卖万次，边际成本趋零。' },
-  { cat: '设计赚钱', title: '模板变现：PPT/海报/简历', src: '淘宝 / 闲鱼 / Etsy 真实生态',
-    preview: '简历、海报、PPT模板在淘宝闲鱼Etsy都有稳定需求，做一次上传卖无数次，懒人愿意花钱省事。',
-    detail: '模板类数字产品几乎零成本复购。做法：选一个刚需细分（如互联网简历、小红书封面、述职PPT），做3-5款高质量模板，上架多平台，用买家秀和好评滚雪球。注意标明可商用范围避免纠纷。比接单轻松，适合积累资产。' },
-  { cat: '设计赚钱', title: '作品集引流接单', src: 'Dribbble / Behance / 站酷生态',
-    preview: '在Dribbble、Behance、站酷持续发作品，被搜到就被私信询单，转化长期客户比海投高效。',
-    detail: '设计师接单最怕没客源。做法：把最好作品按系列发，配清晰标题关键词（如"品牌VI""App界面"），简介留联系方式。平台算法会把高质量作品推给找设计的人，询单质量远高于闲鱼。核心是持续发+关键词对齐需求。' },
-  { cat: '设计赚钱', title: '设计接单平台：把技能产品化', src: 'Fiverr / 蓝湖 / 猪八戒',
-    preview: '在Fiverr、蓝湖、猪八戒挂清晰服务页（解决什么、交付什么、多少钱），积累好评就源源接单。',
-    detail: '自由职业的本质是把技能产品化。做法：做一个服务页面，写清交付物、周期、价格档位（如基础版/精修版），用前几个低价单换好评和案例，中期靠复购转介绍。从打零工变成有招牌的手艺人，时薪远高于上班。' },
-  { cat: '设计赚钱', title: '品牌全案：VI+官网高客单', src: '设计行业常识',
-    preview: '帮初创做Logo、VI、官网视觉，客单价高、易转介绍。一次全案顶几十次散单。',
-    detail: '散单时薪低，全案才赚得到钱。做法：打包"Logo+色彩规范+官网视觉+社媒模板"成套餐，定价按项目而非按小时。初创公司最舍得为"看起来专业"花钱。交付时附一份使用规范，客户满意度高、转介绍多。' },
-  { cat: '设计赚钱', title: '设计课程：经验固化成产品', src: '内容变现常识',
-    preview: '你擅长的（配色/排版/UI）做成课或训练营，边际成本趋零，卖一次设计卖千次。',
-    detail: '知识付费是把经验固化成可复制产品。做法：先用免费内容（小红书/抖音）验证有人要（看收藏评论），再做付费小课，用社群提客单。设计师教"小白也能学会的排版"类需求极大。先卖九块九轻课测需求，跑通再放大。' },
-  { cat: '设计赚钱', title: '设计+AI：单位时间产出翻倍', src: 'AI应用趋势 / 设计圈实践',
-    preview: '用Midjourney出灵感、即时AI修图、AI批量出稿，同样8小时交付翻倍，时薪直接涨。',
-    detail: 'AI不是抢设计师饭碗，是让会用的设计师产出翻倍。做法：把机械活（抠图、出多版配色、批量尺寸）交给AI，你把时间留给创意和审美判断——这是AI替代不了的部分。会AI的设计师报价可以更高，因为交付更快。' },
-  { cat: '设计赚钱', title: '素材站分成：上传就有被动收益', src: '图标/插画平台分成模式',
-    preview: '把图标、插画、纹理上传到素材平台，被人下载就分成，睡梦中也在进账。',
-    detail: '这是真正的被动收入。做法：挑一个你擅长的素材类型（如可爱图标、中国风插画），按平台规范批量上传，设好关键词。前期积累，后期下载量滚雪球。适合作为"顺手做"的资产线，和UI Kit、模板搭配卖。' },
-
-  // —— AI / 网上赚钱 / 风口（贴合当下）——
-  { cat: 'AI赚钱', title: 'AI代运营本地商家', src: 'AI应用趋势 / 副业分享',
-    preview: '用AI帮附近门店做图、写文案、剪视频、管账号，按月收服务费。需求大、门槛被AI拉低。',
-    detail: '大量本地商家想做抖音小红书但不会，你用AI工具批量产出，按店收每月几百到几千。做法：先拿一两家免费试跑出案例，再地推收付费。这是当下普通人离钱最近的AI副业之一，设计师做视觉尤其顺手。' },
-  { cat: 'AI赚钱', title: 'AI自媒体矩阵：批量出内容', src: '内容变现趋势',
-    preview: '用AI批量生成图文/视频，多平台分发赚流量分成和带货佣金，一份选题喂出十条。',
-    detail: '做法：选一个你懂的垂类，用AI写稿/做图/剪视频，一天铺多条到抖音、小红书、视频号，吃各平台流量分成和挂车佣金。关键是建立发布节奏和看数据优化，而不是盲目堆量。设计师用AI出图效率极高。' },
-  { cat: 'AI赚钱', title: '独立开发：一人做SaaS', src: 'Indie Hacker 社区',
-    preview: '一个人用AI写代码做小工具/SaaS，Stripe收款，睡后收入。设计师也能靠审美+AI做产品。',
-    detail: 'Indie Hacker（独立开发者）趋势：用AI辅助写代码，把小痛点做成订阅制小工具（如PDF处理、简历优化）。做法：找一个具体小需求，两周内做出MVP上线，用Twitter/小红书公开构建带流量。设计师的审美是拉开差距的利器。' },
-  { cat: 'AI赚钱', title: 'AI工具套利：本地化教程', src: '信息差变现',
-    preview: '海外火的AI工具，国内很多人不会用。做中文教程、社群、代开通，赚信息差的钱。',
-    detail: '做法：盯海外新出的好用AI工具，第一时间出中文上手教程（短视频/图文），引流到付费社群或代开通服务。你不用开发，只做"翻译+保姆式教学"。信息差窗口通常几个月，先入场者吃肉。' },
-  { cat: 'AI赚钱', title: '短视频带货：选品+内容', src: '抖音 / 小红书电商生态',
-    preview: '抖音小红书挂车，靠选题和内容把流量变佣金。设计师做种草视觉转化更高。',
-    detail: '做法：选一个你真懂且有搜索量的细分（如家居好物、美妆工具），稳定发测评/种草，挂商品链接赚佣金。关键不是粉丝多，是内容能激发下单。设计师懂视觉，封面点击率天然更高，这是你的优势。' },
-  { cat: 'AI赚钱', title: '跨境电商DTC：Shopify+TikTok', src: '出海电商报道',
-    preview: '用Shopify建站、TikTok引流，把小众品卖到海外，利润率常高于国内内卷。',
-    detail: '做法：选一个轻小、有差异化的品（如宠物周边、设计师周边），用TikTok短视频带独立站流量，Stripe/PayPal收款。难点在选品和物流，但一旦跑通，边际成本极低、面向全球市场。设计感强的产品溢价空间大。' },
-  { cat: 'AI赚钱', title: '知识付费+AI：产课成本趋零', src: '内容变现常识',
-    preview: 'AI辅助写大纲、做PPT、剪课，把产课成本压到极低，卖课利润空间拉满。',
-    detail: '做法：把你擅长的（设计/工具/方法）用AI辅助快速产成课程视频和讲义，上架小鹅通/知识星球等。AI把原本几周的产课压缩到几天，你专注内容和引流。卖一次设计卖千次，叠加AI效率，是当下最划算的知识变现路径。' },
-  { cat: 'AI赚钱', title: '风口判断：抢平台红利期', src: '增长 / 平台生态规律',
-    preview: '每个新平台早期流量免费且竞争小，先入场者吃肉。视频号、小红书早期都验证过。',
-    detail: '做法：盯新平台/新功能上线（如视频号刚开、小红书刚推某赛道），第一时间用你擅长的视觉内容占坑。红利期通常3-12个月，早进的账号靠平台推流白嫖流量。判断标准：大厂在补贴、规则在放宽、竞争对手还少。' },
-  { cat: 'AI赚钱', title: 'AI数字人直播：24小时无人卖', src: '直播电商趋势',
-    preview: '用数字人主播24小时循环播，降低人力成本，适合标品和已跑通的话术。',
-    detail: '做法：把验证过的直播话术交给AI数字人，配合自动回复和供应链，做到不间断直播。适合已有稳定货源和转化模型的品类。设计师可负责数字人形象和场景视觉，提升真实感转化。注意平台合规，别碰虚假宣传。' },
-  { cat: 'AI赚钱', title: 'Newsletter/私域：养熟了再变现', src: '邮件 / 社群变现模式',
-    preview: '用邮件或社群沉淀粉丝，靠广告、带货或会员变现。私域的人比公域粉值钱十倍。',
-    detail: '做法：围绕一个你专业的主题（如设计灵感、AI工具）做免费周刊，用社交平台引流订阅，再用广告、付费会员或带货变现。私域粉丝信任度高、可反复触达，是真正的资产。设计师做视觉 newsletter 天然好看、易转发。' },
-
-  // —— 副业路径（普通人可抄，去餐饮特指）——
-  { cat: '副业路径', title: '种草账号：选细分领域持续发', src: '平台公开生态 / 创作者分享',
-    preview: '挑一个你真懂、有人搜的细分方向稳定更新，粉丝起来接商单或带货。',
-    detail: '起号逻辑：垂直、稳定、利他。别今天发美食明天发吐槽，算法看不懂就不推。先想清楚谁会搜这个、我能帮ta什么，再用标题封面抢点击。千粉就能接置换，万粉后商单稳定。核心是持续二字。' },
-  { cat: '副业路径', title: '闲鱼倒卖：信息差搬砖', src: '副业经验分享',
-    preview: '在拼多多或1688找低价品，挂闲鱼加价卖，有人拍下你再去上家拍，零库存零房租。',
-    detail: '这是最轻的副业：不用囤货、不用客服（用自动回复）。关键是选有信息差、懒人愿意多花钱图省事的品（整理收纳、小众配件、临期好物）。平台红利期捡漏，单店月入几千到上万都有人跑通过。' },
-  { cat: '副业路径', title: '技能外包：设计/剪辑/翻译接单', src: '自由职业常识',
-    preview: '你会PPT、剪辑、外语、编程、文案？去Upwork、猪八戒、闲鱼挂服务，用技能换钱时薪高。',
-    detail: '自由职业的本质是把技能产品化：做一个清晰的服务页面（能解决什么、交付什么、多少钱），积累好评就能源源不断接单。初期靠低价换案例，中期靠复购和转介绍。关键是从打零工变成有招牌的手艺人。' },
-  { cat: '副业路径', title: '知识付费：把擅长做成专栏', src: '内容变现常识',
-    preview: '你擅长的（育儿/Excel/考证/穿搭）做成课程或训练营，边际成本趋零，卖一次设计卖千次。',
-    detail: '知识付费是把经验固化成可复制产品。先用免费内容验证有人要（看收藏、评论），再做付费小课，再用社群或训练营提客单。最怕没验证就重投入。先卖九块九轻课测需求，跑通再放大。' },
-
-  // —— 穷人陷阱（避坑）——
-  { cat: '穷人陷阱', title: '陷阱：只卖时间不攒资产', src: '《富爸爸穷爸爸》/ 财富思维',
-    preview: '工资是手停口停的线性收入。如果所有收入都来自出卖时间，那你永远在跑步机上。',
-    detail: '富人把收入的一部分换成资产（能生钱的：内容、产品、投资、能带来客户的系统）。穷人把收入全变成消费。破解法：每月强制留存一小笔，只投能变成资产的地方，哪怕很慢，也要让钱开始替你工作。' },
-  { cat: '穷人陷阱', title: '陷阱：奖励自己式透支', src: '消费主义批判 / 财富思维',
-    preview: '用辛苦了奖自己合理化每一次透支，先消费后投资，雪球永远朝反方向滚。',
-    detail: '商家最爱的是你值得话术。真正的奖励不是花钱，是让未来的你更自由。把犒劳从消费切换成攒下或学一项能变现的技能，短期少爽一点，长期多出选择权。' },
-  { cat: '穷人陷阱', title: '陷阱：完美主义拖延', src: '行动力常识',
-    preview: '等我准备好了再发——你永远准备不好。红利期不等人，先完成再完美才是真效率。',
-    detail: '完美主义是恐惧的包装。市场只奖励先上场并快速迭代的人。第一版烂就烂，发出去才有反馈，有反馈才能改对。把发布设为动作终点，而不是完美。' },
-  { cat: '穷人陷阱', title: '陷阱：在乎工资不在乎现金流', src: '财富思维常识',
-    preview: '决定你自由的不是月薪，是睡后收入占比——不干活也进账的钱有多少。',
-    detail: '高工资但零被动收入，本质是高级打工，一失业就归零。真正的财务安全来自多元现金流：内容版税、投资分红、产品复购、租金。开始有意识地建第二、第三条不靠出卖时间的收入线。' },
-
-  // —— 富人习惯 ——
-  { cat: '富人习惯', title: '习惯：先投资再消费', src: '行为经济学 / 长期跟踪研究',
-    preview: '拿到钱先留一块生钱的钱，剩下的才花。顺序反了，就永远在为过去消费买单。',
-    detail: '长期跟踪研究都指向同一结论：能为了更大回报放弃即时满足的人，长期人生收益显著更高。落到钱上：工资到账先转走一两成到投资或学习账户，再把剩余当生活费。顺序一变，十年天差地别。' },
-  { cat: '富人习惯', title: '习惯：给自己的时间标价', src: '效率 / 财富思维',
-    preview: '时薪低的事（排队、琐碎家务）能外包就外包，把时间留给高杠杆动作。',
-    detail: '很多人舍不得花五十块省两小时，却拿那两小时刷短视频。算笔账：你的一小时值多少？低于这价的杂事，外包或自动化；高于这价的动作（谈客户、做内容、学技能），全力投入。时间最不可再生。' },
-  { cat: '富人习惯', title: '习惯：记账 + 复盘钱去哪了', src: '财富思维常识',
-    preview: '不知道钱从哪来、被谁赚走，就永远在瞎忙。记账不是抠门，是把资源压到高回报处。',
-    detail: '富人未必记账到分，但一定清楚钱从哪来、被谁赚走。每月复盘：哪类收入在涨、哪类支出是漏勺。把资源从低回报处抽出来，压到高回报处（能变现的技能、能复购的产品）。看不见，就改不了。' },
-  { cat: '富人习惯', title: '习惯：算犯错成本再下注', src: '风控 / 投资常识',
-    preview: '富人下注前先想错了亏多少、能不能承受，用小成本试错，对了再加注。不是不冒险，是聪明地冒险。',
-    detail: '穷人是all in赌一把，富人把风险拆成可承受的小实验：先花最小成本验证（测款、试投、小范围上线），数据对了再放大。这样错得起也对得起。关键是每次下注的亏损上限都在睡得着的范围。' }
-];
-
-function _hmmSeed(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return h >>> 0;
-}
-function _hmmShuffle(arr, seed) {
-  const a = arr.slice(); let s = seed >>> 0;
-  const rnd = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
-  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
-  return a;
-}
-function _hmmToday() { const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-function _hmmGetIdx(today) {
-  let idx = 0;
-  try {
-    const last = localStorage.getItem('hami_mm_lastdate');
-    let v = parseInt(localStorage.getItem('hami_mm_idx') || '0', 10);
-    if (isNaN(v)) v = 0;
-    if (last === today) idx = v;                              // 同一天：保持当前条
-    else { idx = (v + 1) % MONEY_MINDS.length;                // 跨天：自动推进一条（一轮内不重复）
-           localStorage.setItem('hami_mm_idx', String(idx));
-           localStorage.setItem('hami_mm_lastdate', today); }
-  } catch (e) {}
-  return idx;
-}
-function _hmmFillDetail(item) {
-  const d = document.getElementById('hmm-detail');
-  if (!d || !item) return;
-  // v376：全量常驻展示（不再折叠/关闭）
-  d.innerHTML = '<div class="hmm-d-title">' + item.title + '</div>'
-    + '<div class="hmm-d-body">' + item.detail + '</div>'
-    + '<div class="hmm-d-src">来源：' + item.src + '</div>';
-}
-function renderMoneyMind() {
-  const card = document.getElementById('hami-money-mind');
-  if (!card) return;
-  const today = _hmmToday();
-  const idx = _hmmGetIdx(today);
-  const list = _hmmShuffle(MONEY_MINDS, _hmmSeed(today)); // 当天洗牌固定，保当天点「换一条」不重复
-  const item = list[idx % list.length];
-  const cat = document.getElementById('hmm-cat');
-  if (cat) cat.textContent = item.cat;
-  _hmmFillDetail(item);
-  card._hmmItem = item;
-  const next = document.getElementById('hmm-next');
-  if (next) next.onclick = function (ev) {
-    ev.stopPropagation();
-    const cur = (idx + 1) % list.length;                     // 「换一条」当天内循环，不重复
-    try { localStorage.setItem('hami_mm_idx', String(cur)); localStorage.setItem('hami_mm_lastdate', today); } catch (e2) {}
-    const it = list[cur];
-    if (cat) cat.textContent = it.cat;
-    _hmmFillDetail(it);
-    card._hmmItem = it;
-  };
-}
-
 // ==================== 时钟 ====================
 function updateClock() {
   const now = new Date();
@@ -15174,105 +14912,6 @@ function checkCheckinAlerts() {
   // 系统通知：只推「体重打卡」，每天第一次打开网页推一次（详见 fireCheckinNotifications）
   fireCheckinNotifications(alerts);
 }
-
-// ==================== 模拟人生更新推荐（每日自动）====================
-// 模拟人生笔记推荐池（经验草稿）
-// ⚠️ 当前为「经验草稿」：基于小红书/抖音「模拟人生」赛道内容规律撰写，互动数为经验预估。
-// 配置 REDFOX_API_KEY 后，将自动用 小红书爆款查询/七日爆款/低粉爆款/抖音热榜 等技能
-// 拉取真实爆款数据刷新本池（见 refreshInspireFromLive 预留位）。
-//
-// v315：主人是「模拟人生捏脸博主」——池子按 70% 捏人向重排：
-//   · 共 14 条，其中 cas:true（捏人/捏脸向）10 条 = 71.4% ≈ 70%，其余 4 条保持账号多样性；
-//   · 按顺序轮换（ensureDailyInspire / refreshInspireToday 的 count % length），
-//     每转满一圈即精确命中 10:4 的捏人/其他配比；
-//   · 4 条非捏人向均匀撒在 2/6/9/13 位，循环时最长连续 3 条同倾向，不会扎堆；
-//   · AI原创/互联网搜集维持 7:7；新增条目仍受 INSPIRE_BLACKLIST（房屋/别墅/建造/城堡）约束。
-//   · 以后加新草稿时：优先补 cas:true 的捏人向，保持全池捏人向占比 ≥ 70%。
-const DAILY_INSPIRE_POOL = [
-  { type: 'ai', platform: '小红书', topic: '捏脸参数', title: 'Sims4捏脸参数分享｜手残党也能捏出神颜', traffic: '爆款', cas: true,
-    detail: { copy: '把整套脸部滑块数值截图发出来，从颧骨、鼻梁到唇形一步步对照调，再附一张「调前vs调后」对比图。新手照着抄就能捏出干净舒服的颜值脸，评论区还能让人点单捏指定风格。', tags: '#模拟人生4 #捏脸 #sims4捏脸 #神颜 #模拟人生教程', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '参数图+前后对比是爆点，结尾引导「想捏谁评论区点单」拉互动', link: '' } },
-  { type: 'web', platform: '小红书', topic: 'MOD清单', title: 'Sims4必装MOD清单｜UI+玩法+美化一次搞定', traffic: '爆款',
-    detail: { copy: '分三块：UI优化（更好用）、玩法扩展（更有趣）、美化（更出片），每块列名称+作用+获取方式。亲测不冲突、不掉帧，降低新手踩坑成本。', tags: '#模拟人生4 #MOD #模拟人生4mod #必装mod #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '清单类收藏高，定期出「2026新版必装」迭代', link: '' } },
-  { type: 'web', platform: '抖音', topic: '人物复刻', title: '把爱豆复刻进Sims4｜捏脸全过程记录', traffic: '爆款', cas: true,
-    detail: { copy: '选一个大家熟悉的爱豆/角色，从参考图→逐步捏脸→换装→最终成片，用快剪+卡点BGM。粉丝向内容传播强，容易出圈被转。', tags: '#模拟人生4 #捏脸 #爱豆复刻 #sims4 #饭圈', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '蹭热点角色/剧集，发布时机跟热点走', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '风格捏脸', title: '同一张脸的多种打开方式｜清冷/甜酷/老钱风一键切换', traffic: '爆款', cas: true,
-    detail: { copy: '固定同一套骨相，只改妆容、发型和穿搭，捏出清冷感、甜酷感、老钱风三个版本并列展示。重点在「骨相不变、气质全变」的反差，让人一眼看懂风格到底由什么决定。结尾问一句「下一期想看什么风格」攒互动。', tags: '#模拟人生4 #捏脸 #风格化 #sims4捏脸 #气质感', stats: '趋势参考：公开搜索 2026-08（真实热点：风格化捏脸回潮）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '同骨相多风格对比最出片，适合做成固定栏目追更', link: '' } },
-  { type: 'web', platform: '抖音', topic: '改造对比', title: 'Sims4素人改造｜捏脸前后对比能有多狠', traffic: '爆款', cas: true,
-    detail: { copy: '拿一张「普通初始脸」开始，只动脸部滑块不改妆发，记录每一步变化，最后放调前vs调后同角度对比。反差越大越吸睛，抖音前3秒直接放对比结果留住人。', tags: '#模拟人生4 #捏脸 #改造 #前后对比 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：改造对比类高完播）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '前3秒放最终成品脸、过程倒叙，完播率更高', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '入门避坑', title: 'Sims4新手避坑指南｜这些钱别乱花', traffic: '潜力',
-    detail: { copy: '写给刚入坑的玩家：开局职业怎么选、第一套房买哪、哪些DLC性价比高、哪些坑别踩。长尾搜索流量好，适合当账号置顶帖。', tags: '#模拟人生4 #入门 #攻略 #新手 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '做成「新手三部曲」系列，沉淀搜索流量', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '点单互动', title: '评论区点单捏人｜粉丝想捏谁，我就捏谁', traffic: '潜力', cas: true,
-    detail: { copy: '固定栏目：从评论区挑「想被捏的角色/风格」，直播或录屏全程捏给粉丝看，成品图回帖@点单的人。参与感强、复访高，还能自然接到定制单咨询。', tags: '#模拟人生4 #捏脸 #点单 #粉丝互动 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：点单类互动笔记涨粉快）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '置顶评论收集点单、每期翻牌，把观众变成回头粉', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '妆容细节', title: 'Sims4妆容精讲｜眼线、唇釉、痣和雀斑怎么点才高级', traffic: '爆款', cas: true,
-    detail: { copy: '专讲CC妆容的细节堆法：眼线粗细与眼尾走向、唇釉叠涂、痣点在哪显脸小、雀斑的疏密节奏。每篇只讲一个部位，配高清特写截图，收藏向明显。', tags: '#模拟人生4 #捏脸 #妆容 #CC #sims4妆容', stats: '趋势参考：公开搜索 2026-08（真实热点：CC妆容教程需求旺）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '一个部位一篇做成系列，标题带「第X期」方便追更', link: '' } },
-  { type: 'web', platform: '抖音', topic: '搞笑名场面', title: 'Sims4离谱bug合集｜笑不活了', traffic: '爆款',
-    detail: { copy: '剪辑游戏里最离谱的穿模、鬼畜动作、NPC迷惑行为，配夸张音效和字幕吐槽。搞笑类天然高转发，适合抖音信息流。', tags: '#模拟人生 #sims4 #搞笑 #游戏名场面 #游戏搞笑', stats: '趋势参考：公开搜索 2026-08（真实热点）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '前2秒放最离谱画面，配热门BGM提量', link: '' } },
-  { type: 'web', platform: '小红书', topic: '发型搭配', title: 'Maxis Match发型图鉴｜按脸型选发型不翻车', traffic: '爆款', cas: true,
-    detail: { copy: '按圆脸/方脸/长脸分类，推荐适配的Maxis Match发型（标注作者名与获取方式），每类配「捏脸档里直接套」的演示图。帮粉丝避坑「好看但不适配」的发型。', tags: '#模拟人生4 #捏脸 #发型 #MaxisMatch #CC #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：Maxis Match 头发 CC 持续高热）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '发型×脸型适配是刚需，长尾搜索流量稳', link: '' } },
-  { type: 'ai', platform: '抖音', topic: '男颜捏脸', title: 'Sims4男颜捏脸｜稀缺赛道这样捏超上头', traffic: '潜力', cas: true,
-    detail: { copy: '男颜向内容供给少、竞争小：讲眉骨与下颌的男性化处理、胡茬青灰影的用法，配「校园/轻熟/硬汉」三种气质演示。快剪+卡点BGM，评论区会涌现「求出数据档」。', tags: '#模拟人生4 #捏脸 #男颜 #sims4 #稀缺赛道', stats: '趋势参考：公开搜索 2026-08（真实热点：男颜向内容供需失衡）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '男颜是蓝海，固定更新容易做到细分第一', link: '' } },
-  { type: 'ai', platform: '小红书', topic: '五官精讲', title: '捏脸五官精讲｜眼睛/鼻梁/唇形逐个抠', traffic: '爆款', cas: true,
-    detail: { copy: '把五官拆成可复用的方法论：眼睛的大小与眼距黄金区间、鼻梁起点决定侧颜立体度、唇形厚薄与嘟嘟唇的关系。每篇一个器官+可抄的数值区间，做成「五官三部曲」。', tags: '#模拟人生4 #捏脸 #五官 #教程 #sims4', stats: '趋势参考：公开搜索 2026-08（真实热点：数值型教程收藏率高）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '数值区间型内容最容易被收藏转发，适合置顶', link: '' } },
-  { type: 'web', platform: '小红书', topic: 'CC穿搭', title: '今日Sims OOTD｜温柔奶茶色系+Maxis Match CC', traffic: '潜力',
-    detail: { copy: '每天/每周固定栏目：给Sims搭一套主题穿搭（奶茶色/学院风/老钱风），标清每件CC名字和获取方式。2026 最热的是 Maxis Match 头发 CC（如 Knox、Boho Flower Bun、Mei），穿搭类互动高，可和你的美化档联动导流。', tags: '#模拟人生4 #穿搭 #OOTD #CC #sims4穿搭', stats: '趋势参考：公开搜索 2026-08（真实热点：Maxis Match CC热）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '固定更新频率养成追更，CC注明来源避争议', link: '' } },
-  { type: 'web', platform: '小红书', topic: '复刻技巧', title: '明星脸复刻有公式｜参考图怎么对标', traffic: '潜力', cas: true,
-    detail: { copy: '教方法而不是堆参数：参考图怎么裁三庭五眼、比例尺量法、先定型再调细节的顺序。用同一明星的正脸/侧脸两张图演示，让粉丝学会自己复刻任意角色。', tags: '#模拟人生4 #捏脸 #复刻 #明星脸 #教程', stats: '趋势参考：公开搜索 2026-08（真实热点：明星复刻类常青）+经验撰写；配置 REDFOX_API_KEY 后自动拉真实赞藏', advice: '授人以渔的教程信任感最强，适合引流到定制服务', link: '' } },
-];
-
-// 笔记推荐黑名单（主人要求：规避 房屋 / 别墅 / 建造 类内容）
-const INSPIRE_BLACKLIST = ['房屋', '别墅', '建造', '城堡'];
-function inspireAllowed(p) {
-  if (!p) return false;
-  const hay = (p.title || '') + ' ' + (p.topic || '') + ' ' + ((p.detail && p.detail.tags) || '') + ' ' + ((p.detail && p.detail.copy) || '');
-  return !INSPIRE_BLACKLIST.some(kw => hay.indexOf(kw) >= 0);
-}
-const INSPIRE_POOL = DAILY_INSPIRE_POOL.filter(inspireAllowed);   // 过滤后池
-
-// 计算两个 YYYY-MM-DD 相差的天数（b - a），统一按 UTC 基准解析，避免时区偏差
-function ymdDiffDays(a, b) {
-  if (!a || !b) return Infinity;
-  const da = new Date(a + 'T00:00:00Z');
-  const db = new Date(b + 'T00:00:00Z');
-  return Math.round((db - da) / 86400000);
-}
-
-const INSPIRE_REFRESH_DAYS = 3;  // 模拟人生笔记推荐更新频率：每 3 天更新一次
-
-function ensureDailyInspire() {
-  const today = todayStr();
-  let existing = store.inspireRecords || [];
-  // 若今天的推荐已不在当前池中（池已升级），则移除，重新取一条，保证刷新后展示新内容
-  const todayRec = existing.find(r => r.date === today);
-  const inPool = todayRec && INSPIRE_POOL.some(p => p.title === todayRec.title);   // 用过滤后的池
-  if (todayRec && !inPool) {
-    existing = existing.filter(r => r.date !== today);
-    store.inspireRecords = existing;
-  }
-  const hasToday = (store.inspireRecords || []).some(r => r.date === today);
-  if (!hasToday) {
-    // 每 INSPIRE_REFRESH_DAYS 天更新一次：距最近一条 >= 间隔 才新增，否则保持最新那条
-    const sorted = [...(store.inspireRecords || [])].sort((a, b) => b.date.localeCompare(a.date));
-    const lastDate = sorted.length ? sorted[0].date : null;
-    const needNew = !lastDate || ymdDiffDays(lastDate, today) >= INSPIRE_REFRESH_DAYS;
-    if (needNew) {
-      const dayIndex = (store.inspireRecords || []).length % INSPIRE_POOL.length;
-      const newInspire = { ...INSPIRE_POOL[dayIndex], date: today };              // 从过滤池抽
-      hamiPushRecord('inspireRecords', newInspire);
-      saveData();
-    }
-    // 不足间隔：今日推荐显示最近那条（不新增），实现「每3天更新」而非「每天」
-  }
-}
-
-// 手动「换一条」：强制执行一次新增（不受 3 天间隔限制），让用户立刻看到下一条草稿
-window.refreshInspireToday = function () {
-  const today = todayStr();
-  store.inspireRecords = (store.inspireRecords || []).filter(r => r.date !== today);
-  const dayIndex = (store.inspireRecords || []).length % INSPIRE_POOL.length;
-  hamiPushRecord('inspireRecords', { ...INSPIRE_POOL[dayIndex], date: today });          // 从过滤池抽
-  saveData();
-  try { renderInspire(); } catch (e) {}
-};
 
 // ==================== 打卡卡片 ====================
 // 把今天真实记录的具体内容直接展示出来（不再笼统"已完成"）
@@ -19518,24 +19157,6 @@ function renderInspire() {
         + '</div>';
     });
     document.getElementById('inspire-history').innerHTML = html;
-  }
-}
-
-// 主页简洁推荐
-function renderDesktopInspire() {
-  const sorted = [...store.inspireRecords].sort((a,b) => b.date.localeCompare(a.date));
-  if (sorted.length === 0) {
-    document.getElementById('desktop-inspire').innerHTML = `<div style="text-align:center;color:#8a6270;padding:16px;font-size:13px;">暂无推荐，每3天更新1条~</div>`;
-  } else {
-    const latest = sorted[0];
-    const subtitle = latest.type === 'web'
-      ? '🌐 互联网收集爆款笔记推荐'
-      : '💡 AI原创潜力笔记推荐';
-    document.getElementById('desktop-inspire').innerHTML = `
-      <div style="padding:12px;background:#fff8fa;border-radius:12px;">
-        <div style="font-size:13px;color:#d14b73;font-weight:600;margin-bottom:6px;">${subtitle}</div>
-        <div style="font-size:13px;color:#8a6270;line-height:1.6;">${escTodo(latest.title)}</div>
-      </div>`;
   }
 }
 
@@ -26317,8 +25938,6 @@ function renderDesktop() {
   safeRender(renderDesktopAccounts, 'accounts');
   safeRender(renderDesktopWeight, 'weight');
   safeRender(renderHomeTodo, 'todo');
-  safeRender(renderDesktopInspire, 'inspire');
-  safeRender(renderMoneyMind, 'moneymind');
 }
 
 // ==================== 初始化 ====================
@@ -26498,7 +26117,6 @@ try { setTimeout(function () { try { maybeRemindBackup(); } catch (e2) {} }, 250
 initSettingsPanel();
 ensureDefaults();
 autoDedupeImportantDates();
-ensureDailyInspire();
 saveData();
 
 // 打开网页：体重日历一律定位到「今天所在月」（像日历软件一样，打开即回到本月；
