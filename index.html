@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-402">
+<meta name="hami-build" content="2026-10-24-403">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1202,16 +1202,6 @@
     gap: 4px;
     margin-bottom: 7px;
   }
-  .checkin-card .ci-icon {
-    font-size: 12px;
-    line-height: 1;
-    flex-shrink: 0;
-    width: 22px; height: 22px;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg,#ffe3ec,#ffd0e0);
-    border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgba(255,158,181,.35);
-  }
   .checkin-card .ci-label {
     font-size: 13px;
     font-weight: 800;
@@ -1219,6 +1209,7 @@
     line-height: 1.2;
     letter-spacing: .5px;
     white-space: nowrap;
+    flex-shrink: 0; /* v403：删图标后卡头只剩标题+徽章，绝不被 flex 压缩折行 */
   }
   /* v399：状态徽章——内嵌卡头尾部，绝不与标题重叠；待打卡显示进度 0/2，完成显示 ✓ */
   .ci-badge {
@@ -5251,7 +5242,6 @@
     .checkin-grid { gap: 5px; }
     .checkin-card { padding: 8px 4px 11px; border-radius: 9px; }
     .checkin-card .ci-head { gap: 3px; margin-bottom: 5px; }
-    .checkin-card .ci-icon { width: 20px; height: 20px; font-size: 11px; }
     .checkin-card .ci-label { font-size: 11.5px; letter-spacing: 0; }
     .ci-badge { font-size: 8px; padding: 2px 4px; }
     .ci-big { font-size: 17px; }
@@ -5317,7 +5307,7 @@
   .card-title, .top-bar h1, .nav-group-title, .nav-item, .nav-text, .nav-motto,
   .modal-title, .drawer-title,
   .stat-card .label, .stat-card .value, .stat-card .unit,
-  .checkin-card, .checkin-card .ci-label,
+  .checkin-card,
   .account-card .ac-header, .account-card .ac-followers, .account-card .ac-detail,
   .weight-calendar-title, .calendar-day,
   .backup-tip, .backup-dismiss, .tip, .motto, .desktop-hero .motto, .desktop-time,
@@ -15310,7 +15300,6 @@ function renderDesktopCheckin() {
     }
     html += '<div class="checkin-card' + (c.done ? ' done' : '') + '" onclick="switchPanel(\'' + target + '\', this)">'
       + '<div class="ci-head">'
-      + '<span class="ci-icon">' + c.icon + '</span>'
       + '<span class="ci-label">' + c.label + '</span>'
       + '<span class="ci-badge' + (c.badgeDone ? ' done' : '') + '">' + c.badge + '</span>'
       + '</div>'
