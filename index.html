@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-400">
+<meta name="hami-build" content="2026-10-24-401">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1477,17 +1477,18 @@
   .weight-cal-badge-num { font-size: 12px; font-weight: 700; color: #d14b73; line-height: 1.2; }
   .weight-cal-badge-label { font-size: 12px; color: #d14b73; line-height: 1.2; }
   .weight-cal-weekdays {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    max-width: 560px; margin: 0 auto 4px;
   }
   .weight-cal-weekdays > div { text-align: center; font-size: 12px; font-weight: 600; color: #7d4a5a; }
   /* v71 重设：体重日历"胶囊"格子——固定高度 + 三段式 + 占位一致 */
   .weight-cal-grid {
     display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px; width: 100%; box-sizing: border-box;
+    gap: 4px; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
     position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    height: 48px; min-width: 0; padding: 3px 2px 2px;
+    height: 50px; min-width: 0; padding: 3px 2px 2px;
     border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
     display: flex; flex-direction: column; align-items: stretch;
     box-sizing: border-box; overflow: hidden; cursor: pointer;
@@ -1518,10 +1519,10 @@
   .weight-cal-main.weight-cal-main-sm { font-size: 11px; letter-spacing: -.5px; }
   .weight-cal-main.weight-cal-main-xs { font-size: 10px; letter-spacing: -.6px; }
   .weight-cal-main.weight-cal-main-fill { color: #b6a0ac; font-weight: 600; font-size: 12px; }
-  /* 底部一行（v385）：涨跌+运动圆点改横排（原竖排两行太挤），格子从四行内容变三行 */
+  /* v401：涨跌+运动圆点恢复竖排两行（v385 横排是未经确认的改动，主人要求增减与打卡圆点分开两行） */
   .weight-cal-foot {
-    display: flex; flex-direction: row; align-items: center; justify-content: center;
-    gap: 4px; min-height: 12px; padding: 0 1px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; min-height: 12px; padding: 0 1px;
   }
   .weight-cal-change {
     font-size: 9px; font-weight: 700; line-height: 1;
