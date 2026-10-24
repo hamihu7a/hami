@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-399">
+<meta name="hami-build" content="2026-10-24-400">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2038,9 +2038,7 @@
   .plan-habit[data-habit="hair"]::before    { background: linear-gradient(90deg,#c9a8ff,#9d7bf0); }
   /* v390：合并卡左右排版（养皮肤 / 学英语） */
   .plan-habit[data-habit="pair-skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
-  .plan-habit[data-habit="pair-english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
   .plan-habit[data-habit="pair-skin"] .plan-habit-cadence    { color: #d14b73; background: #ffeef3; }
-  .plan-habit[data-habit="pair-english"] .plan-habit-cadence { color: #3f6fd0; background: #e9f1ff; }
   .plan-pair-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 9px; }
   .plan-half + .plan-half { border-left: 1px dashed #f2dbe5; padding-left: 9px; }
   .plan-half { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -2225,47 +2223,56 @@
   .sp-chip.total { color: #8b9199; background: #f4f4f6; border: 1px solid #ececf0; }
   .sp-chip.cur { color: #4b5561; background: #eef1f4; border: 1px solid #dfe4ea; }
   .sp-chip.done { color: #4d7a5c; background: #f2f8f4; border: 1px solid #d6e9de; }
-  .sp-prog { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
-  .sp-prog-bar { flex: 1; height: 7px; border-radius: 20px; background: #efeff3; overflow: hidden; }
-  .sp-prog-bar i { display: block; height: 100%; border-radius: 20px; background: #aeb7bf; transition: width .35s ease; }
-  .sp-prog-bar.full i { background: #5d8a6f; }
-  .sp-prog-n { font-size: 15px; font-weight: 800; color: #3d434a; font-variant-numeric: tabular-nums; }
-  .sp-prog-n small { font-size: 10.5px; font-weight: 600; color: #aeb3ba; }
-  .sp-prog-all { font-size: 11px; font-weight: 700; color: #5d8a6f; white-space: nowrap; }
-  .sp-btn.doit { color: #fff; background: #4b5561; border-color: #4b5561; padding: 5px 11px; font-size: 11px; }
-  .sp-btn.doit:hover { background: #414a55; }
+  /* v400：进度区加粗加大——条 10px 带内阴影、数字 18px、完成绿徽章、主按钮绿色实心 */
+  .sp-prog { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+  .sp-prog-bar { flex: 1; height: 10px; border-radius: 20px; background: #efeff3; overflow: hidden; box-shadow: inset 0 1px 2px rgba(58,64,72,.08); }
+  .sp-prog-bar i { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg,#9db8a8,#6b9478); transition: width .35s ease; }
+  .sp-prog-bar.full i { background: linear-gradient(90deg,#6aa87f,#4a7a5c); }
+  .sp-prog-n { font-size: 18px; font-weight: 800; color: #3d434a; font-variant-numeric: tabular-nums; }
+  .sp-prog-n small { font-size: 11px; font-weight: 600; color: #aeb3ba; }
+  .sp-prog-all { font-size: 11.5px; font-weight: 800; color: #fff; background: linear-gradient(135deg,#6aa87f,#4a7a5c); padding: 4px 11px; border-radius: 9px; white-space: nowrap; box-shadow: 0 2px 6px rgba(77,122,92,.28); }
+  .sp-btn.doit { color: #fff; background: linear-gradient(135deg,#6aa87f,#4a7a5c); border-color: transparent; padding: 6px 13px; font-size: 11.5px; font-weight: 800; border-radius: 9px; box-shadow: 0 2px 6px rgba(77,122,92,.28); }
+  .sp-btn.doit:hover { background: linear-gradient(135deg,#5f9c73,#41704f); }
   /* 三行任务：每天操作的主体 */
-  .sp-rows { display: flex; flex-direction: column; gap: 5px; }
+  /* v400：三行任务卡加大——24px 大圆勾 + 左侧 4px 完成绿条 + 分钟徽章，打卡感拉满 */
+  .sp-rows { display: flex; flex-direction: column; gap: 7px; }
   .sp-row {
-    display: flex; align-items: center; gap: 9px; cursor: pointer;
-    padding: 6px 8px 6px 7px; border-radius: 10px;
-    background: #fbfbfc; border: 1px solid #ececf0; border-left: 3px solid #e4e4ea;
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    padding: 10px 10px 10px 9px; border-radius: 12px;
+    background: #fbfbfc; border: 1px solid #ececf0; border-left: 4px solid #e4e4ea;
+    box-shadow: 0 1px 3px rgba(58,64,72,.05);
     transition: all .18s ease;
   }
-  .sp-row:hover { border-color: #dfe0e6; }
-  .sp-row.on { background: #f5faf7; border-color: #dcede3; border-left-color: #5d8a6f; }
+  .sp-row:hover { border-color: #dfe0e6; transform: translateY(-1px); }
+  .sp-row.on { background: #f4faf6; border-color: #d5e8dc; border-left-color: #5d8a6f; box-shadow: 0 2px 8px rgba(77,122,92,.12); }
   .sp-row-box {
-    width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto;
-    border: 2px dashed #ced2d8; background: #fff;
+    width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto;
+    border: 2px dashed #c3c8cf; background: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800; color: transparent; line-height: 1;
+    font-size: 12px; font-weight: 800; color: transparent; line-height: 1;
     transition: all .18s ease;
   }
   .sp-row-box:active { transform: scale(.86); }
-  .sp-row.on .sp-row-box { border: 2px solid #5d8a6f; background: #5d8a6f; color: #fff; animation: spPop .24s ease; }
-  @keyframes spPop { 0% { transform: scale(.82); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+  .sp-row.on .sp-row-box { border: 2px solid #4a7a5c; background: linear-gradient(135deg,#6aa87f,#4a7a5c); color: #fff; animation: spPop .3s ease; box-shadow: 0 2px 6px rgba(77,122,92,.3); }
+  @keyframes spPop { 0% { transform: scale(.82); } 55% { transform: scale(1.16); } 100% { transform: scale(1); } }
   .sp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-  .sp-row-n { font-size: 12.5px; font-weight: 700; color: #3d434a; line-height: 1.25; }
-  .sp-row.on .sp-row-n { color: #4d7a5c; }
-  .sp-row-s { font-size: 10px; font-weight: 500; color: #aeb3ba; }
-  .sp-row-min { font-size: 11px; font-weight: 700; color: #8b9199; font-variant-numeric: tabular-nums; }
+  .sp-row-n { font-size: 13px; font-weight: 800; color: #3d434a; line-height: 1.25; }
+  .sp-row.on .sp-row-n { color: #3f6b4e; }
+  .sp-row-s { font-size: 10.5px; font-weight: 500; color: #aeb3ba; }
+  .sp-row-min {
+    flex: 0 0 auto; font-size: 10.5px; font-weight: 800; color: #6b7178;
+    background: #f2f3f5; border: 1px solid #e8e9ec; border-radius: 8px; padding: 3px 8px;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .sp-row.on .sp-row-min { color: #3f6b4e; background: #e9f4ed; border-color: #cfe6d7; }
   .sp-row-go {
-    flex: 0 0 auto; border-radius: 7px; padding: 4px 8px; cursor: pointer; font-family: inherit;
-    font-size: 10.5px; font-weight: 700; color: #6b7178; background: #fff; border: 1px solid #e4e4ea;
+    flex: 0 0 auto; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-family: inherit;
+    font-size: 11px; font-weight: 800; color: #5b6169; background: #fff; border: 1px solid #e0e1e6;
     transition: all .15s ease;
   }
-  .sp-row-go:hover { color: #4b5561; border-color: #c9ced5; background: #f7f8f9; }
-  .sp-row-go.launch { color: #55697a; background: #f7f9fa; border-color: #d7dee4; }
+  .sp-row-go:hover { color: #3d434a; border-color: #c4c9d0; background: #f7f8f9; }
+  .sp-row-go.launch { color: #3f6fd0; background: #eef3fd; border-color: #cfdffa; }
+  .sp-row-go.launch:hover { color: #3560bd; border-color: #b9cdf5; background: #e5eefc; }
   .sp-note {
     width: 100%; box-sizing: border-box; margin-top: 8px;
     border: 1px solid #ececf0; border-radius: 8px; padding: 6px 10px;
@@ -2336,7 +2343,11 @@
   .sp-foot { margin-top: 9px; text-align: center; font-size: 10.5px; font-weight: 500; color: #b4b8bf; letter-spacing: .5px; }
   @media (max-width: 620px) {
     .sp-main { padding: 10px 10px 8px; }
-    .sp-row { gap: 7px; }
+    .sp-row { gap: 7px; padding: 9px 8px 9px 7px; }
+    .sp-row-box { width: 22px; height: 22px; }
+    .sp-row-min { padding: 2px 6px; font-size: 10px; }
+    .sp-row-go { padding: 5px 8px; font-size: 10.5px; }
+    .sp-prog-n { font-size: 16px; }
     .sp-row-s { display: none; }
     .sp-pv-grid { grid-template-columns: repeat(2, 1fr); }
     .sp-stage { grid-template-columns: 1fr; gap: 2px; }
@@ -8331,9 +8342,7 @@ let store = {
     // daily：history { 'YYYY-MM-DD': 1 }，打了卡就有
     { key: 'skin',    name: '养皮肤 · 身体护理',  icon: '🧴', type: 'daily', history: {} },
     { key: 'face',    name: '养皮肤 · 面部护肤',  icon: '🧖', type: 'daily', history: {} },
-    { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
-    // v390：磨耳朵（听力输入，和多邻国并排左右排版）
-    { key: 'ears',    name: '磨耳朵 · 听力输入',  icon: '🎧', type: 'daily', history: {} },
+    // v400：学英语（多邻国+磨耳朵）已删除——英语打卡统一去「英语学习计划」独立面板
     // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
     { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
   ],
@@ -15230,7 +15239,7 @@ function renderDesktopCheckin() {
     exFact = '未打卡';
     exStatus = 'pending';
   }
-  // v392：提升计划 2.0 的习惯打卡搬上主页——养皮肤（身体/面部）+ 学英语（多邻国/磨耳朵），chips 点击即打卡
+  // v392：提升计划 2.0 的习惯打卡搬上主页——养皮肤（身体/面部）chips 点击即打卡；v400：学英语卡移除（去英语学习计划面板打卡）
   const _habitOn = function (key) {
     try { planEnsure(); } catch (e) {}
     const h = planHabitByKey(key);
@@ -15262,11 +15271,8 @@ function renderDesktopCheckin() {
     _mkPlanCard('🩸', '养皮肤', [
       { key: 'skin', icon: '🧴', label: '身体' },
       { key: 'face', icon: '🧖', label: '面部' }
-    ]),
-    _mkPlanCard('🦊', '学英语', [
-      { key: 'english', icon: '🦊', label: '多邻国' },
-      { key: 'ears', icon: '🎧', label: '磨耳朵' }
     ])
+    // v400：学英语打卡卡删除——英语打卡统一在「英语学习计划」面板
   ];
 
   let html = '';
@@ -25341,16 +25347,13 @@ function planEnsure() {
     store.planHabits = [
       { key: 'skin',    name: '养皮肤 · 身体护理',  icon: '🧴', type: 'daily', history: {} },
       { key: 'face',    name: '养皮肤 · 面部护肤',  icon: '🧖', type: 'daily', history: {} },
-      { key: 'english', name: '学英语 · 多邻国',  icon: '🦊', type: 'daily', history: {} },
-      { key: 'ears',    name: '磨耳朵 · 听力输入',  icon: '🎧', type: 'daily', history: {} },
       { key: 'hair',    name: '养头发 · 护发素',  icon: '💆', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
     ];
     touched = true;
   } else {
     const _need = [
-      { key: 'face', name: '养皮肤 · 面部护肤', icon: '🧖', type: 'daily', history: {} },
-      // v390：磨耳朵（老用户补一条，插在多邻国后面，学英语两张挨着）
-      { key: 'ears', name: '磨耳朵 · 听力输入', icon: '🎧', type: 'daily', history: {}, after: 'english' }
+      { key: 'face', name: '养皮肤 · 面部护肤', icon: '🧖', type: 'daily', history: {} }
+      // v400：ears 迁移已删（学英语习惯移除），老数据原样留在 store 不显示
     ];
     _need.forEach(function (h) {
       let has = false;
@@ -25458,7 +25461,7 @@ function planRenderWeekDots(h) {
 }
 // v390：半栏习惯渲染（合并卡左右两栏用，紧凑版）
 function planHalfName(h) {
-  const map = { skin: '身体护理', face: '面部护肤', english: '多邻国', ears: '磨耳朵' };
+  const map = { skin: '身体护理', face: '面部护肤' };   // v400：学英语两条已移除
   return map[h.key] || h.name;
 }
 // v394：去掉鸡汤文案，改成这条习惯具体做什么
@@ -25614,8 +25617,6 @@ function renderPlanHabits() {
   let html = '';
   // v390：养皮肤合并卡（身体护理 + 面部护肤，左右排版）
   if (byKey.skin || byKey.face) html += planRenderPairCard('pair-skin', '🧖', '养皮肤', [byKey.skin, byKey.face]);
-  // v390：学英语合并卡（多邻国 + 磨耳朵，左右排版）
-  if (byKey.english || byKey.ears) html += planRenderPairCard('pair-english', '🦊', '学英语', [byKey.english, byKey.ears]);
   // 养头发：周期卡，独立一张
   store.planHabits.forEach(function (h) {
     if (h.type === 'cycle') html += planRenderHairCard(h);
@@ -26270,7 +26271,7 @@ function spRender() {
       + '<span class="sp-row-txt">'
       + '<span class="sp-row-n">' + x.name + '</span>'
       + '<span class="sp-row-s">' + x.sub + '</span></span>'
-      + '<span class="sp-row-min">' + x.min + '′</span>'
+      + '<span class="sp-row-min">' + x.min + ' 分钟</span>'
       + '<button class="sp-row-go' + (x.go.launch ? ' launch' : '') + '" type="button" '
       + 'onclick="event.stopPropagation();' + x.go.fn + '">' + x.go.label + '</button>'
       + '</div>';
