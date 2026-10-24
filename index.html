@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-403">
+<meta name="hami-build" content="2026-10-24-404">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -26575,7 +26575,7 @@ function renderCountdown() {
     // v327：提醒超过 4 页时改用「当前/总数」迷你数字（更宽），右侧再多留 16px 防重叠
     const padR = (isCheckin ? 20 : 16) + (pages.length > 4 ? 16 : 0);
     return `
-      <div style="flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:11px ${padR}px 11px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);outline:1.5px dashed rgba(209,75,115,0.25);outline-offset:-5px;display:flex;align-items:center;gap:10px;overflow:hidden;">
+      <div style="cursor:pointer;flex:1;min-width:0;width:100%;background:rgba(255,255,255,0.55);backdrop-filter:blur(10px);border-radius:12px;padding:11px ${padR}px 11px 12px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(209,75,115,0.12);outline:1.5px dashed rgba(209,75,115,0.25);outline-offset:-5px;display:flex;align-items:center;gap:10px;overflow:hidden;">
         ${dateCol}
         <div style="flex:1;min-width:0;display:flex;align-items:center;">
           <div style="font-size:14px;color:#5a3a48;font-weight:600;line-height:1.45;word-break:break-word;text-wrap:balance;">${item.icon} ${item.label}</div>
@@ -26709,13 +26709,18 @@ function bindCountdownDrag(wrap) {
     }
   });
   // 点小点直达（拖动松手会附带 click，按位移过滤掉）
+  // v404：电脑端鼠标单击卡片任意处 = 换下一条（主人要求）；触摸设备保持原有拖动翻页，不响应单击
   wrap.addEventListener('click', function (e) {
     if (dragged > 8) { dragged = 0; return; }
     const dot = e.target && e.target.closest ? e.target.closest('.countdown-dot') : null;
     if (dot) {
       const idx = parseInt(dot.getAttribute('data-idx') || '-1', 10);
       if (idx >= 0) window.__countdownSwitch && window.__countdownSwitch(0, idx);
+      return;
     }
+    let fine = false;
+    try { fine = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches); } catch (e2) {}
+    if (fine) window.__countdownSwitch && window.__countdownSwitch(1);
   });
 }
 
