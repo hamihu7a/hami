@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-401">
+<meta name="hami-build" content="2026-10-24-402">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1488,7 +1488,7 @@
     position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    height: 50px; min-width: 0; padding: 3px 2px 2px;
+    height: 60px; min-width: 0; padding: 3px 2px 2px;
     border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
     display: flex; flex-direction: column; align-items: stretch;
     box-sizing: border-box; overflow: hidden; cursor: pointer;
@@ -1522,7 +1522,7 @@
   /* v401：涨跌+运动圆点恢复竖排两行（v385 横排是未经确认的改动，主人要求增减与打卡圆点分开两行） */
   .weight-cal-foot {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 1px; min-height: 12px; padding: 0 1px;
+    gap: 2px; min-height: 12px; padding: 0 1px;
   }
   .weight-cal-change {
     font-size: 9px; font-weight: 700; line-height: 1;
@@ -4615,7 +4615,7 @@
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
       .weight-cal-grid { gap: 1px; }
-      .weight-cal-cell { height: 44px !important; border-radius: 6px; padding: 1px 0 1px !important; }
+      .weight-cal-cell { height: 54px !important; border-radius: 6px; padding: 1px 0 1px !important; }
       .weight-cal-day { font-size: 10px !important; }
       .weight-cal-main { font-size: 11px !important; }
       /* v199：体重单位改斤后数字变 5 位（如 177.8），按位数自动收字号，保证数字完整落在格子里 */
@@ -4769,7 +4769,7 @@
       grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
       gap: 2px !important;
     }
-    .weight-cal-cell { height: 42px !important; padding: 2px 2px !important; }
+    .weight-cal-cell { height: 52px !important; padding: 2px 2px !important; }
     .weight-cal-day { font-size: 12px !important; }
     .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
@@ -4824,7 +4824,7 @@
       grid-column: 1 / -1;
     }
     .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 2px !important; }
-    .weight-cal-cell { height: 42px !important; }
+    .weight-cal-cell { height: 52px !important; }
     .weight-cal-day { font-size: 11px !important; }
     .weight-cal-main { font-size: 12px !important; }
     th, td { padding: 5px 4px; }
@@ -4892,7 +4892,7 @@
     gap: 2px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    height: 42px !important; padding: 2px 2px !important; min-width: 0;
+    height: 52px !important; padding: 2px 2px !important; min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 11px !important; line-height: 1.1 !important; }
   body.hami-force-desktop .weight-cal-main { font-size: 13px !important; line-height: 1.1 !important; }
@@ -5003,7 +5003,7 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { height: 42px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 52px !important; padding: 2px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
@@ -5092,7 +5092,7 @@
     grid-template-columns: repeat(7, minmax(50px, 1fr)) !important;
     gap: 3px !important;
   }
-  body.hami-force-mini .weight-cal-cell { height: 52px !important; padding: 2px 2px !important; }
+  body.hami-force-mini .weight-cal-cell { height: 62px !important; padding: 2px 2px !important; }
   body.hami-force-mini .weight-cal-day { font-size: 12px !important; }
   body.hami-force-mini .weight-cal-main { font-size: 13px !important; }
   body.hami-force-mini .weight-cal-weight { font-size: 11px !important; padding: 0 3px; }
@@ -15272,13 +15272,31 @@ function renderDesktopCheckin() {
     _mkPlanCard('🩸', '养皮肤', [
       { key: 'skin', icon: '🧴', label: '身体' },
       { key: 'face', icon: '🧖', label: '面部' }
-    ])
-    // v400：学英语打卡卡删除——英语打卡统一在「英语学习计划」面板
+    ]),
+    // v402：学英语打卡卡回归——数据源改为「英语学习计划」store.studyPlan（多邻国一键打卡，点卡片进面板看全部）
+    (function () {
+      let duoOn = false, doneN = 0;
+      try {
+        const sp = store.studyPlan;
+        if (sp && sp.checks && sp.checks[today]) {
+          const tt = spRecTasks(sp.checks[today]);
+          duoOn = !!tt.duo;
+          SP_TASKS.forEach(function (x) { if (tt[x.key]) doneN++; });
+        }
+      } catch (e) {}
+      return {
+        icon: '🦊', label: '学英语', plan: true, target: 'study',
+        done: duoOn, ratio: doneN / 3,
+        badge: doneN === 3 ? '✓' : (doneN + '/3'),
+        badgeDone: doneN === 3,
+        chips: [{ key: 'duo', icon: '🦊', label: '多邻国', on: duoOn, study: true }]
+      };
+    })()
   ];
 
   let html = '';
   cards.forEach((c) => {
-    const target = c.plan ? 'growth' : 'fitness';
+    const target = c.target || (c.plan ? 'growth' : 'fitness');
     let bodyHtml = '';
     if (c.big != null) {
       bodyHtml = '<div class="ci-big' + (c.bigIdle ? ' idle' : '') + '">' + c.big
@@ -15286,7 +15304,7 @@ function renderDesktopCheckin() {
         + '<div class="ci-sub">' + c.sub + '</div>';
     } else if (c.chips) {
       bodyHtml = '<div class="ci-chips">' + c.chips.map(ch =>
-        '<button type="button" class="ci-chip' + (ch.on ? ' on' : '') + '" onclick="event.stopPropagation();planHomeToggle(\'' + ch.key + '\')">'
+        '<button type="button" class="ci-chip' + (ch.on ? ' on' : '') + '" onclick="event.stopPropagation();' + (ch.study ? 'spHomeToggle' : 'planHomeToggle') + '(\'' + ch.key + '\')">'
         + '<span class="cc-ico">' + ch.icon + '</span><span class="cc-label">' + ch.label + '</span><span class="cc-mark">✓</span>'
         + '</button>').join('') + '</div>';
     }
@@ -15304,6 +15322,11 @@ function renderDesktopCheckin() {
 
 }
 
+// v402：主页英语卡 chip——直接切换英语学习计划的多邻国打卡，并刷新主页卡与面板
+function spHomeToggle(key) {
+  try { spToggleTask(key); } catch (e) {}
+  try { renderDesktopCheckin(); } catch (e) {}
+}
 // v392：主页打卡 chip——直接切换提升计划 2.0 习惯的今日打卡，并刷新主页卡与面板
 function planHomeToggle(key) {
   try { planHabitCheck(key); } catch (e) {}
