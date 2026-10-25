@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-405">
+<meta name="hami-build" content="2026-10-25-406">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -16535,7 +16535,7 @@ function monthlyIncomeGo(delta) {
 function calcAccountNetForDeposit() {
   const ars = store.accountRecords || [];
   const mi = ars.filter(r => r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const oi = (store.customOrders || []).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  const oi = (store.customOrders || []).filter(o => o.status === 'done').reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);  // v406：未标记完成的定制单不计入账本
   const bi = (store.beautyRecords || []).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);   // v209 修复：原来漏了美化档
   const ae = ars.filter(r => r.type === 'expense').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   return mi + oi + bi - ae;
@@ -16557,7 +16557,7 @@ function calcAccountNetGated(refIso) {
   const ars = store.accountRecords || [];
   const mi = ars.filter(function (r) { return r.type === 'income' && (!modDay || String(r.date || '') > modDay); }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
   const ae = ars.filter(function (r) { return r.type === 'expense' && (!modDay || String(r.date || '') > modDay); }).reduce(function (s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-  const oi = (store.customOrders || []).reduce(function (s, o) { return s + (parseFloat(o.amount) || 0); }, 0);
+  const oi = (store.customOrders || []).filter(function (o) { return o.status === 'done'; }).reduce(function (s, o) { return s + (parseFloat(o.amount) || 0); }, 0);  // v406：未标记完成的定制单不计入账本
   const bi = (store.beautyRecords || []).reduce(function (s, b) { return s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE); }, 0);
   return mi + oi + bi - ae;
 }
@@ -20246,9 +20246,9 @@ function renderAccount() {
 
   // 手动收入（不含旧"模拟人生定制单"分类——历史迁移已删，不重复计入）
   const manualIncome = inMonth.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
-  // 联动：定制单明细金额自动计入收入（所有金额，不分状态）
+  // v406：联动：定制单明细金额自动计入收入——只计已标记完成(status==='done')的，制作中/逾期未交付的不计入账本
   const ordersAll = (store.customOrders || []).filter(o => o.date && (month === 'all' || o.date.startsWith(month)));
-  const customOrdersIncome = ordersAll.reduce((s,o) => s + (parseFloat(o.amount) || 0), 0);
+  const customOrdersIncome = ordersAll.filter(o => o.status === 'done').reduce((s,o) => s + (parseFloat(o.amount) || 0), 0);  // v406：未标记完成的不计入
   // v214：账本里「定制单收入」（26 年 1~3 月导入的那批）也要计入联动，否则这张卡显示 ¥0 与账本对不上
   const ledgerCustomAll = ledgerCustomIncomeRows(month);
   const ledgerCustomIncome = ledgerCustomAll.reduce((s, r) => s + r.amount, 0);
@@ -20305,7 +20305,7 @@ function renderAccount() {
   // v2026-09-20-114 今日收入：今天这一天的手动收入 + 定制单 + 美化档（与上方「本月收入」口径完全一致，只是范围收窄到今天）
   const _today = todayStr();
   const todayManualInc = records.filter(r => r.date === _today && r.type === 'income').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const todayOrderInc = (store.customOrders || []).filter(o => o.date === _today).reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  const todayOrderInc = (store.customOrders || []).filter(o => o.date === _today && o.status === 'done').reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);  // v406：未标记完成的不计入
   const todayBeautyInc = (store.beautyRecords || []).filter(b => b.date === _today).reduce((s, b) => s + (parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE), 0);
   const todayLedgerCustom = ledgerCustomIncomeRows(null).filter(r => r.date === _today).reduce((s, r) => s + r.amount, 0);
   const todayIncome = todayManualInc + todayOrderInc + todayBeautyInc + todayLedgerCustom;
