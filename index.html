@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-24-404">
+<meta name="hami-build" content="2026-10-24-405">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1513,11 +1513,12 @@
   /* v401：涨跌+运动圆点恢复竖排两行（v385 横排是未经确认的改动，主人要求增减与打卡圆点分开两行） */
   .weight-cal-foot {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; min-height: 12px; padding: 0 1px;
+    gap: 3px; min-height: 14px; padding: 0 1px;
   }
   .weight-cal-change {
     font-size: 9px; font-weight: 700; line-height: 1;
     white-space: nowrap; font-variant-numeric: tabular-nums;
+    max-width: 100%; overflow: hidden;
   }
   .weight-cal-change.weight-cal-change-empty { visibility: hidden; }
   .weight-cal-ex { display: flex; gap: 1px; line-height: 1; align-items: center; }
@@ -2017,7 +2018,7 @@
   /* 每日习惯三卡 */
   /* v394：两列主卡 + 养头发通栏，视觉重心更稳 */
   .plan-habit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .plan-habit[data-habit="hair"] { grid-column: span 2; }
+  /* v405：养头发卡改纵流后不再通栏，与养皮肤卡并排 */
   .plan-habit {
     position: relative; border-radius: 17px; padding: 11px 11px 10px;
     background: linear-gradient(165deg,#fffdfd,#fff7fa 70%,#fff9fb);
@@ -2028,27 +2029,39 @@
   .plan-habit[data-habit="skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
   .plan-habit[data-habit="english"]::before { background: linear-gradient(90deg,#a8c6ff,#7f9fff); }
   .plan-habit[data-habit="hair"]::before    { background: linear-gradient(90deg,#c9a8ff,#9d7bf0); }
-  /* v390：合并卡左右排版（养皮肤 / 学英语） */
+  /* v390：养皮肤合并卡顶条配色 */
   .plan-habit[data-habit="pair-skin"]::before    { background: linear-gradient(90deg,#ffb3c7,#ff8fab); }
   .plan-habit[data-habit="pair-skin"] .plan-habit-cadence    { color: #d14b73; background: #ffeef3; }
-  .plan-pair-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 9px; }
-  .plan-half + .plan-half { border-left: 1px dashed #f2dbe5; padding-left: 9px; }
-  .plan-half { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .plan-half-head { display: flex; align-items: center; gap: 5px; }
-  .plan-half-ico { font-size: 16px; line-height: 1; }
-  .plan-half-name { font-size: 12.5px; font-weight: 800; color: #6a4a58; }
-  .plan-half .plan-check-btn { padding: 7px 4px 6px; border-radius: 11px; }
-  .plan-half .plan-check-btn .pc-main { font-size: 13px; }
-  .plan-half .plan-check-btn .pc-sub { font-size: 9.5px; }
-  .plan-half .plan-habit-streak { font-size: 10.5px; }
-  .plan-half .plan-habit-streak .st-num { font-size: 14px; }
-  .plan-half .plan-habit-week { gap: 2px; }
-  .plan-half .plan-hdot { width: 16px; }
-  .plan-half .plan-habit-week { gap: 4px; }
-  .plan-half .plan-hdot .d { max-width: 16px; }
-  .plan-half .plan-hdot .w { font-size: 8px; }
+  /* v405：打卡流行（整行可点 + 左勾选圈 + 右连续天数与最近4天圆点） */
+  .plan-hrows { display: flex; flex-direction: column; }
+  .plan-hrow {
+    display: flex; align-items: center; gap: 10px; padding: 9px 4px 9px 2px;
+    border-radius: 12px; cursor: pointer; transition: background .15s ease;
+  }
+  .plan-hrow:active { background: #fff0f5; }
+  .plan-hrow + .plan-hrow { border-top: 1px dashed #f3d9e4; }
+  .plan-hbox {
+    width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto;
+    border: 2px solid #f0c4d4; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: #fff; line-height: 1;
+    transition: transform .15s ease;
+  }
+  .plan-hbox:active { transform: scale(.86); }
+  .plan-hrow.done .plan-hbox { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; box-shadow: 0 2px 6px rgba(47,174,110,.30); }
+  .plan-hbody { flex: 1; min-width: 0; }
+  .plan-hname { font-size: 13.5px; font-weight: 800; color: #4a3340; line-height: 1.25; }
+  .plan-hrow.done .plan-hname { color: #9db8a8; text-decoration: line-through; text-decoration-color: rgba(47,163,110,.5); }
+  .plan-hsub { font-size: 10px; font-weight: 700; color: #b98ca0; margin-top: 1px; }
+  .plan-hright { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .plan-hfire { font-size: 11px; font-weight: 800; color: #e26d3d; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .plan-hright .plan-habit-week { gap: 3px; }
+  .plan-hright .plan-hdot { width: 14px; }
+  .plan-hright .plan-hdot .d { max-width: 14px; }
+  .plan-hright .plan-hdot .w { font-size: 8px; }
   @media (max-width: 380px) {
-    .plan-half .plan-hdot .d { max-width: 13px; }
+    .plan-hright .plan-hdot { width: 12px; }
+    .plan-hright .plan-hdot .d { max-width: 12px; }
   }
   .plan-habit-head { display: flex; align-items: center; gap: 8px; }
   .plan-habit-ico { font-size: 22px; line-height: 1; }
@@ -2060,23 +2073,7 @@
   .plan-habit[data-habit="skin"] .plan-habit-cadence    { color: #d14b73; background: #ffeef3; }
   .plan-habit[data-habit="english"] .plan-habit-cadence { color: #3f6fd0; background: #e9f1ff; }
   .plan-habit[data-habit="hair"] .plan-habit-cadence    { color: #7a5fc0; background: #f1ecff; }
-  /* 打卡大按钮 */
-  .plan-check-btn {
-    width: 100%; border: none; cursor: pointer; font-family: inherit;
-    border-radius: 13px; padding: 8px 6px 7px; text-align: center;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    transition: filter .15s ease, transform .15s ease;
-  }
-  .plan-check-btn:hover { filter: brightness(.96); transform: translateY(-1px); }
-  .plan-check-btn .pc-main { font-size: 15px; font-weight: 800; letter-spacing: .3px; }
-  .plan-check-btn .pc-sub  { font-size: 10.5px; font-weight: 700; opacity: .82; }
-  .plan-check-btn.off { color: #a0688a; background: linear-gradient(135deg,#fff5f8,#ffe9f1); border: 1.5px dashed #ffb9cd; }
-  .plan-check-btn.on  { color: #fff; background: linear-gradient(135deg,#4cd08d,#2fae6e); box-shadow: 0 3px 8px rgba(47,174,110,.28); }
-  /* 连续天数 + 本周圆点 */
-  .plan-habit-streak { display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: #c45c7c; }
-  .plan-habit-streak .st-num { font-size: 16px; font-weight: 800; color: #d14b73; font-variant-numeric: tabular-nums; }
-  .plan-habit-streak .st-sep { color: #e0c4d1; font-weight: 800; }
-  .plan-habit-streak .st-best { font-size: 10.5px; font-weight: 800; color: #a07e8e; white-space: nowrap; }
+  /* v405：旧「打卡大按钮 + streak 行」已删——习惯改为 .plan-hrow 打卡流（见上） */
   .plan-habit-cadence.cadence-btn { cursor: pointer; font-family: inherit; border: 1px solid #f0d8e2; }
   .plan-habit-cadence.cadence-btn:hover { filter: brightness(.96); }
   .plan-habit-week { display: flex; justify-content: flex-start; gap: 6px; }
@@ -2085,23 +2082,15 @@
   .plan-hdot .d.on { background: linear-gradient(135deg,#4cd08d,#2fae6e); border-color: transparent; }
   .plan-hdot .d.today { box-shadow: 0 0 0 2px rgba(209,75,115,.28); }
   .plan-hdot .w { font-size: 9px; font-weight: 700; color: #b08a9c; }
-  /* 头发周期卡（v394：左右两栏） */
-  .plan-hair-body { display: grid; grid-template-columns: minmax(120px, 0.85fr) 1fr; gap: 12px; align-items: start; }
-  .plan-hair-left { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-  .plan-hair-right { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
-  .plan-cycle-label { font-size: 11px; font-weight: 800; color: #8a6a9c; letter-spacing: .3px; }
-  .plan-cycle-tip.hot { color: #8f4fd0; }
-  .plan-hair-last { font-size: 10px; font-weight: 700; color: #b6a0c4; }
+  /* 头发周期卡（v405：纵向流——周期行 + 进度条 + 步骤/按钮） */
+  .plan-cycle-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 2px 0 7px; }
+  .plan-cycle-day { font-size: 12px; font-weight: 800; color: #7a5fc0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .plan-cycle-tip.hot { color: #d14b73; }
+  .plan-hair-last { font-size: 10px; font-weight: 700; color: #b6a0c4; margin-top: 3px; }
   .plan-hair-idle { font-size: 10.5px; font-weight: 700; color: #b6a0c4; line-height: 1.45; }
   @media (max-width: 720px) {
     .plan-habit-grid { grid-template-columns: 1fr; }
-    .plan-habit[data-habit="hair"] { grid-column: span 1; }
-    .plan-hair-body { grid-template-columns: 1fr; gap: 8px; }
   }
-  .plan-cycle-num { display: flex; align-items: baseline; gap: 5px; }
-  .plan-cycle-num .cn-big { font-size: 22px; font-weight: 800; color: #7a5fc0; font-variant-numeric: tabular-nums; line-height: 1; }
-  .plan-cycle-num .cn-all { font-size: 11px; font-weight: 700; color: #a38ab8; }
-  .plan-cycle-num .cn-label { margin-left: auto; font-size: 10.5px; font-weight: 700; color: #b08a9c; }
   .plan-cycle-bar { height: 8px; border-radius: 20px; background: #f1e8f8; overflow: hidden; }
   .plan-cycle-bar .cb-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#c9a8ff,#9d7bf0); transition: width .3s ease; }
   .plan-cycle-tip { font-size: 11px; font-weight: 700; color: #8a6a9c; line-height: 1.4; }
@@ -2132,6 +2121,15 @@
   .plan-hair-btn.primary { background: linear-gradient(135deg,#b79cff,#8f6fd8); color: #fff; border-color: transparent; box-shadow: 0 2px 6px rgba(143,111,216,.25); }
   /* 长期目标卡 */
   .plan-goal-list { display: flex; flex-direction: column; gap: 8px; }
+  /* v405：桌面端目标卡两列并排 */
+  @media (min-width: 760px) {
+    .plan-goal-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+  }
+  .plan-goal-link {
+    align-self: flex-start; border: none; background: none; cursor: pointer; font-family: inherit;
+    font-size: 11.5px; font-weight: 800; color: #d14b73; padding: 2px 0;
+  }
+  .plan-goal-link:hover { text-decoration: underline; }
   .plan-goal {
     position: relative; border-radius: 16px; padding: 10px 12px;
     background: #fff; border: 1.5px solid #f3dde6; box-shadow: 0 2px 8px rgba(209,75,115,.07);
@@ -2166,7 +2164,7 @@
   .plan-goal[data-goal="slim"] .plan-goal-bar .gbar-fill    { background: linear-gradient(90deg,#a8e6c1,#4cbf88); }
   .plan-goal-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
   .plan-goal-chip {
-    font-size: 10.5px; font-weight: 800; border-radius: 20px; padding: 2px 9px;
+    font-size: 10px; font-weight: 800; border-radius: 20px; padding: 2px 7px;
     background: #faf4f7; border: 1px solid #f0e2e8; color: #a07e8e; white-space: nowrap;
   }
   .plan-goal-chip.done { color: #2f8a52; background: #e8f7ec; border-color: #c8efd5; }
@@ -2204,24 +2202,24 @@
   #study-plan-root { margin-top: 2px; }
   /* —— 第一层：今日打卡主卡（视觉最重，每天真正要点的都在这里） —— */
   .sp-main {
-    background: #fff; border: 1px solid #e2e2e9; border-radius: 13px;
-    padding: 11px 12px 9px; box-shadow: 0 1px 4px rgba(58,64,72,.06);
+    background: linear-gradient(160deg,#fffdfd,#f8f3fd 75%,#f2f0fd); border: 1.5px solid #e7ddf2; border-radius: 15px;
+    padding: 12px 12px 10px; box-shadow: 0 3px 14px rgba(142,124,240,.12);
   }
   .sp-main-top { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
-  .sp-main-date { font-size: 14.5px; font-weight: 800; color: #2f3438; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+  .sp-main-date { font-size: 14.5px; font-weight: 800; color: #5a3a68; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
   .sp-main-sp { flex: 1; }
   .sp-chip { font-size: 10px; font-weight: 700; border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
   .sp-chip.streak { color: #a8763a; background: #fdf5ea; border: 1px solid #f7e6cc; }
-  .sp-chip.total { color: #8b9199; background: #f4f4f6; border: 1px solid #ececf0; }
+  .sp-chip.total { color: #7a5fc9; background: rgba(255,255,255,.8); border: 1px solid #ddd0fa; }
   .sp-chip.cur { color: #4b5561; background: #eef1f4; border: 1px solid #dfe4ea; }
   .sp-chip.done { color: #4d7a5c; background: #f2f8f4; border: 1px solid #d6e9de; }
   /* v400：进度区加粗加大——条 10px 带内阴影、数字 18px、完成绿徽章、主按钮绿色实心 */
   .sp-prog { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
-  .sp-prog-bar { flex: 1; height: 10px; border-radius: 20px; background: #efeff3; overflow: hidden; box-shadow: inset 0 1px 2px rgba(58,64,72,.08); }
-  .sp-prog-bar i { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg,#9db8a8,#6b9478); transition: width .35s ease; }
-  .sp-prog-bar.full i { background: linear-gradient(90deg,#6aa87f,#4a7a5c); }
-  .sp-prog-n { font-size: 18px; font-weight: 800; color: #3d434a; font-variant-numeric: tabular-nums; }
-  .sp-prog-n small { font-size: 11px; font-weight: 600; color: #aeb3ba; }
+  .sp-prog-bar { flex: 1; height: 10px; border-radius: 20px; background: rgba(142,124,240,.15); overflow: hidden; box-shadow: inset 0 1px 2px rgba(142,124,240,.10); }
+  .sp-prog-bar i { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg,#b79ced,#8e7cf0); transition: width .35s ease; }
+  .sp-prog-bar.full i { background: linear-gradient(90deg,#9d7bf0,#6a4fc9); }
+  .sp-prog-n { font-size: 18px; font-weight: 800; color: #6a4fc9; font-variant-numeric: tabular-nums; }
+  .sp-prog-n small { font-size: 11px; font-weight: 600; color: #a99ac9; }
   .sp-prog-all { font-size: 11.5px; font-weight: 800; color: #fff; background: linear-gradient(135deg,#6aa87f,#4a7a5c); padding: 4px 11px; border-radius: 9px; white-space: nowrap; box-shadow: 0 2px 6px rgba(77,122,92,.28); }
   .sp-btn.doit { color: #fff; background: linear-gradient(135deg,#6aa87f,#4a7a5c); border-color: transparent; padding: 6px 13px; font-size: 11.5px; font-weight: 800; border-radius: 9px; box-shadow: 0 2px 6px rgba(77,122,92,.28); }
   .sp-btn.doit:hover { background: linear-gradient(135deg,#5f9c73,#41704f); }
@@ -2230,13 +2228,13 @@
   .sp-rows { display: flex; flex-direction: column; gap: 7px; }
   .sp-row {
     display: flex; align-items: center; gap: 10px; cursor: pointer;
-    padding: 10px 10px 10px 9px; border-radius: 12px;
-    background: #fbfbfc; border: 1px solid #ececf0; border-left: 4px solid #e4e4ea;
-    box-shadow: 0 1px 3px rgba(58,64,72,.05);
+    padding: 10px 10px 10px 11px; border-radius: 12px;
+    background: rgba(255,255,255,.9); border: 1.5px solid #ead9f5;
+    box-shadow: 0 1px 3px rgba(142,124,240,.06);
     transition: all .18s ease;
   }
-  .sp-row:hover { border-color: #dfe0e6; transform: translateY(-1px); }
-  .sp-row.on { background: #f4faf6; border-color: #d5e8dc; border-left-color: #5d8a6f; box-shadow: 0 2px 8px rgba(77,122,92,.12); }
+  .sp-row:hover { border-color: #ddd0f5; transform: translateY(-1px); }
+  .sp-row.on { background: linear-gradient(135deg,#eefaf2,#e0f5e8); border-color: #c8e8d5; box-shadow: 0 2px 8px rgba(77,122,92,.12); }
   .sp-row-box {
     width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto;
     border: 2px dashed #c3c8cf; background: #fff;
@@ -2248,12 +2246,12 @@
   .sp-row.on .sp-row-box { border: 2px solid #4a7a5c; background: linear-gradient(135deg,#6aa87f,#4a7a5c); color: #fff; animation: spPop .3s ease; box-shadow: 0 2px 6px rgba(77,122,92,.3); }
   @keyframes spPop { 0% { transform: scale(.82); } 55% { transform: scale(1.16); } 100% { transform: scale(1); } }
   .sp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-  .sp-row-n { font-size: 13px; font-weight: 800; color: #3d434a; line-height: 1.25; }
+  .sp-row-n { font-size: 13px; font-weight: 800; color: #4a3a58; line-height: 1.25; }
   .sp-row.on .sp-row-n { color: #3f6b4e; }
-  .sp-row-s { font-size: 10.5px; font-weight: 500; color: #aeb3ba; }
+  .sp-row-s { font-size: 10.5px; font-weight: 500; color: #a99ac9; }
   .sp-row-min {
-    flex: 0 0 auto; font-size: 10.5px; font-weight: 800; color: #6b7178;
-    background: #f2f3f5; border: 1px solid #e8e9ec; border-radius: 8px; padding: 3px 8px;
+    flex: 0 0 auto; font-size: 10.5px; font-weight: 800; color: #6a4fc9;
+    background: #f2edfc; border: 1px solid #e2d8f7; border-radius: 8px; padding: 3px 8px;
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
   .sp-row.on .sp-row-min { color: #3f6b4e; background: #e9f4ed; border-color: #cfe6d7; }
@@ -2267,32 +2265,32 @@
   .sp-row-go.launch:hover { color: #3560bd; border-color: #b9cdf5; background: #e5eefc; }
   .sp-note {
     width: 100%; box-sizing: border-box; margin-top: 8px;
-    border: 1px solid #ececf0; border-radius: 8px; padding: 6px 10px;
-    font-size: 12px; font-family: inherit; color: #41474e; background: #fcfcfd; outline: none;
+    border: 1px solid #e2d8f7; border-radius: 8px; padding: 6px 10px;
+    font-size: 12px; font-family: inherit; color: #41474e; background: #fbf9fe; outline: none;
   }
-  .sp-note:focus { border-color: #c9ced5; }
+  .sp-note:focus { border-color: #c9b8f0; }
   /* 底部弱操作：纯文字按钮 */
-  .sp-mini { display: flex; align-items: center; gap: 13px; margin-top: 8px; padding-top: 7px; border-top: 1px dashed #f0f0f4; }
+  .sp-mini { display: flex; align-items: center; gap: 13px; margin-top: 8px; padding-top: 7px; border-top: 1px dashed #ece6f4; }
   .sp-mini-btn { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 600; color: #a0a5ad; letter-spacing: .2px; transition: color .15s ease; }
   .sp-mini-btn:hover { color: #5b6169; }
   .sp-mini-btn.on { color: #4b5561; }
   .sp-mini-sp { flex: 1; }
   .sp-mini-btn.danger:hover { color: #b06a80; }
   /* —— 第二层：展开面板（进度 / 历史） —— */
-  .sp-panel { margin-top: 9px; padding: 10px 11px; border-radius: 10px; background: #fafafb; border: 1px solid #efeff3; }
+  .sp-panel { margin-top: 9px; padding: 10px 11px; border-radius: 10px; background: #faf8fd; border: 1px solid #ece6f4; }
   .sp-panel-title { font-size: 11.5px; font-weight: 700; color: #6b7178; margin-bottom: 8px; letter-spacing: .3px; }
   .sp-pv-line { display: flex; align-items: baseline; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
   .sp-pv-k { color: #8b9199; font-weight: 600; }
   .sp-pv-v { color: #2f3438; font-weight: 700; }
-  .sp-bar { height: 6px; border-radius: 20px; background: #eeeef2; overflow: hidden; margin: 6px 0 10px; }
-  .sp-bar-fill { display: block; height: 100%; border-radius: 20px; background: #8b96a3; transition: width .35s ease; }
+  .sp-bar { height: 6px; border-radius: 20px; background: #ece6f4; overflow: hidden; margin: 6px 0 10px; }
+  .sp-bar-fill { display: block; height: 100%; border-radius: 20px; background: #8e7cf0; transition: width .35s ease; }
   .sp-pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
-  .sp-pv-cell { display: flex; flex-direction: column; gap: 1px; padding: 7px 6px; border-radius: 8px; background: #fff; border: 1px solid #efeff3; }
+  .sp-pv-cell { display: flex; flex-direction: column; gap: 1px; padding: 7px 6px; border-radius: 8px; background: #fff; border: 1px solid #ece6f4; }
   .sp-pv-cell b { font-size: 15px; font-weight: 700; color: #3d434a; font-variant-numeric: tabular-nums; }
   .sp-pv-cell span { font-size: 10px; font-weight: 500; color: #9aa0a8; }
   .sp-start-row { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
   .sp-date-input { border: 1px solid #e6e6ea; border-radius: 7px; padding: 4px 8px; font-size: 12px; font-family: inherit; color: #41474e; background: #fff; outline: none; }
-  .sp-hist-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-bottom: 1px dashed #f1f1f4; font-size: 12px; }
+  .sp-hist-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-bottom: 1px dashed #f0eaf8; font-size: 12px; }
   .sp-hist-row:last-child { border-bottom: none; }
   .sp-hd { font-variant-numeric: tabular-nums; color: #6b7178; font-weight: 600; flex: 0 0 80px; }
   .sp-hf { font-size: 10.5px; font-weight: 700; border-radius: 20px; padding: 1px 8px; flex: 0 0 auto; }
@@ -2300,39 +2298,58 @@
   .sp-hf.base { color: #8b9199; background: #f4f4f6; }
   .sp-hn { flex: 1; color: #8b9199; font-weight: 500; word-break: break-word; }
   .sp-empty { font-size: 12px; color: #a8adb5; padding: 4px 0; }
-  /* —— 第三层：折叠说明（视觉最轻） —— */
-  .sp-folds { margin-top: 8px; }
-  .sp-fold { border-radius: 9px; background: #fbfbfc; border: 1px solid #f2f2f5; overflow: hidden; }
-  .sp-fold + .sp-fold { margin-top: 5px; }
-  .sp-fold-h { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; cursor: pointer; padding: 7px 10px; background: none; border: none; font-family: inherit; transition: background .15s ease; }
-  .sp-fold-h:hover { background: #f6f6f9; }
-  .sp-fh-t { font-size: 11.5px; font-weight: 700; color: #6b7178; }
-  .sp-fh-x { flex: 1; font-size: 10.5px; font-weight: 500; color: #b0b5bc; }
-  .sp-fh-a { font-size: 12px; font-weight: 700; color: #b0b5bc; width: 12px; text-align: center; }
-  .sp-fold-b { padding: 2px 10px 10px; }
-  .sp-rule { display: flex; gap: 12px; padding: 5px 0; border-bottom: 1px dashed #f2f2f5; font-size: 11.5px; }
+  /* v405：学习工具卡（常用，不折叠）+ 计划说明大折叠（规则/四阶段/口语） */
+  .sp-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+  .sp-tool { background: #fff; border: 1px solid #e7ddf2; border-radius: 12px; padding: 10px 11px; }
+  .sp-tool-t { font-size: 12px; font-weight: 800; color: #4a3a58; margin-bottom: 8px; }
+  .sp-tool-ls { display: flex; flex-direction: column; gap: 5px; }
+  .sp-tool-l {
+    display: flex; align-items: center; gap: 7px; width: 100%; text-align: left;
+    border: none; border-radius: 8px; padding: 6px 8px; background: #f8f6fc;
+    font-family: inherit; cursor: pointer; transition: background .15s ease;
+  }
+  .sp-tool-l:hover { background: #f0ebf9; }
+  .sp-tool-l b { flex: 1; min-width: 0; font-size: 11px; font-weight: 700; color: #4a3a58; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sp-tool-l span { font-size: 9.5px; font-weight: 500; color: #a99ac9; white-space: nowrap; }
+  .sp-tool-l i { font-size: 11px; font-style: normal; color: #8e7cf0; }
+  .sp-tool-note { margin-top: 7px; font-size: 9.5px; font-weight: 500; color: #b0a8c9; line-height: 1.55; }
+  .sp-doc { margin-top: 10px; border-radius: 12px; background: #fbfafd; border: 1px solid #ece6f4; overflow: hidden; }
+  .sp-doc-h { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; cursor: pointer; padding: 10px 12px; background: none; border: none; font-family: inherit; transition: background .15s ease; }
+  .sp-doc-h:hover { background: #f6f2fb; }
+  .sp-doc-t { font-size: 12.5px; font-weight: 800; color: #4b5561; }
+  .sp-doc-x { flex: 1; font-size: 10.5px; font-weight: 500; color: #b0a8c9; }
+  .sp-doc-a { font-size: 13px; font-weight: 700; color: #b0a8c9; width: 13px; text-align: center; }
+  .sp-doc-b { display: none; padding: 2px 12px 12px; border-top: 1px dashed #ece6f4; }
+  .sp-doc.open .sp-doc-b { display: block; }
+  .sp-doc-sec { font-size: 11px; font-weight: 800; color: #8e7cf0; letter-spacing: .5px; margin: 10px 0 5px; }
+  .sp-doc-sec:first-child { margin-top: 2px; }
+  @media (max-width: 360px) {
+    .sp-tools { grid-template-columns: 1fr; }
+  }
+  /* v405：桌面端主卡与工具区左右并排 */
+  @media (min-width: 900px) {
+    #study-plan-root { display: grid; grid-template-columns: 1.45fr 1fr; gap: 10px; align-items: start; }
+    #study-plan-root .sp-main { grid-column: 1; grid-row: 1 / span 2; }
+    #study-plan-root .sp-tools { grid-column: 2; margin-top: 0; }
+    #study-plan-root .sp-doc { grid-column: 2; margin-top: 0; }
+    #study-plan-root .sp-foot { grid-column: 1 / -1; }
+  }
+  .sp-rule { display: flex; gap: 12px; padding: 5px 0; border-bottom: 1px dashed #ece6f4; font-size: 11.5px; }
   .sp-rule:last-child { border-bottom: none; }
   .sp-rk { flex: 0 0 62px; font-weight: 700; color: #8b9199; }
   .sp-rv { flex: 1; font-weight: 500; color: #6b7178; line-height: 1.65; }
-  .sp-links { display: flex; flex-direction: column; gap: 5px; }
   .sp-btn { border-radius: 8px; padding: 7px 12px; font-family: inherit; cursor: pointer; font-size: 12px; font-weight: 600; color: #5b6169; background: #fafafb; border: 1px solid #e2e2e7; transition: all .15s ease; }
   .sp-btn:hover { background: #f3f4f6; border-color: #d3d6db; }
-  .sp-btn.link { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 8px 11px; color: #55697a; background: #fff; border: 1px solid #e6eaee; }
-  .sp-btn.link:hover { background: #f5f8fa; border-color: #d2dae0; }
-  .sp-lk-n { font-size: 12px; font-weight: 700; }
-  .sp-lk-s { font-size: 10.5px; font-weight: 500; color: #9aa0a8; }
-  .sp-lk-a { margin-left: auto; font-size: 12px; color: #8fa2b0; }
   .sp-stage { display: grid; grid-template-columns: 46px 46px 78px 1fr; align-items: baseline; gap: 9px; padding: 6px 9px; border-radius: 8px; border-left: 2px solid transparent; margin-bottom: 4px; }
-  .sp-stage.cur { background: #fff; border-left-color: #5b6672; }
+  .sp-stage.cur { background: #fff; border-left-color: #8e7cf0; }
   .sp-sg-i { font-size: 10.5px; font-weight: 700; color: #aeb3ba; }
   .sp-sg-n { font-size: 12px; font-weight: 700; color: #3d434a; }
   .sp-sg-r { font-size: 10.5px; font-weight: 600; color: #9aa0a8; }
   .sp-sg-d { font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.6; }
   .sp-flow-i { display: flex; gap: 8px; font-size: 11.5px; font-weight: 500; color: #6b7178; line-height: 1.7; padding: 2px 0; }
-  .sp-flow-i b { flex: 0 0 auto; font-size: 10px; font-weight: 700; color: #b2b7be; padding-top: 2px; }
-  .sp-flow-note { margin-top: 7px; padding-top: 7px; border-top: 1px dashed #ececf0; font-size: 11px; font-weight: 600; color: #8b9199; line-height: 1.6; }
+  .sp-flow-i b { flex: 0 0 auto; font-size: 10px; font-weight: 700; color: #b0a8c9; padding-top: 2px; }
   .sp-item-note { font-size: 11.5px; font-weight: 500; color: #8b9199; line-height: 1.7; }
-  .sp-foot { margin-top: 9px; text-align: center; font-size: 10.5px; font-weight: 500; color: #b4b8bf; letter-spacing: .5px; }
+  .sp-foot { margin-top: 9px; text-align: center; font-size: 10.5px; font-weight: 500; color: #b0a8c9; letter-spacing: .5px; }
   @media (max-width: 620px) {
     .sp-main { padding: 10px 10px 8px; }
     .sp-row { gap: 7px; padding: 9px 8px 9px 7px; }
@@ -8028,7 +8045,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
 
       <!-- 一区：每日习惯（三个，节奏各不相同） -->
       <div class="plan-zone">
-        <div class="plan-zone-title"><span class="plan-zone-ico">🌞</span>每日习惯<span class="plan-zone-sub">天天做 · 养起来</span></div>
+        <div class="plan-zone-title"><span class="plan-zone-ico">😍</span>每日习惯<span class="plan-zone-sub">天天做 · 养起来</span></div>
         <div class="plan-habit-grid" id="plan-habit-grid"></div>
       </div>
 
@@ -25488,52 +25505,51 @@ function planHalfSub(h, done, streak) {
   };
   return m[h.key] || '今天还没打卡';
 }
-function planRenderHalfCard(h) {
+// v405：打卡流行式渲染（整行可点 + 左勾选圈 + 右连续天数与最近4天圆点）
+function planRenderHabitRow(h) {
   const today = todayStr();
   const done = !!(h.history && h.history[today]);
   const streak = planStreak(h);
-  return '<div class="plan-half" data-half="' + h.key + '">'
-    + '<div class="plan-half-head"><span class="plan-half-ico">' + h.icon + '</span>'
-    + '<span class="plan-half-name">' + planHalfName(h) + '</span></div>'
-    + '<button class="plan-check-btn ' + (done ? 'on' : 'off') + '" type="button" onclick="planHabitCheck(\'' + h.key + '\')">'
-    + '<span class="pc-main">' + (done ? '✓ 今日已打卡' : '点我打卡') + '</span>'
-    + '<span class="pc-sub">' + planHalfSub(h, done, streak) + '</span></button>'
-    + '<div class="plan-habit-streak">🔥 <span class="st-num">' + streak + '</span> 天'
-    + '<span class="st-sep">·</span><span class="st-best">最长 ' + planBestStreak(h) + '</span></div>'
-    + '<div class="plan-habit-week">' + planRenderWeekDots(h) + '</div>'
+  return '<div class="plan-hrow' + (done ? ' done' : '') + '" data-hrow="' + h.key + '" '
+    + 'onclick="planHabitCheck(\'' + h.key + '\')">'
+    + '<span class="plan-hbox">' + (done ? '✓' : '') + '</span>'
+    + '<div class="plan-hbody"><div class="plan-hname">' + planHalfName(h) + '</div>'
+    + '<div class="plan-hsub">' + planHalfSub(h, done, streak) + '</div></div>'
+    + '<div class="plan-hright"><span class="plan-hfire">🔥 ' + streak + ' 天</span>'
+    + '<div class="plan-habit-week">' + planRenderWeekDots(h) + '</div></div>'
     + '</div>';
 }
-// v390：合并卡（一张卡内左右两栏：养皮肤=身体+面部，学英语=多邻国+磨耳朵）
+// v405：合并卡改打卡流（一张卡内多行：养皮肤=身体护理+面部护肤）
 function planRenderPairCard(key, icon, title, habits) {
-  const cols = habits.filter(Boolean).map(planRenderHalfCard).join('');
+  const rows = habits.filter(Boolean).map(planRenderHabitRow).join('');
   return '<div class="plan-habit plan-habit-pair" data-habit="' + key + '">'
     + '<div class="plan-habit-head"><span class="plan-habit-ico">' + icon + '</span>'
     + '<span class="plan-habit-name">' + title + '</span>'
     + '<span class="plan-habit-cadence">每天</span></div>'
-    + '<div class="plan-pair-cols">' + cols + '</div>'
+    + '<div class="plan-hrows">' + rows + '</div>'
     + '</div>';
 }
-// v394：养头发卡重写——首日也有按钮 + 左右两栏版面
+// v405：养头发卡重写——纵向流（周期行 + 进度条 + 步骤/按钮），去掉左右两栏
 function planRenderHairCard(h) {
   const today = todayStr();
   const cycle = Math.max(1, parseInt(h.cycleDays) || 5);
   const diff = h.lastWash ? Math.round((new Date(today + 'T00:00:00') - new Date(h.lastWash + 'T00:00:00')) / 86400000) : -1;
   const isWashDay = (diff < 0) || (diff >= cycle);   // 没记录过 = 今天就是第一次洗头日
   const dayNo = diff < 0 ? 1 : Math.min(diff + 1, cycle);
-  const remain = isWashDay ? 0 : (cycle - dayNo);
   const steps = (h.steps && h.steps[today]) || {};
-  let tip = '';
+  let tipHtml = '';
   if (diff < 0) {
-    tip = '<div class="plan-cycle-tip">🌱 还没记录过～今天洗第一次，记得先预涂护发素</div>';
+    tipHtml = '<span class="plan-cycle-tip">🌱 还没记录过～今天洗第一次，记得先预涂护发素</span>';
   } else if (isWashDay) {
-    tip = '<div class="plan-cycle-tip hot">💧 今天是洗头日！勾完两步再点「洗完了」</div>';
+    tipHtml = '<span class="plan-cycle-tip hot">💧 今天是洗头日！勾完两步再点「洗完了」</span>';
   } else {
-    tip = '<div class="plan-cycle-tip">🌷 距下次洗头还有 <b>' + remain + '</b> 天' + (remain === 1 ? '（明天洗）' : '') + '</div>';
+    const remain = cycle - dayNo;
+    tipHtml = '<span class="plan-cycle-tip">🌷 距下次洗头还有 <b>' + remain + '</b> 天' + (remain === 1 ? '（明天洗）' : '') + '</span>';
   }
   const lastLine = h.lastWash ? '<div class="plan-hair-last">上次洗头 ' + h.lastWash.slice(5).replace('-', '/') + '</div>' : '';
-  let rightHtml = '';
+  let actHtml = '';
   if (isWashDay) {
-    rightHtml = '<div class="plan-wash-steps">'
+    actHtml = '<div class="plan-wash-steps">'
       + '<button class="plan-wash-step' + (steps.pre ? ' done' : '') + '" type="button" onclick="planHairStep(\'pre\')">'
       + '<span class="ws-box">' + (steps.pre ? '✓' : '1') + '</span>'
       + '<span class="ws-text"><span class="ws-t">预涂调配好的护发素</span><span class="ws-s">等它吸收一会儿再洗</span></span></button>'
@@ -25543,22 +25559,17 @@ function planRenderHairCard(h) {
       + '</div>'
       + '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash()">🫧 洗完了</button></div>';
   } else {
-    rightHtml = '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash(\'early\')">⏩ 提前洗头</button></div>'
+    actHtml = '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash(\'early\')">⏩ 提前洗头</button></div>'
       + '<div class="plan-hair-idle">还没到日子，按周期养着就好～</div>';
   }
   return '<div class="plan-habit" data-habit="hair">'
     + '<div class="plan-habit-head"><span class="plan-habit-ico">' + h.icon + '</span>'
-    + '<span class="plan-habit-name">' + h.name + '</span>'
+    + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
     + '<button class="plan-habit-cadence cadence-btn" type="button" onclick="planHairCycle()" title="点这里改洗头周期">' + cycle + ' 天一洗 ✏️</button></div>'
-    + '<div class="plan-hair-body">'
-    + '<div class="plan-hair-left">'
-    + '<div class="plan-cycle-num"><span class="cn-big">' + (isWashDay ? cycle : dayNo) + '</span><span class="cn-all">/ ' + cycle + ' 天</span></div>'
+    + '<div class="plan-cycle-line"><span class="plan-cycle-day">本周期第 ' + (isWashDay ? cycle : dayNo) + ' / ' + cycle + ' 天</span>' + tipHtml + '</div>'
     + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + Math.round((isWashDay ? cycle : dayNo) / cycle * 100) + '%;"></span></div>'
-    + '<div class="plan-cycle-label">' + (isWashDay ? '洗头日 🛁' : '本周期第 ' + dayNo + ' 天') + '</div>'
-    + tip + lastLine
-    + '</div>'
-    + '<div class="plan-hair-right">' + rightHtml + '</div>'
-    + '</div></div>';
+    + actHtml + lastLine
+    + '</div>';
 }
 // v394：历史最长连续天数
 function planBestStreak(h) {
@@ -25667,7 +25678,7 @@ function planGoalCardDrive(g) {
     + '<span class="plan-goal-pct">已勾 ' + st.done + ' / ' + st.total + ' 个知识点</span></div>'
     + '<div class="plan-goal-bar"><span class="gbar-fill" style="width:' + st.pct + '%;"></span></div>'
     + '<div class="plan-goal-chips">' + chips + '</div>'
-    + '<div class="plan-goal-foot"><button class="plan-goal-btn go" type="button" onclick="switchPanel(\'drive\', this)">🚗 去学车面板</button></div>'
+    + '<button class="plan-goal-link" type="button" onclick="switchPanel(\'drive\', this)">→ 去学车面板</button>'
     + '</div>';
 }
 // v387 健康管理清单卡：一组 4 项（2 检查 + 2 待安排），打勾记日期；检查项完成后可填一句结果
@@ -26052,7 +26063,7 @@ var SP_TASKS = [
 ];
 var spShowProg = false, spShowHist = false;
 var spForceNote = null;         // 重置后强制清空备注框
-var spFolds = { mats: false, flow: false, rules: false, stages: false, gpt: false };
+var spDocOpen = false;   // v405：计划说明大折叠（规则 + 四阶段 + 口语说明）
 
 function spData() {
   if (!store.studyPlan) store.studyPlan = { start: '', checks: {} };
@@ -26143,7 +26154,7 @@ function spSaveNote(v) {
   if (typeof saveData === 'function') saveData();
   if (typeof commitToCloud === 'function') commitToCloud();
 }
-function spToggleFold(k) { spFolds[k] = !spFolds[k]; spRender(); }
+function spToggleDoc() { spDocOpen = !spDocOpen; spRender(); }
 // 连续打卡天数（今天还没打则从昨天算起，不打断连续感）
 function spStreak() {
   const d = spData();
@@ -26156,11 +26167,10 @@ function spStreak() {
   return n;
 }
 // 听力行「↗ 素材」：展开素材折叠并滚过去
+// v405：学习素材改为常驻工具卡，「↗ 素材」只需把工具区滚进视线
 function spOpenMats() {
-  spFolds.mats = true;
-  spRender();
   try {
-    const e = document.getElementById('sp-mats');
+    const e = document.getElementById('sp-tools');
     if (e && e.scrollIntoView) e.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (err) {}
 }
@@ -26230,16 +26240,6 @@ function spToggleProgress() { spShowProg = !spShowProg; spRender(); }
 function spToggleHistory() { spShowHist = !spShowHist; spRender(); }
 function spRuleRow(k, v) {
   return '<div class="sp-rule"><span class="sp-rk">' + k + '</span><span class="sp-rv">' + v + '</span></div>';
-}
-function spFoldBlock(k, id, label, meta, body) {
-  const on = !!spFolds[k];
-  let h = '<div class="sp-fold"' + (id ? ' id="' + id + '"' : '') + '>'
-    + '<button class="sp-fold-h' + (on ? ' on' : '') + '" type="button" onclick="spToggleFold(\'' + k + '\')">'
-    + '<span class="sp-fh-t">' + label + '</span>'
-    + '<span class="sp-fh-x">' + (meta || '') + '</span>'
-    + '<span class="sp-fh-a">' + (on ? '−' : '+') + '</span></button>';
-  if (on) h += '<div class="sp-fold-b">' + body + '</div>';
-  return h + '</div>';
 }
 function spRender() {
   const root = document.getElementById('study-plan-root');
@@ -26336,31 +26336,30 @@ function spRender() {
   }
   h += '</div>';
 
-  // ============ 第二层：折叠（要用才点开，默认全收起） ============
-  h += '<div class="sp-folds">';
-  // 素材（跳转链接按钮）
-  let mats = '<div class="sp-links">';
+  // ============ v405：学习工具（每天常用，不折叠直接可见） ============
+  let linkRows = '';
   SP_LINKS.forEach(function (l) {
-    mats += '<button class="sp-btn link" type="button" onclick="spOpen(\'' + l.url + '\')">'
-      + '<span class="sp-lk-n">' + l.name + '</span><span class="sp-lk-s">' + l.sub + '</span><span class="sp-lk-a">↗</span></button>';
+    linkRows += '<button class="sp-tool-l" type="button" onclick="spOpen(\'' + l.url + '\')">'
+      + '<b>' + l.name + '</b><span>' + l.sub + '</span><i>↗</i></button>';
   });
-  mats += '</div><div class="sp-item-note">网页直达；手机装了对应 APP 时系统可能直接跳 APP。</div>';
-  h += spFoldBlock('mats', 'sp-mats', '学习素材', '3 个听力源 · 网页直达', mats);
-  // 听力流程
-  let flow = '<div class="sp-flow-i"><b>01</b>盲听一遍，抓关键词即可，听不懂是正常情况</div>'
+  let flowHtml = '<div class="sp-flow-i"><b>01</b>盲听一遍，抓关键词即可，听不懂是正常情况</div>'
     + '<div class="sp-flow-i"><b>02</b>开双语字幕对照，只摘 1 句实用口语短句</div>'
     + '<div class="sp-flow-i"><b>03</b>关掉字幕再听一遍</div>'
-    + '<div class="sp-flow-note">每次只用 1 分钟左右短音频；前 4 个月允许双语字幕，第 5 个月起主动减少中文依赖</div>';
-  h += spFoldBlock('flow', '', '听力流程', '盲听 · 对照 · 脱稿', flow);
-  // 计划规则
+    + '<div class="sp-tool-note">每次只用 1 分钟左右短音频；前 4 个月允许双语字幕，第 5 个月起主动减少中文依赖</div>';
+  h += '<div class="sp-tools" id="sp-tools">'
+    + '<div class="sp-tool"><div class="sp-tool-t">🎧 学习素材</div>'
+    + '<div class="sp-tool-ls">' + linkRows + '</div>'
+    + '<div class="sp-tool-note">网页直达；手机装了对应 APP 时系统可能直接跳 APP</div></div>'
+    + '<div class="sp-tool"><div class="sp-tool-t">👂 听力流程</div>' + flowHtml + '</div>'
+    + '</div>';
+
+  // ============ v405：计划说明（规则 + 四阶段 + 口语说明合并为一个大折叠） ============
   let rules = spRuleRow('总周期', '12 个月长线学习')
     + spRuleRow('每日上限', '20 分钟 · 不额外加量')
     + spRuleRow('任务拆分', '多邻国 10 / 分级听力 7 / AI 口语对话 3')
     + spRuleRow('弹性规则', '每周最低打卡 5 天，允许 2 天休息日，休息日不标记欠卡')
     + spRuleRow('保底机制', '状态差当天，仅完成多邻国 10 分钟即判有效打卡，听力与口语可跳过')
     + spRuleRow('记录字段', '打卡日期 / 完成项 / 简短备注');
-  h += spFoldBlock('rules', '', '计划规则', '20 分钟 · 每周 5 天 · 可保底', rules);
-  // 四阶段
   let stages = '';
   SP_STAGES.forEach(function (x) {
     stages += '<div class="sp-stage' + (x.i === st.i ? ' cur' : '') + '">'
@@ -26369,11 +26368,16 @@ function spRender() {
       + '<span class="sp-sg-r">' + x.range + '</span>'
       + '<span class="sp-sg-d">' + x.desc + '</span></div>';
   });
-  h += spFoldBlock('stages', '', '12 个月四阶段', '当前 阶段 ' + st.i + ' · ' + st.name, stages);
-  // 口语说明
-  h += spFoldBlock('gpt', '', '口语使用说明', '3 分钟 · 卡壳可结束',
-    '<div class="sp-item-note">手动打开 ChatGPT APP，新建对话开启麦克风语音对话；单次控制在 3 分钟左右，卡壳可以结束本轮。装了 APP 点右侧「🎙️ 语音」直接进入语音模式。</div>');
-  h += '</div>';
+  h += '<div class="sp-doc' + (spDocOpen ? ' open' : '') + '" id="sp-doc">'
+    + '<button class="sp-doc-h" type="button" onclick="spToggleDoc()">'
+    + '<span class="sp-doc-t">📖 计划说明</span><span class="sp-doc-x">规则 · 阶段 · 口语</span>'
+    + '<span class="sp-doc-a">' + (spDocOpen ? '−' : '+') + '</span></button>'
+    + '<div class="sp-doc-b">'
+    + '<div class="sp-doc-sec">计划规则</div>' + rules
+    + '<div class="sp-doc-sec">12 个月四阶段</div>' + stages
+    + '<div class="sp-doc-sec">口语使用说明</div>'
+    + '<div class="sp-item-note">手动打开 ChatGPT APP，新建对话开启麦克风语音对话；单次控制在 3 分钟左右，卡壳可以结束本轮。装了 APP 点右侧「🎙️ 语音」直接进入语音模式。</div>'
+    + '</div></div>';
 
   h += '<div class="sp-foot">本计划核心是稳定坚持，追求循序渐进，不追求速成</div>';
 
