@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-413">
+<meta name="hami-build" content="2026-10-26-414">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6170,11 +6170,13 @@ body.theme-vintage .sidebar {
   box-shadow: none !important;
 }
 body.theme-vintage .sidebar > .nav-header { background: #fff0f5 !important; }
-/* v413：排除按钮内部的 .nav-text/.nav-icon（类名含 "nav" 被上面误伤），
-   选中深粉底上文字/图标不再各垫一块半透明白胶囊（主人点名） */
+/* v413/v414：排除按钮内部的 .nav-text/.nav-icon（类名含 "nav" 被上面误伤），
+   选中深粉底上文字/图标不再各垫一块半透明白胶囊（主人点名）。
+   v414 修正：v413 加 :not() 抬高了本规则优先级，反把 .active 深粉底压掉了——
+   现在直接 :not(.active) 让选中项退出白胶囊规则，深粉整块底恢复、文字无垫底。 */
 body.theme-vintage .sidebar button,
-body.theme-vintage .sidebar [class*="nav"]:not(.nav-group):not(.nav-text):not(.nav-icon),
-body.theme-vintage .sidebar [class*="item"] {
+body.theme-vintage .sidebar [class*="nav"]:not(.nav-group):not(.nav-text):not(.nav-icon):not(.active),
+body.theme-vintage .sidebar [class*="item"]:not(.active) {
   border: none !important;
   box-shadow: none !important;
   background: rgba(255,255,255,0.55) !important;
