@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-412">
+<meta name="hami-build" content="2026-10-26-413">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -6170,13 +6170,22 @@ body.theme-vintage .sidebar {
   box-shadow: none !important;
 }
 body.theme-vintage .sidebar > .nav-header { background: #fff0f5 !important; }
+/* v413：排除按钮内部的 .nav-text/.nav-icon（类名含 "nav" 被上面误伤），
+   选中深粉底上文字/图标不再各垫一块半透明白胶囊（主人点名） */
 body.theme-vintage .sidebar button,
-body.theme-vintage .sidebar [class*="nav"]:not(.nav-group),
+body.theme-vintage .sidebar [class*="nav"]:not(.nav-group):not(.nav-text):not(.nav-icon),
 body.theme-vintage .sidebar [class*="item"] {
   border: none !important;
   box-shadow: none !important;
   background: rgba(255,255,255,0.55) !important;
   border-radius: 12px !important;
+}
+body.theme-vintage .sidebar .nav-text,
+body.theme-vintage .sidebar .nav-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 /* v329：分组大区块的白底收窄 + 底部浅粉阴影（主人点名，观感同「今日时光」hcp 卡）。
    原先 .nav-group 被 [class*="nav"] 误伤，白底通栏顶满任务栏两边；
