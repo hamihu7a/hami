@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-410">
+<meta name="hami-build" content="2026-10-26-411">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2325,11 +2325,14 @@
   @media (max-width: 360px) {
     .sp-tools { grid-template-columns: 1fr; }
   }
-  /* v405：桌面端主卡与工具区左右并排 */
-  @media (min-width: 900px) {
-    #study-plan-root { display: grid; grid-template-columns: 1.45fr 1fr; gap: 10px; align-items: start; }
+  /* v405/v411：主卡与工具区左右并排——判断依据从【视口宽】改为【容器实际宽】：
+     原来只看视口 ≥900px，主人拖窄主面板后右列被挤成一字一行；现在容器 ≥620px 才并排，
+     窄容器自动上下堆叠、工具卡保持左右两列（每个 ~200px，不再压扁） */
+  #panel-study .card.todo-section { container-type: inline-size; }
+  @container (min-width: 620px) {
+    #study-plan-root { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(290px, 1fr); gap: 10px; align-items: start; }
     #study-plan-root .sp-main { grid-column: 1; grid-row: 1 / span 2; }
-    #study-plan-root .sp-tools { grid-column: 2; margin-top: 0; }
+    #study-plan-root .sp-tools { grid-column: 2; margin-top: 0; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
     #study-plan-root .sp-doc { grid-column: 2; margin-top: 0; }
     #study-plan-root .sp-foot { grid-column: 1 / -1; }
   }
@@ -6217,7 +6220,7 @@ body.theme-vintage .nav-group-title {
 
 /* —— 按钮：不明显的小淡框 —— */
 body.theme-vintage button,
-body.theme-vintage [class*="btn"]:not([class*="title"]):not([class*="head"]):not([class*="icon"]) {
+body.theme-vintage [class*="btn"]:not(button):not([class*="title"]):not([class*="head"]):not([class*="icon"]):not(.db-btn-row):not(.plan-hair-btns):not(.plan-skill-addbtns):not(.hami-confirm-btns) {
   border: 1px solid rgba(255,158,181,0.5) !important;
   border-radius: 12px !important;
   background: rgba(255,240,245,0.92) !important;
@@ -6226,6 +6229,16 @@ body.theme-vintage [class*="btn"]:not([class*="title"]):not([class*="head"]):not
   font-weight: 600 !important;
 }
 body.theme-vintage button:active { transform: scale(0.97) !important; }
+/* v411：去框里套框（主人点名）——重要日期/流水行这类【本身带边框的行卡】里，
+   小按钮不再自带边框和浮影：行卡一层框、按钮只留底色，不再框套框 */
+body.theme-vintage .imp-row-actions .row-edit-btn,
+body.theme-vintage .imp-row-actions .row-del-btn,
+body.theme-vintage .card-actions .row-edit-btn,
+body.theme-vintage .card-actions .row-del-btn {
+  border: none !important;
+  box-shadow: none !important;
+  background: #ffdce8 !important;
+}
 /* 刷新按键：保持半透明圆形原样（不套用通用按钮小淡框） */
 body.theme-vintage button.hero-refresh {
   background: rgba(255,255,255,0.35) !important;
