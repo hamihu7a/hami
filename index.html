@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-407">
+<meta name="hami-build" content="2026-10-26-408">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -16093,13 +16093,18 @@ function ensureDriveLearn() {
     }
   });
   // 首次使用自动填充「学车打勾清单（C2）」种子数据；已有任意内容则不覆盖
+  // v408 根治「刷新后勾选/笔记被刷没」：_updatedAt 只许 touchDrive 在真实修改时刷新！
+  // 旧逻辑只要 _seeded 缺失就无条件刷新 _updatedAt，而并集合并/旧结构数据可能长期缺 _seeded，
+  // 本机就会反复把「旧内容 + 超新时间戳」推上云，其他设备 pull 时「谁新听谁」整对象采信，
+  // 真正最新的勾选与笔记反被旧快照覆盖（科目一勾选清空、科目二笔记丢失的真凶）。
+  // 现改为：只有真正补种时才打时间戳；已有数据一律视为已播种，绝不碰 _updatedAt。
   if (!s._seeded) {
-    s._updatedAt = Date.now();   // v351：补种也打时间戳
     const allEmpty = ['1', '2', '3', '4'].every(function (kk) {
       const sb = s.subjects[kk];
       return sb && sb.points.length === 0 && !sb.note;
     });
     if (allEmpty) {
+      s._updatedAt = Date.now();   // 真正补种才算一次修改（v408）
       ['1', '2', '3', '4'].forEach(function (kk) {
         const sd = DRIVE_SEED[kk];
         if (!sd) return;
@@ -16108,6 +16113,8 @@ function ensureDriveLearn() {
         s.subjects[kk].points = sd.points.map(function (t) { return { text: t, done: false, note: '' }; });
       });
       s._seeded = true;
+    } else {
+      s._seeded = true;   // v408：已有内容 → 视为已播种，不补种、不刷时间戳
     }
   }
   if (!s.active || !s.subjects[s.active]) s.active = '1';
@@ -16276,6 +16283,50 @@ function saveDriveSubjectNote(k, val) {
   if (saved) { saved.classList.add('show'); setTimeout(function () { saved.classList.remove('show'); }, 1500); }
 }
 
+// ===== v408：一次性恢复主人的学车数据（合并式：只补缺，绝不覆盖/删除已有内容）=====
+// 背景：v407 前时间戳污染导致云端旧快照覆盖了本机最新数据——科目一勾选被清、科目二笔记丢失。
+// 本函数把主人截图里的原始记录内置为恢复包，打开学车面板时自动按 text 认人补缺，跑一次后打 _v408r 标记。
+function driveRestoreV408() {
+  try {
+    const s = store.driveLearn;
+    if (!s || !s.subjects || s._v408r) return;
+    const R2 = {
+      '倒车入库': '从右到左入库：方向盘中间对着第二个跟第三个黄线的中间对齐直行，看左后视镜直角超过肩膀之后停车，停车后挂倒档往后退，看左后视镜离下一个直角线一双鞋的距离之后方向盘往右打死，退看右后视镜，直到第二根线消失，方向盘回半圈后，看左后视镜，直到车身与黄线平行之后，方向盘回正直退。从左到右入库：车往前开，看左后视镜肩膀超过直角后往左打一圈半方向盘，一直直行直到左边肩膀超过库前线停车，挂倒档往后退，看左后视镜，车身离库直角1米距离时方向盘往右打满；继续后退，看右后视镜，看到库右角露出，回半圈；车身和边线平行，方向盘全部回正，直退到库底停车。',
+      '侧方停车（出库打左灯）': '雨刮器从左往右数第三个点，对着右边黄线直走，超过黄线后看左后视镜，直到外面左把手与直角距离正对三分之一之后，换到退档退到直角快消失往右边打死，之后看左后视镜第二根黄线出来，方向盘回正，退到左后轮贴住第二根黄线中间往左打死，倒库成功之后方向盘不动打左转向灯直接出去，看前挡风玻璃右下角到达黄线之后，一边回正方向盘，一边往前开逐渐回正直走。',
+      '曲线行驶': '直走方向盘中间对着头全程靠左、右边把手握到直角转弯往右打死，直走，肩膀过轮胎打一圈半，前车左三分之一中间靠着右边黄线贴着走，之后看左后视镜夹角对着黄线，方向盘回正雨刮器左边的点，直到右边的点到黄线打半圈出去。',
+      '直角转弯（转弯前打灯）': ''
+    };
+    let changed = false;
+    // 科目一：主人已学完 → 全部勾上（知识点为空时按种子补齐并直接全勾）
+    const k1 = s.subjects['1'];
+    if (k1) {
+      if (!Array.isArray(k1.points) || !k1.points.length) {
+        const sd = (typeof DRIVE_SEED !== 'undefined') ? DRIVE_SEED['1'] : null;
+        if (sd) { k1.points = sd.points.map(function (t) { return { text: t, done: true, note: '' }; }); changed = true; }
+      } else {
+        k1.points.forEach(function (p) { if (p && !p.done) { p.done = true; changed = true; } });
+      }
+    }
+    // 科目二：补知识点与笔记（按 text 认人；已有内容不动，缺的补上，笔记只在缺失/更短时补）
+    const k2 = s.subjects['2'];
+    if (k2) {
+      if (!Array.isArray(k2.points)) k2.points = [];
+      Object.keys(R2).forEach(function (txt) {
+        let p = null;
+        for (let i = 0; i < k2.points.length; i++) {
+          if (k2.points[i] && String(k2.points[i].text) === txt) { p = k2.points[i]; break; }
+        }
+        if (!p) { p = { text: txt, done: false, note: '' }; k2.points.push(p); changed = true; }
+        if (R2[txt] && String(p.note || '').length < R2[txt].length) { p.note = R2[txt]; changed = true; }
+      });
+      const wantNote = '重点：低速匀速，看后视镜，不压线';
+      if (String(k2.note || '').length < wantNote.length) { k2.note = wantNote; changed = true; }
+    }
+    s._v408r = true;
+    if (changed) { touchDrive(); saveData(); }
+  } catch (e) {}
+}
+
 function switchPanel(name, navEl) {
   try {
     const target = document.getElementById('panel-' + name);
@@ -16299,7 +16350,7 @@ function switchPanel(name, navEl) {
     }
     // 学车进度面板（临时模块）：进入时渲染
     if (name === 'drive') {
-      try { ensureDriveLearn(); renderDriveLearn(); } catch (e) {}
+      try { ensureDriveLearn(); driveRestoreV408(); renderDriveLearn(); } catch (e) {}
     }
     // v396：英语学习计划独立面板，进入时渲染
     if (name === 'study') {
