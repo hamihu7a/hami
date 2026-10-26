@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-411">
+<meta name="hami-build" content="2026-10-26-412">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -2298,7 +2298,8 @@
   .sp-hn { flex: 1; color: #8b9199; font-weight: 500; word-break: break-word; }
   .sp-empty { font-size: 12px; color: #a8adb5; padding: 4px 0; }
   /* v405：学习工具卡（常用，不折叠）+ 计划说明大折叠（规则/四阶段/口语） */
-  .sp-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+  /* v412：学习素材与听力流程一律上下堆叠（主人要求，不再左右并排挤压） */
+  .sp-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 10px; }
   .sp-tool { background: #fff; border: 1px solid #e7ddf2; border-radius: 12px; padding: 10px 11px; }
   .sp-tool-t { font-size: 12px; font-weight: 800; color: #4a3a58; margin-bottom: 8px; }
   .sp-tool-ls { display: flex; flex-direction: column; gap: 5px; }
@@ -2322,20 +2323,8 @@
   .sp-doc.open .sp-doc-b { display: block; }
   .sp-doc-sec { font-size: 11px; font-weight: 800; color: #8e7cf0; letter-spacing: .5px; margin: 10px 0 5px; }
   .sp-doc-sec:first-child { margin-top: 2px; }
-  @media (max-width: 360px) {
-    .sp-tools { grid-template-columns: 1fr; }
-  }
-  /* v405/v411：主卡与工具区左右并排——判断依据从【视口宽】改为【容器实际宽】：
-     原来只看视口 ≥900px，主人拖窄主面板后右列被挤成一字一行；现在容器 ≥620px 才并排，
-     窄容器自动上下堆叠、工具卡保持左右两列（每个 ~200px，不再压扁） */
-  #panel-study .card.todo-section { container-type: inline-size; }
-  @container (min-width: 620px) {
-    #study-plan-root { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(290px, 1fr); gap: 10px; align-items: start; }
-    #study-plan-root .sp-main { grid-column: 1; grid-row: 1 / span 2; }
-    #study-plan-root .sp-tools { grid-column: 2; margin-top: 0; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-    #study-plan-root .sp-doc { grid-column: 2; margin-top: 0; }
-    #study-plan-root .sp-foot { grid-column: 1 / -1; }
-  }
+  /* v412：英语面板一律单列自上而下（主卡 → 学习素材 → 听力流程 → 计划说明 → 页脚），
+     不再做任何左右并排——主人的手机版面与电脑版面都很窄，并排必然挤压 */
   .sp-rule { display: flex; gap: 12px; padding: 5px 0; border-bottom: 1px dashed #ece6f4; font-size: 11.5px; }
   .sp-rule:last-child { border-bottom: none; }
   .sp-rk { flex: 0 0 62px; font-weight: 700; color: #8b9199; }
@@ -3025,11 +3014,9 @@
   .row-del-btn  { background: #fff0f0; color: #c43e3e; border: 1px solid #ffd4d4; }
   .row-del-btn:hover  { background: #ffe4e4; }
   .row-edit-btn:active, .row-del-btn:active { transform: scale(0.95); }
-  /* v357：手机端重要日期「编辑/删除」改上下竖排（主人要求），电脑端维持横排 */
-  .imp-row-actions { display: flex; flex-direction: row; gap: 4px; align-items: flex-end; }
-  @media (max-width: 768px) {
-    .imp-row-actions { flex-direction: column; align-items: flex-end; }
-  }
+  /* v412：重要日期「编辑/删除」始终左右并排（主人要求，取消 v357 的手机端竖排） */
+  .imp-row-actions { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 4px; align-items: flex-end; }
+  .imp-row-actions .row-edit-btn, .imp-row-actions .row-del-btn { white-space: nowrap; flex: 0 0 auto; }
   /* 重要日期「展开其余」折叠按钮 */
   .date-fold-btn {
     display: inline-block; margin: 4px auto 0; border: 1px solid #ffd0dc;
