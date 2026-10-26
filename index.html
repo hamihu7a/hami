@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-416">
+<meta name="hami-build" content="2026-10-26-417">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -841,6 +841,21 @@
     padding:2px 4px;border-radius:8px;transition:background .2s;
   }
   .hami-cmd-bar .cmd-label:hover { background:#fbe6ee; }
+  /* v417：撤销 / 恢复（占据原「💬 跟小助理说」位置，任何修改都能上一步 / 下一步） */
+  .hami-cmd-bar .cmd-hist {
+    display:flex; align-items:center; gap:4px; flex-shrink:0;
+  }
+  .hami-cmd-bar .cmd-hist-item {
+    display:inline-flex; align-items:center; justify-content:center; gap:3px;
+    border:1px solid #ffd3e2; background:#fff7fa; color:#a64b86;
+    font-size:11.5px; font-weight:700; line-height:1;
+    padding:7px 7px; border-radius:10px; cursor:pointer;
+    white-space:nowrap; flex-shrink:0; -webkit-tap-highlight-color:transparent;
+    transition:background .15s, transform .12s, opacity .15s;
+  }
+  .hami-cmd-bar .cmd-hist-item:hover { background:#ffe9f1; }
+  .hami-cmd-bar .cmd-hist-item:active { transform:scale(.95); }
+  .hami-cmd-bar .cmd-hist-item.off { opacity:.42; }
   /* 移动端：所有输入字号≥16px，避免 iOS 自动放大页面 */
   input, textarea, select { font-size: 16px; }
 
@@ -5265,6 +5280,9 @@
       border-radius: 50%;
     }
     .hami-cmd-bar .cmd-label::before { content: '💬'; font-size: 15px; }
+    /* v417：撤销 / 恢复在超小屏再缩一档，但保留文字（箭头单看不懂） */
+    .hami-cmd-bar .cmd-hist { gap: 3px; }
+    .hami-cmd-bar .cmd-hist-item { font-size: 10px; padding: 6px 5px; border-radius: 9px; gap: 2px; }
     .hami-cmd-bar .cmd-input { font-size: 16px; padding: 7px 10px; min-height: 38px; }
     .hami-cmd-bar .cmd-mic { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
     .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 8px; min-height: 34px; }
@@ -6366,6 +6384,16 @@ body.theme-vintage .hami-cmd-bar .cmd-input {
 body.theme-vintage .hami-cmd-bar .cmd-mic { width: 34px !important; height: 34px !important; }
 body.theme-vintage .hami-cmd-bar .cmd-send { padding: 8px 10px !important; }
 body.theme-vintage .hami-cmd-bar .cmd-meta { min-width: 0 !important; padding-left: 6px !important; }
+/* v417：撤销 / 恢复按钮在古着主题下保持浅粉胶囊（不被 body button 通用 !important 规则改成带影子的框） */
+body.theme-vintage .hami-cmd-bar .cmd-hist-item {
+  border: 1px solid #ffd3e2 !important;
+  background: #fff7fa !important;
+  color: #a64b86 !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  padding: 7px 7px !important;
+}
+body.theme-vintage .hami-cmd-bar .cmd-hist-item.off { opacity: .42 !important; }
 
 /* —— 全站紧凑：卡片内边距/块间距收紧（板块之间不要隔太远）—— */
 body.theme-vintage .card { padding: 9px 10px !important; margin-bottom: 4px !important; }
@@ -6591,7 +6619,11 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
 
 <!-- ============ 顶部全局指令栏（最顶端，所有面板通用） ============ -->
 <div class="hami-cmd-bar" id="hami-cmd-bar">
-  <span class="cmd-label" id="hami-cmd-label" title="点我查看怎么用" aria-label="指令用法" onclick="showCmdHelp()">💬 跟小助理说</span>
+  <!-- v417：主人要求把「💬 跟小助理说」这段文字换成「撤销 / 恢复」两个按钮（任何修改都能上一步 / 下一步） -->
+  <div class="cmd-hist" id="cmd-hist">
+    <button class="cmd-hist-item" id="hami-undo-btn" type="button" onclick="hamiUndo()" aria-label="撤销上一步修改" title="撤销上一步修改">↶<span class="cmd-hist-txt">撤销</span></button>
+    <button class="cmd-hist-item" id="hami-redo-btn" type="button" onclick="hamiRedo()" aria-label="恢复刚才撤销的修改" title="恢复刚才撤销的修改">↷<span class="cmd-hist-txt">恢复</span></button>
+  </div>
   <input class="cmd-input" id="hami-cmd-input" type="text"
     placeholder=""
     autocomplete="off">
@@ -8593,8 +8625,127 @@ function showLoadBrokenBanner() {
   el.textContent = '本地存档读取失败（可能已损坏）。已停止自动保存，避免用空白覆盖您的数据。请去「设置 → 数据备份 → 从备份恢复」选一份备份文件。';
 }
 
+// ==================== v417：全局「撤销 / 恢复」（主人：改了任何东西都能前进/后退）====================
+// 原理：每次真正改动数据并存盘前，把「改之前」的整份 store 快照压入撤销栈；恢复=整份快照还原。
+// 规则：①完全相同的两次存盘不占撤销步（避免空栈乱跳）②云合并/内部存盘（saveData(true)）不算主人的操作，不入栈
+//      ③新操作后「恢复」栈清空（标准撤销语义）④栈按步数 + 总字节双重上限裁剪，防内存膨胀
+var HAMI_HIST_MAX = 40;                  // 最多记住 40 步
+var HAMI_HIST_BYTES = 12 * 1024 * 1024;  // 快照总字节软上限（12MB）
+var _hamiUndoStack = [];
+var _hamiRedoStack = [];
+var _hamiHistBaseline = null;            // 上一次存盘后的 store 序列化（比对用）
+var _hamiHistBusy = false;               // 撤销/恢复自身触发的存盘不再记历史
+
+function _hamiStoreSnap() {
+  try { return JSON.stringify(store); } catch (e) { return null; }
+}
+function _hamiHistBytes(arr) {
+  var n = 0;
+  for (var i = 0; i < arr.length; i++) n += (arr[i] ? arr[i].length : 0);
+  return n;
+}
+function _hamiTrimHistory() {
+  while (_hamiUndoStack.length > HAMI_HIST_MAX) _hamiUndoStack.shift();
+  while (_hamiUndoStack.length > 1 && _hamiHistBytes(_hamiUndoStack) > HAMI_HIST_BYTES) _hamiUndoStack.shift();
+}
+function hamiHistoryRefreshBtns() {
+  var u = document.getElementById('hami-undo-btn');
+  var r = document.getElementById('hami-redo-btn');
+  if (u) {
+    var hu = _hamiUndoStack.length > 0;
+    u.classList.toggle('off', !hu);
+    u.title = hu ? ('撤销上一步修改（共 ' + _hamiUndoStack.length + ' 步可退）') : '暂时没有可撤销的修改';
+  }
+  if (r) {
+    var hr = _hamiRedoStack.length > 0;
+    r.classList.toggle('off', !hr);
+    r.title = hr ? ('恢复刚才撤销的修改（共 ' + _hamiRedoStack.length + ' 步可进）') : '暂时没有可恢复的修改';
+  }
+}
+// 存盘前调用：把「改之前」的状态压栈
+function hamiHistoryBeforeSave(isInternal) {
+  if (_hamiHistBusy || isInternal) return;
+  var cur = _hamiStoreSnap();
+  if (!cur) return;
+  if (_hamiHistBaseline === null) { _hamiHistBaseline = cur; return; }
+  if (cur === _hamiHistBaseline) return;   // 数据没真变，不占一步
+  _hamiUndoStack.push(_hamiHistBaseline);
+  _hamiRedoStack.length = 0;
+  _hamiTrimHistory();
+  hamiHistoryRefreshBtns();
+}
+// 存盘后调用：更新比对基线（存盘过程本身会做去重等内部整理，以存完的结果为准）
+function hamiHistoryAfterSave() {
+  _hamiHistBaseline = _hamiStoreSnap();
+  hamiHistoryRefreshBtns();
+}
+function hamiHistoryReset() {
+  _hamiUndoStack = [];
+  _hamiRedoStack = [];
+  _hamiHistBaseline = _hamiStoreSnap();
+  hamiHistoryRefreshBtns();
+}
+// 就地还原（保持 store 同一个对象引用，避免其他模块抓到旧引用）
+function _hamiApplyStoreSnap(snap) {
+  var obj;
+  try { obj = JSON.parse(snap); } catch (e) { return false; }
+  if (!obj || typeof obj !== 'object') return false;
+  Object.keys(store).forEach(function (k) { try { delete store[k]; } catch (e) {} });
+  Object.keys(obj).forEach(function (k) { try { store[k] = obj[k]; } catch (e) {} });
+  return true;
+}
+function _hamiAfterRestore() {
+  // 收掉可能开着的原地编辑态，并按新数据全站重绘
+  try { window.__driveNoteOpen = null; } catch (e) {}
+  try { if (typeof hamiRenderAllNow === 'function') hamiRenderAllNow(); } catch (e) {}
+  try { if (typeof renderDriveLearn === 'function' && document.getElementById('panel-drive') && document.getElementById('panel-drive').classList.contains('active')) renderDriveLearn(); } catch (e) {}
+  try { if (typeof spRender === 'function' && document.getElementById('panel-study') && document.getElementById('panel-study').classList.contains('active')) spRender(); } catch (e) {}
+}
+function hamiUndo() {
+  if (!_hamiUndoStack.length) { try { hamiToast('没有可撤销的修改了~'); } catch (e) {} return; }
+  var prev = _hamiUndoStack.pop();
+  var cur = _hamiStoreSnap();
+  _hamiHistBusy = true;
+  try {
+    if (!_hamiApplyStoreSnap(prev)) {
+      _hamiUndoStack.push(prev);
+      try { hamiToast('撤销失败：这份快照读不出来'); } catch (e) {}
+      return;
+    }
+    if (cur) _hamiRedoStack.push(cur);
+    saveData();                       // 存盘 + 推云端（busy 标记保证不重复记历史）
+    _hamiAfterRestore();
+    try { hamiToast('↶ 已撤销上一步'); } catch (e) {}
+  } finally {
+    _hamiHistBusy = false;
+    hamiHistoryAfterSave();
+  }
+}
+function hamiRedo() {
+  if (!_hamiRedoStack.length) { try { hamiToast('没有可恢复的修改了~'); } catch (e) {} return; }
+  var next = _hamiRedoStack.pop();
+  var cur = _hamiStoreSnap();
+  _hamiHistBusy = true;
+  try {
+    if (!_hamiApplyStoreSnap(next)) {
+      _hamiRedoStack.push(next);
+      try { hamiToast('恢复失败：这份快照读不出来'); } catch (e) {}
+      return;
+    }
+    if (cur) _hamiUndoStack.push(cur);
+    saveData();
+    _hamiAfterRestore();
+    try { hamiToast('↷ 已恢复下一步'); } catch (e) {}
+  } finally {
+    _hamiHistBusy = false;
+    hamiHistoryAfterSave();
+  }
+}
+
 function saveData(skipCloud) {
   if (_loadBroken) return;
+  // v417：改动前的快照入撤销栈（云合并等内部存盘不算）
+  try { hamiHistoryBeforeSave(!!skipCloud); } catch (e) {}
   // 根治 userTodos 重复：每次保存前按「文本+分类」去重，保留最早创建的那条（done 状态取"完成"那条）。
   // 不论是早期 seed bug、云端多次合并，还是「删了又从云端拉回来」，都会在写入前被压平。
   try {
@@ -8697,6 +8848,8 @@ function saveData(skipCloud) {
   // v109：任何一次存档都排一次「全站重渲」，保证所有面板看到同一份数据
   // （重渲期间 _hamiRenderingNow 为真，render 内部若再调 saveData 不会再排队，不会打转）
   try { if (typeof hamiRequestFullRender === 'function') hamiRequestFullRender(); } catch (e) {}
+  // v417：存完更新撤销比对基线（放在所有内部整理之后）
+  try { hamiHistoryAfterSave(); } catch (e) {}
   return savedOk;
 }
 
@@ -14166,6 +14319,8 @@ function loadData() {
     try { fixImportedCategoriesV211(); } catch (e) {}
     // v213：导入账目收入分类校正（幂等）——没写来源的小额收入是「定制单收入」而非「其他收入」
     try { fixImportedCustomIncomeV213(); } catch (e) {}
+    // v417：数据装载完成后重置撤销历史（刷新后历史清空，属预期；按钮置灰）
+    try { if (typeof hamiHistoryReset === 'function') hamiHistoryReset(); } catch (e) {}
   } catch(e) {
     _loadBroken = true;
     console.error('[loadData] 本地存档解析失败，已停止自动保存以免用默认值覆盖您的数据', e);
@@ -16246,7 +16401,7 @@ function renderDriveLearn() {
       html += '<span class="drive-point-check' + (p.done ? ' done' : '') + '" onclick="toggleDrivePoint(\'' + ak + '\',' + idx + ')">' + (p.done ? '✓' : '') + '</span>';
       html += '<span class="drive-point-text">' + escHtml(p.text) + '</span>';
       html += '<button class="drive-point-note-btn' + (p.note ? ' has' : '') + '" type="button" title="给这条知识点加备注（记忆方法/注意要点）" onclick="toggleDrivePointNote(\'' + ak + '\',' + idx + ')">📝</button>';
-      html += '<button class="drive-point-del" type="button" onclick="removeDrivePoint(\'' + ak + '\',' + idx + ')" title="删除这条">✕</button>';
+      // v417：主人要求知识点只能「勾选完成 / 编辑备注」，不给删除键（误删科目二「侧方」后提出的）
       html += '</div>';
       if (editing) {
         html += '<div class="drive-point-note">';
@@ -16403,6 +16558,33 @@ function driveRestoreV408() {
   } catch (e) {}
 }
 
+// ===== v417：主人误按 ✕ 删掉了科目二「侧方停车」→ 补回来（含原文笔记）=====
+// 只补缺失的那一条，其余内容一律不动；用「是否已存在含『侧方』的知识点」判断，天然幂等。
+function driveRestoreV417() {
+  try {
+    const s = store.driveLearn;
+    const k2 = s && s.subjects && s.subjects['2'];
+    if (!k2) return;
+    if (!Array.isArray(k2.points)) k2.points = [];
+    for (let i = 0; i < k2.points.length; i++) {
+      if (k2.points[i] && /侧方/.test(String(k2.points[i].text || ''))) return;   // 还在，不重复补
+    }
+    const txt = '侧方停车（出库打左灯）';
+    const note = '雨刮器从左往右数第三个点，对着右边黄线直走，超过黄线后看左后视镜，直到外面左把手与直角距离正对三分之一之后，换到退档退到直角快消失往右边打死，之后看左后视镜第二根黄线出来，方向盘回正，退到左后轮贴住第二根黄线中间往左打死，倒库成功之后方向盘不动打左转向灯直接出去，看前挡风玻璃右下角到达黄线之后，一边回正方向盘，一边往前开逐渐回正直走。';
+    // 插回原顺序：紧跟「倒车入库」那条后面；找不到就放最后
+    let at = k2.points.length;
+    for (let i = 0; i < k2.points.length; i++) {
+      if (k2.points[i] && /倒车入库/.test(String(k2.points[i].text || ''))) { at = i + 1; break; }
+    }
+    k2.points.splice(at, 0, { text: txt, done: false, note: note });
+    touchDrive();
+    // 这次补数据不算主人的操作，不占撤销步（否则一进面板按撤销就会把补回来的又撤掉）
+    _hamiHistBusy = true;
+    try { saveData(); } finally { _hamiHistBusy = false; }
+    try { hamiToast('✅ 已把科目二的「侧方停车」补回来了（原笔记一起回来）'); } catch (e) {}
+  } catch (e) {}
+}
+
 function switchPanel(name, navEl) {
   try {
     const target = document.getElementById('panel-' + name);
@@ -16426,7 +16608,7 @@ function switchPanel(name, navEl) {
     }
     // 学车进度面板（临时模块）：进入时渲染
     if (name === 'drive') {
-      try { ensureDriveLearn(); driveRestoreV408(); renderDriveLearn(); } catch (e) {}
+      try { ensureDriveLearn(); driveRestoreV408(); driveRestoreV417(); renderDriveLearn(); } catch (e) {}
     }
     // v396：英语学习计划独立面板，进入时渲染
     if (name === 'study') {
@@ -26867,6 +27049,8 @@ function renderDesktop() {
 
 // ==================== 初始化 ====================
 loadData();
+// v417：补回主人误按 ✕ 删掉的「侧方停车」（数据已有才生效，幂等，不会重复添加）
+try { driveRestoreV417(); } catch (e) {}
 // ===== v386：注册 Service Worker——第二次访问起本地缓存秒开（治 GitHub Pages 国内链路 ~12KB/s）=====
 // sw.js 与 index.html 同目录；SW 只拦同源 GET，version.txt 走 no-store 拿真值，Supabase 跨域不碰；
 // 首次访问照旧走网络（绕不开），成功后写缓存，之后一律先吐缓存、后台静默换新
