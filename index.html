@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-414">
+<meta name="hami-build" content="2026-10-26-415">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -11353,7 +11353,12 @@ async function cmdRefreshAction() {
       if (r && r.ok) {
         var rv = (('' + await r.text()) || '').trim();
         var pv = function (s) { var m = ('' + s).match(/^(\d{4})-(\d{2})-(\d{2})-(\d+)$/); return m ? (+m[1] * 1e8) + (+m[2] * 1e6) + (+m[3] * 1e4) + (+m[4]) : 0; };
-        if (rv && pv(rv) > pv(BUILD_VER)) {
+        // v415：只要在线就带破缓存地址跳转，不再拿版本号比大小——
+        // version.txt 与 index.html 在 CDN 上各自缓存，比较会误判「同版」而只做普通 reload，
+        // 普通 reload 又被 SW 缓存层喂旧页（主人刷五六次看不到新版就是这么来的）。
+        // 唯一查询串 = CDN 缓存未命中 = 必然回源拿最新。
+        if (rv) {
+          try { if (window.caches && caches.keys) { var _ks = await caches.keys(); await Promise.all(_ks.map(function (k) { return caches.delete(k); })); } } catch (e) {}
           location.replace(location.pathname + '?_v=' + encodeURIComponent(rv) + '_' + Date.now());
           return;
         }
@@ -14051,6 +14056,26 @@ function loadData() {
       // 【止血·第零批】恢复这两个字段：否则记进去的数据读不回来，还会被初始化空值覆盖销毁
       if (p.exerciseItems !== undefined) store.exerciseItems = p.exerciseItems;
       if (p.userTodos !== undefined) store.userTodos = p.userTodos;
+      // v415【根治「打卡一刷新就没了 / 怎么点都恢复到从前」】
+      // 病因：saveData 用 JSON.stringify(store) 把**整个** store 写进 localStorage，
+      //   但 loadData 是逐字段挑着恢复的，下面这批「后来新增的模块」从来没被恢复过——
+      //   每次刷新它们都退回默认空值（打卡 history 空、学车进度空、英语打卡空），
+      //   只靠云端异步拉回续命；更糟的是本地空壳在云端合并里「先到先得」，
+      //   会把云端真实数据顶掉，于是打卡怎么点都回到从前。
+      // 修法：统一按类型校验后整块恢复，以后新加模块只需往这张表里加一行。
+      var _RESTORE_ARR = ['planHabits', 'planGoals', 'planSkills', 'growthLogs', 'bodyRecords',
+                          'benchmarkNotes', 'publishSchedule', 'accountDeleted'];
+      var _RESTORE_OBJ = ['studyPlan', 'driveLearn'];
+      _RESTORE_ARR.forEach(function (k) {
+        if (Array.isArray(p[k])) store[k] = p[k];
+      });
+      _RESTORE_OBJ.forEach(function (k) {
+        if (p[k] && typeof p[k] === 'object' && !Array.isArray(p[k])) store[k] = p[k];
+      });
+      // 余额锁定基准（v218/v221）：漏恢复会让刷新后联动基准丢失、余额显示漂移
+      if (p.depositLockModifiedAt !== undefined) store.depositLockModifiedAt = p.depositLockModifiedAt;
+      if (p.depositLockNetSnapshot !== undefined) store.depositLockNetSnapshot = p.depositLockNetSnapshot;
+      if (p.depositLastAutoLinkAt !== undefined) store.depositLastAutoLinkAt = p.depositLastAutoLinkAt;
       // v333：工作待办里「毕业设计」多条合并为类目（一次性迁移，主人反馈有3条毕业设计工作待办）
       // v340 修复①：原实现跑在存档恢复（上一行 store.userTodos=p.userTodos）之前，迁移刚跑完就被
       //   存档整体覆盖回去、migratedGradDesign 却已置 true → 三条单独的永远活着、合并再不生效，
@@ -26848,7 +26873,8 @@ loadData();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   window.addEventListener('load', function () {
     try {
-      navigator.serviceWorker.register('sw.js').catch(function () { /* 注册失败：静默降级，不影响使用 */ });
+      // v415：带版本号注册，浏览器不会再用上一版 SW 策略（否则缓存优先的老逻辑可能滞留很久）
+      navigator.serviceWorker.register('sw.js?v=' + encodeURIComponent(BUILD_VER)).catch(function () { /* 注册失败：静默降级，不影响使用 */ });
     } catch (e) {}
   });
 }
