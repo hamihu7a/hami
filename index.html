@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-409">
+<meta name="hami-build" content="2026-10-26-410">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -332,17 +332,14 @@
     try { lastChk = localStorage.getItem('_hamiVerCheck') || ''; } catch (e) {}
     if (lastChk === today) return;
     try { localStorage.setItem('_hamiVerCheck', today); } catch (e) {}
+    // v410：原来走 Contents API 拉 index.html 全文比对，文件超 1MB 后 API 403 静默失效；改走 version.txt（极小、SW 不缓存）
     setTimeout(function () {
-      fetch('https://api.github.com/repos/hamihu7a/hami/contents/index.html?ref=main', { headers: { 'Accept': 'application/vnd.github+json' }, cache: 'no-store' })
-        .then(function (r) { return r.json(); })
-        .then(function (jj) {
-          var s = jj && jj.content; if (!s) return;
-          var bin = ''; try { bin = atob(String(s).replace(/\s+/g, '')); } catch (e1) { return; }
-          var bytes = new Uint8Array(bin.length);
-          for (var x = 0; x < bin.length; x++) bytes[x] = bin.charCodeAt(x) & 0xff;
-          var txt = new TextDecoder('utf-8').decode(bytes);
-          var mm = txt.match(/hami-build"\s*content="([^"]+)"/);
-          if (mm && mm[1] && mm[1] !== cur) forceRefresh();
+      fetch('version.txt?_=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (txt) {
+          var rv = ('' + (txt || '')).trim();
+          var pv = function (s) { var m = ('' + s).match(/^(\d{4})-(\d{2})-(\d{2})-(\d+)$/); return m ? (+m[1] * 1e8) + (+m[2] * 1e6) + (+m[3] * 1e4) + (+m[4]) : 0; };
+          if (rv && pv(rv) > pv(cur)) forceRefresh();
         }).catch(function () {});
     }, 2500);
   } catch (e) {}
@@ -11336,8 +11333,26 @@ async function cmdRefreshAction() {
   try {
     if (hamiSyncReady && hamiCloudEnabled()) { await pullAndMerge(); }
   } catch (e) {}
-  setTimeout(function () {
-    try { location.reload(true); } catch (e) { try { location.reload(); } catch (e2) {} }
+  setTimeout(async function () {
+    // v410：v386 起 SW 对页面缓存优先（秒吐旧缓存），reload(true) 的强刷参数现代浏览器已忽略，
+    // 点刷新会一直看到旧版。改为版本感知：有新版 → 带 _v 新地址绕开 SW 缓存直取新版；
+    // 同版且在线 → 清 SW 缓存再刷新（保证走网络）；离线 → 原样刷新（断网兜底仍在）。
+    try {
+      var r = await fetch('version.txt?_=' + Date.now(), { cache: 'no-store' });
+      if (r && r.ok) {
+        var rv = (('' + await r.text()) || '').trim();
+        var pv = function (s) { var m = ('' + s).match(/^(\d{4})-(\d{2})-(\d{2})-(\d+)$/); return m ? (+m[1] * 1e8) + (+m[2] * 1e6) + (+m[3] * 1e4) + (+m[4]) : 0; };
+        if (rv && pv(rv) > pv(BUILD_VER)) {
+          location.replace(location.pathname + '?_v=' + encodeURIComponent(rv) + '_' + Date.now());
+          return;
+        }
+        if (window.caches && caches.keys) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+        }
+      }
+    } catch (e) {}
+    try { location.reload(); } catch (e) {}
   }, 600);
 }
 function scheduleCloudPush() {
@@ -11496,7 +11511,7 @@ function showNewVersionTip(ver) {
           if (u.indexOf('_v=') >= 0) { location.reload(); return; }
           var sep = (u.indexOf('?') >= 0 ? '&' : '?');
           location.replace(u + sep + '_v=' + encodeURIComponent(ver) + '_' + Date.now());
-        } catch (e) { try { location.reload(true); } catch (e2) { location.reload(); } }
+        } catch (e) { location.reload(); }
       };
       document.body.appendChild(el);
     }
