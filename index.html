@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-408">
+<meta name="hami-build" content="2026-10-26-409">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1713,7 +1713,9 @@
     margin: 6px 0 2px 32px; padding: 7px 10px;
     background: #fff7fa; border-left: 3px solid #ffc2d4; border-radius: 8px;
     font-size: 13px; line-height: 1.55; color: #7d4a5a; word-break: break-word; white-space: pre-wrap;
+    cursor: pointer; transition: background .15s;   /* v409：正文即编辑入口 */
   }
+  .drive-note-view:hover { background: #fff0f6; }
   .drive-point-del { border: none; background: transparent; color: #d98a8a; cursor: pointer; font-size: 14px; padding: 4px 9px; margin-left: 4px; border-radius: 8px; flex-shrink: 0; transition: background .15s; }
   .drive-point-del:hover { background: #ffe0e0; color: #c25f5f; }
   .drive-add-row { display: flex; gap: 8px; margin-top: 12px; }
@@ -16186,8 +16188,8 @@ function renderDriveLearn() {
     html += '<div class="drive-points">';
     sub.points.forEach(function (p, idx) {
       const key = ak + ':' + idx;
-      // v349：主人要求——未完成的知识点，备注文字直接以只读文本显示在下面（不是编辑框）；
-      // 点 ✏️ 才打开编辑框，保存后收回；标记学会（done）后文字才不显示
+      // v349/v409：备注正文平时只读显示在知识点下面；点正文（或📝）原地变成编辑框，不再另开小框；
+      // 编辑态点其他地方自动保存（onblur 静默），「保存/收起」按钮负责收回
       const editing = (window.__driveNoteOpen === key);
       html += '<div class="drive-point' + (p.done ? ' done' : '') + '">';
       html += '<span class="drive-point-check' + (p.done ? ' done' : '') + '" onclick="toggleDrivePoint(\'' + ak + '\',' + idx + ')">' + (p.done ? '✓' : '') + '</span>';
@@ -16195,17 +16197,16 @@ function renderDriveLearn() {
       html += '<button class="drive-point-note-btn' + (p.note ? ' has' : '') + '" type="button" title="给这条知识点加备注（记忆方法/注意要点）" onclick="toggleDrivePointNote(\'' + ak + '\',' + idx + ')">📝</button>';
       html += '<button class="drive-point-del" type="button" onclick="removeDrivePoint(\'' + ak + '\',' + idx + ')" title="删除这条">✕</button>';
       html += '</div>';
-      if (!p.done && p.note) {
-        html += '<div class="drive-note-view">' + escHtml(p.note) + '</div>';
-      }
       if (editing) {
         html += '<div class="drive-point-note">';
-        html += '<textarea class="drive-note-area" id="drive-point-note-' + ak + '-' + idx + '" placeholder="记下这个知识点的记忆方法、注意要点…">' + escHtml(p.note || '') + '</textarea>';
+        html += '<textarea class="drive-note-area" id="drive-point-note-' + ak + '-' + idx + '" placeholder="记下这个知识点的记忆方法、注意要点…" onblur="saveDrivePointNoteQuiet(\'' + ak + '\',' + idx + ', this.value)">' + escHtml(p.note || '') + '</textarea>';
         html += '<div class="drive-point-note-actions">';
         html += '<button class="drive-mini-btn" type="button" onclick="saveDrivePointNote(\'' + ak + '\',' + idx + ')">保存</button>';
         html += '<button class="drive-mini-btn" type="button" onclick="toggleDrivePointNote(\'' + ak + '\',' + idx + ')">收起</button>';
         html += '<span class="drive-note-saved" id="drive-pn-saved-' + ak + '-' + idx + '">已保存 ✓</span>';
         html += '</div></div>';
+      } else if (!p.done && p.note) {
+        html += '<div class="drive-note-view" title="点一下这段文字，直接在这里修改" onclick="toggleDrivePointNote(\'' + ak + '\',' + idx + ')">' + escHtml(p.note) + '</div>';
       }
     });
     html += '</div>';
@@ -16255,10 +16256,22 @@ function toggleAllDrivePoints(k, val) {
 window.__driveNoteOpen = null;
 function toggleDrivePointNote(k, idx) {
   ensureDriveLearn();
-  // v349：✏️ 只控制「编辑框」开/关；文字平时以只读显示在知识点下面，与编辑框无关
+  // v349/v409：📝 / 点正文都走这里——原地开编辑框，打开即聚焦到末尾直接开改
   const key = k + ':' + idx;
   window.__driveNoteOpen = (window.__driveNoteOpen === key) ? null : key;
   renderDriveLearn();
+  if (window.__driveNoteOpen) {
+    const ta = document.getElementById('drive-point-note-' + k + '-' + idx);
+    if (ta) {
+      try {
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        var grow = function () { ta.style.height = 'auto'; ta.style.height = Math.max(88, ta.scrollHeight) + 'px'; };
+        grow();
+        ta.addEventListener('input', grow);
+      } catch (e) {}
+    }
+  }
 }
 // 保存某条知识点的备注：v349 保存后编辑框收回，文字立刻以只读显示在知识点下面（主人明确要求）
 function saveDrivePointNote(k, idx) {
@@ -16271,6 +16284,18 @@ function saveDrivePointNote(k, idx) {
   try { hamiToast('✅ 已保存，文字显示在下面啦'); } catch (e) {}
   window.__driveNoteOpen = null;
   renderDriveLearn();
+}
+// v409：编辑框失焦静默保存——不收起不重渲；没改动就不碰数据/时间戳
+function saveDrivePointNoteQuiet(k, idx, val) {
+  ensureDriveLearn();
+  const sub = store.driveLearn.subjects[k];
+  if (!sub || !sub.points[idx]) return;
+  const nv = (val === undefined || val === null) ? '' : String(val);
+  if ((sub.points[idx].note || '') === nv) return;
+  sub.points[idx].note = nv;
+  touchDrive(); saveData();
+  const saved = document.getElementById('drive-pn-saved-' + k + '-' + idx);
+  if (saved) { saved.classList.add('show'); setTimeout(function () { saved.classList.remove('show'); }, 1500); }
 }
 // 保存科目整体备注（失焦触发）
 function saveDriveSubjectNote(k, val) {
