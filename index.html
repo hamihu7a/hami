@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-26-417">
+<meta name="hami-build" content="2026-10-27-418">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -10755,6 +10755,27 @@ function mergeStoreInto(local, remote) {
       return out;
     } catch (e) { return l; }
   }
+  // v2026-10-27：习惯/目标/技能「同一条命中」时的字段级合并（供下方 mergeStoreInto 调用）。
+  // 打卡态在 history/checks/steps 等「日期→状态」映射里，不能只升 done 布尔。
+  // 映射字段取并集（云端补本机缺失的日期键，本机已有保留）；标量本机空才补云端。
+  function mergePlanItem(l, r) {
+    if (!l || typeof l !== 'object') return r || l;
+    if (!r || typeof r !== 'object') return l;
+    ['history', 'steps', 'checks'].forEach(function (f) {
+      if (r[f] && typeof r[f] === 'object') {
+        if (!l[f] || typeof l[f] !== 'object') l[f] = {};
+        Object.keys(r[f]).forEach(function (dk) {
+          if (l[f][dk] == null || l[f][dk] === '') l[f][dk] = r[f][dk];
+        });
+      }
+    });
+    // 标量：本机空补云端（名称/周期/备注等）；本机已有值一律保留
+    ['cycleDays', 'lastWash', 'name', 'note', 'months', 'start', 'end'].forEach(function (f) {
+      if ((l[f] == null || l[f] === '') && r[f] != null && r[f] !== '') l[f] = r[f];
+    });
+    return l;
+  }
+
   // ====== 数据合并核心：本地优先并集（根治「刷新 / 同步丢数据」）======
   // 设计铁律：本地 localStorage 是绝对事实来源，云端只作为「补充」，绝不允许覆盖 / 删除本地已有记录。
   //  - 数组字段：双方并集，云端独有的记录并进来，本地记录一律保留（绝不整列替换 / 清空）；
@@ -10795,6 +10816,13 @@ function mergeStoreInto(local, remote) {
               const li = lv[hitIdx];
               if (it && typeof it === 'object' && li && typeof li === 'object') {
                 if (it.done === true && li.done !== true) li.done = true;
+                // v2026-10-27 修复「打卡跨设备不同步」：
+                // 习惯/目标/技能的打卡态在 history/steps/checks 等「日期→状态」映射里（非 done 字段），
+                // 旧逻辑命中同条只升 done，导致云端打卡记录合并不进来。
+                // 现对这类字段合并可变字段：映射取并集（云端补本机缺失日期），标量本机空补云端。
+                if (k === 'planHabits' || k === 'planGoals' || k === 'planSkills') {
+                  mergePlanItem(li, it);
+                }
               }
             } catch (e) {}
             return; // 不重复 push
@@ -10807,6 +10835,14 @@ function mergeStoreInto(local, remote) {
                && rv && typeof rv === 'object' && !Array.isArray(rv)) {
       // v340：学车进度这类「对象套数组」字段深合并，不再整体跳过（详见 mergeDriveLearn 注释）
       local[k] = mergeDriveLearn(lv, rv);
+    } else if (rv && typeof rv === 'object' && !Array.isArray(rv)
+               && lv && typeof lv === 'object' && !Array.isArray(lv)
+               && k !== 'driveLearn') {
+      // v2026-10-27 修复「学英语打卡跨设备不同步」：
+      // studyPlan（学习英语打卡）等普通对象字段，旧逻辑只在本地为空才补云端，
+      // 本地已有对象就整体忽略云端更新 → 打卡记录（checks[date]）永远合并不进来。
+      // 现做「只增不减深合并」：云端独有的子键（如某天打卡）补进来，本机已有值保留（本机优先）。
+      local[k] = deepMergeUnion(lv, rv);
     } else if (lv === undefined || lv === null) {
       // 本地该字段为空才用云端补充；本地已有值一律保留，绝不覆盖
       local[k] = rv;
