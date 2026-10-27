@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-27-418">
+<meta name="hami-build" content="2026-10-27-419">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -8383,6 +8383,7 @@ const WEEKLY_GOAL = 6;  // 每周健身目标天数
 // ==================== 数据 ====================
 let store = {
   _lastSavedAt: 0,    // 本地保存时间戳，用于与 IndexedDB 备份比较新旧
+  _fieldTs: {},       // v2026-10-27 字段级修改时间戳：标量字段（余额/锁定/目标体重等）跨设备「后者赢」判定依据
   weightGoal: null,   // 目标体重（斤），健康模块可设，用于进度环
   userTodos: [],      // 用户自定义待办 { date, text, done }
   growthLogs: [],     // v384 成长记录 { id, date, text, cat, minutes, createdAt }——今天学了什么
@@ -8685,6 +8686,34 @@ function hamiHistoryReset() {
   _hamiHistBaseline = _hamiStoreSnap();
   hamiHistoryRefreshBtns();
 }
+// v2026-10-27：存盘时给「本次真正改动的字段」盖字段级时间戳，供跨设备合并时标量「后者赢」判定。
+// 用 _hamiHistBaseline（上一次存盘后的快照）做差量比对，只给变化字段盖戳；未变化的字段时间戳不动，
+// 这样「本机没动过的字段」不会盖掉云端更晚的修改（避免并发编辑互相覆盖）。
+function _stampFieldTs() {
+  try {
+    if (!store._fieldTs || typeof store._fieldTs !== 'object') store._fieldTs = {};
+    const now = Date.now();
+    let prev = null;
+    try { if (_hamiHistBaseline) prev = JSON.parse(_hamiHistBaseline); } catch (e) {}
+    const keys = Object.keys(store);
+    if (!prev) {
+      // 没有基线（首次存盘）：给所有字段盖戳（后续合并以实际存盘先后为准）
+      keys.forEach(function (k) {
+        if (k === '_fieldTs' || k === '_lastSavedAt') return;
+        if (store._fieldTs[k] == null) store._fieldTs[k] = now;
+      });
+      return;
+    }
+    keys.forEach(function (k) {
+      if (k === '_fieldTs' || k === '_lastSavedAt') return;
+      let changed = true;
+      try {
+        if (k in prev) changed = JSON.stringify(prev[k]) !== JSON.stringify(store[k]);
+      } catch (e) { changed = true; }
+      if (changed) store._fieldTs[k] = now;
+    });
+  } catch (e) {}
+}
 // 就地还原（保持 store 同一个对象引用，避免其他模块抓到旧引用）
 function _hamiApplyStoreSnap(snap) {
   var obj;
@@ -8746,6 +8775,8 @@ function saveData(skipCloud) {
   if (_loadBroken) return;
   // v417：改动前的快照入撤销栈（云合并等内部存盘不算）
   try { hamiHistoryBeforeSave(!!skipCloud); } catch (e) {}
+  // v2026-10-27：给本次真正改动的字段盖字段级时间戳（必须在 hamiHistoryBeforeSave 之后、基线更新之前）
+  try { _stampFieldTs(); } catch (e) {}
   // 根治 userTodos 重复：每次保存前按「文本+分类」去重，保留最早创建的那条（done 状态取"完成"那条）。
   // 不论是早期 seed bug、云端多次合并，还是「删了又从云端拉回来」，都会在写入前被压平。
   try {
@@ -10521,16 +10552,23 @@ function deepMergeObjects(a, b) {
 //  · 两边都有的叶子值 → 保留本机非空值（本机刚改的不会被云端旧值回滚抹掉）
 //  · 云端空字符串 → 绝不覆盖本机真实值
 // 目的：双向下全集，任何一端记的东西都不会被另一端吃掉。
-function deepMergeUnion(a, b) {
+// v2026-10-27：deepMergeUnion 现额外接收顶层键 topKey 与合并双方 L/R，用于嵌套标量叶子按「字段级时间戳后者赢」。
+// 旧逻辑「两边都有值就保留本机」导致 accounts.big.followers 这类嵌套标量永远合并不进来——同一类漏洞。
+// 注意：fieldTs 只盖顶层键（如 accounts），故嵌套递归一律用 topKey 查时间戳（按整个对象粒度判后者赢）。
+function deepMergeUnion(a, b, topKey, L, R) {
   const out = Object.assign({}, a);
-  Object.keys(b || {}).forEach(function (k) {
-    const bv = b[k]; const av = out[k];
+  Object.keys(b || {}).forEach(function (bk) {
+    const bv = b[bk]; const av = out[bk];
     const bothObj = bv && typeof bv === 'object' && !Array.isArray(bv)
                  && av && typeof av === 'object' && !Array.isArray(av);
-    if (bothObj) { out[k] = deepMergeUnion(av, bv); return; }
+    if (bothObj) { out[bk] = deepMergeUnion(av, bv, topKey, L, R); return; }
     if (bv === '' || bv == null) return;                 // 云端空值不抹本机
-    if (av == null || av === '') { out[k] = bv; return; } // 本机为空 → 补云端
-    // 两边都有值：保留本机（本机改动会在 300ms 内推上云端，不会造成云端落后）
+    if (av == null || av === '') { out[bk] = bv; return; } // 本机为空 → 补云端
+    // 两边都有标量值：按该对象的字段级时间戳「后者赢」，保证嵌套标量（如账号粉丝数/简介）也能跨设备同步；
+    // 无时间戳（老数据）则保留本机，避免旧云端把本机新改动覆盖掉。
+    const lt = (L && L._fieldTs && L._fieldTs[topKey]) || 0;
+    const rt = (R && R._fieldTs && R._fieldTs[topKey]) || 0;
+    if (rt > lt) out[bk] = bv;
   });
   return out;
 }
@@ -10786,8 +10824,12 @@ function mergeStoreInto(local, remote) {
   Object.keys(remote).forEach(function (k) {
     // v206：体重本机标记（换算哨兵）不参与合并——否则「本机还是旧公斤档、云端已修好」
     // 会把这个标记学过来，让本机跳过一次性换算，旧公斤值就永远修不好了。
+    // v2026-10-27：扩展跳过清单——_fieldTs 单独合并；种子/哨兵/内部标记保持「本机赢」，不被云端旧值覆盖
     if (k === '_lastSavedAt' || k === '__deleted' || k === '__revoked' || k === '__forceRecover'
-        || k === 'weightJinFixV205' || k === 'weightUnitJinV1') return;
+        || k === 'weightJinFixV205' || k === 'weightUnitJinV1'
+        || k === '_fieldTs'
+        || k === 'weightSeedV1Applied' || k === 'screenshotSeedV1Applied' || k === 'tripSeedV1Applied'
+        || k === '_toiletSeedPurgedV1' || k === 'migratedGradDesign') return;
     const rv = remote[k];
     const lv = local[k];
     if (Array.isArray(rv)) {
@@ -10842,12 +10884,34 @@ function mergeStoreInto(local, remote) {
       // studyPlan（学习英语打卡）等普通对象字段，旧逻辑只在本地为空才补云端，
       // 本地已有对象就整体忽略云端更新 → 打卡记录（checks[date]）永远合并不进来。
       // 现做「只增不减深合并」：云端独有的子键（如某天打卡）补进来，本机已有值保留（本机优先）。
-      local[k] = deepMergeUnion(lv, rv);
+      local[k] = deepMergeUnion(lv, rv, k, local, remote);
+    } else if (typeof rv !== 'object' && typeof rv !== 'function' && k !== 'driveLearn') {
+      // v2026-10-27 修复「标量字段跨设备不同步」：余额(depositBalance)、锁定标记(depositLocked)、
+      // 起始体重(startWeight)、查看月份(weightCalMonth) 等是标量且带非空默认值(0/false/180/'')，
+      // 旧逻辑只在 local 为空才补云端 → 云端改过永远合并不进来。现按字段级时间戳「后者赢」：谁最后改谁赢，
+      // 保证手机/电脑任一端修改都能同步到另一端，且不互相覆盖未改动字段。
+      const lt = (local._fieldTs && local._fieldTs[k]) || 0;
+      const rt = (remote._fieldTs && remote._fieldTs[k]) || 0;
+      if (rt > lt) {
+        local[k] = rv;
+      } else if ((lv === undefined || lv === null || lv === '') && rt > 0) {
+        local[k] = rv;   // 本机仍为空且云端有值（含老数据无时间戳的情况）
+      }
     } else if (lv === undefined || lv === null) {
       // 本地该字段为空才用云端补充；本地已有值一律保留，绝不覆盖
       local[k] = rv;
     }
   });
+  // v2026-10-27：字段级时间戳并集（取较大者），供上方标量「后者赢」判定稳定收敛
+  try {
+    if (remote._fieldTs && typeof remote._fieldTs === 'object') {
+      if (!local._fieldTs || typeof local._fieldTs !== 'object') local._fieldTs = {};
+      Object.keys(remote._fieldTs).forEach(function (fk) {
+        const rv2 = remote._fieldTs[fk] || 0, lv2 = local._fieldTs[fk] || 0;
+        if (rv2 > lv2) local._fieldTs[fk] = rv2;
+      });
+    }
+  } catch (e) {}
   // 时间戳取较大者，保证下一次合并稳定收敛
   local._lastSavedAt = Math.max(localTs, remoteTs);
   return local;
@@ -14164,6 +14228,8 @@ function loadData() {
       // v2026-10-05 关键修复：刷新后必须恢复「上次保存时间戳」，否则 store._lastSavedAt 恒为 0，
       // 云端拉取合并时永远判「云端更新」→ 本地刚记的数据成了失败方，一旦云端缺字段就被整列清空（多重丢数据的真凶）。
       if (p._lastSavedAt) { try { store._lastSavedAt = p._lastSavedAt; } catch (e) {} }
+      // v2026-10-27：恢复字段级时间戳，否则刷新后标量合并会误判「本机更旧」而把本机改动覆盖掉
+      if (p._fieldTs && typeof p._fieldTs === 'object') { try { store._fieldTs = p._fieldTs; } catch (e) {} }
       if (p.customOrders !== undefined) store.customOrders = p.customOrders;
       if (p.modSales && Object.keys(p.modSales).length > 0) store.modSales = p.modSales;
       if (p.beautyRecords !== undefined) store.beautyRecords = p.beautyRecords;
