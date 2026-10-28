@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-28-420">
+<meta name="hami-build" content="2026-10-28-421">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1479,14 +1479,14 @@
   }
   .weight-cal-badge-num { font-size: 12px; font-weight: 700; color: #d14b73; line-height: 1.2; }
   .weight-cal-badge-label { font-size: 12px; color: #d14b73; line-height: 1.2; }
-  /* v420：打卡徽章旁的「本月增重/减重」板块：两行上下排、带底色保证文字可读；
-     margin-right 给右上角老鼠(U型枕)装饰留位，绝不挤到它 */
+  /* v421：打卡徽章旁的「本月净增/净减」单行小板块：只显示净结果（减了只显减重、增了只显增重），
+     紧跟打卡徽章同一行不换行；带浅底色保证文字可读 */
   .weight-cal-badge-updown {
-    text-align: left; padding: 2px 7px; border-radius: 6px;
+    text-align: center; padding: 2px 7px; border-radius: 6px;
     background: #fff7fa; border: 1px solid #f3d3df;
-    flex-shrink: 0; margin-right: 56px;
+    flex-shrink: 0; white-space: nowrap;
+    font-size: 12px; font-weight: 700; line-height: 1.35;
   }
-  .weight-cal-badge-updown .wcu-line { font-size: 12px; line-height: 1.35; font-weight: 700; white-space: nowrap; }
   .weight-cal-weekdays {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
     max-width: 560px; margin: 0 auto 4px;
@@ -4633,9 +4633,8 @@
       .weight-cal-nav, .weight-cal-today-badge { width: 20px; height: 20px; font-size: 11px; }
       .weight-cal-badge { padding: 1px 5px; border-radius: 5px; }
       .weight-cal-badge-num, .weight-cal-badge-label { font-size: 11px; }
-      /* v420：手机端增重/减重板块收一档，margin-right 仍给右上角老鼠装饰留位 */
-      .weight-cal-badge-updown { padding: 1px 5px; border-radius: 5px; margin-right: 50px; }
-      .weight-cal-badge-updown .wcu-line { font-size: 11px; }
+      /* v421：手机端净增/净减板块收一档，单行紧跟打卡徽章不换行 */
+      .weight-cal-badge-updown { padding: 1px 5px; border-radius: 5px; font-size: 11px; }
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
       .weight-cal-grid { gap: 1px; }
@@ -25251,22 +25250,13 @@ function renderDesktopWeight() {
     }
   }
 
-  // v420：本月累计增重/减重（相邻两次打卡差值的正负分开累加），显示在打卡徽章旁
-  let upSum = 0, downSum = 0;
-  for (let i = 1; i < monthWeights.length; i++) {
-    const a = getW(monthWeights[i]), b = getW(monthWeights[i-1]);
-    if (a != null && b != null) {
-      const df = a - b;
-      if (df > 0) upSum += df;
-      else if (df < 0) downSum += (-df);
-    }
-  }
-  const fmt1 = (n) => (Math.round(n * 10) / 10).toFixed(1);
-  const updownHtml = (monthWeights.length >= 2)
-    ? `<div class="weight-cal-badge-updown" title="本月累计增重/减重（相邻两次打卡差值累加）">
-        <div class="wcu-line" style="color:#e84a5f;">↑增重 ${fmt1(upSum)}斤</div>
-        <div class="wcu-line" style="color:#34c759;">↓减重 ${fmt1(downSum)}斤</div>
-      </div>`
+  // v421：本月净变化单行板块——减了只显「↓减重 X.X斤」、增了只显「↑增重 X.X斤」（沿用上方 monthChange 口径：月初→月末）
+  const updownHtml = (monthWeights.length >= 2 && monthChange && monthChange !== '—')
+    ? `<div class="weight-cal-badge-updown" style="color:${monthChangeColor};" title="本月净变化（月末 - 月初）">${
+        monthChange === '持平' ? '⚖ 持平'
+        : monthChange.startsWith('↑') ? '↑增重 ' + monthChange.slice(1)
+        : '↓减重 ' + monthChange.slice(1)
+      }</div>`
     : '';
 
   let html = '';
