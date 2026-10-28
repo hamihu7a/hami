@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-10-27-419">
+<meta name="hami-build" content="2026-10-28-420">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1479,6 +1479,14 @@
   }
   .weight-cal-badge-num { font-size: 12px; font-weight: 700; color: #d14b73; line-height: 1.2; }
   .weight-cal-badge-label { font-size: 12px; color: #d14b73; line-height: 1.2; }
+  /* v420：打卡徽章旁的「本月增重/减重」板块：两行上下排、带底色保证文字可读；
+     margin-right 给右上角老鼠(U型枕)装饰留位，绝不挤到它 */
+  .weight-cal-badge-updown {
+    text-align: left; padding: 2px 7px; border-radius: 6px;
+    background: #fff7fa; border: 1px solid #f3d3df;
+    flex-shrink: 0; margin-right: 56px;
+  }
+  .weight-cal-badge-updown .wcu-line { font-size: 12px; line-height: 1.35; font-weight: 700; white-space: nowrap; }
   .weight-cal-weekdays {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
     max-width: 560px; margin: 0 auto 4px;
@@ -1544,10 +1552,11 @@
     display: flex; justify-content: space-around; font-size: 12px; color: #7d4a5a;
     margin-top: 6px; padding-top: 4px; border-top: 1px dashed #ffe4ec;
   }
-  /* v72：图例说明那段长句不许转行——单行显示、溢出省略号，避免末尾"（本月N天）"被甩到第二行 */
+  /* v72：图例说明那段长句不许转行——单行显示、溢出省略号，避免末尾"（本月N天）"被甩到第二行；v420：主人要求居中 */
   .weight-cal-legend-fine {
     display: block; font-size: 11px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-align: center;
     opacity: .72;
   }
 
@@ -4624,6 +4633,9 @@
       .weight-cal-nav, .weight-cal-today-badge { width: 20px; height: 20px; font-size: 11px; }
       .weight-cal-badge { padding: 1px 5px; border-radius: 5px; }
       .weight-cal-badge-num, .weight-cal-badge-label { font-size: 11px; }
+      /* v420：手机端增重/减重板块收一档，margin-right 仍给右上角老鼠装饰留位 */
+      .weight-cal-badge-updown { padding: 1px 5px; border-radius: 5px; margin-right: 50px; }
+      .weight-cal-badge-updown .wcu-line { font-size: 11px; }
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
       .weight-cal-grid { gap: 1px; }
@@ -25239,6 +25251,24 @@ function renderDesktopWeight() {
     }
   }
 
+  // v420：本月累计增重/减重（相邻两次打卡差值的正负分开累加），显示在打卡徽章旁
+  let upSum = 0, downSum = 0;
+  for (let i = 1; i < monthWeights.length; i++) {
+    const a = getW(monthWeights[i]), b = getW(monthWeights[i-1]);
+    if (a != null && b != null) {
+      const df = a - b;
+      if (df > 0) upSum += df;
+      else if (df < 0) downSum += (-df);
+    }
+  }
+  const fmt1 = (n) => (Math.round(n * 10) / 10).toFixed(1);
+  const updownHtml = (monthWeights.length >= 2)
+    ? `<div class="weight-cal-badge-updown" title="本月累计增重/减重（相邻两次打卡差值累加）">
+        <div class="wcu-line" style="color:#e84a5f;">↑增重 ${fmt1(upSum)}斤</div>
+        <div class="wcu-line" style="color:#34c759;">↓减重 ${fmt1(downSum)}斤</div>
+      </div>`
+    : '';
+
   let html = '';
 
   // 顶部：月份标题 + 月统计徽章（使用 class，方便媒体查询收紧）
@@ -25252,6 +25282,7 @@ function renderDesktopWeight() {
       <div class="weight-cal-badge-num">${recordDays}/${totalDays}</div>
       <div class="weight-cal-badge-label">打卡</div>
     </div>
+    ${updownHtml}
   </div>`;
 
   // 星期表头
