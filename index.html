@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-423">
+<meta name="hami-build" content="2026-11-02-424">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -934,6 +934,19 @@
     70%  { box-shadow:0 0 0 12px rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
     100% { box-shadow:0 0 0 0 rgba(74,15,38,0), 0 2px 6px rgba(74,15,38,0.3); }
   }
+  /* v424：录音中（body.voice-bottom）——整条指令栏沉到页面最底部浮层，紧凑不挡内容；
+     停止录音（want=false）时由 setUI 摘掉该 class，自动回到顶部原样 */
+  body.voice-bottom #hami-cmd-bar {
+    top:auto; bottom:0;
+    border-radius:18px 18px 0 0; border-bottom:none;
+    border-top:2px solid #f5d0e0;
+    box-shadow:0 -4px 18px rgba(168,60,142,0.18);
+    padding:7px 12px; gap:6px;
+  }
+  body.voice-bottom #hami-cmd-bar .cmd-hist,
+  body.voice-bottom #hami-cmd-bar .cmd-meta { display:none; }
+  body.voice-bottom #hami-cmd-bar .cmd-input { background:#fef6f9; }
+  body.voice-bottom .main { padding-bottom:74px; }
   /* v347：主人反馈「不要一整条都跟着动」——撤销 v342 整条指令栏联动变色，
      录音态效果收回到按钮本身：.cmd-mic.recording 深酒红底+白图标+脉冲光圈已经够明显 */
   /* v342：浏览器不支持语音时，按钮抖一下变灰——点了必须有反应，不是「开了跟没开一样」 */
@@ -14067,10 +14080,12 @@ function hamiCmdAutosize() {
   var el = document.getElementById('hami-cmd-input');
   if (!el) return;
   try {
+    // v424：录音中沉到底部浮层时，输入框封顶更矮（72px），避免占用太多屏幕挡住主内容
+    var cap = document.body.classList.contains('voice-bottom') ? 72 : 96;
     el.style.height = 'auto';
-    var h = Math.min(el.scrollHeight, 96);
+    var h = Math.min(el.scrollHeight, cap);
     el.style.height = h + 'px';
-    el.style.overflowY = (el.scrollHeight > 96) ? 'auto' : 'hidden';
+    el.style.overflowY = (el.scrollHeight > cap) ? 'auto' : 'hidden';
   } catch (e) {}
 }
 document.addEventListener('DOMContentLoaded', function () {
@@ -27981,11 +27996,13 @@ setInterval(updateClock, 1000);
 // 例：说「8月14号吃饭花了24块钱」→ 自动记到 8月14日 的餐饮支出。
 var HamiVoice = (function () {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, want = false, holdStart = 0, tapMode = false, finalTxt = '', btn = null;
+  var rec = null, want = false, holdStart = 0, tapMode = false, finalAccum = '', btn = null;
 
   function inputEl() { return document.getElementById('hami-cmd-input'); }
   function setUI(on) {
     if (btn) { try { if (on) btn.classList.add('recording'); else btn.classList.remove('recording'); } catch (e) {} }
+    // v424：录音中（on=true）整条指令栏沉到页面底部浮层；停止录音（on=false）摘掉 class 自动回顶部原样
+    try { document.body.classList.toggle('voice-bottom', !!on); } catch (e) {}
     // v347：撤销整条指令栏联动（主人：「只要那个按住说话的图标有变化，不用一整条都跟着动」）——
     // 深色+脉冲动效都在 .cmd-mic.recording 上，效果聚焦于图标本身
     // v335：录音中同步把输入框占位符换成提示，双保险确认"语音已开启"
@@ -28005,11 +28022,16 @@ var HamiVoice = (function () {
       // v422：已松手/已发送后，Chrome 还会异步补发最后一次识别结果——
       // 旧代码照单全收，把刚清空的输入框又填回去，这就是「记录完文字还赖在框里」的根因。
       if (!want) return;
-      var txt = '';
-      for (var i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
-      finalTxt = txt;
+      // v424：累积识别——已确认的(final)逐段追加到 finalAccum 永久保留，
+      // 末尾再拼上当前正在说的(interim)；说话停顿后引擎换新的 interim 也不会抹掉前半句。
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var res = e.results[i];
+        if (res.isFinal) finalAccum += res[0].transcript;
+        else interim += res[0].transcript;
+      }
       var el = inputEl();
-      if (el) { el.value = txt; hamiCmdAutosize(); }
+      if (el) { el.value = finalAccum + interim; hamiCmdAutosize(); }
     };
     r.onerror = function (e) {
       var code = e && e.error;
@@ -28050,7 +28072,7 @@ var HamiVoice = (function () {
     }
     var r = ensure();
     if (!r) return;
-    finalTxt = '';
+    finalAccum = '';
     var el = inputEl();
     if (el) { el.value = ''; hamiCmdAutosize(); }
     want = true; tapMode = false; setUI(true);
@@ -28063,7 +28085,7 @@ var HamiVoice = (function () {
     want = false; tapMode = false; setUI(false);
     try { if (rec) rec.stop(); } catch (x) {}
     var el = inputEl();
-    var txt = (((el && el.value) || '') || finalTxt || '').trim();
+    var txt = (((el && el.value) || '').trim() || finalAccum || '').trim();
     if (!txt) { toast('🎤 没听清，靠近点再说一次试试~'); return; }
     // v422：微信式——松手后【不再自动发送】，文字留在框里给主人检查；
     // 确认没问题点「记一下」才真正记录（发送后由 sendHamiCmd 清空输入框）。
