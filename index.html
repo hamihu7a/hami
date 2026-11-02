@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-430">
+<meta name="hami-build" content="2026-11-02-431">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -3151,9 +3151,17 @@
   .arm-grid {
     padding: 14px 16px; overflow-y: auto;
     display: grid; grid-template-columns: repeat(5, 1fr);
-    gap: 10px; max-height: 36vh;
+    gap: 10px; max-height: 38vh;
     scrollbar-width: thin;
   }
+  .arm-cat-group {
+    grid-column: 1 / -1;
+    font-size: 12px; font-weight: 700; color: var(--c-text-2);
+    padding: 9px 2px 2px; margin-top: 2px;
+    border-top: 1px dashed rgba(255,107,158,0.3);
+    letter-spacing: 0.5px;
+  }
+  .arm-cat-group:first-child { border-top: none; padding-top: 0; }
   .arm-cat {
     display: flex; flex-direction: column; align-items: center;
     gap: 4px; padding: 6px 2px; border-radius: 14px;
@@ -20054,40 +20062,36 @@ const ICON_SVGS = {
   media: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="9" y="11" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 16 L21.5 18 L15.5 20 Z" fill="currentColor"/><path d="M27.5 14 Q30.5 18 27.5 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M29.5 12 Q34 18 29.5 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
 };
 
-// 支出分类（v430：按语义分簇连续排列——吃→用→数码→其他，相似分类聚在一起，不再散落）
+// 支出分类（v431：按语义分 group，渲染时插分组标题；原"其他"大杂烩已拆成 住行/成长健康/人情/娱乐，仅剩自媒体广告+其他兜底）
 const EXPENSE_CATEGORIES = [
-  // 🍽 吃
-  { key: 'buy_vege',  icon: 'bowl',     name: '买菜',     color: '#FF8FA3' },
-  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' },
-  { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4' },
-  { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
-  // 🛍 用（美妆护肤 / 穿戴 / 日用家居）
-  { key: 'beauty',    icon: 'lip',      name: '美妆',     color: '#FFC4D6' },
-  { key: 'skincare',  icon: 'bottle',   name: '护肤',     color: '#FF7E9C' },
-  { key: 'sanitary',  icon: 'bag',      name: '卫生巾',   color: '#FF9EC4' },
-  { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7' },
-  { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8' },
-  { key: 'home',      icon: 'sofa',     name: '家居',     color: '#C9B6E4' },
-  { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61' },
-  // 📱 数码电子
-  { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
-  { key: 'apps',      icon: 'aicon',    name: '应用软件', color: '#F08080' },
-  { key: 'call',      icon: 'phone2',   name: '通讯',     color: '#FF8551' },
-  { key: 'office',    icon: 'printer',  name: '办公',     color: '#F0C9B6' },
-  // 📦 其他（出行 / 事务 / 人际娱乐 / 兜底）
-  { key: 'housing',   icon: 'house',    name: '住房',     color: '#A0D8B3' },
-  { key: 'transport', icon: 'car',      name: '交通',     color: '#F8B88B' },
-  { key: 'car_expense', icon: 'car',    name: '车',       color: '#6FB1E0' },
-  { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3' },
-  { key: 'work',      icon: 'rocket',   name: '工作',     color: '#ff8c69' },
-  { key: 'study',     icon: 'book',     name: '学习',     color: '#FFD580' },
-  { key: 'medical',   icon: 'heart',    name: '医疗',     color: '#FFA07A' },
-  { key: 'social',    icon: 'people',   name: '人情',     color: '#FFB997' },
-  { key: 'sibling',   icon: 'people',   name: '家人',     color: '#FFC2D6' },
-  { key: 'fun',       icon: 'gamepad',  name: '娱乐',     color: '#FF9EBC' },
-  { key: 'mahjong',   icon: 'gamepad',  name: '打麻将',   color: '#FF9EBC' },
-  { key: 'media_ad',  icon: 'media',    name: '自媒体广告', color: '#FF4D7D' },
-  { key: 'other',     icon: 'star',     name: '其他',     color: '#c0c0c0' }
+  { key: 'buy_vege',  icon: 'bowl',     name: '买菜',     color: '#FF8FA3', group: '吃喝' },
+  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1', group: '吃喝' },
+  { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4', group: '吃喝' },
+  { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91', group: '吃喝' },
+  { key: 'beauty',    icon: 'lip',      name: '美妆',     color: '#FFC4D6', group: '美妆个护' },
+  { key: 'skincare',  icon: 'bottle',   name: '护肤',     color: '#FF7E9C', group: '美妆个护' },
+  { key: 'sanitary',  icon: 'bag',      name: '卫生巾',   color: '#FF9EC4', group: '美妆个护' },
+  { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7', group: '穿戴家居' },
+  { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8', group: '穿戴家居' },
+  { key: 'home',      icon: 'sofa',     name: '家居',     color: '#C9B6E4', group: '穿戴家居' },
+  { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61', group: '穿戴家居' },
+  { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5', group: '数码电子' },
+  { key: 'apps',      icon: 'aicon',    name: '应用软件', color: '#F08080', group: '数码电子' },
+  { key: 'call',      icon: 'phone2',   name: '通讯',     color: '#FF8551', group: '数码电子' },
+  { key: 'office',    icon: 'printer',  name: '办公',     color: '#F0C9B6', group: '数码电子' },
+  { key: 'housing',   icon: 'house',    name: '住房',     color: '#A0D8B3', group: '住行出行' },
+  { key: 'transport', icon: 'car',      name: '交通',     color: '#F8B88B', group: '住行出行' },
+  { key: 'car_expense', icon: 'car',    name: '车',       color: '#6FB1E0', group: '住行出行' },
+  { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3', group: '住行出行' },
+  { key: 'work',      icon: 'rocket',   name: '工作',     color: '#ff8c69', group: '成长健康' },
+  { key: 'study',     icon: 'book',     name: '学习',     color: '#FFD580', group: '成长健康' },
+  { key: 'medical',   icon: 'heart',    name: '医疗',     color: '#FFA07A', group: '成长健康' },
+  { key: 'social',    icon: 'people',   name: '人情',     color: '#FFB997', group: '人情往来' },
+  { key: 'sibling',   icon: 'people',   name: '家人',     color: '#FFC2D6', group: '人情往来' },
+  { key: 'fun',       icon: 'gamepad',  name: '娱乐',     color: '#FF9EBC', group: '休闲娱乐' },
+  { key: 'mahjong',   icon: 'gamepad',  name: '打麻将',   color: '#FF9EBC', group: '休闲娱乐' },
+  { key: 'media_ad',  icon: 'media',    name: '自媒体广告', color: '#FF4D7D', group: '其他' },
+  { key: 'other',     icon: 'star',     name: '其他',     color: '#c0c0c0', group: '其他' }
 ];
 
 // 收入分类
@@ -20329,7 +20333,12 @@ function refreshAddModal() {
   const grid = document.getElementById('arm-cat-grid');
   if (grid) {
     let html = '';
+    let lastGroup = null;
     cats.forEach(c => {
+      if (c.group && c.group !== lastGroup) {
+        lastGroup = c.group;
+        html += `<div class="arm-cat-group">${c.group}</div>`;
+      }
       const sel = addModalState.category === c.key;
       html += `<div class="arm-cat ${sel?'selected':''}" data-key="${c.key}" style="--cat-color:${c.color};"><div class="arm-cat-icon" style="${sel?'':('background:#f5e8ed;color:'+c.color+';')}">${ICON_SVGS[c.icon] || ''}</div><div class="arm-cat-name">${c.name}</div></div>`;
     });
