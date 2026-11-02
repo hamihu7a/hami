@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-429">
+<meta name="hami-build" content="2026-11-02-430">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -20054,35 +20054,39 @@ const ICON_SVGS = {
   media: '<svg viewBox="0 0 36 36" aria-hidden="true"><rect x="9" y="11" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 16 L21.5 18 L15.5 20 Z" fill="currentColor"/><path d="M27.5 14 Q30.5 18 27.5 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M29.5 12 Q34 18 29.5 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
 };
 
-// 支出分类
+// 支出分类（v430：按语义分簇连续排列——吃→用→数码→其他，相似分类聚在一起，不再散落）
 const EXPENSE_CATEGORIES = [
+  // 🍽 吃
   { key: 'buy_vege',  icon: 'bowl',     name: '买菜',     color: '#FF8FA3' },
-  { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61' },
-  { key: 'work',      icon: 'rocket',   name: '工作',     color: '#ff8c69' },
-  { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7' },
-  { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8' },
-  { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
+  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' },
+  { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4' },
+  { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
+  // 🛍 用（美妆护肤 / 穿戴 / 日用家居）
   { key: 'beauty',    icon: 'lip',      name: '美妆',     color: '#FFC4D6' },
   { key: 'skincare',  icon: 'bottle',   name: '护肤',     color: '#FF7E9C' },
   { key: 'sanitary',  icon: 'bag',      name: '卫生巾',   color: '#FF9EC4' },
+  { key: 'clothing',  icon: 'tshirt',   name: '服饰',     color: '#F4A4C7' },
+  { key: 'daily',     icon: 'bag',      name: '日用',     color: '#8FD3E8' },
+  { key: 'home',      icon: 'sofa',     name: '家居',     color: '#C9B6E4' },
+  { key: 'shopping',  icon: 'cart',     name: '购物',     color: '#FF6F61' },
+  // 📱 数码电子
+  { key: 'digital',   icon: 'phone',    name: '数码',     color: '#9DD0E5' },
   { key: 'apps',      icon: 'aicon',    name: '应用软件', color: '#F08080' },
+  { key: 'call',      icon: 'phone2',   name: '通讯',     color: '#FF8551' },
+  { key: 'office',    icon: 'printer',  name: '办公',     color: '#F0C9B6' },
+  // 📦 其他（出行 / 事务 / 人际娱乐 / 兜底）
   { key: 'housing',   icon: 'house',    name: '住房',     color: '#A0D8B3' },
   { key: 'transport', icon: 'car',      name: '交通',     color: '#F8B88B' },
   { key: 'car_expense', icon: 'car',    name: '车',       color: '#6FB1E0' },
-  { key: 'fun',       icon: 'gamepad',  name: '娱乐',     color: '#FF9EBC' },
-  { key: 'medical',   icon: 'heart',    name: '医疗',     color: '#FFA07A' },
-  { key: 'call',      icon: 'phone2',   name: '通讯',     color: '#FF8551' },
+  { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3' },
+  { key: 'work',      icon: 'rocket',   name: '工作',     color: '#ff8c69' },
   { key: 'study',     icon: 'book',     name: '学习',     color: '#FFD580' },
-  { key: 'office',    icon: 'printer',  name: '办公',     color: '#F0C9B6' },
-  { key: 'home',      icon: 'sofa',     name: '家居',     color: '#C9B6E4' },
+  { key: 'medical',   icon: 'heart',    name: '医疗',     color: '#FFA07A' },
   { key: 'social',    icon: 'people',   name: '人情',     color: '#FFB997' },
   { key: 'sibling',   icon: 'people',   name: '家人',     color: '#FFC2D6' },
-  { key: 'travel',    icon: 'suitcase', name: '旅行',     color: '#82C4C3' },
-  { key: 'drink',     icon: 'juice',    name: '饮料',     color: '#A5DEE4' },
-  { key: 'snack',     icon: 'burger',   name: '零食',     color: '#FFAB91' },
-  { key: 'food3meal', icon: 'egg',      name: '三餐',     color: '#FFB6C1' },
-  { key: 'media_ad',  icon: 'media',    name: '自媒体广告', color: '#FF4D7D' },
+  { key: 'fun',       icon: 'gamepad',  name: '娱乐',     color: '#FF9EBC' },
   { key: 'mahjong',   icon: 'gamepad',  name: '打麻将',   color: '#FF9EBC' },
+  { key: 'media_ad',  icon: 'media',    name: '自媒体广告', color: '#FF4D7D' },
   { key: 'other',     icon: 'star',     name: '其他',     color: '#c0c0c0' }
 ];
 
