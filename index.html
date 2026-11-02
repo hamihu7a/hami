@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-427">
+<meta name="hami-build" content="2026-11-02-428">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -958,9 +958,8 @@
   }
   body.voice-bottom #hami-cmd-bar .cmd-input {
     background:#fef6f9; min-height:48px; font-size:16px; line-height:1.45;
-    touch-action:manipulation; -webkit-user-select:none; user-select:none;  /* 长按说话时不弹出系统选字菜单 */
+    touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;  /* 长按说话时彻底屏蔽 iOS 放大镜/选字菜单 */
   }
-  body.voice-bottom #hami-cmd-bar .cmd-input:focus { -webkit-user-select:text; user-select:text; }  /* 短按打字恢复可选中可编辑 */
   body.voice-bottom .main { padding-bottom:130px; }
   /* v425：实时识别气泡——按住说话时浮在底栏上方，逐字显示 */
   .voice-bubble {
@@ -14097,7 +14096,16 @@ function sendHamiCmd() {
     const dateTip = (date !== today) ? ('（' + date + '）') : '';
     showCmdToast('✅ 已记录' + dateTip + where + '：' + txt);
     try { playSound('cmd'); } catch (e) {}
-    try { exitVoiceBottom(); } catch (e) {}   // v425：记录成功，底部语音面板收起回顶部
+    try {
+      if (!document.body.classList.contains('voice-bottom')) {
+        exitVoiceBottom();   // 顶部模式：记录成功收起语音态
+      } else {
+        // v428：底部语音面板保持打开，方便连续记录多条；只停录音态+清文字
+        if (window.HamiVoice && HamiVoice.listening) { try { HamiVoice.stop(); } catch (e2) {} }
+        var _el = document.getElementById('hami-cmd-input');
+        if (_el) { _el.value = ''; try { _el.style.userSelect = 'text'; } catch (_) {} hamiCmdAutosize(); }
+      }
+    } catch (e) {}
   } else {
     showCmdToast('🤔 没太听懂，换个说法试试，比如：\n· "昨天大姨妈来了"\n· "前天上了厕所"\n· "早饭花了12块"\n· "打车去公司18"\n· "体重88.5"\n· "跑了5公里"\n· "接单2单"\n· "灵感：做秋日特辑"\n· "生日妈妈农历九月初九"\n· "提醒我明天交电费"');
   }
@@ -28034,7 +28042,7 @@ setInterval(updateClock, 1000);
 // 例：说「8月14号吃饭花了24块钱」→ 自动记到 8月14日 的餐饮支出。
 var HamiVoice = (function () {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, want = false, finalAccum = '', lpTimer = null, isLongPress = false, btn = null;
+  var rec = null, want = false, finalAccum = '', lpTimer = null, holdActive = false, btn = null;
 
   function inputEl() { return document.getElementById('hami-cmd-input'); }
   function setUI(on) {
@@ -28103,27 +28111,28 @@ var HamiVoice = (function () {
     return r;
   }
 
-  function startVoice() {
-    if (!SR) {
-      // v342：不支持语音时给足反馈——按钮抖一下变灰 + 说人话的提示（含 iPhone 系统要求），
-      // 杜绝主人「点了没反应、开了跟没开一样」
-      toast('🎤 当前浏览器不支持语音输入（iPhone 需 iOS 16.4 以上，电脑用 Chrome/Edge）～先打字也能记');
-      try {
-        if (btn) {
-          btn.classList.add('voice-unsupported');
-          setTimeout(function () { try { btn.classList.remove('voice-unsupported'); } catch (e3) {} }, 1300);
-        }
-      } catch (e3) {}
-      return;
-    }
+  // v428：把"启动识别"抽出，返回是否成功（供按住/短按分支复用）。
+  // 关键：recognition.start() 必须在用户手势(指针按下)内【同步】调用，iOS 才开始收音、才会出字；
+  // 之前放在 350ms 定时器里，iOS 判定已脱离手势 → 长按没字。
+  function _beginVoice() {
+    if (!SR) return false;
     var r = ensure();
-    if (!r) return;
+    if (!r) return false;
     finalAccum = '';
     var el = inputEl();
     if (el) { el.value = ''; try { el.style.userSelect = 'none'; } catch (_) {} try { if (el.blur) el.blur(); } catch (_) {} hamiCmdAutosize(); }
     try { var vb = document.getElementById('voice-bubble-txt'); if (vb) vb.textContent = '听紧啦…说话就出现在这里'; } catch (e0) {}
-    want = true; setUI(true);
-    try { r.start(); } catch (x) {}
+    want = true;
+    try { r.start(); } catch (x) { want = false; return false; }
+    return true;
+  }
+  function startVoice() {
+    if (!_beginVoice()) {
+      toast('🎤 当前浏览器不支持语音输入（iPhone 需 iOS 16.4 以上，电脑用 Chrome/Edge）～先打字也能记');
+      try { if (btn) { btn.classList.add('voice-unsupported'); setTimeout(function () { try { btn.classList.remove('voice-unsupported'); } catch (e3) {} }, 1300); } } catch (e3) {}
+      return;
+    }
+    setUI(true);
     toast('🎤 开始听啦！按住说话，说完松手——文字留在下面改一改再点「记一下」');
   }
 
@@ -28132,33 +28141,47 @@ var HamiVoice = (function () {
     want = false; setUI(false);
     try { if (rec) rec.stop(); } catch (x) {}
     var el = inputEl();
-    if (el) { try { el.style.userSelect = ''; } catch (_) {} hamiCmdAutosize(); }
+    if (el) { try { el.style.userSelect = 'text'; } catch (_) {} hamiCmdAutosize(); }  // v428：松手后可点框改字（恢复可选中）
     var txt = (((el && el.value) || '').trim() || finalAccum || '').trim();
     if (!txt) { toast('🎤 没听清，靠近点再说一次试试~'); return; }
     // v426：松手后留在底部，点输入框可改字；点「记一下」记录并回顶部，点 ✕ 关闭回顶部
     toast('🎤 说完啦！点一下框可以改字，没问题点「记一下」就记上；不想记点 ✕ 关闭');
   }
 
-  // v426：底部空白输入框交互——短按=聚焦打字，长按(≥350ms)=语音转文字，松手留字可改
+  // v428：底部空白输入框——短按=聚焦打字/改字，长按(≥300ms)=语音转文字。
+  // 按下即【同步】启动识别(在手势内，iOS 才出字)；短按松手<300ms 中止并转打字；长按松手留字可改。
   function onBoxDown(e) {
     if (want) return;
-    isLongPress = false;
     var el = inputEl();
-    try { if (e && e.pointerId != null && el && el.setPointerCapture) el.setPointerCapture(e.pointerId); } catch (x) {}
+    try { if (el && e && e.pointerId != null && el.setPointerCapture) el.setPointerCapture(e.pointerId); } catch (x) {}
+    if (!SR) return;                       // 不支持语音：纯输入框，短按聚焦打字
+    if (!_beginVoice()) return;            // 启动失败(无权限等)也退化为打字
+    holdActive = false;
     if (lpTimer) clearTimeout(lpTimer);
     lpTimer = setTimeout(function () {
-      isLongPress = true;
-      try { if (el && el.blur) el.blur(); } catch (_) {}   // 收起键盘，准备听写
-      startVoice();
-    }, 350);
+      holdActive = true;
+      setUI(true);   // 确认是"长按"才显示录音态(深色+气泡)，短按不闪
+    }, 300);
   }
   function onBoxUp(e) {
     if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
-    if (isLongPress) { isLongPress = false; finishVoice(); }   // 松手结束录音，文字留框（短按不处理→textarea 自然聚焦打字）
+    if (!want) return;                     // 不支持语音：交给原生(短按聚焦打字)
+    if (holdActive) {
+      holdActive = false;
+      finishVoice();                       // 长按松手：结束录音，文字留框可改(保持底部)
+    } else {
+      holdActive = false;
+      try { if (rec) rec.abort(); } catch (x) {}   // 短按：中止识别，转打字/改字
+      want = false; setUI(false);
+      var el = inputEl();
+      if (el) { try { el.style.userSelect = 'text'; } catch (_) {} if (el.focus) { try { el.focus(); } catch (__){} } }
+    }
   }
   function onBoxCancel() {
     if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
-    if (isLongPress) { isLongPress = false; finishVoice(); }
+    if (!want) return;
+    if (holdActive) { holdActive = false; finishVoice(); }
+    else { holdActive = false; try { if (rec) rec.abort(); } catch (x) {} want = false; setUI(false); }
   }
   // v426：点顶部圆 mic = 进入底部语音模式（不录音，等主人在框里长按说话 / 短按打字）
   function enterVoiceBottom() {
