@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-428">
+<meta name="hami-build" content="2026-11-02-429">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -28042,7 +28042,7 @@ setInterval(updateClock, 1000);
 // 例：说「8月14号吃饭花了24块钱」→ 自动记到 8月14日 的餐饮支出。
 var HamiVoice = (function () {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, want = false, finalAccum = '', lpTimer = null, holdActive = false, btn = null;
+  var rec = null, want = false, finalAccum = '', lpTimer = null, holdActive = false, btn = null, manualBase = '';
 
   function inputEl() { return document.getElementById('hami-cmd-input'); }
   function setUI(on) {
@@ -28083,7 +28083,13 @@ var HamiVoice = (function () {
         else interim += res[0].transcript;
       }
       var el = inputEl();
-      if (el) { el.value = finalAccum + interim; hamiCmdAutosize(); }
+      if (el) {
+        // v429：语音结果追加到"手动已输入文字(manualBase)"之后，绝不清空已有的手动内容
+        var combined = finalAccum + interim;
+        var base = (manualBase || '');
+        el.value = base + (combined ? (base && !/[\s　]$/.test(base) ? ' ' : '') + combined : '');
+        hamiCmdAutosize();
+      }
       // v425：实时识别气泡——按住说话时说一个字出一个字
       try { var vb = document.getElementById('voice-bubble-txt'); if (vb) vb.textContent = (finalAccum + interim) || '听紧啦…说话就出现在这里'; } catch (e2) {}
     };
@@ -28120,7 +28126,8 @@ var HamiVoice = (function () {
     if (!r) return false;
     finalAccum = '';
     var el = inputEl();
-    if (el) { el.value = ''; try { el.style.userSelect = 'none'; } catch (_) {} try { if (el.blur) el.blur(); } catch (_) {} hamiCmdAutosize(); }
+    manualBase = (el && el.value) || '';   // v429：保存手动基准，绝不清空已有的手动文字
+    if (el) { try { el.style.userSelect = 'none'; } catch (_) {} try { if (el.blur) el.blur(); } catch (_) {} hamiCmdAutosize(); }
     try { var vb = document.getElementById('voice-bubble-txt'); if (vb) vb.textContent = '听紧啦…说话就出现在这里'; } catch (e0) {}
     want = true;
     try { r.start(); } catch (x) { want = false; return false; }
@@ -28151,6 +28158,8 @@ var HamiVoice = (function () {
   // v428：底部空白输入框——短按=聚焦打字/改字，长按(≥300ms)=语音转文字。
   // 按下即【同步】启动识别(在手势内，iOS 才出字)；短按松手<300ms 中止并转打字；长按松手留字可改。
   function onBoxDown(e) {
+    // v429：顶部模式(普通指令栏)的输入框就是原生打字框，完全不碰语音逻辑，绝不清空/绝不拦截
+    if (!document.body.classList.contains('voice-bottom')) return;
     if (want) return;
     var el = inputEl();
     try { if (el && e && e.pointerId != null && el.setPointerCapture) el.setPointerCapture(e.pointerId); } catch (x) {}
@@ -28161,7 +28170,7 @@ var HamiVoice = (function () {
     lpTimer = setTimeout(function () {
       holdActive = true;
       setUI(true);   // 确认是"长按"才显示录音态(深色+气泡)，短按不闪
-    }, 300);
+    }, 450);
   }
   function onBoxUp(e) {
     if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
@@ -28173,15 +28182,21 @@ var HamiVoice = (function () {
       holdActive = false;
       try { if (rec) rec.abort(); } catch (x) {}   // 短按：中止识别，转打字/改字
       want = false; setUI(false);
+      // v429：短按=聚焦打字/改字，绝不丢字——还原为按下时的手动文字，再聚焦光标
       var el = inputEl();
-      if (el) { try { el.style.userSelect = 'text'; } catch (_) {} if (el.focus) { try { el.focus(); } catch (__){} } }
+      if (el) { try { el.value = manualBase; } catch (_) {} try { el.style.userSelect = 'text'; } catch (_) {} if (el.focus) { try { el.focus(); } catch (__){} } hamiCmdAutosize(); }
     }
   }
   function onBoxCancel() {
     if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
     if (!want) return;
     if (holdActive) { holdActive = false; finishVoice(); }
-    else { holdActive = false; try { if (rec) rec.abort(); } catch (x) {} want = false; setUI(false); }
+    else {
+      holdActive = false; try { if (rec) rec.abort(); } catch (x) {} want = false; setUI(false);
+      // v429：短按被打断(如系统手势)，也要还原手动文字，避免丢字
+      var el = inputEl();
+      if (el) { try { el.value = manualBase; } catch (_) {} try { el.style.userSelect = 'text'; } catch (_) {} hamiCmdAutosize(); }
+    }
   }
   // v426：点顶部圆 mic = 进入底部语音模式（不录音，等主人在框里长按说话 / 短按打字）
   function enterVoiceBottom() {
