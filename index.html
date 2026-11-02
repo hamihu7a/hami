@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-426">
+<meta name="hami-build" content="2026-11-02-427">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -17060,22 +17060,23 @@ function refreshDisposableDisplay() {
   } catch (e) {}
   _lastDepositShown = cur;
   _skipAutoLinkMark = false;
-  // v221/v222：始终显示「最后手动修改时间」与「最后自动联动时间」两行，便于主人核对
+  // v221/v222：始终显示「最后手动修改」与「最后自动联动」两行，便于主人核对
+  // v427：主人嫌啰嗦——去掉所有括号解释，就两行短标签+时间，没值显示「无」
   const _modEl = document.getElementById('account-deposit-modified-at');
   if (_modEl) {
     if (store.depositLocked === true && store.depositLockModifiedAt) {
-      _modEl.textContent = '最后手动修改时间：' + fmtDepositModTime(store.depositLockModifiedAt) + '（此后更晚日期的账单才联动）';
+      _modEl.textContent = '最后手动修改：' + fmtDepositModTime(store.depositLockModifiedAt);
     } else {
-      _modEl.textContent = '最后手动修改时间：尚未手动修改（当前为本金+账单自动联动）';
+      _modEl.textContent = '最后手动修改：无';
     }
     _modEl.style.display = 'block';
   }
   const _linkEl = document.getElementById('account-deposit-autolink-at');
   if (_linkEl) {
     if (store.depositLastAutoLinkAt) {
-      _linkEl.textContent = '最后自动联动时间：' + fmtDepositModTime(store.depositLastAutoLinkAt);
+      _linkEl.textContent = '最后自动联动：' + fmtDepositModTime(store.depositLastAutoLinkAt);
     } else {
-      _linkEl.textContent = '最后自动联动时间：暂无（记新账后自动更新）';
+      _linkEl.textContent = '最后自动联动：无';
     }
     _linkEl.style.display = 'block';
   }
