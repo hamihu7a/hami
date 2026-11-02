@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-432">
+<meta name="hami-build" content="2026-11-02-433">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1585,8 +1585,14 @@
     max-width: 100%; overflow: hidden;
   }
   .weight-cal-change.weight-cal-change-empty { visibility: hidden; }
-  .weight-cal-ex { display: flex; gap: 1px; line-height: 1; align-items: center; }
+  .weight-cal-ex { display: flex; gap: 1px; line-height: 1; align-items: center; min-height: 13px; }
   .weight-cal-ex-dot { font-size: 8px; }
+  /* v433：如厕标志——已记录深粉实心、未记录浅灰空心（=没打卡的样子）；未来日期不渲染 */
+  .weight-cal-toilet { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+  .weight-cal-toilet svg { display: block; }
+  .weight-cal-toilet.done { filter: drop-shadow(0 1px 1px rgba(209,75,115,.28)); }
+  .weight-cal-legend-toilet { display: inline-flex; align-items: center; gap: 3px; }
+  .weight-cal-legend-toilet svg { display: block; }
   /* 旧 class 兼容：外部响应式块可能还引用 .weight-cal-stack / .weight-cal-weight */
   .weight-cal-stack { display: none !important; }
   .weight-cal-weight { font-size: 13px; font-weight: 800; color: #4a3340; background: transparent; }
@@ -25302,6 +25308,9 @@ function renderDesktopWeight() {
 
   const monthWeights = store.weightRecords.filter(w => w && w.date && w.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
   const monthExercises = store.exerciseRecords.filter(e => e.date.startsWith(month));
+  // v433：如厕记录映射（date → count），取代原三运动圆点；只读判断，绝不改动数据
+  const toiletMap = {};
+  (store.toiletRecords || []).forEach(r => { if (r && r.date) toiletMap[r.date] = (r.count != null ? r.count : 1); });
   // 没打卡的日子按「沿用最近一次真实体重」补出来的序列（只用于显示）
   const filledMap = buildFilledWeightMap();
 
@@ -25422,14 +25431,22 @@ function renderDesktopWeight() {
     // 体重文本（没称体重但已自动沿用前一天时，用浅色标出，和真实打卡区分）
     const weightText = (wv != null) ? wv.toFixed(1) : '';
 
-    // 3项运动打卡圆图标（●打卡 / ○未打卡），手机上通过 class 进一步缩小
-    let exIcons = '';
-    if (ex) {
-      exIcons += ex.aerobics ? '<span class="weight-cal-ex-dot" style="color:#e84a5f;">●</span>' : '<span class="weight-cal-ex-dot" style="color:#ddd;">○</span>';
-      exIcons += ex.cardio ? '<span class="weight-cal-ex-dot" style="color:#34c759;">●</span>' : '<span class="weight-cal-ex-dot" style="color:#ddd;">○</span>';
-      exIcons += ex.weights ? '<span class="weight-cal-ex-dot" style="color:#d14b73;">●</span>' : '<span class="weight-cal-ex-dot" style="color:#ddd;">○</span>';
-    } else if (!isFuture) {
-      exIcons = '<span class="weight-cal-ex-dot" style="color:#ddd;">○</span><span class="weight-cal-ex-dot" style="color:#ddd;">○</span><span class="weight-cal-ex-dot" style="color:#ddd;">○</span>';
+    // v433：原「健身操/有氧/器械」三圆点 → 改为「今天是否上厕所」单一标志。
+    // 已上厕所 = 深粉实心马桶图标；未上厕所 = 浅灰空心（= 没打卡的样子）；未来日期不显示。
+    let toiletIcon = '';
+    if (!isFuture) {
+      const _tc = toiletMap[dateStr];
+      const _didToilet = (_tc != null && _tc > 0);
+      toiletIcon = _didToilet
+        ? '<span class="weight-cal-toilet done" title="' + dateStr + ' 已上厕所' + (_tc > 1 ? '（' + _tc + '次）' : '') + '">'
+          + '<svg viewBox="0 0 24 24" width="13" height="13" fill="#d14b73" aria-hidden="true">'
+          + '<path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/>'
+          + '<circle cx="10.4" cy="12.9" r="1.05" fill="#fff"/><circle cx="14.2" cy="12.9" r="1.05" fill="#fff"/>'
+          + '</svg></span>'
+        : '<span class="weight-cal-toilet" title="' + dateStr + ' 未记录上厕所">'
+          + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#d9cdd3" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">'
+          + '<path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/>'
+          + '</svg></span>';
     }
 
     const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1px rgba(240,192,64,.25);' : '';
@@ -25444,18 +25461,17 @@ function renderDesktopWeight() {
       <div class="${mainCls}">${weightText || '—'}</div>
       <div class="weight-cal-foot">
         <span class="${changeCls}" style="color:${changeColor};">${changeText || '—'}</span>
-        <span class="weight-cal-ex">${exIcons}</span>
+        <span class="weight-cal-ex">${toiletIcon}</span>
       </div>
     </div>`;
   }
 
   html += `</div></div>`;
 
-  // 图例
+  // 图例（v433：原三运动圆点图例 → 上厕所标志图例）
   html += `<div class="weight-cal-legend">
-    <span><span style="color:#e84a5f;">●</span>健身操</span>
-    <span><span style="color:#34c759;">●</span>有氧</span>
-    <span><span style="color:#d14b73;">●</span>器械</span>
+    <span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" fill="#d14b73" aria-hidden="true"><path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/><circle cx="10.4" cy="12.9" r="1.05" fill="#fff"/><circle cx="14.2" cy="12.9" r="1.05" fill="#fff"/></svg>已上厕所</span>
+    <span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#c9b8c1" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/></svg>未记录</span>
   </div>`;
 
   // 提示：本月有几天是"自动沿用前一天"补上的（浅色数字）
