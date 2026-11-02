@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-422">
+<meta name="hami-build" content="2026-11-02-423">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -17058,7 +17058,7 @@ function hamiHelpModDateFor(box) {
   return HAMI_HELP_MOD_DATES[key] || HAMI_HELP_MOD_DEFAULT;
 }
 // v224：把所有 .tip-box（各版面「使用说明/使用方法」长文字）折叠成「📖 使用说明」按键，平时只留按键、点击才展开原文
-// v225：折叠行右侧补上「最后修改日期：X月X日」；并把带 data-hami-help-auto 的说明文字（如可支配余额那段灰字）一并折叠
+// v225：折叠行右侧补上「说明更新：X月X日」（v423 措辞，原「最后修改日期」易与余额修改时间混淆）；并把带 data-hami-help-auto 的说明文字（如可支配余额那段灰字）一并折叠
 function initHelpToggles() {
   var boxes = document.querySelectorAll('.tip-box, [data-hami-help-auto]');
   for (var i = 0; i < boxes.length; i++) {
@@ -17074,7 +17074,7 @@ function initHelpToggles() {
     btn.textContent = '使用说明';
     var dateEl = document.createElement('span');
     dateEl.className = 'hami-help-date';
-    dateEl.textContent = '【最后修改日期：' + fmtHelpModDate(hamiHelpModDateFor(box)) + '】';
+    dateEl.textContent = '【说明更新：' + fmtHelpModDate(hamiHelpModDateFor(box)) + '】';
     row.appendChild(btn);
     row.appendChild(dateEl);
     var body = document.createElement('div');
