@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-425">
+<meta name="hami-build" content="2026-11-02-426">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -937,7 +937,7 @@
   /* v425：录音中（body.voice-bottom）——整条指令栏沉到页面最底部浮层；
      停止录音回顶部？不——v425 按主人要求：松手后【停留底部】可修改文字，点「记一下」或 ✕ 才回顶部；
      底部加 safe-area（手机屏幕圆角/小白条不再挡按键） */
-  .hami-cmd-bar .voice-hold, .hami-cmd-bar .cmd-close { display:none; }
+  body:not(.voice-bottom) #hami-cmd-bar .cmd-close { display:none; }   /* 只在底部语音模式显示关闭键 */
   body.voice-bottom #hami-cmd-bar {
     top:auto; bottom:0;
     border-radius:18px 18px 0 0; border-bottom:none;
@@ -948,22 +948,7 @@
   }
   body.voice-bottom #hami-cmd-bar .cmd-hist,
   body.voice-bottom #hami-cmd-bar .cmd-meta { display:none; }
-  body.voice-bottom #hami-cmd-bar .cmd-mic { display:none; }   /* 顶部圆 mic 隐藏，由大按钮接管 */
-  body.voice-bottom #hami-cmd-bar .voice-hold {
-    display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    width:auto; height:46px; min-height:46px; padding:0 14px; border:none;
-    border-radius:23px; background:#4a0f26; color:#fff;
-    font-size:14px; font-weight:700; white-space:nowrap; flex-shrink:0;
-    touch-action:none; -webkit-touch-callout:none;
-    -webkit-user-select:none; user-select:none;
-    box-shadow:0 2px 8px rgba(74,15,38,0.3);
-  }
-  body.voice-bottom #hami-cmd-bar .voice-hold svg { display:block; }
-  body.voice-bottom #hami-cmd-bar .voice-hold.recording,
-  body.voice-bottom #hami-cmd-bar .voice-hold.recording:hover,
-  body.voice-bottom #hami-cmd-bar .voice-hold.recording:active {
-    background:#2b0715; color:#fff; animation:hami-mic-pulse-dark 1.2s infinite;
-  }
+  body.voice-bottom #hami-cmd-bar .cmd-mic { display:none; }   /* 顶部圆 mic 隐藏，底部用空白输入框直接交互 */
   body.voice-bottom #hami-cmd-bar .cmd-close {
     display:inline-flex; align-items:center; justify-content:center;
     width:42px; height:42px; min-width:42px; border:none; border-radius:50%;
@@ -971,7 +956,11 @@
     cursor:pointer; flex-shrink:0;
     box-shadow:0 2px 6px rgba(184,53,87,0.12);
   }
-  body.voice-bottom #hami-cmd-bar .cmd-input { background:#fef6f9; min-height:44px; }
+  body.voice-bottom #hami-cmd-bar .cmd-input {
+    background:#fef6f9; min-height:48px; font-size:16px; line-height:1.45;
+    touch-action:manipulation; -webkit-user-select:none; user-select:none;  /* 长按说话时不弹出系统选字菜单 */
+  }
+  body.voice-bottom #hami-cmd-bar .cmd-input:focus { -webkit-user-select:text; user-select:text; }  /* 短按打字恢复可选中可编辑 */
   body.voice-bottom .main { padding-bottom:130px; }
   /* v425：实时识别气泡——按住说话时浮在底栏上方，逐字显示 */
   .voice-bubble {
@@ -6695,22 +6684,13 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
   <textarea class="cmd-input" id="hami-cmd-input" rows="1"
     placeholder=""
     autocomplete="off" spellcheck="false"></textarea>
-  <button class="cmd-mic" id="hami-cmd-mic" title="按住说话，松手后文字留在框里，检查后点「记一下」；也可以点一下开始，说完再点一下结束" aria-label="语音记录">
+  <button class="cmd-mic" id="hami-cmd-mic" title="点一下进入语音输入：底部弹出输入框，长按说话、松手改字、点「记一下」记录；或直接点输入框打字" aria-label="语音输入">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
       <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
       <line x1="12" y1="19" x2="12" y2="23"></line>
       <line x1="8" y1="23" x2="16" y2="23"></line>
     </svg>
-  </button>
-  <!-- v425：微信式「按住说话」大按钮——只在录音模式（沉到底部）显示；顶部圆 mic 此时隐藏 -->
-  <button class="voice-hold" id="hami-voice-hold" type="button" aria-label="按住说话" title="按住说话，松手后文字可修改，再点「记一下」">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-      <line x1="12" y1="19" x2="12" y2="23"></line>
-      <line x1="8" y1="23" x2="16" y2="23"></line>
-    </svg><span>按住说话</span>
   </button>
   <button class="cmd-send" id="hami-cmd-send" onclick="sendHamiCmd()">记一下</button>
   <button class="cmd-close" id="hami-cmd-close" type="button" onclick="exitVoiceBottom()" aria-label="关闭语音输入" title="关闭语音输入，回到顶部">✕</button>
@@ -28053,27 +28033,23 @@ setInterval(updateClock, 1000);
 // 例：说「8月14号吃饭花了24块钱」→ 自动记到 8月14日 的餐饮支出。
 var HamiVoice = (function () {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, want = false, holdStart = 0, tapMode = false, finalAccum = '', btn = null;
+  var rec = null, want = false, finalAccum = '', lpTimer = null, isLongPress = false, btn = null;
 
   function inputEl() { return document.getElementById('hami-cmd-input'); }
   function setUI(on) {
-    // v425：顶部圆 mic + 底部「按住说话」大按钮都要跟着录音态变色
+    // v426：顶部圆 mic 跟着录音态变色（深色+脉冲在 .cmd-mic.recording 上）
     try {
-      var mics = document.querySelectorAll('.cmd-mic, .voice-hold');
-      for (var mi = 0; mi < mics.length; mi++) {
-        if (on) mics[mi].classList.add('recording'); else mics[mi].classList.remove('recording');
-      }
+      var mic = document.getElementById('hami-cmd-mic');
+      if (mic) { if (on) mic.classList.add('recording'); else mic.classList.remove('recording'); }
     } catch (e) {}
-    // v425：voice-recording=录音中（气泡显示）；voice-bottom=语音面板沉底部——
-    // 开始录音时沉下去，松手后【保留在底部】给主人改字；点「记一下」成功或 ✕ 关闭才回顶部
+    // v426：voice-recording=录音中（气泡显示）。voice-bottom（浮层沉底）由 enter/exit 控制，这里不碰——
+    // 开始录音时已在底部；松手后【保留底部】给主人改字；点「记一下」成功或 ✕ 才回顶部
+    try { document.body.classList.toggle('voice-recording', !!on); } catch (e) {}
+    // 录音中把输入框占位符换成提示；平时底部模式显示「可按住转文字」
     try {
-      document.body.classList.toggle('voice-recording', !!on);
-      if (on) document.body.classList.add('voice-bottom');
+      var el = inputEl();
+      if (el) el.setAttribute('placeholder', on ? '🎤 录音中…松手后文字留在框里可改' : '可按住转文字');
     } catch (e) {}
-    // v347：撤销整条指令栏联动（主人：「只要那个按住说话的图标有变化，不用一整条都跟着动」）——
-    // 深色+脉冲动效都在 .cmd-mic.recording 上，效果聚焦于图标本身
-    // v335：录音中同步把输入框占位符换成提示，双保险确认"语音已开启"
-    try { var el = inputEl(); if (el) el.setAttribute('placeholder', on ? '🎤 录音中…说完松手，先看看再记' : ''); } catch (e) {}
   }
   function toast(msg) { try { showCmdToast(msg); } catch (e) { try { hamiToast(msg); } catch (e2) {} } }
 
@@ -28143,67 +28119,65 @@ var HamiVoice = (function () {
     if (!r) return;
     finalAccum = '';
     var el = inputEl();
-    if (el) { el.value = ''; hamiCmdAutosize(); }
+    if (el) { el.value = ''; try { el.style.userSelect = 'none'; } catch (_) {} try { if (el.blur) el.blur(); } catch (_) {} hamiCmdAutosize(); }
     try { var vb = document.getElementById('voice-bubble-txt'); if (vb) vb.textContent = '听紧啦…说话就出现在这里'; } catch (e0) {}
-    want = true; tapMode = false; setUI(true);
+    want = true; setUI(true);
     try { r.start(); } catch (x) {}
     toast('🎤 开始听啦！按住说话，说完松手——文字留在下面改一改再点「记一下」');
   }
 
   function finishVoice() {
     if (!want) return;
-    want = false; tapMode = false; setUI(false);
+    want = false; setUI(false);
     try { if (rec) rec.stop(); } catch (x) {}
     var el = inputEl();
+    if (el) { try { el.style.userSelect = ''; } catch (_) {} hamiCmdAutosize(); }
     var txt = (((el && el.value) || '').trim() || finalAccum || '').trim();
     if (!txt) { toast('🎤 没听清，靠近点再说一次试试~'); return; }
-    // v422：微信式——松手后【不再自动发送】，文字留在框里给主人检查；
-    // v425：松手后停在底部，点输入框可修改；点「记一下」记录，点 ✕ 关闭回顶部。
-    if (el) hamiCmdAutosize();
-    toast('🎤 说完啦！点输入框可以改字，没问题点「记一下」就记上；不想记点 ✕ 关闭');
+    // v426：松手后留在底部，点输入框可改字；点「记一下」记录并回顶部，点 ✕ 关闭回顶部
+    toast('🎤 说完啦！点一下框可以改字，没问题点「记一下」就记上；不想记点 ✕ 关闭');
   }
 
-  function onDown(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    if (want) { finishVoice(); return; }   // 录音中再按 = 结束
-    // v350：按下时把指针锁在本按钮上——主人按住时手指/鼠标稍微滑出 1 像素，
-    // 之前会触发 pointerleave → finishVoice，深色瞬间被熄灭，看起来就是「点了没变深」（真实浏览器已复现）。
-    // 锁定后滑动不再触发离开，松手 pointerup 仍会派发到本按钮。
-    var b = (e && e.currentTarget) || btn;
-    try { if (b && e && e.pointerId != null && b.setPointerCapture) b.setPointerCapture(e.pointerId); } catch (x) {}
-    holdStart = Date.now();
-    startVoice();
+  // v426：底部空白输入框交互——短按=聚焦打字，长按(≥350ms)=语音转文字，松手留字可改
+  function onBoxDown(e) {
+    if (want) return;
+    isLongPress = false;
+    var el = inputEl();
+    try { if (e && e.pointerId != null && el && el.setPointerCapture) el.setPointerCapture(e.pointerId); } catch (x) {}
+    if (lpTimer) clearTimeout(lpTimer);
+    lpTimer = setTimeout(function () {
+      isLongPress = true;
+      try { if (el && el.blur) el.blur(); } catch (_) {}   // 收起键盘，准备听写
+      startVoice();
+    }, 350);
   }
-  function onUp(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!want) return;
-    if (Date.now() - holdStart >= 700) finishVoice();   // 按住 ≥0.7 秒：松手结束录音（留在底部可改字）
-    else { tapMode = true; toast('🎤 继续说…说完了再点一下「按住说话」'); }  // 轻点：进入免按模式
+  function onBoxUp(e) {
+    if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+    if (isLongPress) { isLongPress = false; finishVoice(); }   // 松手结束录音，文字留框（短按不处理→textarea 自然聚焦打字）
   }
-  // v350：移除 pointerleave 监听——它是「图标不变深」的元凶（按下后稍微滑动就被结束），
-  // setPointerCapture 后不再需要；松手/取消由 pointerup/pointercancel 兑底
-  // v425：顶部圆 mic 和底部「按住说话」大按钮绑同一套按住逻辑
+  function onBoxCancel() {
+    if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+    if (isLongPress) { isLongPress = false; finishVoice(); }
+  }
+  // v426：点顶部圆 mic = 进入底部语音模式（不录音，等主人在框里长按说话 / 短按打字）
+  function enterVoiceBottom() {
+    try { document.body.classList.add('voice-bottom'); } catch (e) {}
+    try { var el = inputEl(); if (el) { el.setAttribute('placeholder', '可按住转文字'); hamiCmdAutosize(); } } catch (e) {}
+  }
+  // v350：移除 pointerleave 监听——按下后滑动不再误触发结束；松手/取消由 pointerup/pointercancel 兜底
   function bind() {
-    var ids = ['hami-cmd-mic', 'hami-voice-hold'];
-    btn = null;
-    for (var bi = 0; bi < ids.length; bi++) {
-      var b = document.getElementById(ids[bi]);
-      if (!b) continue;
-      if (!btn) btn = b;
-      if (window.PointerEvent) {
-        b.addEventListener('pointerdown', onDown);
-        b.addEventListener('pointerup', onUp);
-        b.addEventListener('pointercancel', onUp);
-      } else {
-        b.addEventListener('touchstart', function (e) { e.preventDefault(); onDown(e); }, false);
-        b.addEventListener('touchend', function (e) { e.preventDefault(); onUp(e); }, false);
-        b.addEventListener('mousedown', onDown);
-        b.addEventListener('mouseup', onUp);
-      }
-      b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-      b.addEventListener('click', function (e) { e.preventDefault(); });
+    var mic = document.getElementById('hami-cmd-mic');
+    if (mic) {
+      btn = mic;
+      mic.addEventListener('click', function (e) { if (e && e.preventDefault) e.preventDefault(); enterVoiceBottom(); });
     }
-    if (!btn) return;
+    var el = inputEl();
+    if (el) {
+      el.addEventListener('pointerdown', onBoxDown);
+      el.addEventListener('pointerup', onBoxUp);
+      el.addEventListener('pointercancel', onBoxCancel);
+      el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
@@ -28216,7 +28190,7 @@ var HamiVoice = (function () {
 function exitVoiceBottom() {
   try { if (window.HamiVoice && HamiVoice.listening) HamiVoice.stop(); } catch (e) {}
   try { document.body.classList.remove('voice-bottom', 'voice-recording'); } catch (e) {}
-  try { var el = document.getElementById('hami-cmd-input'); if (el && el.blur) el.blur(); } catch (e) {}
+  try { var el = document.getElementById('hami-cmd-input'); if (el) { if (el.blur) el.blur(); try { el.style.userSelect = ''; } catch (_) {} } } catch (e) {}
   try { hamiCmdAutosize(); } catch (e) {}
 }
 </script>
