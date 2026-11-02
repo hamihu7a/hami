@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-433">
+<meta name="hami-build" content="2026-11-02-434">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -1543,7 +1543,7 @@
     position: relative; z-index: 1;
   }
   .weight-cal-cell {
-    height: 60px; min-width: 0; padding: 3px 2px 2px;
+    height: 70px; min-width: 0; padding: 4px 2px 3px;
     border: 1px solid #f5e8ee; border-radius: 8px; background: #ffffff;
     display: flex; flex-direction: column; align-items: stretch;
     box-sizing: border-box; overflow: hidden; cursor: pointer;
@@ -1577,7 +1577,7 @@
   /* v401：涨跌+运动圆点恢复竖排两行（v385 横排是未经确认的改动，主人要求增减与打卡圆点分开两行） */
   .weight-cal-foot {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 3px; min-height: 14px; padding: 0 1px;
+    gap: 4px; min-height: 20px; padding: 0 1px;
   }
   .weight-cal-change {
     font-size: 9px; font-weight: 700; line-height: 1;
@@ -1590,7 +1590,7 @@
   /* v433：如厕标志——已记录深粉实心、未记录浅灰空心（=没打卡的样子）；未来日期不渲染 */
   .weight-cal-toilet { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
   .weight-cal-toilet svg { display: block; }
-  .weight-cal-toilet.done { filter: drop-shadow(0 1px 1px rgba(209,75,115,.28)); }
+  .weight-cal-toilet.done { filter: drop-shadow(0 1px 1px rgba(95,174,127,.35)); }
   .weight-cal-legend-toilet { display: inline-flex; align-items: center; gap: 3px; }
   .weight-cal-legend-toilet svg { display: block; }
   /* 旧 class 兼容：外部响应式块可能还引用 .weight-cal-stack / .weight-cal-weight */
@@ -4687,8 +4687,10 @@
       .weight-cal-badge-updown { padding: 1px 5px; border-radius: 5px; font-size: 11px; }
       .weight-cal-weekdays { gap: 1px; }
       .weight-cal-weekdays > div { font-size: 10px; }
-      .weight-cal-grid { gap: 1px; }
-      .weight-cal-cell { height: 54px !important; border-radius: 6px; padding: 1px 0 1px !important; }
+      .weight-cal-grid { gap: 2px; }
+      /* v433b：格子加高+padding 放开，数字上下有呼吸感，涨跌行不再被卡扁 */
+      .weight-cal-cell { height: 66px !important; border-radius: 7px; padding: 3px 1px 2px !important; }
+      .weight-cal-foot { gap: 4px !important; min-height: 18px !important; }
       .weight-cal-day { font-size: 10px !important; }
       .weight-cal-main { font-size: 11px !important; }
       /* v199：体重单位改斤后数字变 5 位（如 177.8），按位数自动收字号，保证数字完整落在格子里 */
@@ -4842,7 +4844,7 @@
       grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
       gap: 2px !important;
     }
-    .weight-cal-cell { height: 52px !important; padding: 2px 2px !important; }
+    .weight-cal-cell { height: 64px !important; padding: 3px 2px !important; }
     .weight-cal-day { font-size: 12px !important; }
     .weight-cal-main { font-size: 13px !important; }
     /* 表格/卡片恢复桌面 padding */
@@ -4897,7 +4899,7 @@
       grid-column: 1 / -1;
     }
     .weight-cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 2px !important; }
-    .weight-cal-cell { height: 52px !important; }
+    .weight-cal-cell { height: 64px !important; }
     .weight-cal-day { font-size: 11px !important; }
     .weight-cal-main { font-size: 12px !important; }
     th, td { padding: 5px 4px; }
@@ -4965,7 +4967,7 @@
     gap: 2px !important; overflow-x: auto !important;
   }
   body.hami-force-desktop .weight-cal-cell {
-    height: 52px !important; padding: 2px 2px !important; min-width: 0;
+    height: 64px !important; padding: 3px 2px !important; min-width: 0;
   }
   body.hami-force-desktop .weight-cal-day { font-size: 11px !important; line-height: 1.1 !important; }
   body.hami-force-desktop .weight-cal-main { font-size: 13px !important; line-height: 1.1 !important; }
@@ -5076,7 +5078,7 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 2px !important;
   }
-  body.hami-force-narrow .weight-cal-cell { height: 52px !important; padding: 2px 1px !important; }
+  body.hami-force-narrow .weight-cal-cell { height: 64px !important; padding: 3px 1px !important; }
   body.hami-force-narrow .weight-cal-day { font-size: 11px !important; }
   body.hami-force-narrow .weight-cal-main { font-size: 12px !important; }
   body.hami-force-narrow .weight-cal-weight { font-size: 10px !important; }
@@ -5165,7 +5167,7 @@
     grid-template-columns: repeat(7, minmax(50px, 1fr)) !important;
     gap: 3px !important;
   }
-  body.hami-force-mini .weight-cal-cell { height: 62px !important; padding: 2px 2px !important; }
+  body.hami-force-mini .weight-cal-cell { height: 66px !important; padding: 3px 2px !important; }
   body.hami-force-mini .weight-cal-day { font-size: 12px !important; }
   body.hami-force-mini .weight-cal-main { font-size: 13px !important; }
   body.hami-force-mini .weight-cal-weight { font-size: 11px !important; padding: 0 3px; }
@@ -25431,21 +25433,21 @@ function renderDesktopWeight() {
     // 体重文本（没称体重但已自动沿用前一天时，用浅色标出，和真实打卡区分）
     const weightText = (wv != null) ? wv.toFixed(1) : '';
 
-    // v433：原「健身操/有氧/器械」三圆点 → 改为「今天是否上厕所」单一标志。
-    // 已上厕所 = 深粉实心马桶图标；未上厕所 = 浅灰空心（= 没打卡的样子）；未来日期不显示。
+    // v433b：如厕标志改为「圆底徽章 + 白色对勾」——已上厕所=清新绿实心圆白勾（一眼看清），
+    // 未记录=浅灰空心圆（像没打卡的样子）；未来日期不显示。
     let toiletIcon = '';
     if (!isFuture) {
       const _tc = toiletMap[dateStr];
       const _didToilet = (_tc != null && _tc > 0);
       toiletIcon = _didToilet
         ? '<span class="weight-cal-toilet done" title="' + dateStr + ' 已上厕所' + (_tc > 1 ? '（' + _tc + '次）' : '') + '">'
-          + '<svg viewBox="0 0 24 24" width="13" height="13" fill="#d14b73" aria-hidden="true">'
-          + '<path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/>'
-          + '<circle cx="10.4" cy="12.9" r="1.05" fill="#fff"/><circle cx="14.2" cy="12.9" r="1.05" fill="#fff"/>'
+          + '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">'
+          + '<circle cx="12" cy="12" r="10.5" fill="#5fae7f"/>'
+          + '<path d="M7.2 12.4l3.1 3.1 6.4-6.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
           + '</svg></span>'
         : '<span class="weight-cal-toilet" title="' + dateStr + ' 未记录上厕所">'
-          + '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#d9cdd3" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">'
-          + '<path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/>'
+          + '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">'
+          + '<circle cx="12" cy="12" r="9.6" fill="none" stroke="#d5c8ce" stroke-width="1.8"/>'
           + '</svg></span>';
     }
 
@@ -25468,10 +25470,10 @@ function renderDesktopWeight() {
 
   html += `</div></div>`;
 
-  // 图例（v433：原三运动圆点图例 → 上厕所标志图例）
+  // 图例（v433b：绿圆白勾=已上厕所，灰空心=未记录）
   html += `<div class="weight-cal-legend">
-    <span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" fill="#d14b73" aria-hidden="true"><path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/><circle cx="10.4" cy="12.9" r="1.05" fill="#fff"/><circle cx="14.2" cy="12.9" r="1.05" fill="#fff"/></svg>已上厕所</span>
-    <span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#c9b8c1" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3h2.2v5.2h6.6V3h2.2v5.2h1.1c1.1 0 1.9.9 1.9 2v1.1h-1.6v4.4c0 2.6-2.1 4.7-4.7 4.7H11.9c-2.6 0-4.7-2.1-4.7-4.7v-4.4H5.6V10c0-1.1.8-2 1.9-2h-.1V3z"/></svg>未记录</span>
+    <span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#5fae7f"/><path d="M7.2 12.4l3.1 3.1 6.4-6.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>已上厕所</span>
+    <span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="9.6" fill="none" stroke="#c9b8c1" stroke-width="1.8"/></svg>未记录</span>
   </div>`;
 
   // 提示：本月有几天是"自动沿用前一天"补上的（浅色数字）
