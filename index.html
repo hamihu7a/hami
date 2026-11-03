@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-03-449"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-03-450"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -6774,6 +6774,7 @@ body.theme-y2k .y2k-starburst--hero { top: 16px; right: 20px; }
 body.theme-y2k .desktop-hero /* ============ 细节 ============ */
 body.theme-y2k hr { border-color: #F5EAF0 !important; }
 body.theme-y2k ::-webkit-scrollbar-thumb { background: #EBD9E3 !important; border-radius: 8px !important; }
+
 body.theme-y2k ::-webkit-scrollbar-track { background: transparent !important; }
 </style></head><body class="theme-y2k"><!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL --><script>
 (function(){
@@ -7610,6 +7611,22 @@ body.theme-y2k .hcp-today .hcp-sub,
 body.theme-y2k .hcp-fest .hcp-sub { color: #B9A6B2 !important; font-weight: 600 !important; }
 body.theme-y2k .hcp-fest .hcp-fest-txt { color: #8D7A84 !important; }
 body.theme-y2k .hcp-bar-pct { color: #8D7A84 !important; }
+/* ===== v450：hero 顶部间隙 + 刷新键真右下角半透明 + 自媒体卡加宽 + 体重格加宽 ===== */
+/* 2-1 hero 顶上与指令栏留出呼吸 */
+body.theme-y2k .desktop-hero { margin-top: 10px !important; }
+/* 2-2 刷新键锚点归位：hero-top 抢了 relative，改成 static 让按钮贴 hero 卡角 */
+body.theme-y2k .hero-top { position: static !important; }
+body.theme-y2k .hero-refresh { right: 6px !important; bottom: 6px !important; background: rgba(255,255,255,0.55) !important; backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; border: 1.5px solid rgba(214,143,168,0.55) !important; color: #C97B9B !important; box-shadow: 0 2px 8px -2px rgba(160,100,130,0.35) !important; }
+body.theme-y2k .hero-refresh:hover { background: rgba(255,255,255,0.78) !important; }
+/* 2-3 自媒体卡：两侧 20px 大留白收成 8px，卡从 86px 加宽到 ~94px；粉丝不转行 */
+body.theme-y2k .accounts-wrap { padding: 8px 8px 10px !important; }
+body.theme-y2k .accounts-grid { display: flex !important; gap: 4px !important; }
+body.theme-y2k .account-card { padding: 8px 5px !important; }
+body.theme-y2k .account-card .ac-followers { white-space: nowrap !important; display: flex !important; align-items: baseline !important; justify-content: center !important; }
+body.theme-y2k .account-card .acc-num { font-size: 19px !important; }
+/* 2-4 体重日历：两侧 20px 收成 8px，格子从 36px 加宽到 ~39px，数字完整显示 */
+body.theme-y2k #home-weight-cal { padding: 10px 8px 12px !important; }
+body.theme-y2k #home-weight-cal .weight-cal-grid { gap: 2px !important; }
 </style><div id="hami-countdown-pair"><div class="hcp-card hcp-life"><div class="hcp-title"> 人生剩余天数</div><div class="hcp-big"><span id="hcp-life-days">--</span><span class="hcp-unit">天</span></div><div class="hcp-sub" id="hcp-life-sub">距 90 岁目标</div><div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div></div><div class="hcp-card hcp-today hcp-fest"><div class="hcp-title"> 近期节日</div><div class="hcp-big"><span id="hcp-fest-name">--</span></div><div class="hcp-sub" id="hcp-fest-sub">--</div><div class="hcp-fest-rows"><div class="hcp-fest-row"><span class="hcp-fest-tag">国内</span><span class="hcp-fest-txt" id="hcp-fest-cn">--</span></div><div class="hcp-fest-row"><span class="hcp-fest-tag ab">国外</span><span class="hcp-fest-txt" id="hcp-fest-ab">--</span></div></div></div></div><script>
  (function(){
  var RING_C = 163.36, _lifeCache = null;
@@ -25972,7 +25989,7 @@ function renderCountdown() {
  let html = `<div class="countdown-page" style="position:relative;">`;
  page.forEach(item => html += boxHtml(item));
  if (pages.length > 1 && pages.length <= 4) {
- html += `<div class="countdown-dots" style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);display:flex;flex-direction:row;gap:4px;z-index:2;">`;
+ html += `<div class="countdown-dots" style="position:absolute;right:8px;top:50%;bottom:auto;transform:translateY(-50%);display:flex;flex-direction:row;gap:4px;z-index:2;">`;
  pages.forEach((_, idx) => {
  const active = idx === pageIndex ? 'background:#D89CB0;width:12px;height:4px;' : 'background:rgba(187,119,139,0.4);width:4px;height:4px;';
  html += `<span class="countdown-dot" data-idx="${idx}" style="width:4px;border-radius:2px;transition:all .3s;${active}"></span>`;
