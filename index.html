@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="hami-build" content="2026-11-02-434">
+<meta name="hami-build" content="2026-11-03-435">
 <script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
@@ -8285,7 +8285,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
       <div class="card-title"><span>🔒</span> 访问密码（同步加密 · 可选）</div>
       <div class="db-desc">设了密码后：<b>别人知道网址也进不来</b>（打开需输密码），且云端文件<b>没有密码解不开</b>。手机 / 电脑填<b>同一个密码</b>即可互通。密码只存你本机，<b>忘了可在设置重设，数据不丢</b>。</div>
       <div style="position:relative;margin-top:8px;">
-        <input type="password" id="settings-sync-pwd" placeholder="输入访问密码（至少 4 位，例如 4557878）" style="width:100%;padding:8px 44px 8px 10px;border:1px solid #f0c9d6;border-radius:8px;font-size:13px;box-sizing:border-box;">
+        <input type="text" id="settings-sync-pwd" autocomplete="off" placeholder="输入访问密码（至少 4 位，例如 4557878）" style="width:100%;padding:8px 44px 8px 10px;border:1px solid #f0c9d6;border-radius:8px;font-size:13px;box-sizing:border-box;-webkit-text-security:disc;">
         <button type="button" id="settings-sync-pwd-eye" title="显示 / 隐藏密码" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:17px;line-height:1;padding:4px 6px;border-radius:6px;">👁</button>
       </div>
       <div class="db-btn-row" style="margin-top:8px;">
@@ -10051,7 +10051,7 @@ function hamiShowUnlock(cb) {
       + '<div style="font-size:19px;font-weight:800;color:#a64b86;margin-top:10px;">小助理已上锁</div>'
       + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是Hami的私人工作台，请输入访问密码才能进入</div>'
       + '<div style="position:relative;margin-top:16px;">'
-      + '<input id="hami-unlock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:12px 46px 12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;"/>'
+      + '<input id="hami-unlock-input" type="text" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:12px 46px 12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;-webkit-text-security:disc;"/>'
       + '<button type="button" id="hami-unlock-eye" title="显示 / 隐藏密码" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;">👁</button>'
       + '</div>'
       + '<div id="hami-unlock-err" style="font-size:12px;color:#d14b73;height:16px;margin-top:8px;"></div>'
@@ -10123,8 +10123,9 @@ function hamiShowUnlock(cb) {
       // 造成"点三四下才有反应"；pointerdown 在焦点转移之前就完成切换，指哪打哪。
       eye.addEventListener('pointerdown', function (e) {
         e.preventDefault();
-        var show = inp.type === 'password';
-        inp.type = show ? 'text' : 'password';
+        // v435：type=text + text-security 圆点遮罩，浏览器不再把它当密码框弹"要保存密码吗"
+        var show = inp.style.webkitTextSecurity !== 'none';
+        inp.style.webkitTextSecurity = show ? 'none' : 'disc';
         eye.textContent = show ? '🙈' : '👁';
       });
     }
@@ -13063,8 +13064,9 @@ async function initSettingsPanel() {
         // v365：pointerdown + 阻止默认，根治"点好几下才切换"（原 click 先抢焦点→键盘收放→按钮移位点击落空）
         pwdEye.addEventListener('pointerdown', function (e) {
           e.preventDefault();
-          const show = pwdInput.type === 'password';
-          pwdInput.type = show ? 'text' : 'password';
+          // v435：同解锁门，text-security 遮罩代替 type=password
+          const show = pwdInput.style.webkitTextSecurity !== 'none';
+          pwdInput.style.webkitTextSecurity = show ? 'none' : 'disc';
           pwdEye.textContent = show ? '🙈' : '👁';
         });
       }
@@ -22171,10 +22173,11 @@ function renderImpNext() {
   const today = new Date(todayStr() + 'T00:00:00');
   const list = dates.map((d) => { const i = calcDateInfo(d, today); const o = {}; for (const k in d) o[k] = d[k]; for (const k in i) o[k] = i[k]; return o; });
   list.sort((a, b) => a.sortKey - b.sortKey);
-  const next = list.find(d => !d.isToday) || list[0];
+  // v435：今天正好生日的排最前——之前 !d.isToday 会把"就是今天"的跳过去，显示下一个43天后的
+  const next = list.find(d => d.isToday) || list.find(d => !d.isToday) || list[0];
   if (!next) { el.innerHTML = ''; return; }
-  const icon = next.type === 'birthday' ? '🎂' : (next.type === 'anniversary' ? '💕' : '🔔');
-  const label = next.type === 'birthday' ? '天后生日' : (next.type === 'anniversary' ? '天后纪念日' : '天后提醒');
+  const icon = next.isToday ? '🎉' : (next.type === 'birthday' ? '🎂' : (next.type === 'anniversary' ? '💕' : '🔔'));
+  const label = next.isToday ? '就是今天' : (next.type === 'birthday' ? '天后生日' : (next.type === 'anniversary' ? '天后纪念日' : '天后提醒'));
   let sub;
   if (next.type === 'anniversary') sub = '💕 在一起第 ' + (next.totalDays || 0) + ' 天' + (next.thisYearAge ? ' · 今年第 ' + next.thisYearAge + ' 周年' : '');
   else if (next.isLunar && next.lunarLabel) sub = '📅 农历' + next.lunarLabel + (next.nextDate ? '（' + next.nextDate + '）' : '') + (next.thisYearAge ? ' · 今年 ' + next.thisYearAge + ' 岁' : '');
@@ -22187,7 +22190,7 @@ function renderImpNext() {
     + '<div style="font-size:14px;font-weight:800;color:#d14b73;">' + escapeHtml(next.name) + '</div>'
     + '<div style="font-size:12px;color:#8a6270;">' + sub + '</div>'
     + '</div>'
-    + '<div style="text-align:center;"><div style="font-size:20px;font-weight:800;color:#e85f7a;line-height:1;">' + next.daysLeft + '</div><div style="font-size:10px;color:#a14a64;">' + label + '</div></div>'
+    + '<div style="text-align:center;"><div style="font-size:20px;font-weight:800;color:#e85f7a;line-height:1;">' + (next.isToday ? '🎉' : next.daysLeft) + '</div><div style="font-size:10px;color:#a14a64;">' + label + '</div></div>'
     + '</div>';
 }
 
