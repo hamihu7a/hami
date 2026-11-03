@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-454"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-455"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -6782,7 +6782,41 @@ body.theme-y2k hr { border-color: #F5EAF0 !important; }
 body.theme-y2k ::-webkit-scrollbar-thumb { background: #EBD9E3 !important; border-radius: 8px !important; }
 
 body.theme-y2k ::-webkit-scrollbar-track { background: transparent !important; }
-</style></head><body class="theme-y2k"><!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL --><script>
+</style><style id="hami-v455-fix">
+/* ===== v455 手机窄屏修复（只动窄屏，桌面端零影响；整块可删） ===== */
+@media (max-width: 768px) {
+  /* 1) 经期「记开始 / 记结束」：日期框独占一行，两键各半行、文字完整不省略 */
+  .period-action-row { gap: 8px !important; }
+  .period-action-row .date-log-input { flex: 1 1 100% !important; min-width: 0 !important; }
+  .period-main-btn, .period-end-btn {
+    flex: 1 1 0 !important; min-width: 0 !important;
+    font-size: 13px !important; padding: 12px 8px !important;
+    white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important;
+  }
+  /* 2) 分页行：按钮不裂字，中间信息单行（放不下就省略，不折行） */
+  .date-fold-btn {
+    flex: 0 0 auto !important; padding: 6px 10px !important;
+    font-size: 12px !important; white-space: nowrap !important;
+  }
+  /* 窄屏分页改两行：上面「第 x/y 页 · 共 n 个月」完整一行，下面两个按钮各占一半、点着更好按 */
+  .mi-page-row { gap: 8px !important; flex-wrap: wrap !important; }
+  .mi-page-row > span {
+    flex: 1 1 100%; order: -1; min-width: 0;
+    font-size: 12px !important; white-space: nowrap;
+    overflow: visible; text-overflow: clip; text-align: center;
+  }
+  .mi-page-row > button { flex: 1 1 0 !important; max-width: 132px; text-align: center; }
+  /* 3) 学车进度：科目 tab 改 2×2，四科全部可见可点（不再溢出被裁） */
+  .drive-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .drive-tab { padding: 8px 4px !important; }
+  /* 4) 自媒体账号卡：头像在上、名字居中完整显示（不再只剩一个字） */
+  .accounts-grid .acc-head { flex-direction: column !important; align-items: center !important; gap: 3px !important; margin-bottom: 6px !important; }
+  .accounts-grid .acc-id { width: 100% !important; flex: 1 1 auto !important; text-align: center; }
+  .accounts-grid .acc-name { font-size: 12px !important; text-align: center; overflow: visible !important; text-overflow: clip !important; }
+  .accounts-grid .acc-handle { font-size: 9.5px !important; justify-content: center !important; overflow: visible !important; text-overflow: clip !important; }
+}
+</style>
+</head><body class="theme-y2k"><!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL --><script>
 (function(){
  // 单一真源：BUILD_VER 直接派生自 <meta name="hami-build">，以后只需改 meta 一处，避免版本号漂移导致“自动刷新失效”
  var BUILD_VER = (function(){var m=document.querySelector('meta[name="hami-build"]');return (m&&m.getAttribute)?m.getAttribute('content'):'2026-09-20-111';})();
@@ -7967,7 +8001,7 @@ body.theme-y2k #desktop-accounts-wrap .ac-title::before {
  <button class="media-add-btn" style="margin-left:auto;" onclick="openWeightEditModal()">记一项</button></div><div id="weight-table-wrap"><table><thead><tr><th>日期</th><th>体重</th><th>备注</th></tr></thead><tbody id="weight-table"></tbody></table></div></div></div><!-- ==================== 学车进度（临时模块） ==================== --><div id="panel-drive" class="panel"><div class="card drive-card"><div class="drive-header"><div class="drive-title"> 学车进度</div><div class="drive-overall" id="drive-overall"></div></div><div class="drive-progress-bar drive-overall-bar"><div class="drive-progress-fill" id="drive-overall-fill"></div></div><div class="drive-tabs" id="drive-tabs"></div><div id="drive-learn-root"></div></div></div><!-- ==================== 有氧运动 · 器械打卡（独立面板） ==================== --><div id="panel-exercise" class="panel"><div class="tip-box"><b>使用说明</b>：运动分三类打卡 —— ①<b>有氧操</b> ②<b>爬坡</b> ③<b>器械</b>。点「记一项」选类型、填项目和时长；下方三张分类卡点一下可只看该类记录。
  </div><div class="ex-cat-overview" id="exercise-cat-overview"></div><div class="card"><div class="card-title">每日运动打卡
  <button class="media-add-btn" style="margin-left:auto;" onclick="openExerciseItemModal()">记一项</button></div><div id="exercise-table"></div><div class="exercise-detail-section"><div class="exercise-detail-head"><span class="exercise-detail-title">详细记录</span><div class="exercise-filter-tabs"><span class="exercise-filter-tab active" data-ex-filter="all" onclick="setExerciseFilter('all')">全部</span><span class="exercise-filter-tab" data-ex-filter="aerobics" onclick="setExerciseFilter('aerobics')">有氧操</span><span class="exercise-filter-tab" data-ex-filter="cardio" onclick="setExerciseFilter('cardio')">爬坡</span><span class="exercise-filter-tab" data-ex-filter="weights" onclick="setExerciseFilter('weights')">器械</span></div></div><div id="exercise-items-table-wrap"><!-- v268：明细表格改为紧凑记录行卡片（日期+类型徽章+项目+时长+操作） --><div id="exercise-items-table"></div></div></div></div><div class="card"><div class="card-title">月度运动统计</div><div id="exercise-stats"></div></div></div><!-- ==================== 自媒体更新记录 ==================== --><!-- ==================== 模拟人生更新推荐 ==================== --><!-- ==================== 经期记录 ==================== --><div id="panel-period" class="panel"><div class="tip-box"><b>使用说明</b>：来月经告诉我开始/结束日期。经期自动同步到减肥工作台设为休息日~
- </div><div class="stats-grid" id="period-stats"></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 9h.01M12 7h.01M16 10h.01M9 14c2-1 4-1 6 0"/></svg></span> 经期预测与提醒</div><div id="period-predict"></div></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8 10h8M8 14h8"/></svg></span> 经期记录</div><!-- 主操作：记开始 / 记结束 双按钮 --><div class="period-action-row"><input type="date" id="period-open-start" class="date-log-input" title="选择日期" placeholder="选择日期"><button id="period-start-btn" class="period-main-btn" onclick="startOpenPeriod()"> 记开始（进行中）</button><button id="period-end-btn" class="period-end-btn" onclick="endOpenPeriod()"> 记结束（已结束）</button></div><p class="period-tip">先选日期：点「记开始」表示<b>这天来月经</b>；点「记结束」表示<b>这天结束</b>。进行中的经期会置顶显示，结束日期待记录。</p><!-- 副操作：补记已结束的历史经期（开始+结束一起） --><div class="period-sub-toggle" onclick="togglePeriodHistoryForm()">＋ 补记一段已结束的历史经期</div><div id="period-history-form" style="display:none;margin:6px 0 4px;"><div style="display:flex;gap:8px;"><input type="date" id="period-hist-start" class="date-log-input" placeholder="开始"><input type="date" id="period-hist-end" class="date-log-input" placeholder="结束"></div><button id="period-hist-save" class="date-log-btn" style="width:100%;margin-top:8px;" onclick="logPeriodHistory()"> 保存历史经期</button></div><div id="period-table" style="margin-top:14px;"></div></div></div><!-- ==================== 洗头记录 ==================== --><div id="panel-wash" class="panel"><div class="tip-box"><b>使用说明</b>：洗头了点一下「今天洗了头」。超过 3 天没洗头会提醒你该洗啦~
+ </div><div class="stats-grid" id="period-stats"></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 9h.01M12 7h.01M16 10h.01M9 14c2-1 4-1 6 0"/></svg></span> 经期预测与提醒</div><div id="period-predict"></div></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8 10h8M8 14h8"/></svg></span> 经期记录</div><!-- 主操作：记开始 / 记结束 双按钮 --><div class="period-action-row"><input type="date" id="period-open-start" class="date-log-input" title="选择日期" placeholder="选择日期"><button id="period-start-btn" class="period-main-btn" onclick="startOpenPeriod()">记开始</button><button id="period-end-btn" class="period-end-btn" onclick="endOpenPeriod()">记结束</button></div><p class="period-tip">先选日期：点「记开始」表示<b>这天来月经</b>；点「记结束」表示<b>这天结束</b>。进行中的经期会置顶显示，结束日期待记录。</p><!-- 副操作：补记已结束的历史经期（开始+结束一起） --><div class="period-sub-toggle" onclick="togglePeriodHistoryForm()">＋ 补记一段已结束的历史经期</div><div id="period-history-form" style="display:none;margin:6px 0 4px;"><div style="display:flex;gap:8px;"><input type="date" id="period-hist-start" class="date-log-input" placeholder="开始"><input type="date" id="period-hist-end" class="date-log-input" placeholder="结束"></div><button id="period-hist-save" class="date-log-btn" style="width:100%;margin-top:8px;" onclick="logPeriodHistory()"> 保存历史经期</button></div><div id="period-table" style="margin-top:14px;"></div></div></div><!-- ==================== 洗头记录 ==================== --><div id="panel-wash" class="panel"><div class="tip-box"><b>使用说明</b>：洗头了点一下「今天洗了头」。超过 3 天没洗头会提醒你该洗啦~
  </div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3l-1 2v11a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V8L9 6z"/><path d="M9 3v3h6V3"/></svg></span> 洗头提醒</div><div id="wash-remind"></div><button onclick="logWash()" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:12px;background:#D89CB0;color:#fff;font-size:14px;font-weight:700;cursor:pointer;"> 今天洗了头</button><div class="date-log-row"><input type="date" id="wash-date-input" class="date-log-input"><button class="date-log-btn" onclick="logWashForDate()"> 记录此日</button></div></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8 10h8M8 14h8"/></svg></span> 洗头记录</div><div id="wash-table"></div></div></div><!-- ==================== 如厕记录 ==================== --><div id="panel-toilet" class="panel"><div class="tip-box"><b>使用说明</b>：上厕所点「我今天上了厕所」→ 当天健康；第二天没上→观察；第三天还没上→异常。
  </div><div class="stats-grid" id="toilet-stats"></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M6 11h12v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M7 16h10"/></svg></span> 今日如厕</div><div id="toilet-today"></div><button onclick="logToilet()" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:12px;background:#D89CB0;color:#fff;font-size:14px;font-weight:700;cursor:pointer;"> 我今天上了厕所</button><div class="date-log-row"><input type="date" id="toilet-date-input" class="date-log-input"><button class="date-log-btn" onclick="logToiletForDate()"> 记录此日</button></div></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8 10h8M8 14h8"/></svg></span> 如厕记录</div><div id="toilet-table"></div></div></div><!-- ==================== 敷面膜记录 ==================== --><div id="panel-mask" class="panel"><div class="tip-box"><b>使用说明</b>：面膜每周2次，到周三没敷就提醒，做完2次才停。
  </div><div class="stats-grid" id="mask-stats"></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01"/><path d="M9 15c1.5 1.5 4.5 1.5 6 0"/></svg></span> 本周面膜进度</div><div id="mask-progress"></div><button onclick="logMask()" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:12px;background:#D89CB0;color:#fff;font-size:14px;font-weight:700;cursor:pointer;"> 我今天敷了面膜</button><div class="date-log-row"><input type="date" id="mask-date-input" class="date-log-input"><button class="date-log-btn" onclick="logMaskForDate()"> 记录此日</button></div></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8 10h8M8 14h8"/></svg></span> 敷面膜记录</div><div id="mask-table"></div></div></div><!-- ==================== 支出与总收入（记账） ==================== --><div id="panel-account" class="panel"><div class="tip-box"><b>使用方法</b>：跟我说"午饭花了25"、"打车12块"、"收了定制单800"就行，我帮你记。
@@ -9637,8 +9671,8 @@ function hamiShowUnlock(cb) {
  + '<div style="font-size:19px;font-weight:800;color:#BB77A3;margin-top:10px;">小助理已上锁</div>'
  + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是Hami的私人工作台，请输入访问密码才能进入</div>'
  + '<div style="position:relative;margin-top:16px;">'
- + '<input id="hami-unlock-input" type="text" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:12px 46px 12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;-webkit-text-security:disc;"/>'
- + '<button type="button" id="hami-unlock-eye" title="显示 / 隐藏密码" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;">显</button>'
+ + '<input id="hami-unlock-input" type="text" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:12px 58px 12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;-webkit-text-security:disc;"/>'
+ + '<button type="button" id="hami-unlock-eye" title="显示 / 隐藏密码" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:#fdf0f6;color:#BB77A3;cursor:pointer;font-size:12px;font-weight:800;line-height:1;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0 9px;border-radius:9px;">显</button>'
  + '</div>'
  + '<div id="hami-unlock-err" style="font-size:12px;color:#D89CB0;height:16px;margin-top:8px;"></div>'
  + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
@@ -17009,7 +17043,7 @@ function renderIncome() {
  const miShow = miRows.slice(__miPage * MI_PAGE, __miPage * MI_PAGE + MI_PAGE);
  miHtml = '<div class="monthly-income-list">' + miShow.join('') + '</div>';
  if (miTotalPages > 1) {
- miHtml += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
+ miHtml += '<div class="mi-page-row" style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
  + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(-1)"' + (__miPage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
  + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__miPage + 1) + '/' + miTotalPages + ' 页 · 共 ' + miRows.length + ' 个月</span>'
  + '<button class="date-fold-btn" type="button" onclick="monthlyIncomeGo(1)"' + (__miPage >= miTotalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
@@ -17699,7 +17733,7 @@ function renderMedia() {
  });
  html += '</div>';
  if (totalPages > 1) {
- html += `<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;"><button class="date-fold-btn" type="button" onclick="mediaDetailGo(-1)" ${__mediaDetailPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button><span style="font-size:12px;color:#8a6270;font-weight:600;">第 ${__mediaDetailPage + 1}/${totalPages} 页 · 共 ${monthRecordsDesc.length} 条</span><button class="date-fold-btn" type="button" onclick="mediaDetailGo(1)" ${__mediaDetailPage >= totalPages - 1 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button></div>`;
+ html += `<div class="mi-page-row" style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;"><button class="date-fold-btn" type="button" onclick="mediaDetailGo(-1)" ${__mediaDetailPage === 0 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>‹ 上页</button><span style="font-size:12px;color:#8a6270;font-weight:600;">第 ${__mediaDetailPage + 1}/${totalPages} 页 · 共 ${monthRecordsDesc.length} 条</span><button class="date-fold-btn" type="button" onclick="mediaDetailGo(1)" ${__mediaDetailPage >= totalPages - 1 ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}>下页 ›</button></div>`;
  }
  document.getElementById('media-table').innerHTML = html;
  }
@@ -18460,7 +18494,7 @@ function renderFutureDone(doneList, today) {
  let html = '<div class="future-done-head"> 已完成图文项目 <span class="future-done-count">' + doneList.length + '</span></div>';
  viewList.forEach(function (p) { html += fpDoneCardHtml(p); });
  if (totalPages > 1) {
- html += '<div style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
+ html += '<div class="mi-page-row" style="margin-top:10px;display:flex;justify-content:center;align-items:center;gap:10px;">'
  + '<button class="date-fold-btn" type="button" onclick="futureDoneGo(-1)"' + (__donePage === 0 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>‹ 上页</button>'
  + '<span style="font-size:12px;color:#8a6270;font-weight:600;">第 ' + (__donePage + 1) + '/' + totalPages + ' 页 · 共 ' + doneList.length + ' 条</span>'
  + '<button class="date-fold-btn" type="button" onclick="futureDoneGo(1)"' + (__donePage >= totalPages - 1 ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>下页 ›</button>'
