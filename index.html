@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-03-448"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-03-449"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -6937,7 +6937,8 @@ body.theme-y2k .hcp-fest {
 /* 星芒点缀（右上角，浅黄线稿） */
 body.theme-y2k .hcp-life::after,
 body.theme-y2k .hcp-today::after,
-body.theme-y2k .hcp-fest::after {
+body.theme-y2k .hcp-fest::after { display: none !important; }
+body.theme-y2k .hcp-x::after {
   content: '' !important;
   position: absolute !important;
   top: 15px !important; right: 17px !important;
@@ -7182,7 +7183,7 @@ body.theme-y2k .nav-item::after {
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E2B0C3' stroke-width='1.15' stroke-linecap='round'%3E%3Cpath d='M12 3.2c.7 4.6 3.4 7.3 8 8-4.6.7-7.3 3.4-8 8-.7-4.6-3.4-7.3-8-8 4.6-.7 7.3-3.4 8-8z'/%3E%3C/svg%3E") center/contain no-repeat !important;
   pointer-events: none !important;
 }
-body.theme-y2k .nav-item:hover::after { opacity: 0.85 !important; }
+body.theme-y2k .nav-item::after { display: none !important; }
 
 /* —— 4) 字级分布：层级拉开但不笨重 —— */
 body.theme-y2k .todo-card .tc-title { font-size: 14px !important; font-weight: 700 !important; letter-spacing: 0.2px !important; }
@@ -7563,6 +7564,52 @@ body.theme-y2k .media-record-btn.del,
 body.theme-y2k .imp-row-actions .row-del-btn { color: #C0808C !important; border-color: rgba(196,128,140,0.42) !important; }
 body.theme-y2k .cat-cardio .ex-cat-add { color: #7FA8C9 !important; border-color: rgba(140,175,205,0.5) !important; }
 body.theme-y2k .cat-weights .ex-cat-add { color: #A184C4 !important; border-color: rgba(170,145,205,0.5) !important; }
+/* ===== v449：装饰母题替换 / 三键半透明 / hcp 字体主次 ===== */
+/* 1) hcp 卡右上角：星芒换成三颗泡泡圆点（粉/蓝/紫，呼应侧栏辅助色） */
+body.theme-y2k .hcp-life::before,
+body.theme-y2k .hcp-today::before,
+body.theme-y2k .hcp-fest::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 14px !important; right: 16px !important;
+  width: 28px !important; height: 15px !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(circle 6px at 7px 8px, #F2C4D8 97%, transparent 100%),
+    radial-gradient(circle 4.5px at 17px 5px, #BFD9EA 97%, transparent 100%),
+    radial-gradient(circle 3.5px at 24px 11px, #CDBCE4 97%, transparent 100%);
+}
+/* 2) 侧栏三键：半透明玻璃质感（不要深底色），z-index 兜底防遮挡 */
+body.theme-y2k #sidebar-grip,
+body.theme-y2k #sidebar-lock-btn,
+body.theme-y2k #sidebar-reset-btn {
+  background: rgba(255,255,255,0.55) !important;
+  background-image: none !important;
+  border: 1px solid rgba(242,211,222,0.75) !important;
+  box-shadow: 0 2px 8px rgba(208,140,172,0.12) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  backdrop-filter: blur(6px) !important;
+}
+body.theme-y2k .sidebar-width-control { position: relative !important; z-index: 60 !important; }
+/* 3) 选中项残留的左侧粉渐变条清掉（y2k 用白卡+阴影表达选中） */
+body.theme-y2k .nav-item.active {
+  border-left-color: transparent !important;
+  background-image: none !important;
+  background: #FFFFFF !important;
+}
+/* 4) hcp 卡字体主次：标题轻、数字最重、说明最淡 */
+body.theme-y2k .hcp-life .hcp-title,
+body.theme-y2k .hcp-today .hcp-title,
+body.theme-y2k .hcp-fest .hcp-title { color: #B08CA0 !important; font-weight: 700 !important; }
+body.theme-y2k .hcp-life .hcp-big,
+body.theme-y2k .hcp-today .hcp-big,
+body.theme-y2k .hcp-fest .hcp-big { color: #4E4149 !important; }
+body.theme-y2k .hcp-life .hcp-unit { color: #8D7A84 !important; }
+body.theme-y2k .hcp-life .hcp-sub,
+body.theme-y2k .hcp-today .hcp-sub,
+body.theme-y2k .hcp-fest .hcp-sub { color: #B9A6B2 !important; font-weight: 600 !important; }
+body.theme-y2k .hcp-fest .hcp-fest-txt { color: #8D7A84 !important; }
+body.theme-y2k .hcp-bar-pct { color: #8D7A84 !important; }
 </style><div id="hami-countdown-pair"><div class="hcp-card hcp-life"><div class="hcp-title"> 人生剩余天数</div><div class="hcp-big"><span id="hcp-life-days">--</span><span class="hcp-unit">天</span></div><div class="hcp-sub" id="hcp-life-sub">距 90 岁目标</div><div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div></div><div class="hcp-card hcp-today hcp-fest"><div class="hcp-title"> 近期节日</div><div class="hcp-big"><span id="hcp-fest-name">--</span></div><div class="hcp-sub" id="hcp-fest-sub">--</div><div class="hcp-fest-rows"><div class="hcp-fest-row"><span class="hcp-fest-tag">国内</span><span class="hcp-fest-txt" id="hcp-fest-cn">--</span></div><div class="hcp-fest-row"><span class="hcp-fest-tag ab">国外</span><span class="hcp-fest-txt" id="hcp-fest-ab">--</span></div></div></div></div><script>
  (function(){
  var RING_C = 163.36, _lifeCache = null;
