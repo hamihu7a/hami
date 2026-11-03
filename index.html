@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-03-450"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-03-451"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -6935,16 +6935,23 @@ body.theme-y2k .hcp-today,
 body.theme-y2k .hcp-fest {
   background: linear-gradient(158deg, #FFFFFF 0%, #FEFBF1 52%, #FAF0D6 100%) !important;
 }
-/* 星芒点缀（右上角，浅黄线稿） */
-body.theme-y2k .hcp-life::after,
-body.theme-y2k .hcp-today::after,
-body.theme-y2k .hcp-fest::after { display: none !important; }
-body.theme-y2k .hcp-x::after {
+/* v451：线稿小装饰家族——人生剩余天数卡回到星芒（主人喜欢之前的），近期节日卡换同族爱心 */
+body.theme-y2k .hcp-life::after {
   content: '' !important;
   position: absolute !important;
   top: 15px !important; right: 17px !important;
   width: 20px !important; height: 20px !important;
   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 6 L58 42 L94 50 L58 58 L50 94 L42 58 L6 50 L42 42 Z' fill='none' stroke='%23EFC0D2' stroke-width='3.2' stroke-linejoin='round'/></svg>") no-repeat center/contain !important;
+  pointer-events: none !important;
+  opacity: .85 !important;
+}
+body.theme-y2k .hcp-today::after,
+body.theme-y2k .hcp-fest::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 15px !important; right: 17px !important;
+  width: 18px !important; height: 17px !important;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 86 C26 63 10 46 10 30 C10 17 20 9 31 9 C40 9 46 14 50 22 C54 14 60 9 69 9 C80 9 90 17 90 30 C90 46 74 63 50 86 Z' fill='none' stroke='%23ECB5CB' stroke-width='4' stroke-linejoin='round'/></svg>") no-repeat center/contain !important;
   pointer-events: none !important;
   opacity: .85 !important;
 }
@@ -7566,20 +7573,7 @@ body.theme-y2k .imp-row-actions .row-del-btn { color: #C0808C !important; border
 body.theme-y2k .cat-cardio .ex-cat-add { color: #7FA8C9 !important; border-color: rgba(140,175,205,0.5) !important; }
 body.theme-y2k .cat-weights .ex-cat-add { color: #A184C4 !important; border-color: rgba(170,145,205,0.5) !important; }
 /* ===== v449：装饰母题替换 / 三键半透明 / hcp 字体主次 ===== */
-/* 1) hcp 卡右上角：星芒换成三颗泡泡圆点（粉/蓝/紫，呼应侧栏辅助色） */
-body.theme-y2k .hcp-life::before,
-body.theme-y2k .hcp-today::before,
-body.theme-y2k .hcp-fest::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 14px !important; right: 16px !important;
-  width: 28px !important; height: 15px !important;
-  pointer-events: none !important;
-  background:
-    radial-gradient(circle 6px at 7px 8px, #F2C4D8 97%, transparent 100%),
-    radial-gradient(circle 4.5px at 17px 5px, #BFD9EA 97%, transparent 100%),
-    radial-gradient(circle 3.5px at 24px 11px, #CDBCE4 97%, transparent 100%);
-}
+/* 1) v451：泡泡圆点已撤（主人不喜欢），hcp 卡右上角回到线稿装饰（星芒/爱心，见上方 v451 规则） */
 /* 2) 侧栏三键：半透明玻璃质感（不要深底色），z-index 兜底防遮挡 */
 body.theme-y2k #sidebar-grip,
 body.theme-y2k #sidebar-lock-btn,
@@ -7627,6 +7621,25 @@ body.theme-y2k .account-card .acc-num { font-size: 19px !important; }
 /* 2-4 体重日历：两侧 20px 收成 8px，格子从 36px 加宽到 ~39px，数字完整显示 */
 body.theme-y2k #home-weight-cal { padding: 10px 8px 12px !important; }
 body.theme-y2k #home-weight-cal .weight-cal-grid { gap: 2px !important; }
+
+/* ===== v451：装饰母题家族——星芒保留，新增爱心/小花/迷你星（同族浅粉线稿），图案不再单一 ===== */
+/* 体重日历标题右侧：小花（五瓣线稿，粗细与星芒一致） */
+body.theme-y2k #home-weight-cal h3 { position: relative !important; }
+body.theme-y2k #home-weight-cal h3::after {
+  content: '' !important; position: absolute !important;
+  top: 50% !important; right: 4px !important; transform: translateY(-50%) !important;
+  width: 16px !important; height: 16px !important;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23E9C4D7' stroke-width='4.5'><circle cx='50' cy='30' r='16'/><circle cx='69' cy='44' r='16'/><circle cx='62' cy='66' r='16'/><circle cx='38' cy='66' r='16'/><circle cx='31' cy='44' r='16'/><circle cx='50' cy='50' r='7'/></g></svg>") no-repeat center/contain !important;
+  pointer-events: none !important; opacity: .8 !important;
+}
+/* hero 星芒旁的小伙伴：迷你星（一大一小经典组合） */
+body.theme-y2k .y2k-starburst--hero::after {
+  content: '' !important; position: absolute !important;
+  left: -16px !important; bottom: -4px !important;
+  width: 11px !important; height: 11px !important;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 8 L57 43 L92 50 L57 57 L50 92 L43 57 L8 50 L43 43 Z' fill='none' stroke='%23EAC3D5' stroke-width='5' stroke-linejoin='round'/></svg>") no-repeat center/contain !important;
+  pointer-events: none !important; opacity: .85 !important;
+}
 </style><div id="hami-countdown-pair"><div class="hcp-card hcp-life"><div class="hcp-title"> 人生剩余天数</div><div class="hcp-big"><span id="hcp-life-days">--</span><span class="hcp-unit">天</span></div><div class="hcp-sub" id="hcp-life-sub">距 90 岁目标</div><div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div></div><div class="hcp-card hcp-today hcp-fest"><div class="hcp-title"> 近期节日</div><div class="hcp-big"><span id="hcp-fest-name">--</span></div><div class="hcp-sub" id="hcp-fest-sub">--</div><div class="hcp-fest-rows"><div class="hcp-fest-row"><span class="hcp-fest-tag">国内</span><span class="hcp-fest-txt" id="hcp-fest-cn">--</span></div><div class="hcp-fest-row"><span class="hcp-fest-tag ab">国外</span><span class="hcp-fest-txt" id="hcp-fest-ab">--</span></div></div></div></div><script>
  (function(){
  var RING_C = 163.36, _lifeCache = null;
