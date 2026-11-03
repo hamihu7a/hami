@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-455"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-456"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -6816,6 +6816,125 @@ body.theme-y2k ::-webkit-scrollbar-track { background: transparent !important; }
   .accounts-grid .acc-handle { font-size: 9.5px !important; justify-content: center !important; overflow: visible !important; text-overflow: clip !important; }
 }
 </style>
+<style id="hami-v456-fix">
+/* ===== v456 手机窄屏修复：侧栏紧凑 + 文字/图标居中 + 三键融合 + 账号卡紧凑 + 余额布局（整块可删） ===== */
+@media (max-width: 768px) {
+  /* 1) 侧栏标题「Hami 小助理」：缩小 + 不转行 */
+  body.theme-y2k .nav-header .nav-title {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    line-height: 1.25 !important;
+  }
+  body.theme-y2k .nav-header .nav-title br { display: none !important; }
+  /* 2) 座右铭「每天进步一点点」：单行不转行 */
+  body.theme-y2k .nav-header .nav-motto {
+    white-space: nowrap !important;
+    font-size: 10px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  /* 4) 侧栏条目：图标在上、文字在下，整体在栏内居中；去掉图标左右大间距 */
+  body.theme-y2k .nav-item {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    padding: 6px 4px !important;
+    margin: 2px 6px !important;
+    text-align: center !important;
+  }
+  body.theme-y2k .nav-item .nav-icon {
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+  body.theme-y2k .nav-item .nav-text {
+    width: auto !important;
+    text-align: center !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+  /* 5) 三键（拖动/锁定/重置）：融合进侧栏最底部，无背景、无分块 */
+  body.theme-y2k .sidebar .sidebar-width-control {
+    position: static !important;
+    bottom: auto !important;
+    margin-top: auto !important;
+    background: transparent !important;
+    border-top: none !important;
+    box-shadow: none !important;
+    padding: 10px 0 6px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  body.theme-y2k .sidebar .sidebar-drag-row { width: 100% !important; display: flex !important; justify-content: center !important; }
+  body.theme-y2k .sidebar .sb-mini-row {
+    width: 100% !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+  /* 拖动条（#sidebar-grip）保留全宽可拖动，但去掉白底/边框/阴影，融合进侧栏 */
+  body.theme-y2k .sidebar #sidebar-grip,
+  body.theme-y2k .sidebar #sidebar-grip:hover,
+  body.theme-y2k .sidebar #sidebar-grip.dragging {
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  body.theme-y2k .sidebar .sidebar-lock-btn,
+  body.theme-y2k .sidebar .sidebar-reset-btn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 5px 8px !important;
+    color: #B98AA6 !important;
+    font-size: 15px !important;
+    border-radius: 8px !important;
+  }
+  body.theme-y2k .sidebar .sidebar-lock-btn:hover,
+  body.theme-y2k .sidebar .sidebar-reset-btn:hover { background: rgba(255,255,255,0.55) !important; }
+  body.theme-y2k .sidebar .sidebar-lock-btn.locked { background: transparent !important; color: #A08790 !important; }
+
+  /* 3) 自媒体账号卡三数据行：每行单行、标签+数值同行、字号有层级（不再乱转行） */
+  body.theme-y2k .account-card .ac-detail {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    white-space: nowrap !important;
+    font-size: 10px !important;
+    margin: 1px 0 0 !important;
+    padding: 1px 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+  }
+  body.theme-y2k .account-card .ac-detail > span:first-child {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+  }
+  body.theme-y2k .account-card .ac-detail b { flex: 0 0 auto !important; font-size: 11px !important; font-weight: 700 !important; }
+  body.theme-y2k .account-card .ac-detail b.ac-up { color: #e74c3c !important; }
+  body.theme-y2k .account-card .ac-detail b.ac-down { color: #8CBC9E !important; }
+
+  /* 8) 可支配余额：整句「当前可支配余额」单行显示，数字转到下一行 */
+  body.theme-y2k #account-disposable-display {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+  body.theme-y2k #account-disposable-display > span:first-child { white-space: nowrap !important; }
+  body.theme-y2k #account-deposit-saved-tip { align-self: flex-end !important; margin-left: 0 !important; }
+}
+</style>
 </head><body class="theme-y2k"><!-- 自动刷新缓存：每次更新版本号，旧缓存用户会自动跳转到带时间戳的URL --><script>
 (function(){
  // 单一真源：BUILD_VER 直接派生自 <meta name="hami-build">，以后只需改 meta 一处，避免版本号漂移导致“自动刷新失效”
@@ -9525,6 +9644,7 @@ function onBgFile(key, input) {
  compressImage(file, dataUrl => {
  setBgStored(key, dataUrl); // 改存 IndexedDB，不再占用 localStorage 的 5MB 配额
  applyBg(key, dataUrl);
+ try { var _d = {vis:100, mode:'even', px:50, py:50, zoom:100, flip:0, rot:0}; hamiBgMaskSet(key, _d); applyBgMask(key, _d); } catch(e){}
  });
  input.value = ''; // 重置，便于再次选择同一张图
 }
@@ -12629,6 +12749,7 @@ async function initSettingsPanel() {
  setBgStored(_settingsActiveKey, dataUrl); // 改存 IndexedDB，不占 localStorage 配额
  applyBg(_settingsActiveKey, dataUrl);
  setMirrorPreview(_settingsActiveKey, dataUrl);
+ try { var _d = {vis:100, mode:'even', px:50, py:50, zoom:100, flip:0, rot:0}; hamiBgMaskSet(_settingsActiveKey, _d); applyBgMask(_settingsActiveKey, _d); } catch(e){}
  if (statusEl) statusEl.textContent = ' 已更新「' + _settingsActiveKey + '」背景，正在同步云端…';
  afterBgChange(statusEl); // 同步内嵌配置 + 推送云端
  try { playSound('save'); } catch (e) {}
@@ -16614,25 +16735,52 @@ function calcAccountNetGated(refIso) {
 // ==================== v444：可支配余额·每月趋势图（可整体移除模块） ====================
 // 数据：store.depositHistory = [{ym:'2026-11', v:1234.5, ts}]，每月一条、同月自动取最新值。
 // 移除方法：删掉 HTML 里 #deposit-trend-block、本函数、以及 refreshDisposableDisplay 末尾的调用即可。
+// v456：根据全部账单/定制单/美化档，反推「各月末累计可支配余额」——用于趋势图回填历史月份，让增长趋势可见
+function calcMonthlyDepositSeries(curVal) {
+  if (curVal == null || isNaN(curVal)) curVal = 0;
+  var dep = parseFloat(store.depositBalance) || 0;
+  var items = [];
+  (store.accountRecords || []).forEach(function (r) {
+    var d = String(r.date || ''); if (!/^\d{4}-\d{2}/.test(d)) return;
+    var amt = (parseFloat(r.amount) || 0) * (r.type === 'expense' ? -1 : 1);
+    items.push({ ym: d.slice(0, 7), amt: amt });
+  });
+  (store.customOrders || []).forEach(function (o) {
+    if (o.status !== 'done') return;
+    var d = String(o.date || o.createdAt || ''); if (!/^\d{4}-\d{2}/.test(d)) return;
+    items.push({ ym: d.slice(0, 7), amt: parseFloat(o.amount) || 0 });
+  });
+  (store.beautyRecords || []).forEach(function (b) {
+    var d = String(b.date || ''); if (!/^\d{4}-\d{2}/.test(d)) return;
+    items.push({ ym: d.slice(0, 7), amt: parseFloat(b.amount) || (parseInt(b.count) || 0) * MOD_PRICE });
+  });
+  var now = new Date();
+  var curYm = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2);
+  if (!items.length) return [{ ym: curYm, v: Math.round(curVal * 100) / 100 }];
+  var minYm = items.map(function (it) { return it.ym; }).sort()[0];
+  var parts = minYm.split('-'); var my = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
+  function pad(n) { return (n < 10 ? '0' + n : '' + n); }
+  var series = [], cum = 0;
+  while (my + '-' + pad(mm) <= curYm) {
+    var ym = my + '-' + pad(mm);
+    for (var i = 0; i < items.length; i++) { if (items[i].ym === ym) cum += items[i].amt; }
+    series.push({ ym: ym, v: Math.round((dep + cum) * 100) / 100 });
+    mm++; if (mm > 12) { mm = 1; my++; }
+  }
+  if (series.length) series[series.length - 1].v = Math.round(curVal * 100) / 100;
+  return series;
+}
 function renderDepositTrend(curVal) {
   var el = document.getElementById('deposit-trend-block');
   if (!el) return;
   try {
-    var _d = new Date();
-    var ym = _d.getFullYear() + '-' + ('0' + (_d.getMonth() + 1)).slice(-2);
     if (curVal == null || isNaN(curVal)) curVal = 0;
-    var hist = Array.isArray(store.depositHistory) ? store.depositHistory : (store.depositHistory = []);
-    var changed = false;
-    var last = hist.length ? hist[hist.length - 1] : null;
-    if (!last || last.ym !== ym || Math.abs((parseFloat(last.v) || 0) - curVal) > 0.005) {
-      hist.push({ ym: ym, v: Math.round(curVal * 100) / 100, ts: (typeof _nowLocalISO === 'function' ? _nowLocalISO() : '') });
-      changed = true;
-    }
-    var byM = {};
-    hist.forEach(function (h) { if (h && h.ym) byM[h.ym] = h; });
-    var series = Object.keys(byM).sort().map(function (k) { return byM[k]; }).slice(-12);
-    store.depositHistory = series;
+    var fullSeries = calcMonthlyDepositSeries(curVal);
+    var prev = Array.isArray(store.depositHistory) ? store.depositHistory : [];
+    var changed = (prev.length !== fullSeries.length) || fullSeries.some(function (s, i) { return !prev[i] || prev[i].ym !== s.ym || Math.abs((parseFloat(prev[i].v) || 0) - (parseFloat(s.v) || 0)) > 0.005; });
+    store.depositHistory = fullSeries;
     if (changed && typeof saveData === 'function') { try { saveData(); } catch (e) {} }
+    var series = fullSeries.slice(-12);
     if (series.length === 0) { el.innerHTML = ''; return; }
     var vals = series.map(function (h) { return parseFloat(h.v) || 0; });
     var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
@@ -16672,7 +16820,7 @@ function renderDepositTrend(curVal) {
       var _mch = n === 1 ? 'end' : (i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle'));
       mlabels += '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="' + _mch + '" font-size="10" fill="#A49099">' + h.ym.slice(5).replace(/^0/, '') + '月</text>';
     });
-    var idxSet = {}; for (var _i = 0; _i < n; _i++) idxSet[_i] = 1;
+    var idxSet = {}; idxSet[0] = 1; idxSet[n - 1] = 1; // v456：只标注首/末点（原来每个点都标，月份一多就重叠成一团）
     var mi = 0, ma = 0;
     vals.forEach(function (v, i) { if (v < vals[mi]) mi = i; if (v > vals[ma]) ma = i; });
     idxSet[mi] = 1; idxSet[ma] = 1;
@@ -22782,15 +22930,15 @@ function renderFollowerChange(data) {
  const prev = data.prevFollowers;
  const cur = data.followers;
  if (prev == null || isNaN(prev) || cur == null || isNaN(cur)) {
- return '<div class="ac-detail"><span>粉丝增减：</span><b>—</b></div>';
+ return '<div class="ac-detail"><span>增减：</span><b>—</b></div>';
  }
  const diff = cur - prev;
  if (diff > 0) {
- return '<div class="ac-detail"><span>粉丝增减：</span><b class="ac-up">+' + diff + '</b></div>';
+ return '<div class="ac-detail"><span>增减：</span><b class="ac-up">+' + diff + '</b></div>';
  } else if (diff < 0) {
- return '<div class="ac-detail"><span>粉丝增减：</span><b class="ac-down">' + diff + '</b></div>';
+ return '<div class="ac-detail"><span>增减：</span><b class="ac-down">' + diff + '</b></div>';
  }
- return '<div class="ac-detail"><span>粉丝增减：</span><b>0</b></div>';
+ return '<div class="ac-detail"><span>增减：</span><b>0</b></div>';
 }
 
 // v289 账号头像（base64 内嵌；换头像只需替换这两串）
@@ -22816,7 +22964,7 @@ function renderDesktopAccounts() {
  const aid = c.data.accountId ? '<span class="acc-aid">@' + escTodo(c.data.accountId) + '</span>' : '';
  html += `<div class="account-card" style="${st}"><div class="acc-head"><div class="acc-avatar"><img src="${t.av}" alt=""></div><div class="acc-id"><div class="acc-name">${c.nameCn}</div><div class="acc-handle"><span class="acc-chip">${escTodo(c.data.platform)}</span>${aid}</div></div></div><div class="ac-followers"><span class="acc-num">${c.data.followers}</span><span class="ac-unit"> 粉丝</span></div>
  ${renderFollowerChange(c.data)}
- <div class="ac-detail"><span>总共获赞：</span><b>${c.data.likes}</b></div></div>`;
+ <div class="ac-detail"><span>获赞：</span><b>${c.data.likes}</b></div></div>`;
  });
  html += '</div>';
  // 最后更新日期：仅数据真正刷新时才更新；展示「最后更新 月日 · 距离上次 X 天」（不转行）
