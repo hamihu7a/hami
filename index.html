@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-466"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-467"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -24996,8 +24996,8 @@ const updownText = (monthWeights.length >= 2 && monthChange && monthChange !== '
 : '↓减' + monthChange.slice(1))
 : '增减 —';
 const updownHtml = `<div class="weight-cal-badge-updown" style="color:${monthChangeColor};" title="本月增减了多少斤（月末 - 月初）">${updownText}</div>`;
-// v463：徽章恢复「共X天 打卡Y天」（主人要求以前的设计，简洁字少）；totalDays 用上方已有的当月天数
-const checkinHtml = `<div class="weight-cal-badge" title="本月共 ${totalDays} 天，已打卡 ${recordDays} 天">共${totalDays}天 打卡${recordDays}天</div>`;
+// v467：徽章极简「打卡 总天数/打卡天数」（主人嫌「共X天 打卡Y天」啰嗦）；完整说明保留在 title
+const checkinHtml = `<div class="weight-cal-badge" title="本月共 ${totalDays} 天，已打卡 ${recordDays} 天">打卡 ${totalDays}/${recordDays}</div>`;
 
  let html = '';
 
