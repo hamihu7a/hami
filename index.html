@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-457"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-458"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -1416,9 +1416,9 @@
  background: #8CBC9E; border: 2px solid #fff;
  animation: accPulse 2s infinite;
  }
- .acc-id { min-width: 0; flex: 1; }
+ .acc-id { min-width: 0; flex: 1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
  .acc-name { font-size: 13px; font-weight: 800; color: #5a3a48; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
- .acc-handle { margin-top: 2px; font-size: 10.5px; color: #b08898; display: flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; overflow: hidden; }
+ .acc-handle { margin-top: 0; font-size: 10.5px; color: #b08898; display: flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; overflow: hidden; }
  .acc-chip { flex: none; font-size: 9.5px; line-height: 1; padding: 3px 7px; border-radius: 999px; background: var(--chipBg, #ffe3ea); color: var(--chipFg, #e8447a); font-weight: 700; }
  .account-card .ac-followers { display: flex; align-items: baseline; justify-content: center; gap: 2px; font-size: 24px; font-weight: 800; margin: 3px 0 2px; }
  .account-card .acc-num { background: linear-gradient(90deg, var(--acc, #ff7f9e), var(--acc2, #F6DDE7)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
@@ -6570,7 +6570,7 @@ body.theme-y2k .nav-group-title::before { display: none !important; }
 /* —— 条目：圆角块；图标与文字首行对齐；超四字换行且两行字数均衡 —— */
 body.theme-y2k .nav-item {
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   gap: 9px !important;
   padding: 8px 8px 8px 12px !important;
   margin: 1px 8px 1px 6px !important;
@@ -6587,14 +6587,16 @@ body.theme-y2k .nav-item .nav-icon {
 body.theme-y2k .nav-item .nav-icon svg { width: 17px !important; height: 17px !important; display: block !important; }
 body.theme-y2k .nav-text br { display: none !important; }
 body.theme-y2k .nav-item .nav-text {
-  display: block !important;
-  width: 4.9em !important;
-  white-space: normal !important;
-  word-break: break-all !important;
-  text-wrap: balance !important;
+  display: inline-block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   text-align: left !important;
-  font-size: 12.5px !important;
-  line-height: 1.5 !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
   color: #6B5A60 !important;
 }
 body.theme-y2k .nav-item:hover { background: rgba(255,255,255,0.85) !important; }
@@ -6811,9 +6813,9 @@ body.theme-y2k ::-webkit-scrollbar-track { background: transparent !important; }
   .drive-tab { padding: 8px 4px !important; }
   /* 4) 自媒体账号卡：头像在上、名字居中完整显示（不再只剩一个字） */
   .accounts-grid .acc-head { flex-direction: column !important; align-items: center !important; gap: 3px !important; margin-bottom: 6px !important; }
-  .accounts-grid .acc-id { width: 100% !important; flex: 1 1 auto !important; text-align: center; }
-  .accounts-grid .acc-name { font-size: 12px !important; text-align: center; overflow: visible !important; text-overflow: clip !important; }
-  .accounts-grid .acc-handle { font-size: 9.5px !important; justify-content: center !important; overflow: visible !important; text-overflow: clip !important; }
+  .accounts-grid .acc-id { width: 100% !important; flex: 1 1 auto !important; display: flex !important; align-items: baseline !important; justify-content: center !important; gap: 6px !important; flex-wrap: nowrap !important; text-align: center; }
+  .accounts-grid .acc-name { font-size: 12.5px !important; text-align: left; overflow: visible !important; text-overflow: clip !important; flex: 0 0 auto !important; }
+  .accounts-grid .acc-handle { font-size: 9.5px !important; justify-content: flex-start !important; overflow: visible !important; text-overflow: clip !important; flex: 0 1 auto !important; min-width: 0 !important; }
 }
 </style>
 <style id="hami-v456-fix">
@@ -6833,28 +6835,33 @@ body.theme-y2k ::-webkit-scrollbar-track { background: transparent !important; }
     overflow: visible !important;
     text-overflow: clip !important;
   }
-  /* 4) 侧栏条目：图标在上、文字在下，整体在栏内居中；去掉图标左右大间距 */
+  /* 4) 侧栏条目（v458 主人要求）：图标在左、文字在右同一行（取消图标在上文字在下）；长类目在图标右侧换行 */
   body.theme-y2k .nav-item {
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 2px !important;
-    padding: 6px 4px !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 7px 6px 7px 10px !important;
     margin: 2px 6px !important;
-    text-align: center !important;
+    text-align: left !important;
   }
   body.theme-y2k .nav-item .nav-icon {
     width: auto !important;
     min-width: 0 !important;
     margin: 0 !important;
+    flex: 0 0 auto !important;
   }
   body.theme-y2k .nav-item .nav-text {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
     width: auto !important;
-    text-align: center !important;
+    text-align: left !important;
     white-space: normal !important;
     word-break: break-word !important;
     font-size: 11px !important;
     line-height: 1.3 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
   /* 5) 三键（拖动/锁定/重置）：融合进侧栏最底部，无背景、无分块 */
   body.theme-y2k .sidebar .sidebar-width-control {
@@ -7987,7 +7994,13 @@ body.theme-y2k #desktop-accounts-wrap .ac-title::before {
   /* ③ 体重记录日历：头部整行不换行；隐藏「打卡 N/M 天」；「增减 X.X 斤」靠右顶替其位 */
   body.theme-y2k #home-weight-cal .weight-cal-header,
   body.theme-y2k .weight-cal-header { flex-wrap: nowrap !important; gap: 3px !important; overflow: hidden !important; }
-  body.theme-y2k .weight-cal-badge { display: none !important; }
+  body.theme-y2k #home-weight-cal .weight-cal-badge,
+  body.theme-y2k .weight-cal-badge {
+    display: inline-flex !important; align-items: center !important;
+    padding: 2px 6px !important; border-radius: 6px !important;
+    background: #fce8ee !important; flex-shrink: 0 !important; white-space: nowrap !important;
+    font-size: 10.5px !important; font-weight: 700 !important; color: #B7798E !important;
+  }
   body.theme-y2k #home-weight-cal .weight-cal-month,
   body.theme-y2k .weight-cal-month { font-size: 11px !important; white-space: nowrap !important; min-width: 0 !important; flex-shrink: 1 !important; }
   body.theme-y2k .weight-cal-nav,
@@ -7998,15 +8011,15 @@ body.theme-y2k #desktop-accounts-wrap .ac-title::before {
     white-space: nowrap !important; flex-shrink: 0 !important; border-radius: 6px !important;
   }
 
-  /* ④ 日历格子体重数字：字号再收一档 + 去省略号，保证 175.3 五位完整落在格子里 */
+  /* ④ 日历格子体重数字：手机端（≤768）保持 9px 小字不撑爆格子；电脑端 14px 由最终块顶层规则负责 */
   body.theme-y2k #home-weight-cal .weight-cal-main,
   body.theme-y2k .weight-cal-main {
     font-size: 9px !important; letter-spacing: -0.7px !important;
     text-overflow: clip !important; font-variant-numeric: tabular-nums !important;
   }
   body.theme-y2k #home-weight-cal .weight-cal-main.weight-cal-main-sm,
-  body.theme-y2k #home-weight-cal .weight-cal-main.weight-cal-main-xs,
   body.theme-y2k .weight-cal-main.weight-cal-main-sm,
+  body.theme-y2k #home-weight-cal .weight-cal-main.weight-cal-main-xs,
   body.theme-y2k .weight-cal-main.weight-cal-main-xs { font-size: 8.5px !important; letter-spacing: -0.8px !important; }
   body.theme-y2k #home-weight-cal .weight-cal-cell > *,
   body.theme-y2k .weight-cal-cell > * { text-overflow: clip !important; }
@@ -8055,6 +8068,34 @@ body.theme-y2k #desktop-accounts-wrap .ac-title::before {
     white-space: nowrap; pointer-events: none;
   }
 }
+/* ===== v458：手机端 hero 年环浮到右上角（不再占 62px 把时间激励语顶下去），时间贴近顶部与「小助理说」 ===== */
+@media (max-width: 768px) {
+  .desktop-hero { padding-top: 8px !important; }
+  .hero-year-ring {
+    position: absolute !important;
+    top: 2px !important; right: 6px !important;
+    margin: 0 !important;
+    transform: scale(0.55) !important;
+    transform-origin: top right !important;
+    z-index: 3;
+  }
+}
+/* v458：体重日历打卡徽章（窄条，桌面+手机统一）；电脑端（≥769）数字放大到 14px */
+body.theme-y2k #home-weight-cal .weight-cal-badge,
+body.theme-y2k .weight-cal-badge {
+  display: inline-flex !important; align-items: center !important;
+  padding: 2px 6px !important; border-radius: 6px !important;
+  background: #fce8ee !important; flex-shrink: 0 !important; white-space: nowrap !important;
+  font-size: 10.5px !important; font-weight: 700 !important; color: #B7798E !important;
+}
+@media (min-width: 769px) {
+  body.theme-y2k #home-weight-cal .weight-cal-main,
+  body.theme-y2k .weight-cal-main { font-size: 14px !important; letter-spacing: -0.3px !important; }
+  body.theme-y2k .weight-cal-main.weight-cal-main-sm { font-size: 12px !important; letter-spacing: -0.4px !important; }
+  body.theme-y2k .weight-cal-main.weight-cal-main-xs { font-size: 11px !important; letter-spacing: -0.5px !important; }
+}
+/* v458：账号卡——平台芯片与 @账号名 拆成独立项，名+平台始终同行，@id 放不下才单独换行 */
+body.theme-y2k .acc-handle { display: contents !important; }
 </style><div id="hami-countdown-pair"><div class="hcp-card hcp-life"><div class="hcp-title"> 人生剩余天数</div><div class="hcp-big"><span id="hcp-life-days">--</span><span class="hcp-unit">天</span></div><div class="hcp-sub" id="hcp-life-sub">距 90 岁目标</div><div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div></div><div class="hcp-card hcp-today hcp-fest"><div class="hcp-title"> 近期节日</div><div class="hcp-big"><span id="hcp-fest-name">--</span></div><div class="hcp-sub" id="hcp-fest-sub">--</div><div class="hcp-fest-rows"><div class="hcp-fest-row"><span class="hcp-fest-tag">国内</span><span class="hcp-fest-txt" id="hcp-fest-cn">--</span></div><div class="hcp-fest-row"><span class="hcp-fest-tag ab">国外</span><span class="hcp-fest-txt" id="hcp-fest-ab">--</span></div></div></div></div><script>
  (function(){
  var RING_C = 163.36, _lifeCache = null;
@@ -24794,6 +24835,8 @@ const updownText = (monthWeights.length >= 2 && monthChange && monthChange !== '
 : '↓减' + monthChange.slice(1))
 : '增减 —';
 const updownHtml = `<div class="weight-cal-badge-updown" style="color:${monthChangeColor};" title="本月增减了多少斤（月末 - 月初）">${updownText}</div>`;
+// v458：把「打卡了多少天」放回增减徽章左边（主人要求），窄条不挤占增减显示
+const checkinHtml = `<div class="weight-cal-badge" title="本月共打卡 ${recordDays} 天（记录体重的天数）">打卡${recordDays}天</div>`;
 
  let html = '';
 
@@ -24801,7 +24844,7 @@ const updownHtml = `<div class="weight-cal-badge-updown" style="color:${monthCha
  const isViewTodayMonth = month === today.substring(0, 7);
  html += `<div class="weight-cal-header"><button class="weight-cal-nav" type="button" onclick="event.stopPropagation(); changeWeightCalMonth(-1);" title="上个月">&lsaquo;</button><div class="weight-cal-month" id="weight-cal-month-label" onclick="event.stopPropagation(); openWeightMonthPicker();" title="点这里选月份（解决：点击日期/标题直接跳转任意月份）">${year}年${monthIdx + 1}月 <span style="font-size:11px;color:#b58a96;margin-left:2px;">▾</span></div><button class="weight-cal-nav" type="button" onclick="event.stopPropagation(); changeWeightCalMonth(1);" title="下个月">&rsaquo;</button>
 ${!isViewTodayMonth ? `<button class="weight-cal-cell-today weight-cal-nav weight-cal-today-badge" type="button" onclick="event.stopPropagation(); resetWeightCalMonth();" title="回到今天所在月">今</button>` : ''}
-${updownHtml}
+${checkinHtml}${updownHtml}
  </div>`;
 
  // 星期表头
