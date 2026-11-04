@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-462"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-463"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8014,16 +8014,16 @@ body.theme-y2k #desktop-accounts-wrap .ac-title::before {
     white-space: nowrap !important; flex-shrink: 0 !important; border-radius: 6px !important;
   }
 
-  /* ④ 日历格子体重数字：手机端（≤768）保持 9px 小字不撑爆格子；电脑端 14px 由最终块顶层规则负责 */
+  /* ④ 日历格子体重数字：手机端（≤768）v463 从 9px 回调到 11px（主人反馈过小）；电脑端 14px 由最终块顶层规则负责 */
   body.theme-y2k #home-weight-cal .weight-cal-main,
   body.theme-y2k .weight-cal-main {
-    font-size: 9px !important; letter-spacing: -0.7px !important;
+    font-size: 11px !important; letter-spacing: -0.4px !important;
     text-overflow: clip !important; font-variant-numeric: tabular-nums !important;
   }
   body.theme-y2k #home-weight-cal .weight-cal-main.weight-cal-main-sm,
   body.theme-y2k .weight-cal-main.weight-cal-main-sm,
   body.theme-y2k #home-weight-cal .weight-cal-main.weight-cal-main-xs,
-  body.theme-y2k .weight-cal-main.weight-cal-main-xs { font-size: 8.5px !important; letter-spacing: -0.8px !important; }
+  body.theme-y2k .weight-cal-main.weight-cal-main-xs { font-size: 10px !important; letter-spacing: -0.6px !important; }
   body.theme-y2k #home-weight-cal .weight-cal-cell > *,
   body.theme-y2k .weight-cal-cell > * { text-overflow: clip !important; }
 
@@ -8071,18 +8071,7 @@ body.theme-y2k #desktop-accounts-wrap .ac-title::before {
     white-space: nowrap; pointer-events: none;
   }
 }
-/* ===== v458：手机端 hero 年环浮到右上角（不再占 62px 把时间激励语顶下去），时间贴近顶部与「小助理说」 ===== */
-@media (max-width: 768px) {
-  .desktop-hero { padding-top: 8px !important; }
-  .hero-year-ring {
-    position: absolute !important;
-    top: 2px !important; right: 6px !important;
-    margin: 0 !important;
-    transform: scale(0.55) !important;
-    transform-origin: top right !important;
-    z-index: 3;
-  }
-}
+/* v463：撤销 v458 的年环浮动，恢复右上角三个倒计时环原样（主人要求改回去） */
 /* v458：体重日历打卡徽章（窄条，桌面+手机统一）；电脑端（≥769）数字放大到 14px */
 body.theme-y2k #home-weight-cal .weight-cal-badge,
 body.theme-y2k .weight-cal-badge {
@@ -8097,6 +8086,8 @@ body.theme-y2k .weight-cal-badge {
   body.theme-y2k .weight-cal-main.weight-cal-main-sm { font-size: 12px !important; letter-spacing: -0.4px !important; }
   body.theme-y2k .weight-cal-main.weight-cal-main-xs { font-size: 11px !important; letter-spacing: -0.5px !important; }
 }
+/* v463：账号名与平台芯片收紧间距（主人反馈离太远） */
+body.theme-y2k .acc-id { gap: 2px !important; }
 /* v458：账号卡——平台芯片与 @账号名 拆成独立项，名+平台始终同行，@id 放不下才单独换行 */
 body.theme-y2k .acc-handle { display: contents !important; }
 /* v459：天气/黄历卡删「今日天气/今日黄历」竖排标题，天气名/农历横排单行不转行，整体上下收窄 */
@@ -24933,8 +24924,8 @@ const updownText = (monthWeights.length >= 2 && monthChange && monthChange !== '
 : '↓减' + monthChange.slice(1))
 : '增减 —';
 const updownHtml = `<div class="weight-cal-badge-updown" style="color:${monthChangeColor};" title="本月增减了多少斤（月末 - 月初）">${updownText}</div>`;
-// v458：把「打卡了多少天」放回增减徽章左边（主人要求），窄条不挤占增减显示
-const checkinHtml = `<div class="weight-cal-badge" title="本月共打卡 ${recordDays} 天（记录体重的天数）">打卡${recordDays}天</div>`;
+// v463：徽章恢复「共X天 打卡Y天」（主人要求以前的设计，简洁字少）；totalDays 用上方已有的当月天数
+const checkinHtml = `<div class="weight-cal-badge" title="本月共 ${totalDays} 天，已打卡 ${recordDays} 天">共${totalDays}天 打卡${recordDays}天</div>`;
 
  let html = '';
 
