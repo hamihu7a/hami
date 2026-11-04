@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-470"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-471"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8448,18 +8448,91 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
   .mn-stamp{width:40px;height:40px;}
   .mn-ocr-card,.mn-modal-card{padding:14px;border-radius:16px;}
 }
+
+/* ===== v471：全屏稿纸写作 + 一条细工具栏 + 干净纸卡 + 图取字框选 ===== */
+.mn-wrap{max-width:760px;margin:0 auto;padding:12px 12px 44px;}
+.mn-bar{display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:10px;border:1px solid #F2E5EC;border-radius:14px;background:rgba(255,255,255,.86);box-shadow:0 2px 10px rgba(196,150,170,.08);}
+.mn-bar-left{display:flex;align-items:baseline;gap:8px;min-width:0;flex:0 0 auto;}
+.mn-bar-left .mn-title{font-size:14px;}
+.mn-bar-left .mn-sub{font-size:10px;padding:2px 7px;}
+.mn-bar-acts{display:flex;gap:5px;margin-left:auto;flex:0 0 auto;white-space:nowrap;}
+.mn-act{border:1px solid #F2E5EC;background:#fff;color:#8C7B82;border-radius:9px;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;}
+.mn-act-main{border-color:rgba(214,143,168,.55);background:linear-gradient(180deg,#FFF7FA,#FCE9F1);color:#7A5967;box-shadow:0 2px 8px rgba(214,143,168,.14);}
+.mn-act.on{background:#FFF0F6;border-color:#E39BB4;color:#7A5967;}
+.mn-organize{margin-bottom:10px;padding:9px 10px;border:1px dashed #EED9E3;border-radius:12px;background:rgba(255,255,255,.72);}
+.mn-organize .mn-chips{margin-bottom:7px;}
+.mn-organize .mn-toolrow{gap:5px;}
+.mn-head,.mn-tools{display:none !important;}
+/* 卡片只留纸与字，操作键统一收进全屏翻看 */
+.mn-ops{display:none !important;}
+.mn-card-foot{justify-content:flex-start;}
+/* —— 全屏稿纸 —— */
+.mn-sheet{position:fixed;inset:0;z-index:9750;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(160deg,#FFF4F8,#FDF7F2 55%,#F4F0FB);}
+.mn-sheet-paper{position:relative;width:min(680px,96vw);height:min(86vh,720px);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--mn-line,#F2E5EC);border-radius:18px;background-color:var(--mn-bg,#FFFAFC);background-image:var(--mn-wash,none);background-size:var(--mn-wash-size,auto);box-shadow:0 6px 18px rgba(196,150,170,.12),0 26px 70px rgba(126,84,103,.18);transition:transform .28s ease,opacity .28s ease;}
+.mn-sheet-paper.mn-paper-line{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,var(--mn-line,#F2E5EC) 31px,var(--mn-line,#F2E5EC) 32px);}
+.mn-sheet-paper.mn-paper-grid{background-image:linear-gradient(to right,var(--mn-line,#F2E5EC) 1px,transparent 1px),linear-gradient(to bottom,var(--mn-line,#F2E5EC) 1px,transparent 1px);background-size:32px 32px;}
+.mn-sheet-paper.mn-paper-stamp:before{content:'记';position:absolute;right:22px;top:58px;width:52px;height:52px;border:1.5px solid var(--mn-ac,#B9A2D6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#7A5967;opacity:.45;transform:rotate(-8deg);pointer-events:none;}
+.mn-sheet-paper.mn-paper-note:before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:86px;height:14px;background:linear-gradient(90deg,rgba(233,196,215,.8),rgba(214,190,232,.8));border-radius:2px;pointer-events:none;}
+.mn-sheet-top{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;padding:16px 22px 8px;font-size:10.5px;font-weight:800;color:#A49099;letter-spacing:1px;}
+.mn-sheet-x{border:1px solid #F2E5EC;background:rgba(255,255,255,.86);color:#8C7B82;border-radius:20px;padding:4px 11px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:inherit;}
+.mn-sheet-text{flex:1 1 auto;min-height:0;width:100%;resize:none;border:none;outline:none;background:transparent !important;background-color:transparent !important;padding:10px 24px;box-sizing:border-box;font-family:inherit;font-size:16px;line-height:32px;color:#5E4F55;font-weight:600;letter-spacing:.3px;}
+.mn-sheet-text::placeholder{color:#C9B9C0;font-weight:600;}
+.mn-sheet-foot{flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:10px 18px 16px;border-top:1px solid rgba(255,255,255,.8);background:rgba(255,255,255,.55);}
+.mn-sheet-picks{min-width:0;flex:1;}
+.mn-sheet-picks .mn-cat-pick{margin-bottom:6px;}
+.mn-sheet-picks .mn-cat-opt{padding:3px 9px;font-size:10.5px;}
+.mn-sheet-picks .mn-paper-pick{gap:6px;}
+.mn-sheet-picks .mn-paper-btn{width:52px;padding:4px;border-radius:9px;}
+.mn-sheet-picks .mn-paper-thumb{height:24px;margin-bottom:3px;}
+.mn-sheet-picks .mn-paper-name{font-size:9px;}
+.mn-sheet-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto;}
+.mn-sheet-count{font-size:10px;color:#A49099;font-weight:700;}
+.mn-sheet-save{border:1px solid rgba(214,143,168,.55);background:linear-gradient(180deg,#FFF7FA,#FCE9F1);color:#7A5967;border-radius:11px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(214,143,168,.18);}
+.mn-sheet-paper.mn-closing{transform:scale(.965) translateY(8px);opacity:0;}
+/* —— 图取字：原图拖框 —— */
+.mn-ocr-crop{position:relative;display:flex;justify-content:center;margin-top:10px;touch-action:none;user-select:none;}
+.mn-ocr-crop img{max-height:190px;max-width:100%;border-radius:10px;border:1px solid #F2E5EC;object-fit:contain;display:block;}
+.mn-ocr-rect{position:absolute;border:1.5px dashed #C97B9B;background:rgba(233,155,180,.14);pointer-events:none;display:none;}
+.mn-ocr-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.mn-ocr-hint{font-size:10px;color:#A49099;font-weight:700;}
+.mn-ocr-lines{max-height:150px;}
+/* 图取字也改成全屏沉浸卡片，不再被 modal-mask 的 left:侧栏宽 挤到屏幕外 */
+.mn-sheet-ocr .mn-ocr-card{width:min(600px,94vw);max-height:88vh;box-shadow:0 20px 60px rgba(126,84,103,.20);}
+@media (max-width:768px){
+  .mn-sheet-ocr .mn-ocr-card{width:100vw;height:100vh;height:100dvh;max-height:none;border-radius:0;border:none;padding:14px 16px 24px;overflow:auto;}
+  .mn-sheet-ocr .mn-ocr-crop img{max-height:250px;}
+  .mn-sheet-ocr .mn-ocr-lines{max-height:190px;}
+  .mn-wrap{padding:8px 8px 34px;}
+  .mn-bar{padding:6px 7px;gap:5px;overflow-x:auto;}
+  .mn-bar-left .mn-title{font-size:12.5px;}
+  .mn-bar-left .mn-sub{display:none;}
+  .mn-bar-acts{gap:4px;}
+  .mn-act{padding:5px 7px;font-size:10.5px;}
+  .mn-sheet{padding:0;}
+  .mn-sheet-paper{width:100vw;height:100vh;height:100dvh;border-radius:0;border:none;}
+  .mn-sheet-text{font-size:16px;line-height:32px;padding:8px 18px;}
+  .mn-sheet-top{padding:14px 16px 6px;}
+  .mn-sheet-foot{padding:8px 12px 14px;}
+  .mn-sheet-picks .mn-paper-btn{width:46px;}
+  .mn-sheet-save{padding:8px 13px;}
+  .mn-card{padding:14px 14px 12px;}
+  .mn-card-text{font-size:13px;}
+  .mn-big{min-height:140px;}
+}
 </style>
 
 <!-- ===== v469 心境便签 · 模块开始（整体移除请连同结尾注释一起删，另删：侧栏「心境便签」nav-item、store.moodNotes、_RESTORE_ARR 的 'moodNotes'、末尾 script#hami-v468-mood-js）===== -->
 <div id="panel-mood" class="panel"><div class="mn-wrap">
-  <div class="mn-head">
-    <span class="mn-title">心境便签</span>
-    <span class="mn-sub" id="mn-count">共 0 张</span>
-    <button class="mn-btn" type="button" onclick="mnOpenEditor()">写一张</button>
-    <button class="mn-btn" type="button" onclick="mnOpenOcr()">图取字</button>
-    <button class="mn-btn mn-btn-ghost" type="button" onclick="mnShuffle()">随手翻</button>
+  <div class="mn-bar">
+    <div class="mn-bar-left"><span class="mn-title">心境便签</span><span class="mn-sub" id="mn-count">共 0 张</span></div>
+    <div class="mn-bar-acts">
+      <button class="mn-act mn-act-main" type="button" onclick="mnOpenEditor()">写一张</button>
+      <button class="mn-act" type="button" onclick="mnOpenOcr()">图取字</button>
+      <button class="mn-act" type="button" onclick="mnShuffle()">翻一翻</button>
+      <button class="mn-act" id="mn-organize-btn" type="button" onclick="mnToggleOrganize()">整理</button>
+    </div>
   </div>
-  <div class="mn-tools">
+  <div class="mn-organize" id="mn-organize-box" style="display:none;">
     <div class="mn-chips" id="mn-chips"></div>
     <div class="mn-toolrow">
       <input id="mn-search" class="mn-search" type="text" placeholder="找一句" oninput="mnRender()">
@@ -8475,28 +8548,35 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
   <div class="mn-timeline" id="mn-timeline"></div>
 </div></div>
 
-<div id="mn-modal" class="modal-mask" style="display:none;z-index:9600;" onclick="if(event.target===this)mnCloseEditor()">
-  <div class="mn-modal-card">
-    <div class="mn-modal-head"><b id="mn-modal-title">写一张</b><button class="mn-x" type="button" onclick="mnCloseEditor()">×</button></div>
-    <textarea id="mn-text" class="mn-textarea" placeholder="写点此刻的心境，或一句想记住的话"></textarea>
-    <div class="mn-field-label">分类</div>
-    <div class="mn-cat-pick" id="mn-cat-pick"></div>
-    <div class="mn-field-label">纸样</div>
-    <div class="mn-paper-pick" id="mn-paper-pick"></div>
-    <div class="mn-modal-foot">
-      <button class="mn-btn mn-btn-ghost" type="button" onclick="mnCloseEditor()">取消</button>
-      <button class="mn-btn" type="button" onclick="mnSave()">好了</button>
+<div id="mn-modal" class="mn-sheet" style="display:none;" onclick="if(event.target===this)mnCloseEditor()">
+  <div class="mn-sheet-paper" id="mn-sheet-paper">
+    <div class="mn-sheet-top"><span id="mn-sheet-meta"></span><button class="mn-sheet-x" type="button" onclick="mnCloseEditor()">收起</button></div>
+    <textarea id="mn-text" class="mn-sheet-text" placeholder="写点此刻的心境，或一句想记住的话" oninput="mnSheetCount()"></textarea>
+    <div class="mn-sheet-foot">
+      <div class="mn-sheet-picks">
+        <div class="mn-cat-pick" id="mn-cat-pick"></div>
+        <div class="mn-paper-pick" id="mn-paper-pick"></div>
+      </div>
+      <div class="mn-sheet-actions">
+        <span class="mn-sheet-count" id="mn-sheet-count"></span>
+        <button class="mn-sheet-save" id="mn-sheet-save" type="button" onclick="mnSave()">收进册子</button>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="mn-ocr" class="modal-mask" style="display:none;z-index:9700;" onclick="if(event.target===this)mnCloseOcr()">
+<div id="mn-ocr" class="mn-sheet mn-sheet-ocr" style="display:none;z-index:9700;" onclick="if(event.target===this)mnCloseOcr()">
   <div class="mn-ocr-card">
     <div class="mn-modal-head"><b>图取字</b><button class="mn-x" type="button" onclick="mnCloseOcr()">×</button></div>
     <div class="mn-ocr-drop" onclick="document.getElementById('mn-ocr-file').click()">选一张图片</div>
     <input id="mn-ocr-file" type="file" accept="image/*" style="display:none;" onchange="mnOcrPick(this)">
-    <div class="mn-ocr-preview" id="mn-ocr-preview"></div>
-    <div class="mn-ocr-status" id="mn-ocr-status">首次需联网装识别字典，约 2MB</div>
+    <div class="mn-ocr-crop" id="mn-ocr-crop"><img id="mn-ocr-img" src="" alt=""><div class="mn-ocr-rect" id="mn-ocr-rect"></div></div>
+    <div class="mn-ocr-actions">
+      <button class="mn-mini" type="button" onclick="mnOcrRun()">重认整张</button>
+      <button class="mn-mini" type="button" onclick="mnOcrRunCrop()">只认框里</button>
+      <span class="mn-ocr-hint">在图上拖个框，只认这块最准</span>
+    </div>
+    <div class="mn-ocr-status" id="mn-ocr-status">选好图片自动认字，首次需联网装字典</div>
     <div class="mn-ocr-lines" id="mn-ocr-lines"></div>
     <div class="mn-ocr-manual"><textarea id="mn-ocr-manual" placeholder="没认出来？把文字粘这儿，一行一句"></textarea><button class="mn-mini" type="button" onclick="mnOcrManual()">分行</button></div>
     <div class="mn-field-label">选中的字（可改）</div>
@@ -8518,7 +8598,7 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
       <button class="mn-btn mn-btn-ghost" type="button" onclick="mnViewerStep(-1)">上一张</button>
       <button class="mn-btn mn-btn-ghost" type="button" onclick="mnViewerFav()" id="mn-viewer-fav">收藏</button>
       <button class="mn-btn mn-btn-ghost" type="button" onclick="mnViewerEdit()">改</button>
-      <button class="mn-btn mn-btn-ghost" type="button" onclick="mnViewerDel()">删</button>
+      <button class="mn-btn mn-btn-ghost" id="mn-viewer-del" type="button" onclick="mnViewerDel()">删</button>
       <button class="mn-btn mn-btn-ghost" type="button" onclick="mnViewerStep(1)">下一张</button>
     </div>
   </div>
@@ -28232,6 +28312,28 @@ function mnPaperThumb(k, color, bg){
   var extra = k==='grid' ? ';background-size:10px 10px' : '';
   return 'background-color:'+(bg||'#FFF')+';background-image:'+map+extra;
 }
+/* —— v471 全屏稿纸：纸面随分类与纸样变化 —— */
+function mnSheetApply(){
+  var p=document.getElementById('mn-sheet-paper'); if(!p) return;
+  var c=mnCat(mnState.eCat), paper=mnState.ePaper||'line';
+  var lines={mood:'#E6DCF5',energy:'#F0E3BC',drive:'#DBEAF6',quote:'#F6D9E5'};
+  p.style.setProperty('--mn-bg',c.bg);
+  p.style.setProperty('--mn-line',lines[c.k]||'#F2E5EC');
+  p.style.setProperty('--mn-ac',c.c);
+  p.style.setProperty('--mn-wash','none');
+  p.className='mn-sheet-paper mn-paper-'+paper;
+}
+function mnSheetCount(){
+  var e=document.getElementById('mn-sheet-count'), t=document.getElementById('mn-text');
+  if(e&&t) e.textContent=String(t.value||'').trim().length+' 字';
+}
+function mnToggleOrganize(){
+  var b=document.getElementById('mn-organize-box'), btn=document.getElementById('mn-organize-btn');
+  if(!b) return;
+  var on=(b.style.display==='none');
+  b.style.display=on?'block':'none';
+  if(btn) btn.classList.toggle('on',on);
+}
 function mnRenderPicks(){
   var a='', cc=mnCat(mnState.eCat);
   MN_CATS.forEach(function(c){
@@ -28246,6 +28348,7 @@ function mnRenderPicks(){
       +  '<div class="mn-paper-thumb" style="'+mnPaperThumb(p.k,cc.c,cc.bg)+'"></div><span class="mn-paper-name">'+p.n+'</span></button>';
   });
   document.getElementById('mn-paper-pick').innerHTML=b;
+  mnSheetApply();
 }
 function mnPickCat(k){ mnState.eCat=k; if(!mnState.paperTouched) mnState.ePaper=mnCat(k).paper||'line'; mnRenderPicks(); }
 function mnPickPaper(k){ mnState.ePaper=k; mnState.paperTouched=true; mnRenderPicks(); }
@@ -28255,13 +28358,16 @@ function mnOpenEditor(id){
   mnState.eCat = n?n.cat:'mood';
   mnState.paperTouched = !!n;
   mnState.ePaper = n ? (n.paper||mnCat(n.cat).paper||'line') : (mnCat(mnState.eCat).paper||'line');
-  document.getElementById('mn-modal-title').textContent = n?'改一张':'写一张';
+  var meta=document.getElementById('mn-sheet-meta');
+  if(meta) meta.textContent=(n?'改这一张 · ':'')+mnStamp(Date.now())+' · 第 '+(mnNotes().length+(n?0:1))+' 张';
+  var sv=document.getElementById('mn-sheet-save'); if(sv) sv.textContent=n?'记好了':'收进册子';
   document.getElementById('mn-text').value = n?n.text:'';
   mnRenderPicks();
+  mnSheetApply(); mnSheetCount();
   document.getElementById('mn-modal').style.display='flex';
   if(!n) setTimeout(function(){ try{document.getElementById('mn-text').focus();}catch(e){} },60);
 }
-function mnCloseEditor(){ document.getElementById('mn-modal').style.display='none'; mnState.editId=null; }
+function mnCloseEditor(){ var p=document.getElementById('mn-sheet-paper'); if(p) p.classList.remove('mn-closing'); document.getElementById('mn-modal').style.display='none'; mnState.editId=null; }
 function mnSave(){
   var t=(document.getElementById('mn-text').value||'').trim();
   if(!t){ try{hamiToast('还没写呢');}catch(e){} return; }
@@ -28277,13 +28383,16 @@ function mnSave(){
   mnState.stageId=n.id; mnState.cat='all'; mnState.fav=false; mnState.q='';
   var si=document.getElementById('mn-search'); if(si) si.value='';
   mnResetFold();
-  mnCloseEditor(); mnSaveStore(); mnRender();
+  var p=document.getElementById('mn-sheet-paper');
+  if(p){ p.classList.add('mn-closing'); setTimeout(function(){ mnCloseEditor(); },240); }
+  else mnCloseEditor();
+  mnSaveStore(); mnRender();
 }
 
-/* —— 图取字：上传图片 → 中文识别 → 点选文字 → 直接记成便签 —— */
+/* —— 图取字 v471：放大增强 + 分条多版面识别 + 拖框重认 + 合并去重 —— */
 var MN_TESS_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
 var MN_TESS_LANG = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/chi_sim@1.0.0/4.0.0_best_int';
-var mnOcr = {lines:[], picked:{}, cat:'mood', img:null, busy:false};
+var mnOcr = {lines:[], picked:{}, cat:'mood', canvas:null, worker:null, busy:false, crop:null, drag:null};
 function mnOcrStatus(t){ var e=document.getElementById('mn-ocr-status'); if(e) e.textContent=t; }
 function mnOcrRenderCats(){
   var h='';
@@ -28295,31 +28404,66 @@ function mnOcrRenderCats(){
 }
 function mnOcrPickCat(k){ mnOcr.cat=k; mnOcrRenderCats(); }
 function mnOcrReset(){
-  mnOcr.lines=[]; mnOcr.picked={}; mnOcr.img=null; mnOcr.busy=false;
+  mnOcr.lines=[]; mnOcr.picked={}; mnOcr.canvas=null; mnOcr.crop=null; mnOcr.busy=false;
   mnOcr.cat = mnState.cat!=='all' ? mnState.cat : 'mood';
   var f=document.getElementById('mn-ocr-file'); if(f) f.value='';
-  document.getElementById('mn-ocr-preview').innerHTML='';
+  var im=document.getElementById('mn-ocr-img'); if(im) im.removeAttribute('src');
+  var rc=document.getElementById('mn-ocr-rect'); if(rc) rc.style.display='none';
   document.getElementById('mn-ocr-lines').innerHTML='';
   document.getElementById('mn-ocr-manual').value='';
   document.getElementById('mn-ocr-final').value='';
-  mnOcrStatus('首次需联网装识别字典，约 2MB');
+  mnOcrStatus('选好图片自动认字，首次需联网装字典（约 2MB）');
   mnOcrRenderCats();
 }
-function mnOpenOcr(){ mnOcrReset(); document.getElementById('mn-ocr').style.display='flex'; }
-function mnCloseOcr(){ document.getElementById('mn-ocr').style.display='none'; }
+function mnOpenOcr(){ mnOcrReset(); document.getElementById('mn-ocr').style.display='flex'; mnOcrBindCrop(); }
+function mnCloseOcr(){ document.getElementById('mn-ocr').style.display='none'; mnOcr.busy=false; }
+/* 原图上拖框，框内区域可单独放大重认 */
+function mnOcrBindCrop(){
+  var box=document.getElementById('mn-ocr-crop'); if(!box || box.getAttribute('data-bound')) return;
+  box.setAttribute('data-bound','1');
+  var img=document.getElementById('mn-ocr-img'), rc=document.getElementById('mn-ocr-rect');
+  function pt(e){ var r=img.getBoundingClientRect(); return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width))), y:Math.max(0,Math.min(1,(e.clientY-r.top)/Math.max(1,r.height)))}; }
+  function paint(){
+    var d=mnOcr.drag; if(!d) return;
+    var ir=img.getBoundingClientRect(), br=box.getBoundingClientRect();
+    var x1=Math.min(d.x,d.x2)*ir.width+(ir.left-br.left), y1=Math.min(d.y,d.y2)*ir.height+(ir.top-br.top);
+    var x2=Math.max(d.x,d.x2)*ir.width+(ir.left-br.left), y2=Math.max(d.y,d.y2)*ir.height+(ir.top-br.top);
+    rc.style.display='block'; rc.style.left=x1+'px'; rc.style.top=y1+'px';
+    rc.style.width=Math.max(2,x2-x1)+'px'; rc.style.height=Math.max(2,y2-y1)+'px';
+  }
+  box.addEventListener('pointerdown',function(e){
+    if(!img.getAttribute('src')) return;
+    var p=pt(e); mnOcr.drag={x:p.x,y:p.y,x2:p.x,y2:p.y};
+    try{ box.setPointerCapture(e.pointerId); }catch(err){}
+    paint();
+  });
+  box.addEventListener('pointermove',function(e){ if(!mnOcr.drag) return; var p=pt(e); mnOcr.drag.x2=p.x; mnOcr.drag.y2=p.y; paint(); });
+  box.addEventListener('pointerup',function(e){
+    var d=mnOcr.drag; if(!d) return; mnOcr.drag=null;
+    var x=Math.min(d.x,d.x2), y=Math.min(d.y,d.y2), w=Math.abs(d.x2-d.x), h=Math.abs(d.y2-d.y);
+    mnOcr.crop=(w>.04&&h>.02)?{x:x,y:y,w:w,h:h}:null;
+    if(!mnOcr.crop) rc.style.display='none';
+  });
+}
 function mnOcrPick(input){
   var f=input.files&&input.files[0]; if(!f) return;
   var fr=new FileReader();
   fr.onload=function(){
     var im=new Image();
     im.onload=function(){
-      var max=1600, r=Math.min(1,max/Math.max(im.width,im.height));
+      var W=im.width,H=im.height,scale=1,M=Math.max(W,H);
+      if(M>3200) scale=3200/M; else if(M<1600) scale=1600/M;   // 只放大，不缩小正文
       var cv=document.createElement('canvas');
-      cv.width=Math.max(1,Math.round(im.width*r)); cv.height=Math.max(1,Math.round(im.height*r));
-      try { cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); } catch(e){}
-      var data=cv.toDataURL('image/jpeg',.88);
-      mnOcr.img=data;
-      document.getElementById('mn-ocr-preview').innerHTML='<img src="'+data+'" alt="">';
+      cv.width=Math.max(1,Math.round(W*scale)); cv.height=Math.max(1,Math.round(H*scale));
+      var g=cv.getContext('2d'); g.imageSmoothingQuality='high'; g.drawImage(im,0,0,cv.width,cv.height);
+      var en=document.createElement('canvas'); en.width=cv.width; en.height=cv.height;
+      var eg=en.getContext('2d');
+      try { eg.filter='grayscale(1) contrast(1.28) brightness(1.04)'; } catch(err){}
+      eg.imageSmoothingQuality='high'; eg.drawImage(cv,0,0);
+      mnOcr.canvas=en; mnOcr.crop=null;
+      var im2=document.getElementById('mn-ocr-img'); if(im2) im2.src=cv.toDataURL('image/jpeg',.9);
+      var rc=document.getElementById('mn-ocr-rect'); if(rc) rc.style.display='none';
+      mnOcrStatus('图已放好，正在分条认字…');
       mnOcrRun();
     };
     im.onerror=function(){ mnOcrStatus('这张图读不出来，换一张'); };
@@ -28346,34 +28490,118 @@ function mnOcrLoadEngine(cb){
   sc.onerror=function(){ if(done)return; done=true; clearTimeout(timer); cb(false); };
   document.head.appendChild(sc);
 }
-function mnOcrRun(){
-  if(!mnOcr.img || mnOcr.busy) return;
-  mnOcr.busy=true; mnOcrStatus('正在装识别引擎…');
+function mnOcrEngine(cb){
   mnOcrLoadEngine(function(ok){
-    if(!ok){ mnOcr.busy=false; mnOcrStatus('没连上识别引擎，可以把文字粘在下面再分行'); return; }
-    mnOcrStatus('正在认字…');
-    var wk=null;
+    if(!ok){ cb(null); return; }
+    if(mnOcr.worker){ cb(mnOcr.worker); return; }
     try {
-      Tesseract.createWorker('chi_sim',1,{langPath:MN_TESS_LANG,logger:function(m){
-        if(m && m.status==='recognizing text') mnOcrStatus('认字 '+Math.round((m.progress||0)*100)+'%');
-      }}).then(function(w){
-        wk=w; return w.recognize(mnOcr.img);
-      }).then(function(r){
-        mnOcrSetLines((r&&r.data&&r.data.text)||'');
-        mnOcrStatus('认完了，点句子选进来');
-      }).catch(function(e){
-        mnOcrStatus('没认出来，可以把文字粘在下面再分行');
-      }).then(function(){
-        if(wk){ try{ wk.terminate(); }catch(e){} }
-        mnOcr.busy=false;
-      });
-    } catch(e){ mnOcr.busy=false; mnOcrStatus('没认出来，可以把文字粘在下面再分行'); }
+      Tesseract.createWorker('chi_sim',1,{langPath:MN_TESS_LANG,logger:function(){}})
+        .then(function(w){ mnOcr.worker=w; cb(w); })
+        .catch(function(){ cb(null); });
+    } catch(e){ cb(null); }
+  });
+}
+/* 把源 canvas 的一块放大成 JPEG，供单段识别 */
+function mnOcrPart(cv,x,y,w,h,zoom,maxW){
+  var sw=Math.max(1,Math.round(w*zoom)), sh=Math.max(1,Math.round(h*zoom));
+  var k=Math.min(1,(maxW||2400)/sw); if(k<1){ sw=Math.round(sw*k); sh=Math.round(sh*k); }
+  var c=document.createElement('canvas'); c.width=sw; c.height=sh;
+  var g=c.getContext('2d'); g.imageSmoothingQuality='high';
+  g.drawImage(cv,x,y,w,h,0,0,sw,sh);
+  return c.toDataURL('image/jpeg',.92);
+}
+function mnOcrBuildParts(cropOnly){
+  var cv=mnOcr.canvas; if(!cv) return [];
+  var x=0,y=0,w=cv.width,h=cv.height;
+  if(cropOnly && mnOcr.crop){
+    var c=mnOcr.crop;
+    x=Math.round(c.x*w); y=Math.round(c.y*h);
+    w=Math.max(8,Math.round(c.w*w)); h=Math.max(8,Math.round(c.h*h));
+  }
+  var parts=[];
+  if(cropOnly){
+    parts.push({data:mnOcrPart(cv,x,y,w,h,2.2),psm:6,pri:0});
+    parts.push({data:mnOcrPart(cv,x,y,w,h,2.2),psm:11,pri:2});
+  } else {
+    // 整页自动版面（补充）+ 自上而下分条（主体）+ 稀疏文本兜底
+    parts.push({data:mnOcrPart(cv,x,y,w,h,1,1800),psm:3,pri:1});
+    var top=Math.round(h*.05), band=Math.max(420,Math.round(h/4));
+    for(var yy=top; yy<h; yy+=band){
+      parts.push({data:mnOcrPart(cv,x,y+yy,w,Math.min(band,h-yy),1.6),psm:6,pri:0});
+    }
+    parts.push({data:mnOcrPart(cv,x,y,w,h,1,1800),psm:11,pri:2});
+  }
+  return parts;
+}
+function mnOcrCollect(r,pri,bag){
+  var d=r&&r.data; if(!d) return;
+  var ls=d.lines||[];
+  ls.forEach(function(l){ var t=String(l.text||'').replace(/\s+/g,' ').trim(); if(t) bag.push({t:t,conf:l.confidence||0,pri:pri}); });
+  if(!ls.length && d.text){
+    String(d.text).split(/[\r\n]+/).forEach(function(t){ t=String(t).trim(); if(t) bag.push({t:t,conf:60,pri:pri}); });
+  }
+}
+function mnOcrNorm(t){ return String(t).replace(/[\s，。！？、,.!?·:：；;（）()\[\]「」""'']/g,''); }
+function mnOcrSimilar(a,b){
+  if(a===b) return true;
+  if(a.length>=6 && b.length>=6 && (a.indexOf(b)>=0 || b.indexOf(a)>=0)) return true;
+  var A={},hit=0,sa=a.split(''),sb=b.split('');
+  sa.forEach(function(c){ A[c]=1; });
+  sb.forEach(function(c){ if(A[c]) hit++; });
+  return hit/Math.max(1,Math.min(sa.length,sb.length))>.85;
+}
+function mnOcrMerge(bag){
+  bag.sort(function(a,b){ return a.pri-b.pri; });
+  var out=[];
+  bag.forEach(function(r){
+    var t=r.t;
+    if(t.length<2) return;
+    if(/^[\d\s:：%％\.\-\/]{1,8}$/.test(t)) return;            // 状态栏时间/电量碎片
+    if(r.conf && r.conf<25) return;
+    var k=mnOcrNorm(t); if(k.length<2) return;
+    for(var i=0;i<out.length;i++) if(mnOcrSimilar(mnOcrNorm(out[i]),k)) return;
+    out.push(t);
+  });
+  return out;
+}
+function mnOcrRun(){ mnOcrStart(false); }
+function mnOcrRunCrop(){
+  if(!mnOcr.crop){ mnOcrStatus('先在图上拖一个框，再点「只认框里」'); return; }
+  mnOcrStart(true);
+}
+function mnOcrStart(cropOnly){
+  if(!mnOcr.canvas){ mnOcrStatus('先选一张图片'); return; }
+  if(mnOcr.busy) return;
+  var parts=mnOcrBuildParts(cropOnly);
+  if(!parts.length){ mnOcrStatus('这张图读不出来'); return; }
+  mnOcr.busy=true; mnOcrStatus('正在装识别引擎…');
+  mnOcrEngine(function(w){
+    if(!w){ mnOcr.busy=false; mnOcrStatus('没连上识别引擎，可以把文字粘在下面再分行'); return; }
+    var bag=[], i=0;
+    function step(){
+      if(i>=parts.length){
+        var lines=mnOcrMerge(bag);
+        mnOcrSetLines(lines.join('\n'));
+        mnOcrStatus(lines.length?('认完了，共 '+lines.length+' 行，点掉不要的'):'没认出来，拖框只认那块，或把文字粘在下面');
+        mnOcr.busy=false; return;
+      }
+      var p=parts[i];
+      mnOcrStatus('认字 '+(i+1)+'/'+parts.length+' 段…');
+      var pre;
+      try { pre=(typeof w.setParameters==='function') ? w.setParameters({tessedit_pageseg_mode:String(p.psm)}) : Promise.resolve(); }
+      catch(err){ pre=Promise.resolve(); }
+      pre.then(function(){ return w.recognize(p.data); })
+         .then(function(r){ mnOcrCollect(r,p.pri,bag); })
+         .catch(function(){}).then(function(){ i++; step(); });
+    }
+    step();
   });
 }
 function mnOcrSetLines(text){
   var arr=String(text||'').split(/[\r\n]+/).map(function(x){ return x.replace(/\s+/g,' ').trim(); })
           .filter(function(x){ return x.length>0; });
   mnOcr.lines=arr; mnOcr.picked={};
+  for(var i=0;i<arr.length;i++) mnOcr.picked[i]=true;       // 默认全选，点掉不要的
   mnOcrRenderLines(); mnOcrSync();
 }
 function mnOcrRenderLines(){
@@ -28395,7 +28623,6 @@ function mnOcrManual(){
   var t=document.getElementById('mn-ocr-manual').value||'';
   if(!t.trim()){ try{hamiToast('先粘点字');}catch(e){} return; }
   mnOcrSetLines(t);
-  for(var i=0;i<mnOcr.lines.length;i++) mnOcr.picked[i]=true;
   mnOcrRenderLines(); mnOcrSync();
   mnOcrStatus('已分行，可以点掉不要的句子');
 }
@@ -28441,7 +28668,16 @@ function mnViewerFav(){
   mnSaveStore(); mnRender(); mnRenderViewer();
 }
 function mnViewerEdit(){ var id=mnState.viewerId; mnCloseViewer(); mnOpenEditor(id); }
-function mnViewerDel(){ var id=mnState.viewerId; mnCloseViewer(); mnAskDel(id); }
+function mnViewerDel(){
+  var b=document.getElementById('mn-viewer-del'); if(!b) return;
+  if(b.getAttribute('data-armed')==='1'){
+    var id=mnState.viewerId; mnCloseViewer(); mnDelete(id);
+    b.setAttribute('data-armed',''); b.textContent='删';
+  } else {
+    b.setAttribute('data-armed','1'); b.textContent='确定删';
+    setTimeout(function(){ if(b.getAttribute('data-armed')==='1'){ b.setAttribute('data-armed',''); b.textContent='删'; } },4000);
+  }
+}
 
 /* —— 自包含启动：面板切到 active 即渲染，不侵入 switchPanel —— */
 (function(){
@@ -28462,4 +28698,17 @@ function mnViewerDel(){ var id=mnState.viewerId; mnCloseViewer(); mnAskDel(id); 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
+<style id="hami-v471-fix">
+/* 稿纸正文：压过 y2k 主题「所有 textarea 一律白底 + 边框」的强规则 */
+body.theme-y2k .mn-sheet .mn-sheet-paper textarea.mn-sheet-text{
+  background:transparent !important;background-color:transparent !important;background-image:none !important;
+  border:none !important;border-radius:0 !important;box-shadow:none !important;
+}
+/* v471：仅手机端收紧「记一下」指令栏 → 时间与激励语之间的空白；三倒计时环一律不动 */
+@media (max-width:768px){
+  .main{padding-top:10px !important;}
+  body.theme-y2k .desktop-hero, body .desktop-hero{margin-top:4px !important;padding-top:8px !important;}
+  body.hami-force-desktop .desktop-hero{margin-top:10px !important;padding-top:14px !important;}
+}
+</style>
 </body></html>
