@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-463"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-464"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8086,6 +8086,14 @@ body.theme-y2k .weight-cal-badge {
   body.theme-y2k .weight-cal-main.weight-cal-main-sm { font-size: 12px !important; letter-spacing: -0.4px !important; }
   body.theme-y2k .weight-cal-main.weight-cal-main-xs { font-size: 11px !important; letter-spacing: -0.5px !important; }
 }
+/* v464：侧栏符号与文字紧贴——撤 v440 的 4.9em 固定宽居中盒（那是两行字时代的遗物），间距收紧 */
+body.theme-y2k .nav-item .nav-text {
+  width: auto !important;
+  text-align: left !important;
+  margin-left: 0 !important;
+  text-wrap: initial !important;
+}
+body.theme-y2k .nav-item { gap: 4px !important; }
 /* v463：账号名与平台芯片收紧间距（主人反馈离太远） */
 body.theme-y2k .acc-id { gap: 2px !important; }
 /* v458：账号卡——平台芯片与 @账号名 拆成独立项，名+平台始终同行，@id 放不下才单独换行 */
