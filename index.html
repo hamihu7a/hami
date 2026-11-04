@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-458"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-459"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8096,6 +8096,15 @@ body.theme-y2k .weight-cal-badge {
 }
 /* v458：账号卡——平台芯片与 @账号名 拆成独立项，名+平台始终同行，@id 放不下才单独换行 */
 body.theme-y2k .acc-handle { display: contents !important; }
+/* v459：天气/黄历卡删「今日天气/今日黄历」竖排标题，天气名/农历横排单行不转行，整体上下收窄 */
+body.theme-y2k #desktop-weather .weather-title-row,
+body.theme-y2k #desktop-fortune .weather-title-row { justify-content: center !important; margin: 0 0 4px !important; line-height: 1.25 !important; }
+body.theme-y2k #desktop-weather .weather-title-weather,
+body.theme-y2k #desktop-fortune .weather-title-weather { border-left: none !important; padding-left: 0 !important; font-size: 16px !important; }
+body.theme-y2k #desktop-weather .weather-title-lines,
+body.theme-y2k #desktop-fortune .weather-title-lines { flex-direction: row !important; white-space: nowrap !important; }
+body.theme-y2k #desktop-weather .weather-title-lines .title-line,
+body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inline !important; }
 </style><div id="hami-countdown-pair"><div class="hcp-card hcp-life"><div class="hcp-title"> 人生剩余天数</div><div class="hcp-big"><span id="hcp-life-days">--</span><span class="hcp-unit">天</span></div><div class="hcp-sub" id="hcp-life-sub">距 90 岁目标</div><div class="hcp-bar"><div class="hcp-bar-fill" id="hcp-life-fill"></div><div class="hcp-bar-pct" id="hcp-life-pct">--%</div></div></div><div class="hcp-card hcp-today hcp-fest"><div class="hcp-title"> 近期节日</div><div class="hcp-big"><span id="hcp-fest-name">--</span></div><div class="hcp-sub" id="hcp-fest-sub">--</div><div class="hcp-fest-rows"><div class="hcp-fest-row"><span class="hcp-fest-tag">国内</span><span class="hcp-fest-txt" id="hcp-fest-cn">--</span></div><div class="hcp-fest-row"><span class="hcp-fest-tag ab">国外</span><span class="hcp-fest-txt" id="hcp-fest-ab">--</span></div></div></div></div><script>
  (function(){
  var RING_C = 163.36, _lifeCache = null;
@@ -24201,7 +24210,7 @@ function renderWeatherFromApi(d) {
  uvTitle = '当前紫外线暂无数据；今日峰值 ' + uvMax + '（' + uvShortLevel(d.uvMax) + '）';
  }
  el.innerHTML = `
- <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-text"><div>今日</div><div>天气</div></div><div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div></div><div class="home-card-row"><span>位置</span><b>${isValidCityName(d.city) ? d.city : WEATHER_CITY_CN}</b></div><div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div><div class="wx-extra-wrap"><div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div><div class="home-card-row weather-uv"><span>紫外线：</span><b title="${uvTitle}">${uvText}</b></div></div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<span class="wb-tail">天气</span></span><span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市">搜索<span class="wb-tail">城市</span></span></div></div>`;
+ <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${d.name}</span></div></div><div class="home-card-row"><span>位置</span><b>${isValidCityName(d.city) ? d.city : WEATHER_CITY_CN}</b></div><div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div><div class="wx-extra-wrap"><div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div><div class="home-card-row weather-uv"><span>紫外线：</span><b title="${uvTitle}">${uvText}</b></div></div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="showTomorrowWeatherModal(event)" title="查看明日天气">明日<span class="wb-tail">天气</span></span><span class="tomorrow-badge" onclick="openWeatherSearchCity()" title="切换城市">搜索<span class="wb-tail">城市</span></span></div></div>`;
  } catch(e) { renderWeatherFallback(); }
 }
 
@@ -24234,7 +24243,7 @@ function renderWeatherFallback() {
  if (!hasReal) {
  window._wxAdvice = null;
  el.innerHTML = `
- <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-text"><div>今日</div><div>天气</div></div><div class="weather-title-weather">️ <span class="weather-title-lines">暂无数据</span></div></div><div class="home-card-row"><span>位置</span><b>${WEATHER_CITY_CN}</b></div><div class="home-card-note weather-fail">没拿到真实天气，就不显示猜的温度啦～ 检查下网络，点下面「重新获取」。</div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="retryWeather(event)" title="重新获取今日天气">重新<span class="wb-tail">获取</span></span></div></div>`;
+ <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-weather">️ <span class="weather-title-lines">暂无数据</span></div></div><div class="home-card-row"><span>位置</span><b>${WEATHER_CITY_CN}</b></div><div class="home-card-note weather-fail">没拿到真实天气，就不显示猜的温度啦～ 检查下网络，点下面「重新获取」。</div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="retryWeather(event)" title="重新获取今日天气">重新<span class="wb-tail">获取</span></span></div></div>`;
  return;
  }
 
@@ -24248,7 +24257,7 @@ function renderWeatherFallback() {
  else if (uvMax) uvText = '峰值' + uvMax + '（' + uvShortLevel(d.uvMax) + '）';
  const stamp = weatherCacheStamp(cache);
  el.innerHTML = `
- <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-text"><div>今日</div><div>天气</div></div><div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${splitTitleText(d.name)}</span></div></div><div class="home-card-row"><span>位置</span><b>${isValidCityName(d.city) ? d.city : WEATHER_CITY_CN}</b></div><div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div><div class="home-card-row weather-stale"><span>数据</span><b>${stamp} 取的（非最新）</b></div><div class="wx-extra-wrap"><div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div><div class="home-card-row weather-uv"><span>紫外线：</span><b>${uvText}</b></div></div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="retryWeather(event)" title="重新获取今日天气">重新<span class="wb-tail">获取</span></span></div></div>`;
+ <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-weather">${guessWeatherIcon(d.name)} <span class="weather-title-lines">${d.name}</span></div></div><div class="home-card-row"><span>位置</span><b>${isValidCityName(d.city) ? d.city : WEATHER_CITY_CN}</b></div><div class="home-card-row"><span>温度</span><b>${d.lo} ~ ${d.hi}</b></div><div class="home-card-row weather-stale"><span>数据</span><b>${stamp} 取的（非最新）</b></div><div class="wx-extra-wrap"><div class="home-card-note weather-advice" onclick="showWeatherAdvicePop(this)" title="点击查看完整建议"><b>建议：</b>${adv.short}</div><div class="home-card-row weather-uv"><span>紫外线：</span><b>${uvText}</b></div></div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="retryWeather(event)" title="重新获取今日天气">重新<span class="wb-tail">获取</span></span></div></div>`;
 }
 
 // 点击「重新获取」：绕开缓存，真去请求一次
@@ -24304,7 +24313,7 @@ function renderWeatherFortune() {
  const ji = String(hl.ji || '').replace(/\s+/g, '，').replace(/，$/, '');
  const naYin = hl.naYin || hl.dayWx || '—';
  el.innerHTML = `
- <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-text"><div>今日</div><div>黄历</div></div><div class="weather-title-weather">${moonEmoji(hl.day)} <span class="weather-title-lines">${splitTitleText(hl.lunar)}</span></div></div><div class="home-card-row"><span>纳音</span><b>${naYin}</b></div><div class="home-card-row"><span>冲煞</span><b>${hl.chong}${hl.sha ? ' · ' + hl.sha : ''}</b></div><div class="yi-ji-wrap"><div class="home-card-note yi-ji" id="desktop-yi-yi" onclick="showYiJiPop(this, window._hlToday, '今日')" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="yi-label">宜：</b><span>${yi || '—'}</span></div><div class="home-card-note yi-ji" id="desktop-yi-ji" onclick="showYiJiPop(this, window._hlToday, '今日')" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="ji-label">忌：</b><span>${ji || '—'}</span></div></div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">明日黄历</span></div></div>`;
+ <div class="home-card-flex"><div class="home-card-body"><div class="weather-title-row"><div class="weather-title-weather">${moonEmoji(hl.day)} <span class="weather-title-lines">${hl.lunar}</span></div></div><div class="home-card-row"><span>纳音</span><b>${naYin}</b></div><div class="home-card-row"><span>冲煞</span><b>${hl.chong}${hl.sha ? ' · ' + hl.sha : ''}</b></div><div class="yi-ji-wrap"><div class="home-card-note yi-ji" id="desktop-yi-yi" onclick="showYiJiPop(this, window._hlToday, '今日')" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="yi-label">宜：</b><span>${yi || '—'}</span></div><div class="home-card-note yi-ji" id="desktop-yi-ji" onclick="showYiJiPop(this, window._hlToday, '今日')" title="点击查看完整宜忌（含值神、值宿、吉神凶煞）"><b class="ji-label">忌：</b><span>${ji || '—'}</span></div></div></div><div class="home-card-foot"><span class="tomorrow-badge" onclick="showTomorrowAlmanacModal(event)" title="查看明日黄历">明日黄历</span></div></div>`;
 
  // 天气：实时拉取（open-meteo 主，wttr.in 备）
  fetchWeather();
