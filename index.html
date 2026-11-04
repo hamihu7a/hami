@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-471"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-472"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -6476,7 +6476,7 @@ body.theme-vintage input[type="date"]:not(.date-filled):not(:focus)::before {
  }
  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hamiDateBind);
  else hamiDateBind();
- setInterval(hamiDateScan, 800);
+ setInterval(function(){ if(document.visibilityState==='visible') hamiDateScan(); }, 3000);
 })();
 </script><style id="y2kTheme">
 /* ============================================================
@@ -8268,7 +8268,7 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
  }
  function boot(){
  if (document.getElementById('hcp-fest-name') && typeof findSolarForLunar === 'function') {
- render(); bindFestPop(); setInterval(render, 30000);
+ render(); bindFestPop(); setInterval(function(){ if(document.visibilityState==='visible') render(); }, 30000);
  } else { setTimeout(boot, 300); }
  }
  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
@@ -8580,12 +8580,25 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
     <div class="mn-ocr-lines" id="mn-ocr-lines"></div>
     <div class="mn-ocr-manual"><textarea id="mn-ocr-manual" placeholder="没认出来？把文字粘这儿，一行一句"></textarea><button class="mn-mini" type="button" onclick="mnOcrManual()">分行</button></div>
     <div class="mn-field-label">选中的字（可改）</div>
-    <textarea id="mn-ocr-final" class="mn-textarea" style="min-height:76px;" placeholder="点上面的句子选进来"></textarea>
+    <textarea id="mn-ocr-final" class="mn-textarea" style="min-height:150px;" placeholder="点上面的句子选进来"></textarea>
+    <div class="mn-ocr-editrow"><span>框里随意改，换行都留着</span><button class="mn-mini" type="button" onclick="mnOcrZoomOpen()">放大改字</button></div>
     <div class="mn-field-label">记到哪类</div>
     <div class="mn-cat-pick" id="mn-ocr-cat"></div>
+    <div class="mn-field-label">便签款式</div>
+    <div class="mn-paper-pick" id="mn-ocr-paper"></div>
     <div class="mn-modal-foot">
       <button class="mn-btn mn-btn-ghost" type="button" onclick="mnCloseOcr()">取消</button>
       <button class="mn-btn" type="button" onclick="mnOcrSave()">记上去</button>
+    </div>
+  </div>
+  <div id="mn-ocr-zoom" class="mn-ocr-zoom" style="display:none;">
+    <div class="mn-ocr-zoom-box">
+      <div class="mn-ocr-zoom-top"><span>改选中的字</span><button class="mn-x" type="button" onclick="mnOcrZoomCancel()">×</button></div>
+      <textarea id="mn-ocr-zoom-text" class="mn-ocr-zoom-text" placeholder="慢慢改，换行和空行都会留着"></textarea>
+      <div class="mn-ocr-zoom-foot">
+        <button class="mn-mini" type="button" onclick="mnOcrZoomCancel()">取消</button>
+        <button class="mn-act mn-act-main" type="button" onclick="mnOcrZoomDone()">改好了</button>
+      </div>
     </div>
   </div>
 </div>
@@ -12664,7 +12677,7 @@ function syncMirrorRatios() {
 }
 // 页面加载后测一次（v363：改为等启动完成后再测——密码门延迟渲染期间量到的是空壳，正是镜像压扁的根因）；窗口尺寸变化时重测
 (function () {
- function boot() { setTimeout(syncMirrorRatios, 600); setTimeout(syncMirrorRatios, 2500); setTimeout(syncMirrorRatios, 5500); }
+ function boot() { setTimeout(function(){ if(document.visibilityState==='visible') syncMirrorRatios(); }, 600); setTimeout(function(){ if(document.visibilityState==='visible') syncMirrorRatios(); }, 2500); }
  if (document.readyState === 'complete') boot();
  else window.addEventListener('load', boot);
  var t = null;
@@ -27764,7 +27777,7 @@ window.addEventListener('resize', function () {
 });
 
 updateClock();
-setInterval(updateClock, 1000);
+setInterval(function(){ if(document.visibilityState==='visible') updateClock(); }, 1000);
 
 /* ===== 年度倒计时环JS 开始（hero 左上角「今年还剩多少天」半透明环，可整段删除，不影响其它任何功能/排版） ===== */
 (function () {
@@ -27793,7 +27806,7 @@ setInterval(updateClock, 1000);
  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', heroYearInit);
  else heroYearInit();
  setTimeout(heroYearInit, 700);
- setInterval(heroYearInit, 30000);
+ setInterval(function(){ if(document.visibilityState==='visible') heroYearInit(); }, 30000);
 })();
 /* ===== 年度倒计时环JS 结束 ===== */
 </script><script>
@@ -28389,10 +28402,10 @@ function mnSave(){
   mnSaveStore(); mnRender();
 }
 
-/* —— 图取字 v471：放大增强 + 分条多版面识别 + 拖框重认 + 合并去重 —— */
+/* —— 图取字 v472：放大增强 + 重叠分条 + 段落合并 + 大编辑层 + 便签款式 —— */
 var MN_TESS_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
 var MN_TESS_LANG = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/chi_sim@1.0.0/4.0.0_best_int';
-var mnOcr = {lines:[], picked:{}, cat:'mood', canvas:null, worker:null, busy:false, crop:null, drag:null};
+var mnOcr = {lines:[], picked:{}, cat:'mood', paper:'line', paperTouched:false, canvas:null, worker:null, busy:false, crop:null, drag:null};
 function mnOcrStatus(t){ var e=document.getElementById('mn-ocr-status'); if(e) e.textContent=t; }
 function mnOcrRenderCats(){
   var h='';
@@ -28402,21 +28415,34 @@ function mnOcrRenderCats(){
   });
   document.getElementById('mn-ocr-cat').innerHTML=h;
 }
-function mnOcrPickCat(k){ mnOcr.cat=k; mnOcrRenderCats(); }
+function mnOcrRenderPapers(){
+  var box=document.getElementById('mn-ocr-paper'); if(!box) return;
+  var cc=mnCat(mnOcr.cat), h='';
+  MN_PAPERS.forEach(function(p){
+    var on=mnOcr.paper===p.k;
+    h += '<button class="mn-paper-opt'+(on?' on':'')+'" type="button" onclick="mnOcrPickPaper(\''+p.k+'\')">'
+      +  '<div class="mn-paper-thumb" style="'+mnPaperThumb(p.k,cc.c,cc.bg)+'"></div><span class="mn-paper-name">'+p.n+'</span></button>';
+  });
+  box.innerHTML=h;
+}
+function mnOcrPickCat(k){ mnOcr.cat=k; if(!mnOcr.paperTouched) mnOcr.paper=mnCat(k).paper||'line'; mnOcrRenderCats(); mnOcrRenderPapers(); }
+function mnOcrPickPaper(k){ mnOcr.paper=k; mnOcr.paperTouched=true; mnOcrRenderPapers(); }
 function mnOcrReset(){
   mnOcr.lines=[]; mnOcr.picked={}; mnOcr.canvas=null; mnOcr.crop=null; mnOcr.busy=false;
   mnOcr.cat = mnState.cat!=='all' ? mnState.cat : 'mood';
+  mnOcr.paper = mnCat(mnOcr.cat).paper||'line'; mnOcr.paperTouched=false;
   var f=document.getElementById('mn-ocr-file'); if(f) f.value='';
   var im=document.getElementById('mn-ocr-img'); if(im) im.removeAttribute('src');
   var rc=document.getElementById('mn-ocr-rect'); if(rc) rc.style.display='none';
   document.getElementById('mn-ocr-lines').innerHTML='';
   document.getElementById('mn-ocr-manual').value='';
   document.getElementById('mn-ocr-final').value='';
+  var z=document.getElementById('mn-ocr-zoom'); if(z) z.style.display='none';
   mnOcrStatus('选好图片自动认字，首次需联网装字典（约 2MB）');
-  mnOcrRenderCats();
+  mnOcrRenderCats(); mnOcrRenderPapers();
 }
 function mnOpenOcr(){ mnOcrReset(); document.getElementById('mn-ocr').style.display='flex'; mnOcrBindCrop(); }
-function mnCloseOcr(){ document.getElementById('mn-ocr').style.display='none'; mnOcr.busy=false; }
+function mnCloseOcr(){ document.getElementById('mn-ocr').style.display='none'; var z=document.getElementById('mn-ocr-zoom'); if(z) z.style.display='none'; mnOcr.busy=false; }
 /* 原图上拖框，框内区域可单独放大重认 */
 function mnOcrBindCrop(){
   var box=document.getElementById('mn-ocr-crop'); if(!box || box.getAttribute('data-bound')) return;
@@ -28452,13 +28478,13 @@ function mnOcrPick(input){
     var im=new Image();
     im.onload=function(){
       var W=im.width,H=im.height,scale=1,M=Math.max(W,H);
-      if(M>3200) scale=3200/M; else if(M<1600) scale=1600/M;   // 只放大，不缩小正文
+      if(M>3600) scale=3600/M; else if(M<2000) scale=2000/M;   // 只放大不缩小正文
       var cv=document.createElement('canvas');
       cv.width=Math.max(1,Math.round(W*scale)); cv.height=Math.max(1,Math.round(H*scale));
       var g=cv.getContext('2d'); g.imageSmoothingQuality='high'; g.drawImage(im,0,0,cv.width,cv.height);
       var en=document.createElement('canvas'); en.width=cv.width; en.height=cv.height;
       var eg=en.getContext('2d');
-      try { eg.filter='grayscale(1) contrast(1.28) brightness(1.04)'; } catch(err){}
+      try { eg.filter='grayscale(1) contrast(1.5) brightness(1.06)'; } catch(err){}
       eg.imageSmoothingQuality='high'; eg.drawImage(cv,0,0);
       mnOcr.canvas=en; mnOcr.crop=null;
       var im2=document.getElementById('mn-ocr-img'); if(im2) im2.src=cv.toDataURL('image/jpeg',.9);
@@ -28510,6 +28536,7 @@ function mnOcrPart(cv,x,y,w,h,zoom,maxW){
   g.drawImage(cv,x,y,w,h,0,0,sw,sh);
   return c.toDataURL('image/jpeg',.92);
 }
+/* 重叠分条：相邻条带留 15% 重叠，避免一句话被从中间切断 */
 function mnOcrBuildParts(cropOnly){
   var cv=mnOcr.canvas; if(!cv) return [];
   var x=0,y=0,w=cv.width,h=cv.height;
@@ -28520,48 +28547,92 @@ function mnOcrBuildParts(cropOnly){
   }
   var parts=[];
   if(cropOnly){
-    parts.push({data:mnOcrPart(cv,x,y,w,h,2.2),psm:6,pri:0});
-    parts.push({data:mnOcrPart(cv,x,y,w,h,2.2),psm:11,pri:2});
+    parts.push({data:mnOcrPart(cv,x,y,w,h,2.4,2600),psm:6,pri:0,ord:100});
+    parts.push({data:mnOcrPart(cv,x,y,w,h,2.4,2600),psm:11,pri:2,ord:0});
   } else {
-    // 整页自动版面（补充）+ 自上而下分条（主体）+ 稀疏文本兜底
-    parts.push({data:mnOcrPart(cv,x,y,w,h,1,1800),psm:3,pri:1});
-    var top=Math.round(h*.05), band=Math.max(420,Math.round(h/4));
-    for(var yy=top; yy<h; yy+=band){
-      parts.push({data:mnOcrPart(cv,x,y+yy,w,Math.min(band,h-yy),1.6),psm:6,pri:0});
+    parts.push({data:mnOcrPart(cv,x,y,w,h,1,2000),psm:3,pri:1,ord:0});
+    var top=Math.round(h*.03), band=Math.max(420,Math.round(h/4));
+    var step=Math.max(220,Math.round(band*.85)), k=0;
+    for(var yy=top; yy<h; yy+=step){
+      parts.push({data:mnOcrPart(cv,x,y+yy,w,Math.min(band,h-yy),1.7,2400),psm:6,pri:0,ord:100+k*100});
+      k++;
     }
-    parts.push({data:mnOcrPart(cv,x,y,w,h,1,1800),psm:11,pri:2});
+    parts.push({data:mnOcrPart(cv,x,y,w,h,1,2000),psm:11,pri:2,ord:100000});
   }
   return parts;
 }
-function mnOcrCollect(r,pri,bag){
+/* 清洗与噪声过滤：状态栏时间/电量、边框竖线、单字符碎片一律丢掉 */
+function mnOcrClean(t){
+  return String(t==null?'':t).replace(/\s+/g,' ').replace(/[|｜]{1,3}$/,'').replace(/^[\s\-—–_·•|｜]+/,'').trim();
+}
+function mnOcrIsNoise(t){
+  if(!t || t.length<2) return true;
+  if(/^[\d\s:：%％\.\-\/·|+]{1,12}$/.test(t)) return true;
+  if(/^(上午|下午|凌晨|晚上)?\d{1,2}[:：]\d{2}$/.test(t)) return true;
+  // 只要含中文/字母/数字就不是符号噪声（中文在 JS 里也算 \W，别用 \W 判短句）
+  if(!/[\u4e00-\u9fa5A-Za-z0-9]/.test(t)) return true;
+  return false;
+}
+function mnOcrCollect(r,pri,bag,base){
   var d=r&&r.data; if(!d) return;
-  var ls=d.lines||[];
-  ls.forEach(function(l){ var t=String(l.text||'').replace(/\s+/g,' ').trim(); if(t) bag.push({t:t,conf:l.confidence||0,pri:pri}); });
+  var ls=d.lines||[], i=0;
+  ls.forEach(function(l){
+    var t=mnOcrClean(l.text||'');
+    if(!mnOcrIsNoise(t)) bag.push({t:t,conf:l.confidence||0,pri:pri,ord:base+i*0.5});
+    i++;
+  });
   if(!ls.length && d.text){
-    String(d.text).split(/[\r\n]+/).forEach(function(t){ t=String(t).trim(); if(t) bag.push({t:t,conf:60,pri:pri}); });
+    String(d.text).split(/[\r\n]+/).forEach(function(x,i){
+      var t=mnOcrClean(x);
+      if(!mnOcrIsNoise(t)) bag.push({t:t,conf:60,pri:pri,ord:base+i*0.5});
+    });
   }
 }
-function mnOcrNorm(t){ return String(t).replace(/[\s，。！？、,.!?·:：；;（）()\[\]「」""'']/g,''); }
+function mnOcrNorm(t){ return String(t).replace(/[\s，。！？、,.!?·:：；;（）()\[\]「」《》""'']/g,''); }
 function mnOcrSimilar(a,b){
   if(a===b) return true;
-  if(a.length>=6 && b.length>=6 && (a.indexOf(b)>=0 || b.indexOf(a)>=0)) return true;
+  if(a.length>=5 && b.length>=5 && (a.indexOf(b)>=0 || b.indexOf(a)>=0)) return true;
+  if(a.length<4 || b.length<4) return false;
   var A={},hit=0,sa=a.split(''),sb=b.split('');
   sa.forEach(function(c){ A[c]=1; });
-  sb.forEach(function(c){ if(A[c]) hit++; });
-  return hit/Math.max(1,Math.min(sa.length,sb.length))>.85;
+  sb.forEach(function(c){ if(A[c]){ hit++; A[c]=0; } });
+  return hit/Math.max(1,Math.min(sa.length,sb.length))>.88;
 }
+/* 长句优先去重：噪声先滤、短碎片被长句吸收，再按位置排好拼成完整段落 */
 function mnOcrMerge(bag){
-  bag.sort(function(a,b){ return a.pri-b.pri; });
-  var out=[];
+  var arr=[];
   bag.forEach(function(r){
-    var t=r.t;
-    if(t.length<2) return;
-    if(/^[\d\s:：%％\.\-\/]{1,8}$/.test(t)) return;            // 状态栏时间/电量碎片
-    if(r.conf && r.conf<25) return;
-    var k=mnOcrNorm(t); if(k.length<2) return;
-    for(var i=0;i<out.length;i++) if(mnOcrSimilar(mnOcrNorm(out[i]),k)) return;
-    out.push(t);
+    var t=mnOcrClean(r&&r.t);
+    if(mnOcrIsNoise(t) || (r && r.conf && r.conf<28)) return;
+    var k=mnOcrNorm(t);
+    if(k.length<2) return;
+    arr.push({t:t,k:k,pri:(r&&r.pri)||0,ord:(r&&r.ord)||0});
   });
+  arr.sort(function(a,b){ return (b.k.length-a.k.length)||(a.pri-b.pri); });
+  var keep=[];
+  arr.forEach(function(r){
+    for(var i=0;i<keep.length;i++){
+      var q=keep[i].k;
+      // 一方是另一方的子串 → 短的那条是重复碎片，直接丢
+      if(q===r.k || q.indexOf(r.k)>=0 || r.k.indexOf(q)>=0 || mnOcrSimilar(q,r.k)) return;
+    }
+    keep.push(r);
+  });
+  keep.sort(function(a,b){ return a.ord-b.ord; });
+  return mnOcrJoinParas(keep.map(function(r){ return r.t; }));
+}
+/* 相邻碎片拼成段：上一行没说完就接上；句末/超长/新引号才断段 */
+function mnOcrJoinParas(lines){
+  var END=/[。！？!?…；;」』）)\]】]$/, START=/^[「『（(\[【]/;
+  var out=[], cur='';
+  lines.forEach(function(t){
+    if(!cur){ cur=t; return; }
+    if(END.test(cur) || (cur.length+t.length>64) || (START.test(t) && cur.length>=10)){
+      out.push(cur); cur=t; return;
+    }
+    cur += t;
+  });
+  if(cur) out.push(cur);
   return out;
 }
 function mnOcrRun(){ mnOcrStart(false); }
@@ -28582,16 +28653,16 @@ function mnOcrStart(cropOnly){
       if(i>=parts.length){
         var lines=mnOcrMerge(bag);
         mnOcrSetLines(lines.join('\n'));
-        mnOcrStatus(lines.length?('认完了，共 '+lines.length+' 行，点掉不要的'):'没认出来，拖框只认那块，或把文字粘在下面');
+        mnOcrStatus(lines.length?('认完了，共 '+lines.length+' 段，点掉不要的'):'没认出来，拖框只认那块，或把文字粘在下面');
         mnOcr.busy=false; return;
       }
       var p=parts[i];
       mnOcrStatus('认字 '+(i+1)+'/'+parts.length+' 段…');
       var pre;
-      try { pre=(typeof w.setParameters==='function') ? w.setParameters({tessedit_pageseg_mode:String(p.psm)}) : Promise.resolve(); }
+      try { pre=(typeof w.setParameters==='function') ? w.setParameters({tessedit_pageseg_mode:String(p.psm),preserve_interword_spaces:'1'}) : Promise.resolve(); }
       catch(err){ pre=Promise.resolve(); }
       pre.then(function(){ return w.recognize(p.data); })
-         .then(function(r){ mnOcrCollect(r,p.pri,bag); })
+         .then(function(r){ mnOcrCollect(r,p.pri,bag,p.ord||0); })
          .catch(function(){}).then(function(){ i++; step(); });
     }
     step();
@@ -28619,6 +28690,20 @@ function mnOcrSync(){
   for(var i=0;i<mnOcr.lines.length;i++) if(mnOcr.picked[i]) out.push(mnOcr.lines[i]);
   document.getElementById('mn-ocr-final').value=out.join('\n');
 }
+/* 放大改字：整屏一块大纸，随便改，改完写回 */
+function mnOcrZoomOpen(){
+  var z=document.getElementById('mn-ocr-zoom'), t=document.getElementById('mn-ocr-zoom-text');
+  if(!z||!t) return;
+  t.value=document.getElementById('mn-ocr-final').value||'';
+  z.style.display='flex';
+  setTimeout(function(){ try{ t.focus(); }catch(e){} },50);
+}
+function mnOcrZoomDone(){
+  var z=document.getElementById('mn-ocr-zoom'), t=document.getElementById('mn-ocr-zoom-text');
+  if(t) document.getElementById('mn-ocr-final').value=t.value;
+  if(z) z.style.display='none';
+}
+function mnOcrZoomCancel(){ var z=document.getElementById('mn-ocr-zoom'); if(z) z.style.display='none'; }
 function mnOcrManual(){
   var t=document.getElementById('mn-ocr-manual').value||'';
   if(!t.trim()){ try{hamiToast('先粘点字');}catch(e){} return; }
@@ -28631,7 +28716,7 @@ function mnOcrSave(){
   if(!t){ try{hamiToast('还没选字');}catch(e){} return; }
   var c=mnCat(mnOcr.cat);
   var n={id:'mn_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), text:t,
-         cat:c.k, paper:c.paper||'line', ts:Date.now(), fav:false, from:'ocr'};
+         cat:c.k, paper:mnOcr.paper||c.paper||'line', ts:Date.now(), fav:false, from:'ocr'};
   var a=mnNotes(); a.unshift(n); store.moodNotes=a;
   mnState.cat='all'; mnState.fav=false; mnState.q='';
   var si=document.getElementById('mn-search'); if(si) si.value='';
@@ -28709,6 +28794,50 @@ body.theme-y2k .mn-sheet .mn-sheet-paper textarea.mn-sheet-text{
   .main{padding-top:10px !important;}
   body.theme-y2k .desktop-hero, body .desktop-hero{margin-top:4px !important;padding-top:8px !important;}
   body.hami-force-desktop .desktop-hero{margin-top:10px !important;padding-top:14px !important;}
+}
+</style>
+<style id="hami-v472-fix">
+/* ===== v472-1 写便签 / 图取字：偏大的窗口，背后册子仍看得见 ===== */
+.mn-sheet{background:rgba(94,79,85,.26) !important;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:22px !important;}
+.mn-sheet-paper{width:min(760px,88vw) !important;height:min(82vh,700px) !important;border-radius:18px !important;border:1px solid var(--mn-line,#F2E5EC) !important;box-shadow:0 8px 26px rgba(196,150,170,.16),0 30px 80px rgba(94,79,85,.26) !important;}
+.mn-sheet-ocr .mn-ocr-card{width:min(700px,92vw) !important;max-height:88vh !important;max-height:88dvh !important;}
+/* 选中的字：给足空间 + 独立放大编辑层 */
+#mn-ocr-final{min-height:150px !important;font-size:16px !important;line-height:1.95 !important;}
+.mn-ocr-editrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:7px;}
+.mn-ocr-editrow span{font-size:10px;color:#A49099;font-weight:700;}
+.mn-ocr-zoom{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(94,79,85,.32);}
+.mn-ocr-zoom-box{width:min(720px,94vw);height:min(84vh,700px);height:min(84dvh,700px);display:flex;flex-direction:column;background:#FFFAFC;border:1px solid #F2E5EC;border-radius:18px;padding:16px;box-shadow:0 30px 80px rgba(94,79,85,.28);}
+.mn-ocr-zoom-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;color:#7A5967;margin-bottom:10px;}
+.mn-ocr-zoom-text{flex:1;min-height:0;width:100%;resize:none;border:1.5px solid #F2E5EC;border-radius:12px;background:#fff;padding:14px 16px;font-size:18px;line-height:2;color:#5E4F55;box-sizing:border-box;}
+.mn-ocr-zoom-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+/* 纸样按钮：类名不含 btn，避开 y2k「class 含 btn 一律刷粉」 */
+.mn-paper-opt{flex:0 0 auto;width:64px;border:1.5px solid #F2E5EC;background:#fff;border-radius:12px;padding:6px;cursor:pointer;text-align:center;font-family:'Yuanti SC','PingFang SC','Microsoft YaHei',sans-serif;}
+.mn-paper-opt.on{border-color:#E39BB4;background:#FFF4F8;box-shadow:0 2px 10px rgba(227,155,180,.16);}
+.mn-paper-opt .mn-paper-thumb{height:30px;border-radius:6px;margin-bottom:5px;}
+.mn-paper-opt .mn-paper-name{display:block;font-size:10px;font-weight:800;color:#8C7B82;}
+/* ===== v472-2 便签纸上的文字：端正手写体（按钮 / 工具栏 / 标签保持工作台原字体） ===== */
+:root{--mn-hand:'Hannotate SC','Kaiti SC','STKaiti','KaiTi','楷体','FZKai-Z03','Songti SC',serif;}
+.mn-card-text,.mn-fold-sum,.mn-card-foot,.mn-stamp,.mn-sheet-top #mn-sheet-meta,
+.mn-sheet-text,.mn-viewer .mn-card-text,#mn-ocr-final,.mn-ocr-manual textarea,.mn-ocr-zoom-text{
+  font-family:var(--mn-hand) !important;
+}
+.mn-ops button,.mn-sure{font-family:'Yuanti SC','PingFang SC','Microsoft YaHei',sans-serif !important;}
+body.theme-y2k textarea#mn-ocr-final,
+body.theme-y2k .mn-ocr-manual textarea,
+body.theme-y2k .mn-ocr-zoom-text,
+body.theme-y2k .mn-sheet .mn-sheet-paper textarea.mn-sheet-text{font-family:var(--mn-hand) !important;}
+.mn-card-text{letter-spacing:.5px;}
+.mn-sheet-text{font-size:18px !important;line-height:34px !important;}
+.mn-viewer .mn-card-text{font-size:18px !important;line-height:2.05 !important;}
+/* ===== v472-3 手机端也留边，不再铺满整屏 ===== */
+@media (max-width:768px){
+  .mn-sheet{padding:12px !important;}
+  .mn-sheet-paper{width:100% !important;height:min(86vh,720px) !important;height:min(86dvh,720px) !important;border-radius:16px !important;border:1px solid var(--mn-line,#F2E5EC) !important;}
+  .mn-sheet-ocr .mn-ocr-card{width:100% !important;height:auto !important;max-height:88vh !important;max-height:88dvh !important;border-radius:16px !important;border:1px solid #F2E5EC !important;padding:14px 14px 20px !important;}
+  .mn-sheet-ocr .mn-ocr-crop img{max-height:210px !important;}
+  .mn-ocr-zoom-box{width:100% !important;height:min(86dvh,640px) !important;}
+  #mn-ocr-final{min-height:130px !important;}
+  .mn-sheet-text{font-size:17px !important;line-height:32px !important;}
 }
 </style>
 </body></html>
