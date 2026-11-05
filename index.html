@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-476"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-477"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8663,7 +8663,7 @@ let store = {
  // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
  { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} },
  // v473：美白牙贴（隔一天一次，2026-11-04 第一次）
- { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, total: 6, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
  ],
  planGoals: [
  // link：关联学车模块只读算进度；checklist：一组待办清单（打勾记日期）；phase：分阶段计划（开始日+期数）
@@ -8673,6 +8673,7 @@ let store = {
  { key: 'blood', name: '体检抽血', note: '看指标适不适合用身体补剂', kind: 'check', done: false, date: '', result: '' },
  { key: 'anal', name: '肛肠科检查', note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
  { key: 'mole', name: '点痣', note: '恢复期别抠痂 · 注意防晒', kind: 'todo', done: false, date: '' },
+ { key: 'moleFu', name: '点痣复诊', note: '看恢复状态', kind: 'todo', done: false, date: '', plan: '2026-11-26' },
  { key: 'ear', name: '打耳洞', note: '认准正规店 · 银针养耳', kind: 'todo', done: false, date: '' }
  ] },
  { key: 'slim', name: '身体补剂计划', icon: '', type: 'phase', date: '', months: 6, note: '每月一次 · 配合饮食运动' }
@@ -25493,9 +25494,9 @@ ${checkinHtml}${updownHtml}
  if (!isFuture) {
  const _wt = getWeightToiletState(dateStr);
  // v476：称前/称后用「前/后」字圆区分（done=薄荷绿底白字，未记录=灰描边灰字），不再用同款对勾
- const _mk = (cls, done, tip, label) => '<span class="weight-cal-toilet wt-dot ' + cls + (done ? ' done' : '') + '" title="' + tip + '">' + label + '</span>';
- toiletIcon = _mk('wt-before', !!_wt.before, dateStr + ' 称体重前已上厕所', '前')
- + _mk('wt-after', !!_wt.after, dateStr + ' 称体重后已上厕所', '后');
+ const _mk = (cls, done, tip) => '<span class="weight-cal-toilet wt-dot ' + cls + (done ? ' done' : '') + '" title="' + tip + '"></span>';
+ toiletIcon = _mk('wt-before', !!_wt.before, dateStr + ' 称体重前已上厕所')
+ + _mk('wt-after', !!_wt.after, dateStr + ' 称体重后已上厕所');
  }
 
  const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1px rgba(240,192,64,.25);' : '';
@@ -25511,7 +25512,7 @@ ${checkinHtml}${updownHtml}
  html += `</div></div>`;
 
  // 图例（v433b：绿圆白勾=已上厕所，灰空心=未记录）
- html += `<div class="weight-cal-legend"><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot done wt-before">前</span>称前已上</span><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot done wt-after">后</span>称后已上</span><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot"></span>未记录</span></div>`;
+ html += `<div class="weight-cal-legend"><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot done wt-before"></span>称前已上</span><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot done wt-after"></span>称后已上</span><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot"></span>未记录</span></div>`;
 
  // 提示：本月有几天是"自动沿用前一天"补上的（浅色数字）
  const filledDays = Object.keys(filledMap).filter(d => d.startsWith(month) && !weightMap[d]).length;
@@ -25919,14 +25920,14 @@ function planEnsure() {
  { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
  { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} },
  // v473：美白牙贴隔日计划
- { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, total: 6, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
  ];
  touched = true;
  } else {
  const _need = [
  { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
  // v473：美白牙贴隔日计划；after 仅用于插到养头发后面，不落库
- { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 }, after: 'hair' }
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 }, total: 6, after: 'hair' }
  // v400：ears 迁移已删（学英语习惯移除），老数据原样留在 store 不显示
  ];
  _need.forEach(function (h) {
@@ -25944,12 +25945,23 @@ function planEnsure() {
  // v384→v386 旧名迁移（身体油→身体护理）
  store.planHabits.forEach(function (h) { if (h.key === 'skin' && h.name === '养皮肤 · 身体油') { h.name = '养皮肤 · 身体护理'; touched = true; } });
  }
+ // v477：养头发改「护发素」纯打卡——把 steps 里预涂护发素的日子一次性迁进 history；牙贴老数据补总量 6 贴
+ store.planHabits.forEach(function (h) {
+ if (h.key === 'hair') {
+ if (!h.history || typeof h.history !== 'object') h.history = {};
+ let t2 = false;
+ Object.keys(h.steps || {}).forEach(function (d) { if (h.steps[d] && h.steps[d].pre && !h.history[d]) { h.history[d] = 1; t2 = true; } });
+ if (t2) touched = true;
+ }
+ if (h.key === 'patch' && !h.total) { h.total = 6; touched = true; }
+ });
  // —— 目标：v387 起「手术」系卡片（v386 单张手术卡 / 早期拆分的术前体检·点痣·痔疮手术）统一换成一张「健康管理」清单卡 ——
  const _healthDef = function () {
  return { key: 'health', name: '健康管理', icon: '', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
  { key: 'blood', name: '体检抽血', note: '看指标适不适合用身体补剂', kind: 'check', done: false, date: '', result: '' },
  { key: 'anal', name: '肛肠科检查', note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
  { key: 'mole', name: '点痣', note: '恢复期别抠痂 · 注意防晒', kind: 'todo', done: false, date: '' },
+ { key: 'moleFu', name: '点痣复诊', note: '看恢复状态', kind: 'todo', done: false, date: '', plan: '2026-11-26' },
  { key: 'ear', name: '打耳洞', note: '认准正规店 · 银针养耳', kind: 'todo', done: false, date: '' }
  ] };
  };
@@ -25984,7 +25996,11 @@ function planEnsure() {
  _healthDef().items.forEach(function (def) {
  let has = false;
  g.items.forEach(function (it) { if (it.key === def.key) has = true; });
- if (!has) { g.items.push(JSON.parse(JSON.stringify(def))); touched = true; }
+ if (!has) {
+ g.items.push(JSON.parse(JSON.stringify(def)));
+ if (def.key === 'moleFu') { g.items.forEach(function (it) { if (it.key === 'mole' && !it.done) { it.done = true; it.date = '2026-11-05'; } }); }
+ touched = true;
+ }
  });
  });
  // 4) 身体补剂默认开始日
@@ -26073,47 +26089,64 @@ function planRenderPairCard(key, icon, title, habits) {
  + '<div class="plan-hrows">' + rows + '</div>'
  + '</div>';
 }
-// v405：养头发卡重写——纵向流（周期行 + 进度条 + 步骤/按钮），去掉左右两栏
+// v477：养头发改「护发素」纯打卡卡——哪天调了护发素就点一下，洗头不再出现在这张卡
 function planRenderHairCard(h) {
  const today = todayStr();
- const cycle = Math.max(1, parseInt(h.cycleDays) || 5);
- const diff = h.lastWash ? Math.round((new Date(today + 'T00:00:00') - new Date(h.lastWash + 'T00:00:00')) / 86400000) : -1;
- const isWashDay = (diff < 0) || (diff >= cycle); // 没记录过 = 今天就是第一次洗头日
- const dayNo = diff < 0 ? 1 : Math.min(diff + 1, cycle);
- const steps = (h.steps && h.steps[today]) || {};
- let tipHtml = '';
- if (diff < 0) {
- tipHtml = '<span class="plan-cycle-tip"> 还没记录过～今天洗第一次，记得先预涂护发素</span>';
- } else if (isWashDay) {
- tipHtml = '<span class="plan-cycle-tip hot"> 今天是洗头日！勾完两步再点「洗完了」</span>';
+ if (!h.history) h.history = {};
+ const done = !!h.history[today];
+ const cnt = Object.keys(h.history).filter(function (d) { return h.history[d]; }).length;
+ const streak = planStreak(h);
+ let tip, btn;
+ if (done) {
+  tip = '<span class="plan-cycle-tip">今天已调好护发素</span>';
+  btn = '<button class="plan-hair-btn" type="button" onclick="planHairUndo()">撤销今天</button>';
  } else {
- const remain = cycle - dayNo;
- tipHtml = '<span class="plan-cycle-tip"> 距下次洗头还有 <b>' + remain + '</b> 天' + (remain === 1 ? '（明天洗）' : '') + '</span>';
- }
- const lastLine = h.lastWash ? '<div class="plan-hair-last">上次洗头 ' + h.lastWash.slice(5).replace('-', '/') + '</div>' : '';
- let actHtml = '';
- if (isWashDay) {
- actHtml = '<div class="plan-wash-steps">'
- + '<button class="plan-wash-step' + (steps.pre ? ' done' : '') + '" type="button" onclick="planHairStep(\'pre\')">'
- + '<span class="ws-box">' + (steps.pre ? '✓' : '1') + '</span>'
- + '<span class="ws-text"><span class="ws-t">预涂调配好的护发素</span><span class="ws-s">等它吸收一会儿再洗</span></span></button>'
- + '<button class="plan-wash-step' + (steps.wash ? ' done' : '') + '" type="button" onclick="planHairStep(\'wash\')">'
- + '<span class="ws-box">' + (steps.wash ? '✓' : '2') + '</span>'
- + '<span class="ws-text"><span class="ws-t">洗头</span><span class="ws-s">周期重新开始计算</span></span></button>'
- + '</div>'
- + '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash()"> 洗完了</button></div>';
- } else {
- actHtml = '<div class="plan-hair-btns"><button class="plan-hair-btn primary" type="button" onclick="planHairWash(\'early\')"> 提前洗头</button></div>'
- + '<div class="plan-hair-idle">还没到日子，按周期养着就好～</div>';
+  tip = '<span class="plan-cycle-tip hot">调好护发素就来打卡</span>';
+  btn = '<button class="plan-hair-btn primary" type="button" onclick="planHairDone()">调好了 · 打卡</button>';
  }
  return '<div class="plan-habit" data-habit="hair">'
- + '<div class="plan-habit-head"><span class="plan-habit-ico">' + h.icon + '</span>'
+ + '<div class="plan-habit-head"><span class="plan-habit-ico">' + (h.icon || '') + '</span>'
  + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
- + '<button class="plan-habit-cadence cadence-btn" type="button" onclick="planHairCycle()" title="点这里改洗头周期">' + cycle + ' 天一洗 ️</button></div>'
- + '<div class="plan-cycle-line"><span class="plan-cycle-day">本周期第 ' + (isWashDay ? cycle : dayNo) + ' / ' + cycle + ' 天</span>' + tipHtml + '</div>'
- + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + Math.round((isWashDay ? cycle : dayNo) / cycle * 100) + '%;"></span></div>'
- + actHtml + lastLine
+ + '<span class="plan-habit-cadence">打卡</span></div>'
+ + '<div class="plan-cycle-line"><span class="plan-cycle-day">累计 ' + cnt + ' 次</span>' + tip + '</div>'
+ + '<div class="plan-patch-dots">' + planHairDotsHtml(h) + '</div>'
+ + '<div class="plan-patch-streak">连续 ' + streak + ' 天 · 累计 ' + cnt + ' 次</div>'
+ + '<div class="plan-hair-btns">' + btn + '</div>'
  + '</div>';
+}
+// v477：护发素打卡点阵——从第一次记录日起、最多 14 格、只到今天，不显示未来空点
+function planHairDotsHtml(h) {
+ const today = todayStr();
+ const p = function (x) { return String(x).padStart(2, '0'); };
+ const fmt = function (dt) { return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); };
+ const _hist = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
+ let _start = _hist.length ? _hist[0] : today;
+ const _t13 = new Date(today + 'T00:00:00'); _t13.setDate(_t13.getDate() - 13);
+ if (new Date(_start + 'T00:00:00') < _t13) _start = fmt(_t13);
+ let html = '';
+ const _e = new Date(today + 'T00:00:00');
+ for (let d = new Date(_start + 'T00:00:00'); d <= _e; d.setDate(d.getDate() + 1)) {
+  const ds = fmt(d);
+  const cls = 'd' + (h.history[ds] ? ' on' : '') + (ds === today ? ' today' : '');
+  html += '<div class="plan-pdot"><span class="' + cls + '"></span><span class="w">' + d.getDate() + '</span></div>';
+ }
+ return html;
+}
+function planHairDone() {
+ const h = planHabitByKey('hair'); if (!h) return;
+ if (!h.history) h.history = {};
+ h.history[todayStr()] = 1;
+ saveData(); renderPlanHabits();
+ try { finToast('护发素已打卡'); } catch (e) {}
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+function planHairUndo() {
+ const h = planHabitByKey('hair'); if (!h) return;
+ if (!h.history) h.history = {};
+ delete h.history[todayStr()];
+ saveData(); renderPlanHabits();
+ try { finToast('已撤销今天的护发素打卡'); } catch (e) {}
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
 }
 // v473：美白牙贴（隔天一次）——独立周期卡，不复用洗头卡文案
 function planPatchNext(h) {
@@ -26134,15 +26167,19 @@ function planRenderPatchCard(h) {
  const cnt = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).length;
  const last = h.lastDone ? h.lastDone.slice(5).replace('-', '/') : '';
  const nx = st.next.slice(5).replace('-', '/');
+ const total = Math.max(1, parseInt(h.total) || 6);
  let tip, btn;
- if (st.due) {
+ if (cnt >= total) {
+   tip = '<span class="plan-cycle-tip">' + total + ' 贴已用完 · 好好保持</span>';
+   btn = '';
+ } else if (st.due) {
    tip = '<span class="plan-cycle-tip hot">今天该贴了 · 记得打卡</span>';
    btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">贴好了 · 打卡</button>';
  } else if (st.doneToday) {
    tip = '<span class="plan-cycle-tip">今天已贴 · 下次 ' + nx + '</span>';
    btn = '<button class="plan-hair-btn" type="button" onclick="planPatchUndo()">撤销今天</button>';
  } else {
-   tip = '<span class="plan-cycle-tip">下次 ' + nx + ' · 还有 ' + (st.cycle - st.diff) + ' 天</span>';
+   tip = '<span class="plan-cycle-tip">剩 ' + (total - cnt) + ' 贴 · 下次 ' + nx + '</span>';
    btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">提前贴一片</button>';
  }
  const pct = st.due ? 100 : Math.round((st.diff < 0 ? 0 : st.diff) / st.cycle * 100);
@@ -26150,16 +26187,18 @@ function planRenderPatchCard(h) {
  + '<div class="plan-habit-head"><span class="plan-habit-ico"></span>'
  + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
  + '<span class="plan-habit-cadence">隔天一次</span></div>'
- + '<div class="plan-cycle-line"><span class="plan-cycle-day">已贴 ' + cnt + ' 次</span>' + tip + '</div>'
+ + '<div class="plan-cycle-line"><span class="plan-cycle-day">已贴 ' + cnt + '/' + (Math.max(1, parseInt(h.total) || 6)) + ' 贴</span>' + tip + '</div>'
  + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + pct + '%;"></span></div>'
  + '<div class="plan-patch-dots">' + planPatchDotsHtml(h) + '</div>'
- + '<div class="plan-patch-streak">连续达成 ' + planPatchStreak(h) + ' 期 · 累计 ' + cnt + ' 次</div>'
+ + '<div class="plan-patch-streak">连续达成 ' + planPatchStreak(h) + ' 期 · 剩余 ' + (Math.max(1, parseInt(h.total) || 6) - cnt) + ' 贴</div>'
  + '<div class="plan-hair-btns">' + btn + '</div>'
  + (last ? '<div class="plan-hair-last">上次 ' + last + '</div>' : '')
  + '</div>';
 }
 function planPatchDone() {
  const h = planHabitByKey('patch'); if (!h) return;
+ const _used = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).length;
+ if (_used >= (parseInt(h.total) || 6)) { try { finToast('6 贴都用完啦'); } catch (e) {} return; }
  const today = todayStr();
  h.lastDone = today;
  if (!h.history) h.history = {};
@@ -26187,12 +26226,12 @@ function planPatchDotsHtml(h) {
  const cycle = Math.max(1, parseInt(h.cycleDays) || 2);
  const fmt = function (dt) { const p = function (x) { return String(x).padStart(2, '0'); }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); };
  // v476：点阵从「第一次打卡日」起算（不早于今天往前13天）——新计划不显示开始前的空点
+ const total = Math.max(1, parseInt(h.total) || 6);
  const _hist = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
- let start = _hist.length ? _hist[0] : (h.lastDone || today);
- const _t13 = new Date(today + 'T00:00:00'); _t13.setDate(_t13.getDate() - 13);
- if (new Date(start + 'T00:00:00') < _t13) start = fmt(_t13);
+ const start = _hist.length ? _hist[0] : (h.lastDone || today);
+ const days = (total - 1) * cycle + 1; // v477：6 贴 × 隔天 = 只显示这 11 天，多余的日子不要
  let html = '';
- for (let i = 0; i < 14; i++) {
+ for (let i = 0; i < days; i++) {
  const d = new Date(start + 'T00:00:00'); d.setDate(d.getDate() + i);
  const ds = fmt(d);
  const done = !!(h.history && h.history[ds]);
@@ -26339,8 +26378,8 @@ function planGoalCardChecklist(g) {
  + '<span class="plan-ck-box" role="checkbox" aria-checked="' + (it.done ? 'true' : 'false') + '" onclick="planHealthCheck(\'' + it.key + '\')">' + (it.done ? '✓' : '') + '</span>'
  + '<div class="plan-ck-body">'
  + '<div class="plan-ck-nrow"><span class="plan-ck-name">' + escTodo(it.name) + '</span>'
- + '<span class="plan-ck-chip ' + (it.kind === 'check' ? 'check' : 'todo') + '">' + (it.kind === 'check' ? '检查' : '待安排') + '</span>'
- + (dLabel ? '<span class="plan-ck-date">✓ ' + dLabel + ' 完成</span>' : '')
+ + '<span class="plan-ck-chip ' + (it.kind === 'check' ? 'check' : 'todo') + '">' + (it.kind === 'check' ? '检查' : (it.plan ? '复诊' : '待安排')) + '</span>'
+ + (dLabel ? '<span class="plan-ck-date">✓ ' + dLabel + ' 完成</span>' : (it.plan && !it.done ? '<span class="plan-ck-date">' + it.plan.slice(5).replace('-', '/') + ' 去复诊</span>' : ''))
  + '</div>'
  + (it.note ? '<div class="plan-ck-note">' + escTodo(it.note) + '</div>' : '');
  if (it.kind === 'check' && it.done) {
@@ -28467,11 +28506,17 @@ function mnRender(){
       html += '<div class="mn-fold mn-cat-'+c.k+'">'
            +  '<button class="mn-fold-head" type="button" onclick="mnToggleCatFold(\''+c.k+'\')">'
            +  '<span class="mn-fold-dot"></span><b>'+c.n+'</b><small>'+list.length+' 张</small><i>'+(open?'−':'＋')+'</i></button>';
+      if(!open && list.length){
+        var pv = String(list[0].text).replace(/\s+/g,' ');
+        if(pv.length > 42) pv = pv.slice(0,42)+'…';
+        html += '<div class="mn-fold-prev">'+mnEsc(pv)+'</div>';
+      }
       if(open){
         html += '<div class="mn-fold-body">';
         list.forEach(function(n){
           var o = !!mnState.openNotes[n.id];
-          var sum = String(n.text).replace(/\s+/g,' ').slice(0,32);
+          var sum = String(n.text).replace(/\s+/g,' ');
+          if(sum.length > 32) sum = sum.slice(0,32)+'…';
           html += '<div class="mn-fold-item">'
                +  '<div class="mn-fold-line" onclick="mnToggleNoteFold(\''+n.id+'\')">'
                +  '<span class="mn-fold-sum">'+mnEsc(sum)+'</span>'
@@ -29071,5 +29116,22 @@ body.theme-y2k .mn-sheet .mn-sheet-paper textarea.mn-sheet-text{font-family:var(
 .mn-card.mn-cat-emo .mn-deco,.mn-card.mn-cat-night .mn-deco,.mn-card.mn-cat-words .mn-deco{opacity:.5;}
 /* 分类按钮：暮色三类选中时同样用本类的沉静色，别被通用粉覆盖 */
 .mn-cat-opt.on[data-c="emo"],.mn-cat-opt.on[data-c="night"],.mn-cat-opt.on[data-c="words"]{color:#5E4F55;}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-lite-webfont@1.7.0/lxgwwenkailite-regular.css" media="(max-width:768px)">
+<style id="hami-v477-fix">
+/* ===== v477-1 心境便签：手机端手写体（LXGW 文楷 Lite 分片按需加载，失败自动回退本机楷体栈，桌面端不受影响） ===== */
+@media (max-width:768px){
+  :root{--mn-hand:'LXGW WenKai Lite','Hannotate SC','Kaiti SC','STKaiti','KaiTi','楷体','FZKai-Z03','Songti SC',serif;}
+}
+/* ===== v477-2 折叠分类：收起时露出最新一张的一行字（超长省略） ===== */
+.mn-fold-prev{font-family:var(--mn-hand);font-size:11.5px;font-weight:600;color:#7A5967;padding:0 13px 10px 31px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9;line-height:1.4;}
+/* ===== v477-3 体重日历：称前/称后纯色圆点（前=薄荷绿、后=雾紫，低饱和不印字） ===== */
+.weight-cal-toilet.wt-dot{width:12px;height:12px;border-radius:50%;display:inline-flex;box-sizing:border-box;padding:0;flex:0 0 auto;}
+.weight-cal-toilet.wt-dot.wt-before.done{background:#8CBC9E;}
+.weight-cal-toilet.wt-dot.wt-after.done{background:#B9A3DC;}
+.weight-cal-toilet.wt-dot.wt-before:not(.done){border:1.4px solid #A9CDB6;background:transparent;}
+.weight-cal-toilet.wt-dot.wt-after:not(.done){border:1.4px solid #CFBFEA;background:transparent;}
+.weight-cal-toilet.wt-dot:not(.done):not(.wt-before):not(.wt-after){border:1.4px solid #d5c8ce;background:transparent;}
+.weight-cal-ex .wt-dot + .wt-dot{margin-left:3px;}
 </style>
 </body></html>
