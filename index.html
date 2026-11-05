@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-04-472"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-473"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8645,7 +8645,9 @@ let store = {
  { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
  // v400：学英语（多邻国+磨耳朵）已删除——英语打卡统一去「英语学习计划」独立面板
  // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
- { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
+ { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} },
+ // v473：美白牙贴（隔一天一次，2026-11-04 第一次）
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
  ],
  planGoals: [
  // link：关联学车模块只读算进度；checklist：一组待办清单（打勾记日期）；phase：分阶段计划（开始日+期数）
@@ -10401,20 +10403,67 @@ function hamiShowUnlock(cb) {
  var ex = document.getElementById('hami-unlock-overlay'); if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
  var ov = document.createElement('div');
  ov.id = 'hami-unlock-overlay';
- ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#fde7f3 0%,#efe6fb 100%);font-family:inherit;';
+ ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:inherit;background:radial-gradient(circle at 16% 20%,rgba(244,214,231,.62) 0,transparent 46%),radial-gradient(circle at 84% 76%,rgba(226,214,244,.58) 0,transparent 48%),radial-gradient(circle at 72% 10%,rgba(214,231,246,.42) 0,transparent 42%),#FDF7FA;';
+ // v473：锁屏展示小助理头像（本机设置优先，否则取侧栏默认头像）
+ var _av = '';
+ try { _av = localStorage.getItem('hami_assistant_avatar') || ''; } catch (e) {}
+ if (!_av) { try { var _ai = document.querySelector('.avatar img'); if (_ai) _av = _ai.src || ''; } catch (e) {} }
+ var _avHtml = _av
+   ? '<img src="' + _av + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">'
+   : '<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="48" fill="#F7E9F1"/><circle cx="50" cy="39" r="15" fill="#E7C6D9"/><path d="M18 86c4-19 17-27 32-27s28 8 32 27" fill="#E7C6D9"/></svg>';
+ var _wd = ['日','一','二','三','四','五','六'];
+ var _now = new Date();
+ var _dateLine = _now.getFullYear() + '.' + ('0' + (_now.getMonth()+1)).slice(-2) + '.' + ('0' + _now.getDate()).slice(-2) + ' · 周' + _wd[_now.getDay()];
+ var _deco = function (path, size, pos) {
+   return '<svg viewBox="0 0 100 100" fill="none" stroke="#EFC0D2" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;' + pos + ';width:' + size + 'px;height:' + size + 'px;opacity:.7;pointer-events:none;">' + path + '</svg>';
+ };
+ var _star = '<path d="M50 12 L57 43 L88 50 L57 57 L50 88 L43 57 L12 50 L43 43 Z"/>';
+ var _moon = '<path d="M66 14 A38 38 0 1 0 66 86 A30 30 0 1 1 66 14 Z"/><path d="M22 20 l2 6 6 2 -6 2 -2 6 -2-6 -6-2 6-2 Z"/>';
+ var _sprig = '<path d="M50 88 C50 60 40 42 24 26 M50 88 C50 60 60 42 76 26"/><path d="M37 48 C29 46 25 40 25 32 C33 34 37 40 37 48 Z M63 48 C71 46 75 40 75 32 C67 34 63 40 63 48 Z"/>';
  ov.innerHTML =
- '<div style="width:min(92vw,360px);background:#fff;border-radius:22px;box-shadow:0 12px 40px rgba(180,120,170,.28);padding:26px 22px;text-align:center;">'
- + '<div id="hami-unlock-logo" style="font-size:40px;line-height:1;user-select:none;-webkit-user-select:none;cursor:default;"></div>'
- + '<div style="font-size:19px;font-weight:800;color:#BB77A3;margin-top:10px;">小助理已上锁</div>'
- + '<div style="font-size:13px;color:#8a6270;margin-top:6px;line-height:1.6;">这是Hami的私人工作台，请输入访问密码才能进入</div>'
- + '<div style="position:relative;margin-top:16px;">'
- + '<input id="hami-unlock-input" type="text" inputmode="numeric" autocomplete="off" placeholder="访问密码" style="width:100%;box-sizing:border-box;padding:12px 58px 12px 14px;font-size:16px;border:2px solid #f0c8e0;border-radius:14px;outline:none;text-align:center;letter-spacing:2px;-webkit-text-security:disc;"/>'
+ '<style>'
+ + '#hami-unlock-overlay .hk-card{position:relative;width:min(92vw,372px);box-sizing:border-box;background:rgba(255,255,255,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(242,229,236,.95);border-radius:20px;padding:26px 26px 20px;text-align:center;box-shadow:0 2px 8px rgba(196,150,170,.06),0 14px 34px rgba(196,150,170,.12),0 40px 90px rgba(94,79,85,.10);overflow:hidden;animation:hkIn .38s cubic-bezier(.2,.8,.3,1) both;}'
+ + '@keyframes hkIn{from{opacity:0;transform:translateY(10px) scale(.985);}to{opacity:1;transform:none;}}'
+ + '#hami-unlock-overlay .hk-topbar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#E39BB4,#B9A2D6,#9CBFD9);opacity:.8;}'
+ + '#hami-unlock-overlay .hk-avatar{width:92px;height:92px;margin:6px auto 0;padding:4px;border-radius:50%;box-sizing:border-box;background:conic-gradient(from 200deg,#764E80,#B98BC0,#E39BB4,#B98BC0,#764E80);box-shadow:0 6px 20px rgba(196,150,170,.22);cursor:default;user-select:none;-webkit-user-select:none;}'
+ + '#hami-unlock-overlay .hk-avatar-in{width:100%;height:100%;border-radius:50%;border:2px solid #fff;box-sizing:border-box;overflow:hidden;background:#FDF4F8;}'
+ + '#hami-unlock-overlay .hk-kicker{font-size:9.5px;font-weight:800;letter-spacing:2.4px;color:#B9A6B0;margin-top:14px;}'
+ + '#hami-unlock-overlay .hk-title{font-size:18px;font-weight:800;color:#5E4F55;letter-spacing:.6px;margin-top:7px;}'
+ + '#hami-unlock-overlay .hk-sub{font-size:12px;color:#A0919A;line-height:1.75;margin-top:7px;}'
+ + '#hami-unlock-overlay .hk-rule{height:1px;background:linear-gradient(90deg,transparent,#F0DDE7 18%,#F0DDE7 82%,transparent);margin:16px 0 13px;}'
+ + '#hami-unlock-overlay .hk-date{font-size:10.5px;color:#B9A6B0;letter-spacing:.6px;margin-bottom:11px;}'
+ + '#hami-unlock-overlay .hk-field{position:relative;}'
+ + '#hami-unlock-overlay input.hk-input{width:100%;box-sizing:border-box;padding:12px 52px 12px 14px;font-size:15px;border:1.5px solid #F0DDE7 !important;border-radius:12px !important;outline:none;text-align:center;letter-spacing:2px;-webkit-text-security:disc;background:rgba(255,255,255,.92) !important;color:#5E4F55;font-family:inherit;box-shadow:none !important;transition:border-color .16s,box-shadow .16s;}'
+ + '#hami-unlock-overlay input.hk-input::placeholder{color:#C4B3BC;letter-spacing:1px;font-size:13px;}'
+ + '#hami-unlock-overlay input.hk-input:focus{border-color:#DE9DB4 !important;box-shadow:0 0 0 3px rgba(222,157,180,.14) !important;}'
+ + '#hami-unlock-overlay .hk-err{font-size:11.5px;color:#C9849A;height:16px;margin-top:7px;}'
+ + '#hami-unlock-overlay .hk-enter{width:100%;margin-top:2px;padding:12px 0;font-size:15px;font-weight:700;color:#fff;background:#DE9DB4;border:none;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:1px;box-shadow:0 6px 16px rgba(222,157,180,.28);transition:background .16s,transform .16s;}'
+ + '#hami-unlock-overlay .hk-enter:hover{background:#D28FAE;}'
+ + '#hami-unlock-overlay .hk-enter:active{transform:translateY(1px);}'
+ + '#hami-unlock-overlay .hk-foot{display:flex;align-items:center;justify-content:center;gap:7px;font-size:10.5px;color:#B9A6B0;margin-top:14px;}'
+ + '#hami-unlock-overlay .hk-dot{width:3px;height:3px;border-radius:50%;background:#EFC0D2;flex:0 0 auto;}'
+ + '@media (max-width:420px){#hami-unlock-overlay .hk-card{padding:22px 18px 18px;}#hami-unlock-overlay .hk-avatar{width:84px;height:84px;}}'
+ + '</style>'
+ + _deco(_star, 26, 'top:9%;left:11%')
+ + _deco(_moon, 30, 'bottom:11%;right:10%')
+ + _deco(_sprig, 22, 'top:15%;right:17%')
+ + '<div class="hk-card">'
+ + '<div class="hk-topbar"></div>'
+ + '<div id="hami-unlock-logo" class="hk-avatar"><div class="hk-avatar-in">' + _avHtml + '</div></div>'
+ + '<div class="hk-kicker">HAMI · PRIVATE SPACE</div>'
+ + '<div class="hk-title">工作台已上锁</div>'
+ + '<div class="hk-sub">这是 Hami 的私人工作台<br>输入访问密码才能进入</div>'
+ + '<div class="hk-rule"></div>'
+ + '<div class="hk-date">' + _dateLine + '</div>'
+ + '<div class="hk-field">'
+ + '<input id="hami-unlock-input" class="hk-input" type="text" inputmode="numeric" autocomplete="off" placeholder="访问密码" />'
  + '<button type="button" id="hami-unlock-eye" title="显示 / 隐藏密码" aria-label="显示或隐藏密码" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;background:transparent;color:#D89CB0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%;-webkit-tap-highlight-color:transparent;">' + HAMI_EYE_ON + '</button>'
  + '</div>'
- + '<div id="hami-unlock-err" style="font-size:12px;color:#D89CB0;height:16px;margin-top:8px;"></div>'
- + '<button id="hami-unlock-btn" style="width:100%;margin-top:4px;padding:12px 0;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f3a8cf,#b98be0);border:none;border-radius:14px;cursor:pointer;">进入工作台</button>'
- + '<div style="font-size:11px;color:#b89;margin-top:12px;">密码只存在你这台设备上，别人猜不到就进不来</div>'
+ + '<div id="hami-unlock-err" class="hk-err"></div>'
+ + '<button id="hami-unlock-btn" class="hk-enter">进入工作台</button>'
+ + '<div class="hk-foot"><span class="hk-dot"></span>本机已加密 · 密码只存这台设备<span class="hk-dot"></span></div>'
  + '</div>';
+
  document.body.appendChild(ov);
  var inp = document.getElementById('hami-unlock-input');
  var btn = document.getElementById('hami-unlock-btn');
@@ -25829,12 +25878,16 @@ function planEnsure() {
  store.planHabits = [
  { key: 'skin', name: '养皮肤 · 身体护理', icon: '', type: 'daily', history: {} },
  { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
- { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} }
+ { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} },
+ // v473：美白牙贴隔日计划
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
  ];
  touched = true;
  } else {
  const _need = [
- { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} }
+ { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
+ // v473：美白牙贴隔日计划；after 仅用于插到养头发后面，不落库
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 }, after: 'hair' }
  // v400：ears 迁移已删（学英语习惯移除），老数据原样留在 store 不显示
  ];
  _need.forEach(function (h) {
@@ -26023,6 +26076,70 @@ function planRenderHairCard(h) {
  + actHtml + lastLine
  + '</div>';
 }
+// v473：美白牙贴（隔天一次）——独立周期卡，不复用洗头卡文案
+function planPatchNext(h) {
+ const base = h.lastDone ? new Date(h.lastDone + 'T00:00:00') : new Date(todayStr() + 'T00:00:00');
+ const n = Math.max(1, parseInt(h.cycleDays) || 2);
+ base.setDate(base.getDate() + n);
+ const p = function (x) { return String(x).padStart(2, '0'); };
+ return base.getFullYear() + '-' + p(base.getMonth() + 1) + '-' + p(base.getDate());
+}
+function planPatchState(h) {
+ const today = todayStr();
+ const cycle = Math.max(1, parseInt(h.cycleDays) || 2);
+ const diff = h.lastDone ? Math.round((new Date(today + 'T00:00:00') - new Date(h.lastDone + 'T00:00:00')) / 86400000) : -1;
+ return { cycle: cycle, diff: diff, due: diff < 0 || diff >= cycle, doneToday: diff === 0, next: planPatchNext(h) };
+}
+function planRenderPatchCard(h) {
+ const st = planPatchState(h);
+ const cnt = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).length;
+ const last = h.lastDone ? h.lastDone.slice(5).replace('-', '/') : '';
+ const nx = st.next.slice(5).replace('-', '/');
+ let tip, btn;
+ if (st.due) {
+   tip = '<span class="plan-cycle-tip hot">今天该贴了 · 记得打卡</span>';
+   btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">贴好了 · 打卡</button>';
+ } else if (st.doneToday) {
+   tip = '<span class="plan-cycle-tip">今天已贴 · 下次 ' + nx + '</span>';
+   btn = '<button class="plan-hair-btn" type="button" onclick="planPatchUndo()">撤销今天</button>';
+ } else {
+   tip = '<span class="plan-cycle-tip">下次 ' + nx + ' · 还有 ' + (st.cycle - st.diff) + ' 天</span>';
+   btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">提前贴一片</button>';
+ }
+ const pct = st.due ? 100 : Math.round((st.diff < 0 ? 0 : st.diff) / st.cycle * 100);
+ return '<div class="plan-habit" data-habit="patch">'
+ + '<div class="plan-habit-head"><span class="plan-habit-ico"></span>'
+ + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
+ + '<span class="plan-habit-cadence">隔天一次</span></div>'
+ + '<div class="plan-cycle-line"><span class="plan-cycle-day">已贴 ' + cnt + ' 次</span>' + tip + '</div>'
+ + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + pct + '%;"></span></div>'
+ + '<div class="plan-hair-btns">' + btn + '</div>'
+ + (last ? '<div class="plan-hair-last">上次 ' + last + '</div>' : '')
+ + '</div>';
+}
+function planPatchDone() {
+ const h = planHabitByKey('patch'); if (!h) return;
+ const today = todayStr();
+ h.lastDone = today;
+ if (!h.history) h.history = {};
+ h.history[today] = 1;
+ saveData(); renderPlanHabits();
+ try { finToast('牙贴打卡 · 下次 ' + planPatchNext(h).slice(5).replace('-', '/')); } catch (e) {}
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+ try { if (typeof renderCountdown === 'function') renderCountdown(); } catch (e) {}
+}
+function planPatchUndo() {
+ const h = planHabitByKey('patch'); if (!h) return;
+ const today = todayStr();
+ if (!h.history) h.history = {};
+ delete h.history[today];
+ const ds = Object.keys(h.history).filter(function (d) { return h.history[d]; }).sort();
+ h.lastDone = ds.length ? ds[ds.length - 1] : '';
+ saveData(); renderPlanHabits();
+ try { finToast('已撤销今天的牙贴打卡'); } catch (e) {}
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+ try { if (typeof renderCountdown === 'function') renderCountdown(); } catch (e) {}
+}
 // v394：历史最长连续天数
 function planBestStreak(h) {
  const ds = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
@@ -26096,6 +26213,7 @@ function renderPlanHabits() {
  // 养头发：周期卡，独立一张
  store.planHabits.forEach(function (h) {
  if (h.type === 'cycle') html += planRenderHairCard(h);
+ else if (h.type === 'patch') html += planRenderPatchCard(h);
  });
  el.innerHTML = html;
 }
@@ -26883,6 +27001,14 @@ function renderCountdown() {
  }
 
  const alerts = [];
+
+ // v473：美白牙贴隔日提醒（到日子才进轮播，不额外弹通知/横幅）
+ try {
+  const _patchHabit = (store.planHabits || []).filter(function (x) { return x && x.type === 'patch'; })[0];
+  if (_patchHabit && _patchHabit.lastDone && typeof planPatchState === 'function' && planPatchState(_patchHabit).due) {
+   alerts.push({ icon: '', label: '该贴美白牙贴了 · 去打卡', days: 0, targetDate: todayDate, kind: 'patch', hideDays: true });
+  }
+ } catch (e) {}
 
  // 1. 生日：倒数前5天(5~3) + 倒数第2天(2) + 当天(0)；跳过倒数第1天(1)
  // 农历生日须按农历历法推算目标公历日，不能用 getNextAnniversary（仅新历，会把农历当新历算错倒计时）
@@ -28136,13 +28262,18 @@ var MN_CATS = [
   {k:'mood',   n:'心境', c:'#B9A2D6', bg:'#F4EDFB', d:'star',   paper:'line'},
   {k:'energy', n:'能量', c:'#D8C08C', bg:'#FDF6E3', d:'flower', paper:'grid'},
   {k:'drive',  n:'激励', c:'#9CBFD9', bg:'#EDF5FB', d:'cloud',  paper:'stamp'},
-  {k:'quote',  n:'摘句', c:'#E39BB4', bg:'#FDEFF5', d:'heart',  paper:'note'}
+  {k:'quote',  n:'摘句', c:'#E39BB4', bg:'#FDEFF5', d:'heart',  paper:'note'},
+  /* v473 沉静暮色：低饱和雾灰紫 / 灰紫 / 烟粉，素纸细横线，细线月牙雨丝；上面四类一律不动 */
+  {k:'emo',    n:'emo',  c:'#8E8AA8', bg:'#EDEDF3', d:'moon',   paper:'plain'},
+  {k:'night',  n:'深夜', c:'#7C7694', bg:'#E8E6EF', d:'moon',   paper:'plain'},
+  {k:'words',  n:'碎念', c:'#9C8890', bg:'#F0EAEC', d:'rain',   paper:'plain'}
 ];
 var MN_PAPERS = [
   {k:'line',  n:'线圈'},
   {k:'stamp', n:'印章'},
   {k:'note',  n:'便签'},
-  {k:'grid',  n:'格纹'}
+  {k:'grid',  n:'格纹'},
+  {k:'plain', n:'素纸'}
 ];
 var mnState = {cat:'all', fav:false, sort:'new', q:'', stageId:null, viewerId:null,
                editId:null, eCat:'mood', ePaper:'line', paperTouched:false, confirmId:null,
@@ -28166,7 +28297,9 @@ function mnDeco(kind, color){
     star:'<path d="M50 8 L58 41 L92 50 L58 59 L50 92 L41 59 L8 50 L41 41 Z"/><circle cx="50" cy="50" r="4"/>',
     cloud:'<path d="M22 66 C9 66 9 45 24 45 C26 28 48 21 59 34 C71 25 89 34 89 49 C99 51 99 66 86 66 Z"/><path d="M36 55 h30"/>',
     flower:'<circle cx="50" cy="27" r="13"/><circle cx="72" cy="43" r="13"/><circle cx="64" cy="69" r="13"/><circle cx="36" cy="69" r="13"/><circle cx="28" cy="43" r="13"/><circle cx="50" cy="50" r="9"/>',
-    heart:'<path d="M50 85 C20 65 10 48 18 34 C26 20 44 24 50 38 C56 24 74 20 82 34 C90 48 80 65 50 85 Z"/>'
+    heart:'<path d="M50 85 C20 65 10 48 18 34 C26 20 44 24 50 38 C56 24 74 20 82 34 C90 48 80 65 50 85 Z"/>',
+    moon:'<path d="M66 14 A38 38 0 1 0 66 86 A30 30 0 1 1 66 14 Z"/><path d="M22 20 l2 6 6 2 -6 2 -2 6 -2-6 -6-2 6-2 Z"/>',
+    rain:'<path d="M30 18 L24 46 M50 12 L44 40 M70 18 L64 46 M40 56 L34 84 M60 56 L54 84"/>'
   }[kind] || '';
   return '<svg viewBox="0 0 100 100" fill="none" stroke="'+color+'" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
 }
@@ -28320,7 +28453,8 @@ function mnPaperThumb(k, color, bg){
     line:'repeating-linear-gradient(to bottom,transparent 0,transparent 8px,'+line+' 8px,'+line+' 9px)',
     stamp:'radial-gradient(circle at 78% 45%,transparent 0 10px,'+line+' 10px,'+line+' 11.5px,transparent 12px)',
     note:'linear-gradient(180deg,'+line+' 0 5px,transparent 5px)',
-    grid:'linear-gradient(to right,'+line+' 1px,transparent 1px),linear-gradient(to bottom,'+line+' 1px,transparent 1px)'
+    grid:'linear-gradient(to right,'+line+' 1px,transparent 1px),linear-gradient(to bottom,'+line+' 1px,transparent 1px)',
+    plain:'repeating-linear-gradient(to bottom,transparent 0,transparent 9px,'+line+' 9px,'+line+' 10px)'
   }[k];
   var extra = k==='grid' ? ';background-size:10px 10px' : '';
   return 'background-color:'+(bg||'#FFF')+';background-image:'+map+extra;
@@ -28329,12 +28463,17 @@ function mnPaperThumb(k, color, bg){
 function mnSheetApply(){
   var p=document.getElementById('mn-sheet-paper'); if(!p) return;
   var c=mnCat(mnState.eCat), paper=mnState.ePaper||'line';
-  var lines={mood:'#E6DCF5',energy:'#F0E3BC',drive:'#DBEAF6',quote:'#F6D9E5'};
+  var lines={mood:'#E6DCF5',energy:'#F0E3BC',drive:'#DBEAF6',quote:'#F6D9E5',emo:'#DCDCE6',night:'#D7D3E2',words:'#E3D7DB'};
   p.style.setProperty('--mn-bg',c.bg);
   p.style.setProperty('--mn-line',lines[c.k]||'#F2E5EC');
   p.style.setProperty('--mn-ac',c.c);
   p.style.setProperty('--mn-wash','none');
   p.className='mn-sheet-paper mn-paper-'+paper;
+  /* v473：写便签的引导句随分类变，暮色三类给 emo 向短句，不往数据里塞内容 */
+  var hints={mood:'写点此刻的心境…',energy:'给自己一点能量…',drive:'往前走一步…',quote:'记一句想留下的话…',
+             emo:'不必好起来，先放着就好。',night:'夜里想的，先放这儿。',words:'不想解释，就记一句。'};
+  var t=document.getElementById('mn-text');
+  if(t) t.placeholder=hints[c.k]||'写点什么…';
 }
 function mnSheetCount(){
   var e=document.getElementById('mn-sheet-count'), t=document.getElementById('mn-text');
@@ -28839,5 +28978,23 @@ body.theme-y2k .mn-sheet .mn-sheet-paper textarea.mn-sheet-text{font-family:var(
   #mn-ocr-final{min-height:130px !important;}
   .mn-sheet-text{font-size:17px !important;line-height:32px !important;}
 }
+</style>
+<style id="hami-v473-mood">
+/* ===== v473 心境便签：沉静暮色三类 + 素纸（原四类四色四款完全不动） ===== */
+/* 低饱和雾灰紫 / 灰紫 / 烟粉：底纹更素、装饰更收敛，跟马卡龙四款拉开气质 */
+.mn-cat-emo{--mn-bg:#EDEDF3;--mn-ac:#8E8AA8;--mn-line:#DCDCE6;--mn-wash:radial-gradient(circle at 1px 1px,rgba(142,138,168,.12) 1px,transparent 1.6px);--mn-wash-size:15px 15px;}
+.mn-cat-night{--mn-bg:#E8E6EF;--mn-ac:#7C7694;--mn-line:#D7D3E2;--mn-wash:repeating-linear-gradient(to bottom,rgba(124,118,148,.07) 0 1px,transparent 1px 28px);--mn-wash-size:auto;}
+.mn-cat-words{--mn-bg:#F0EAEC;--mn-ac:#9C8890;--mn-line:#E3D7DB;--mn-wash:none;--mn-wash-size:auto;}
+.mn-chip.on[data-c="emo"]{background:#EDEDF3;border-color:#8E8AA8;}
+.mn-chip.on[data-c="night"]{background:#E8E6EF;border-color:#7C7694;}
+.mn-chip.on[data-c="words"]{background:#F0EAEC;border-color:#9C8890;}
+/* 素纸：只留细横线，没有线圈孔 / 印章 / 胶带 / 波点 */
+.mn-sheet-paper.mn-paper-plain{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,var(--mn-line,#F2E5EC) 31px,var(--mn-line,#F2E5EC) 32px);}
+.mn-card.mn-paper-plain{background-color:var(--mn-bg);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--mn-line) 27px,var(--mn-line) 28px);}
+.mn-card.mn-paper-plain .mn-card-text{line-height:28px;}
+.mn-card.mn-cat-emo,.mn-card.mn-cat-night,.mn-card.mn-cat-words{border-color:var(--mn-line);box-shadow:0 2px 6px rgba(120,112,138,.05),0 12px 28px rgba(120,112,138,.08);}
+.mn-card.mn-cat-emo .mn-deco,.mn-card.mn-cat-night .mn-deco,.mn-card.mn-cat-words .mn-deco{opacity:.5;}
+/* 分类按钮：暮色三类选中时同样用本类的沉静色，别被通用粉覆盖 */
+.mn-cat-opt.on[data-c="emo"],.mn-cat-opt.on[data-c="night"],.mn-cat-opt.on[data-c="words"]{color:#5E4F55;}
 </style>
 </body></html>
