@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-475"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-476"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -1556,6 +1556,10 @@
  .weight-cal-toilet { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
  .weight-cal-toilet svg { display: block; }
  .weight-cal-toilet.done { filter: drop-shadow(0 1px 1px rgba(140,188,158,.3)5); }
+ /* v476：称前/称后字圆——done 薄荷绿底白字，未记录灰描边灰字；line-height:1 覆盖旧 0 */
+ .weight-cal-toilet.wt-dot { width: 13px; height: 13px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; line-height: 1; box-sizing: border-box; padding: 0; flex: 0 0 auto; }
+ .weight-cal-toilet.wt-dot.done { background: #5fae7f; color: #fff; }
+ .weight-cal-toilet.wt-dot:not(.done) { border: 1.3px solid #d5c8ce; background: transparent; color: #c9b8c1; }
  .weight-cal-legend-toilet { display: inline-flex; align-items: center; gap: 3px; }
  .weight-cal-legend-toilet svg { display: block; }
  /* 旧 class 兼容：外部响应式块可能还引用 .weight-cal-stack / .weight-cal-weight */
@@ -25488,18 +25492,10 @@ ${checkinHtml}${updownHtml}
  let toiletIcon = '';
  if (!isFuture) {
  const _wt = getWeightToiletState(dateStr);
- const _mk = (cls, done, tip) => done
- ? '<span class="weight-cal-toilet ' + cls + ' done" title="' + tip + '">'
- + '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">'
- + '<circle cx="12" cy="12" r="10.5" fill="#5fae7f"/>'
- + '<path d="M7.2 12.4l3.1 3.1 6.4-6.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
- + '</svg></span>'
- : '<span class="weight-cal-toilet ' + cls + '" title="' + tip + '">'
- + '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">'
- + '<circle cx="12" cy="12" r="9.6" fill="none" stroke="#d5c8ce" stroke-width="1.8"/>'
- + '</svg></span>';
- toiletIcon = _mk('wt-before', !!_wt.before, dateStr + ' 称体重前已上厕所')
- + _mk('wt-after', !!_wt.after, dateStr + ' 称体重后已上厕所');
+ // v476：称前/称后用「前/后」字圆区分（done=薄荷绿底白字，未记录=灰描边灰字），不再用同款对勾
+ const _mk = (cls, done, tip, label) => '<span class="weight-cal-toilet wt-dot ' + cls + (done ? ' done' : '') + '" title="' + tip + '">' + label + '</span>';
+ toiletIcon = _mk('wt-before', !!_wt.before, dateStr + ' 称体重前已上厕所', '前')
+ + _mk('wt-after', !!_wt.after, dateStr + ' 称体重后已上厕所', '后');
  }
 
  const todayShadow = isToday ? 'box-shadow:inset 0 0 0 1px rgba(240,192,64,.25);' : '';
@@ -25515,7 +25511,7 @@ ${checkinHtml}${updownHtml}
  html += `</div></div>`;
 
  // 图例（v433b：绿圆白勾=已上厕所，灰空心=未记录）
- html += `<div class="weight-cal-legend"><span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#5fae7f"/><path d="M7.2 12.4l3.1 3.1 6.4-6.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>称前已上</span><span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#5fae7f"/><path d="M7.2 12.4l3.1 3.1 6.4-6.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>称后已上</span><span class="weight-cal-legend-toilet"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><circle cx="12" cy="12" r="9.6" fill="none" stroke="#c9b8c1" stroke-width="1.8"/></svg>未记录</span></div>`;
+ html += `<div class="weight-cal-legend"><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot done wt-before">前</span>称前已上</span><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot done wt-after">后</span>称后已上</span><span class="weight-cal-legend-toilet"><span class="weight-cal-toilet wt-dot"></span>未记录</span></div>`;
 
  // 提示：本月有几天是"自动沿用前一天"补上的（浅色数字）
  const filledDays = Object.keys(filledMap).filter(d => d.startsWith(month) && !weightMap[d]).length;
@@ -26190,9 +26186,14 @@ function planPatchDotsHtml(h) {
  const today = todayStr();
  const cycle = Math.max(1, parseInt(h.cycleDays) || 2);
  const fmt = function (dt) { const p = function (x) { return String(x).padStart(2, '0'); }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); };
+ // v476：点阵从「第一次打卡日」起算（不早于今天往前13天）——新计划不显示开始前的空点
+ const _hist = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
+ let start = _hist.length ? _hist[0] : (h.lastDone || today);
+ const _t13 = new Date(today + 'T00:00:00'); _t13.setDate(_t13.getDate() - 13);
+ if (new Date(start + 'T00:00:00') < _t13) start = fmt(_t13);
  let html = '';
- for (let i = 13; i >= 0; i--) {
- const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() - i);
+ for (let i = 0; i < 14; i++) {
+ const d = new Date(start + 'T00:00:00'); d.setDate(d.getDate() + i);
  const ds = fmt(d);
  const done = !!(h.history && h.history[ds]);
  let due = false;
