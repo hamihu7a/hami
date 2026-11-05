@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-474"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-475"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -2132,6 +2132,16 @@
  .plan-cycle-bar { height: 8px; border-radius: 20px; background: #f1e8f8; overflow: hidden; }
  .plan-cycle-bar .cb-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#c9a8ff,#9d7bf0); transition: width .3s ease; }
  .plan-cycle-tip { font-size: 11px; font-weight: 700; color: #8a6a9c; line-height: 1.4; }
+ /* v475：美白牙贴打卡点阵 + 连续期数 */
+ .plan-patch-dots { display: flex; gap: 5px; overflow-x: auto; padding: 3px 0 2px; -webkit-overflow-scrolling: touch; }
+ .plan-pdot { flex: 0 0 auto; width: 21px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+ .plan-pdot .d { width: 100%; aspect-ratio: 1/1; max-width: 21px; border-radius: 50%; background: #f6e7ed; border: 1.5px solid #efd5e0; box-sizing: border-box; }
+ .plan-pdot .d.on { background: linear-gradient(135deg,#8CBC9E,#7fae90); border-color: transparent; box-shadow: 0 1px 4px rgba(140,188,158,.3); }
+ .plan-pdot .d.due { background: #fff; border-color: #f0a35e; box-shadow: 0 0 0 2px rgba(240,163,94,.18); }
+ .plan-pdot .d.today { box-shadow: 0 0 0 2px rgba(187,119,139,.3); }
+ .plan-pdot .d.on.today { box-shadow: 0 0 0 2px rgba(140,188,158,.4); }
+ .plan-pdot .w { font-size: 9px; font-weight: 700; color: #b08a9c; font-variant-numeric: tabular-nums; }
+ .plan-patch-streak { font-size: 10.5px; font-weight: 700; color: #b48bf2; margin-top: 2px; }
  .plan-wash-steps { display: flex; flex-direction: column; gap: 6px; }
  .plan-wash-step {
  display: flex; align-items: center; gap: 8px; border-radius: 11px; padding: 8px 10px;
@@ -19803,10 +19813,12 @@ function openWeightEditModal(idx, presetDate) {
  if (dEl) dEl.value = presetDate || todayStr();
  if (vEl) vEl.value = '';
  if (nEl) nEl.value = '';
+ const _date0 = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+ const _wt0 = getWeightToiletState(_date0);
  const _bEl0 = document.getElementById('we-toilet-before');
  const _aEl0 = document.getElementById('we-toilet-after');
- if (_bEl0) _bEl0.checked = false;
- if (_aEl0) _aEl0.checked = false;
+ if (_bEl0) _bEl0.checked = !!_wt0.before;
+ if (_aEl0) _aEl0.checked = !!_wt0.after;
  if (titleEl) titleEl.textContent = '+ 记一项体重';
  const m = document.getElementById('weight-edit-modal');
  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
@@ -19820,11 +19832,11 @@ function openWeightEditModal(idx, presetDate) {
  if (dEl) dEl.value = w.date || '';
  if (vEl) vEl.value = v != null ? v : '';
  if (nEl) nEl.value = w.note || '';
- const _wt = (store.weightToilet || []).find(function (r) { return r && r.date === (w.date || ''); });
+ const _wt = getWeightToiletState(w.date || '');
  const _bEl = document.getElementById('we-toilet-before');
  const _aEl = document.getElementById('we-toilet-after');
- if (_bEl) _bEl.checked = !!(_wt && _wt.before);
- if (_aEl) _aEl.checked = !!(_wt && _wt.after);
+ if (_bEl) _bEl.checked = !!_wt.before;
+ if (_aEl) _aEl.checked = !!_wt.after;
  if (titleEl) titleEl.textContent = '️ 修改体重记录';
  const m = document.getElementById('weight-edit-modal');
  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
@@ -25330,6 +25342,16 @@ function buildFilledWeightMap() {
 }
 
 // ==================== 主面板体重记录卡片 ====================
+// v475：称前/称后如厕状态——默认从全局如厕记录推导（有记录→称后），手动覆盖（weightToilet）优先
+function getWeightToiletState(dateStr) {
+ let _b = false, _a = false;
+ const hasGlobal = (store.toiletRecords || []).some(function (r) { return r && r.date === dateStr && (r.count != null ? r.count : 0) > 0; });
+ if (hasGlobal) _a = true; // 称体重多在清晨，如厕记录多为午后 → 默认记「称后」
+ const ov = (store.weightToilet || []).find(function (r) { return r && r.date === dateStr; });
+ if (ov) { if (ov.before != null) _b = !!ov.before; if (ov.after != null) _a = !!ov.after; }
+ return { before: _b, after: _a };
+}
+
 function renderDesktopWeight() {
  const today = todayStr();
  const todayDate = new Date(today);
@@ -25348,9 +25370,7 @@ function renderDesktopWeight() {
  // v433：如厕记录映射（date → count），取代原三运动圆点；只读判断，绝不改动数据
  const toiletMap = {};
  (store.toiletRecords || []).forEach(r => { if (r && r.date) toiletMap[r.date] = (r.count != null ? r.count : 1); });
- // v474：体重日历独立如厕映射（按日期记 称前/称后），不复用全局 toiletRecords
- const weightToiletMap = {};
- (store.weightToilet || []).forEach(r => { if (r && r.date) weightToiletMap[r.date] = r; });
+  // v475：称前/称后改由 getWeightToiletState 统一推导（全局如厕记录→称后 + 手动覆盖），不再单独建 map
  // 没打卡的日子按「沿用最近一次真实体重」补出来的序列（只用于显示）
  const filledMap = buildFilledWeightMap();
 
@@ -25467,7 +25487,7 @@ ${checkinHtml}${updownHtml}
  // 未记录=浅灰空心圆（像没打卡的样子）；未来日期不显示。
  let toiletIcon = '';
  if (!isFuture) {
- const _wt = weightToiletMap[dateStr] || {};
+ const _wt = getWeightToiletState(dateStr);
  const _mk = (cls, done, tip) => done
  ? '<span class="weight-cal-toilet ' + cls + ' done" title="' + tip + '">'
  + '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">'
@@ -26136,6 +26156,8 @@ function planRenderPatchCard(h) {
  + '<span class="plan-habit-cadence">隔天一次</span></div>'
  + '<div class="plan-cycle-line"><span class="plan-cycle-day">已贴 ' + cnt + ' 次</span>' + tip + '</div>'
  + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + pct + '%;"></span></div>'
+ + '<div class="plan-patch-dots">' + planPatchDotsHtml(h) + '</div>'
+ + '<div class="plan-patch-streak">连续达成 ' + planPatchStreak(h) + ' 期 · 累计 ' + cnt + ' 次</div>'
  + '<div class="plan-hair-btns">' + btn + '</div>'
  + (last ? '<div class="plan-hair-last">上次 ' + last + '</div>' : '')
  + '</div>';
@@ -26163,6 +26185,35 @@ function planPatchUndo() {
  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
  try { if (typeof renderCountdown === 'function') renderCountdown(); } catch (e) {}
 }
+// v475：美白牙贴打卡点阵 + 连续期数
+function planPatchDotsHtml(h) {
+ const today = todayStr();
+ const cycle = Math.max(1, parseInt(h.cycleDays) || 2);
+ const fmt = function (dt) { const p = function (x) { return String(x).padStart(2, '0'); }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); };
+ let html = '';
+ for (let i = 13; i >= 0; i--) {
+ const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() - i);
+ const ds = fmt(d);
+ const done = !!(h.history && h.history[ds]);
+ let due = false;
+ if (h.lastDone && ds >= h.lastDone) { const diff = Math.round((new Date(ds + 'T00:00:00') - new Date(h.lastDone + 'T00:00:00')) / 86400000); due = (diff >= 0 && diff % cycle === 0); }
+ const cls = 'd' + (done ? ' on' : (due ? ' due' : '')) + (ds === today ? ' today' : '');
+ html += '<div class="plan-pdot"><span class="' + cls + '"></span><span class="w">' + d.getDate() + '</span></div>';
+ }
+ return html;
+}
+function planPatchStreak(h) {
+ const cycle = Math.max(1, parseInt(h.cycleDays) || 2);
+ const ds = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
+ if (!ds.length) return 0;
+ let streak = 1;
+ for (let i = ds.length - 1; i > 0; i--) {
+ const gap = Math.round((new Date(ds[i] + 'T00:00:00') - new Date(ds[i - 1] + 'T00:00:00')) / 86400000);
+ if (gap === cycle) streak++; else break;
+ }
+ return streak;
+}
+
 // v394：历史最长连续天数
 function planBestStreak(h) {
  const ds = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).sort();
