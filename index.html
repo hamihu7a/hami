@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-06-478"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-06-479"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8658,14 +8658,18 @@ let store = {
  planHabits: [
  // daily：history { 'YYYY-MM-DD': 1 }，打了卡就有
  { key: 'skin', name: '养皮肤 · 身体护理', icon: '', type: 'daily', history: {} },
- { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
- // v400：学英语（多邻国+磨耳朵）已删除——英语打卡统一去「英语学习计划」独立面板
+ // v479：面部护肤疗程化——history=日常护肤，repair=涂修护膏，终点挂 11/26 复诊
+ { key: 'face', name: '面部护肤 · 8周', icon: '', type: 'course', history: {}, repair: {}, repairEnd: '2026-11-26' },
+ // v479：保健品（镁 / 维生素）双格打卡
+ { key: 'supp', name: '保健品', icon: '', type: 'daily2', mg: {}, vit: {}, total: 60 },
  // cycle：cycleDays 天一洗；lastWash 上次洗头日；steps { 'YYYY-MM-DD': { pre:1, wash:1 } }
  { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} },
  // v473：美白牙贴（隔一天一次，2026-11-04 第一次）
  { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, total: 6, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
  ],
  planGoals: [
+ // v479：月度同角度对比照（起 / 中 / 末 三格，压缩后随云同步）
+ { key: 'photos', name: '这两个月 · 对比照', icon: '', type: 'photos', start: '2026-11-06', shots: [null, null, null] },
  // link：关联学车模块只读算进度；checklist：一组待办清单（打勾记日期）；phase：分阶段计划（开始日+期数）
  { key: 'drive', name: '学车拿证', icon: '', type: 'link', note: 'C2 四科全过就拿证' },
  // v387：原「手术」换成健康管理清单——2 个检查 + 2 个待安排，逐项打勾
@@ -25906,6 +25910,160 @@ function fillDateInputDefault(id) {
 // ==================== 提升计划 2.0（v388：每日习惯 + 长期目标 + 技能提升） ====================
 // 与「成长记录」（growthLogs）数据共存：老笔记原样留在 store/备份里，本区只做「打卡 + 盯目标 + 技能拆步」。
 // 可移除性：删本段 JS + plan CSS 块 + 面板三个 zone div + store 三个默认键 + 各清单接入点即可，不影响其他模块。
+// ==================== v479 起：三张子卡（可整块移除）====================
+// 数据挂 planHabits / planGoals（两者已在 _RESTORE_ARR 白名单），不新增 store 顶层字段
+function v479Today() { return todayStr(); }
+function v479Ds(dt) { const p = function (x) { return String(x).padStart(2, '0'); }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); }
+function v479Count(map) { return Object.keys(map || {}).filter(function (d) { return map[d]; }).length; }
+function v479Streak(map) {
+  const d = new Date(v479Today() + 'T00:00:00');
+  if (!(map && map[v479Ds(d)])) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (map && map[v479Ds(d)]) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function v479Dots(map, cls) {
+  const base = new Date(v479Today() + 'T00:00:00');
+  let html = '';
+  for (let back = 13; back >= 0; back--) {
+    const d = new Date(base); d.setDate(d.getDate() - back);
+    const ds = v479Ds(d);
+    const on = !!(map && map[ds]);
+    html += '<span class="v479-dot' + (on ? ' on ' + cls : '') + (back === 0 ? ' today' : '') + '" title="' + ds + '"></span>';
+  }
+  return html;
+}
+function v479Save() {
+  saveData();
+  try { renderPlanHabits(); } catch (e) {}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// —— 面部护肤 · 8周：日常护肤 / 涂修护膏 ——
+function planFaceCheck(which) {
+  const h = planHabitByKey('face'); if (!h) return;
+  const k = (which === 'repair') ? 'repair' : 'history';
+  if (!h[k] || typeof h[k] !== 'object') h[k] = {};
+  const t = v479Today();
+  if (h[k][t]) delete h[k][t]; else h[k][t] = 1;
+  v479Save();
+}
+function planRenderFaceCourse(h) {
+  if (!h.history || typeof h.history !== 'object') h.history = {};
+  if (!h.repair || typeof h.repair !== 'object') h.repair = {};
+  const td = v479Today();
+  let fuLeft = '';
+  if (h.repairEnd) {
+    const diff = Math.round((new Date(h.repairEnd + 'T00:00:00') - new Date(td + 'T00:00:00')) / 86400000);
+    fuLeft = diff > 0 ? '距复诊 ' + diff + ' 天' : (diff === 0 ? '今天复诊' : '已复诊');
+  }
+  const col = function (label, map, which, sub, cls) {
+    return '<div class="v479-col">'
+      + '<div class="v479-col-head"><span class="v479-col-name">' + label + '</span>'
+      + '<button class="v479-go" type="button" onclick="planFaceCheck(\'' + which + '\')">' + (map[td] ? '撤销' : '打卡') + '</button></div>'
+      + '<div class="v479-col-sub">' + sub + '</div>'
+      + '<div class="v479-dots">' + v479Dots(map, cls) + '</div></div>';
+  };
+  return '<div class="plan-habit v479-card" data-habit="face">'
+    + '<div class="plan-habit-head"><span class="plan-habit-ico"></span>'
+    + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
+    + '<span class="plan-habit-cadence">每天</span></div>'
+    + '<div class="v479-two">'
+    + col('日常护肤', h.history, 'daily', '连续 ' + v479Streak(h.history) + ' 天', 'g')
+    + col('涂修护膏', h.repair, 'repair', fuLeft + ' · 共 ' + v479Count(h.repair) + ' 天', 'p')
+    + '</div></div>';
+}
+// —— 保健品：镁 / 维生素 ——
+function planSuppCheck(k) {
+  const h = planHabitByKey('supp'); if (!h) return;
+  const key = (k === 'vit') ? 'vit' : 'mg';
+  if (!h[key] || typeof h[key] !== 'object') h[key] = {};
+  const t = v479Today();
+  if (h[key][t]) delete h[key][t]; else h[key][t] = 1;
+  v479Save();
+}
+function planRenderSuppCard(h) {
+  if (!h.mg || typeof h.mg !== 'object') h.mg = {};
+  if (!h.vit || typeof h.vit !== 'object') h.vit = {};
+  const total = Math.max(1, parseInt(h.total) || 60);
+  const td = v479Today();
+  const col = function (label, map, key, cls) {
+    const left = Math.max(0, total - v479Count(map));
+    return '<div class="v479-col">'
+      + '<div class="v479-col-head"><span class="v479-col-name">' + label + '</span>'
+      + '<button class="v479-go" type="button" onclick="planSuppCheck(\'' + key + '\')">' + (map[td] ? '撤销' : '打卡') + '</button></div>'
+      + '<div class="v479-col-sub">连续 ' + v479Streak(map) + ' 天 · 剩 ' + left + '/' + total + '</div>'
+      + '<div class="v479-dots">' + v479Dots(map, cls) + '</div></div>';
+  };
+  return '<div class="plan-habit v479-card" data-habit="supp">'
+    + '<div class="plan-habit-head"><span class="plan-habit-ico"></span>'
+    + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
+    + '<span class="plan-habit-cadence">每天</span></div>'
+    + '<div class="v479-two">' + col('镁 · 睡前', h.mg, 'mg', 'g') + col('维生素 · 早', h.vit, 'vit', 'p') + '</div></div>';
+}
+// —— 月度同角度对比照：起 / 中 / 末 三格 ——
+function planCompressPhoto(file, cb) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const img = new Image();
+    img.onload = function () {
+      const MAX = 600;
+      let w = img.width, hh = img.height;
+      if (w > MAX || hh > MAX) { const r = Math.min(MAX / w, MAX / hh); w = Math.round(w * r); hh = Math.round(hh * r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = hh;
+      c.getContext('2d').drawImage(img, 0, 0, w, hh);
+      try { cb(c.toDataURL('image/jpeg', 0.7)); } catch (err) { try { hamiToast('图片处理失败，请换一张 JPG/PNG'); } catch (e2) {} }
+    };
+    img.onerror = function () { try { hamiToast('图片读取失败（iPhone 请转 JPG/PNG）'); } catch (e2) {} };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function planPhotoPick(slot, input) {
+  const f = input && input.files && input.files[0];
+  if (!f) return;
+  const g = planGoalByKey('photos'); if (!g) return;
+  if (!Array.isArray(g.shots)) g.shots = [null, null, null];
+  planCompressPhoto(f, function (src) {
+    g.shots[slot] = { date: v479Today(), src: src };
+    saveData();
+    try { renderPlanGoals(); } catch (e) {}
+    try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+  });
+  input.value = '';
+}
+function planPhotoView(slot) {
+  const g = planGoalByKey('photos'); if (!g || !Array.isArray(g.shots) || !g.shots[slot]) return;
+  const old = document.getElementById('v479-photo-mask'); if (old) old.remove();
+  const m = document.createElement('div');
+  m.id = 'v479-photo-mask'; m.className = 'v479-photo-mask';
+  m.innerHTML = '<div class="v479-photo-box"><img src="' + g.shots[slot].src + '" alt="对比照">'
+    + '<button class="v479-go" type="button" onclick="document.getElementById(\'v479-photo-mask\').remove()">关闭</button></div>';
+  m.addEventListener('click', function (ev) { if (ev.target === m) m.remove(); });
+  document.body.appendChild(m);
+}
+function planGoalCardPhotos(g) {
+  if (!Array.isArray(g.shots)) g.shots = [null, null, null];
+  const labels = ['起', '中', '末'];
+  let cells = '';
+  for (let i = 0; i < 3; i++) {
+    const s = g.shots[i];
+    cells += '<div class="v479-shot">'
+      + '<div class="v479-shot-label">' + labels[i] + '</div>'
+      + (s && s.src
+        ? '<img class="v479-shot-img" src="' + s.src + '" alt="对比照" onclick="planPhotoView(' + i + ')">'
+          + '<div class="v479-shot-date">' + (s.date || '').slice(5).replace('-', '/') + '</div>'
+        : '<div class="v479-shot-empty">＋</div>')
+      + '<label class="v479-shot-btn">' + (s && s.src ? '重拍' : '拍照')
+      + '<input type="file" accept="image/*" style="display:none" onchange="planPhotoPick(' + i + ', this)"></label>'
+      + '</div>';
+  }
+  return '<div class="plan-goal v479-photo-card" data-goal="photos">'
+    + '<div class="plan-goal-head"><span class="plan-goal-ico"></span>'
+    + '<div><div class="plan-goal-name">' + escTodo(g.name) + '</div>'
+    + '<div class="plan-goal-note">同一面墙 · 同一光线 · 素颜 · 正脸＋侧脸</div></div></div>'
+    + '<div class="v479-shots">' + cells + '</div></div>';
+}
+// ==================== v479 止 ====================
 function planEnsure() {
  const _p = function (n) { return String(n).padStart(2, '0'); };
  const _dstr = function (d) { return d.getFullYear() + '-' + _p(d.getMonth() + 1) + '-' + _p(d.getDate()); };
@@ -25916,15 +26074,17 @@ function planEnsure() {
  if (!Array.isArray(store.planHabits) || !store.planHabits.length) {
  store.planHabits = [
  { key: 'skin', name: '养皮肤 · 身体护理', icon: '', type: 'daily', history: {} },
- { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
+ { key: 'face', name: '面部护肤 · 8周', icon: '', type: 'course', history: {}, repair: {}, repairEnd: '2026-11-26' },
+ { key: 'supp', name: '保健品', icon: '', type: 'daily2', mg: {}, vit: {}, total: 60 },
  { key: 'hair', name: '养头发 · 护发素', icon: '', type: 'cycle', cycleDays: 5, lastWash: '', steps: {} },
  // v473：美白牙贴隔日计划
- { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, total: 6, lastDone: '2026-11-04', history: { '2026-11-04': 1 } }
+ { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 }, total: 6 }
  ];
  touched = true;
  } else {
  const _need = [
- { key: 'face', name: '养皮肤 · 面部护肤', icon: '', type: 'daily', history: {} },
+ { key: 'face', name: '面部护肤 · 8周', icon: '', type: 'course', history: {}, repair: {}, repairEnd: '2026-11-26' },
+ { key: 'supp', name: '保健品', icon: '', type: 'daily2', mg: {}, vit: {}, total: 60, after: 'face' },
  // v473：美白牙贴隔日计划；after 仅用于插到养头发后面，不落库
  { key: 'patch', name: '美白牙贴', icon: '', type: 'patch', cycleDays: 2, lastDone: '2026-11-04', history: { '2026-11-04': 1 }, total: 6, after: 'hair' }
  // v400：ears 迁移已删（学英语习惯移除），老数据原样留在 store 不显示
@@ -25953,6 +26113,16 @@ function planEnsure() {
  if (t2) touched = true;
  }
  if (h.key === 'patch' && !h.total) { h.total = 6; touched = true; }
+ if (h.key === 'face' && h.type !== 'course') {
+   h.type = 'course'; h.name = '面部护肤 · 8周';
+   if (!h.repair || typeof h.repair !== 'object') h.repair = {};
+   if (!h.repairEnd) h.repairEnd = '2026-11-26';
+   touched = true;
+ }
+ if (h.key === 'supp') {
+   if (!h.mg || typeof h.mg !== 'object') { h.mg = {}; touched = true; }
+   if (!h.vit || typeof h.vit !== 'object') { h.vit = {}; touched = true; }
+ }
  });
  // —— 目标：v387 起「手术」系卡片（v386 单张手术卡 / 早期拆分的术前体检·点痣·痔疮手术）统一换成一张「健康管理」清单卡 ——
  const _healthDef = function () {
@@ -25965,6 +26135,7 @@ function planEnsure() {
  };
  if (!Array.isArray(store.planGoals) || !store.planGoals.length) {
  store.planGoals = [
+ { key: 'photos', name: '这两个月 · 对比照', icon: '', type: 'photos', start: '2026-11-06', shots: [null, null, null] },
  { key: 'drive', name: '学车拿证', icon: '', type: 'link', note: 'C2 四科全过就拿证' },
  _healthDef(),
  { key: 'slim', name: '身体补剂计划', icon: '', type: 'phase', date: slimDefault, months: 6, note: '每月一次 · 配合饮食运动' }
@@ -26025,6 +26196,14 @@ function planEnsure() {
  // 4) 身体补剂默认开始日
  store.planGoals.forEach(function (g) {
  if (g.key === 'slim' && !g.date) { g.date = slimDefault; touched = true; }
+ });
+ // 4.5) v479 月度对比照：老用户没有就补在最前面
+ if (!_hasGoal('photos')) {
+   store.planGoals.unshift({ key: 'photos', name: '这两个月 · 对比照', icon: '', type: 'photos', start: '2026-11-06', shots: [null, null, null] });
+   touched = true;
+ }
+ store.planGoals.forEach(function (g) {
+   if (g.key === 'photos' && !Array.isArray(g.shots)) { g.shots = [null, null, null]; touched = true; }
  });
  // 5) 技能卡（v388）：老用户没有就建空数组
  if (!Array.isArray(store.planSkills)) { store.planSkills = []; touched = true; }
@@ -26342,11 +26521,13 @@ function renderPlanHabits() {
  store.planHabits.forEach(function (h) { byKey[h.key] = h; });
  let html = '';
  // v390：养皮肤合并卡（身体护理 + 面部护肤，左右排版）
- if (byKey.skin || byKey.face) html += planRenderPairCard('pair-skin', '', '养皮肤', [byKey.skin, byKey.face]);
+ if (byKey.skin) html += planRenderPairCard('pair-skin', '', '养皮肤', [byKey.skin]);
  // 养头发：周期卡，独立一张
  store.planHabits.forEach(function (h) {
  if (h.type === 'cycle') html += planRenderHairCard(h);
  else if (h.type === 'patch') html += planRenderPatchCard(h);
+ else if (h.type === 'course') html += planRenderFaceCourse(h);
+ else if (h.type === 'daily2') html += planRenderSuppCard(h);
  });
  el.innerHTML = html;
 }
@@ -26528,6 +26709,7 @@ function renderPlanGoals() {
  if (g.type === 'link') html += planGoalCardDrive(g);
  else if (g.type === 'checklist') html += planGoalCardChecklist(g);
  else if (g.type === 'phase') html += planGoalCardPhase(g);
+ else if (g.type === 'photos') html += planGoalCardPhotos(g);
  });
  el.innerHTML = html;
 }
@@ -29212,5 +29394,37 @@ body.theme-y2k #home-weight-cal .weight-cal-badge-updown{margin-left:0 !importan
 .plan-ck-stage-txt{font-size:11.5px;font-weight:800;color:#5E4F55;flex:1;min-width:0;}
 .plan-ck-stage-row.done .plan-ck-stage-txt{color:#8CBC9E;}
 .plan-ck-stage-row .plan-ck-date{margin-left:auto;white-space:nowrap;}
+</style>
+<style id="hami-v479-fix">
+.v479-card::before{background:linear-gradient(90deg,#ffb3c7,#c9a8ff);}
+.v479-card{align-self:start;}
+.v479-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.v479-col{min-width:0;background:#fffafc;border:1px solid #f6e2ea;border-radius:12px;padding:8px 9px;display:flex;flex-direction:column;gap:6px;}
+.v479-col-head{display:flex;align-items:center;gap:6px;}
+.v479-col-name{font-size:12px;font-weight:800;color:#5E4F55;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.v479-go{flex:0 0 auto;border:1px solid #f0c4d4;background:#fff;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:800;color:#a07e8e;cursor:pointer;font-family:inherit;}
+.v479-go:active{background:#fff0f5;}
+.v479-col-sub{font-size:10px;color:#a8899a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.v479-dots{display:flex;gap:2px;align-items:center;flex-wrap:nowrap;overflow:hidden;}
+.v479-dot{flex:1 1 0;min-width:0;height:9px;border-radius:50%;background:#f6e7ed;border:1px solid #efd5e0;box-sizing:border-box;}
+.v479-dot.on.g{background:#8CBC9E;border-color:#8CBC9E;}
+.v479-dot.on.p{background:#B9A3DC;border-color:#B9A3DC;}
+.v479-dot.today{box-shadow:0 0 0 2px rgba(187,119,139,.28);}
+.v479-photo-card{border-top:3px solid #c9b6ef;}
+.v479-shots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.v479-shot{min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.v479-shot-label{font-size:11px;font-weight:800;color:#a07e8e;}
+.v479-shot-img,.v479-shot-empty{width:100%;height:88px;object-fit:cover;border-radius:10px;border:1.5px solid #f6e2ea;background:#fffafc;box-sizing:border-box;}
+.v479-shot-empty{display:flex;align-items:center;justify-content:center;font-size:22px;color:#e9b9cb;border-style:dashed;line-height:1;}
+.v479-shot-date{font-size:10px;color:#a8899a;}
+.v479-shot-btn{font-size:10px;font-weight:800;color:#a07e8e;background:#fff6f9;border:1px solid #f6e2ea;border-radius:20px;padding:2px 10px;cursor:pointer;}
+.v479-photo-mask{position:fixed;inset:0;z-index:9999;background:rgba(94,79,85,.5);display:flex;align-items:center;justify-content:center;padding:20px;}
+.v479-photo-box{background:#fffafc;border-radius:18px;padding:12px;max-width:min(92vw,560px);display:flex;flex-direction:column;gap:8px;align-items:center;}
+.v479-photo-box img{max-width:100%;max-height:70vh;border-radius:12px;}
+@media (max-width:768px){
+ .v479-shot-img,.v479-shot-empty{height:76px;}
+ .v479-col{padding:7px;}
+ .v479-col-name{font-size:11.5px;}
+}
 </style>
 </body></html>
