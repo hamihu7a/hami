@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-05-477"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-06-478"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8672,8 +8672,7 @@ let store = {
  { key: 'health', name: '健康管理', icon: '', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
  { key: 'blood', name: '体检抽血', note: '看指标适不适合用身体补剂', kind: 'check', done: false, date: '', result: '' },
  { key: 'anal', name: '肛肠科检查', note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
- { key: 'mole', name: '点痣', note: '恢复期别抠痂 · 注意防晒', kind: 'todo', done: false, date: '' },
- { key: 'moleFu', name: '点痣复诊', note: '看恢复状态', kind: 'todo', done: false, date: '', plan: '2026-11-26' },
+ { key: 'mole', name: '点痣', note: '恢复期别抠痂 · 注意防晒', kind: 'todo', done: true, date: '2026-11-05', fuDone: false, fuDate: '', fuPlan: '2026-11-26' },
  { key: 'ear', name: '打耳洞', note: '认准正规店 · 银针养耳', kind: 'todo', done: false, date: '' }
  ] },
  { key: 'slim', name: '身体补剂计划', icon: '', type: 'phase', date: '', months: 6, note: '每月一次 · 配合饮食运动' }
@@ -11961,7 +11960,7 @@ async function pullAndMerge() {
  try {
  const _rq = (remote.store && remote.store.dailyQuotes) || null;
  const _lq = store.dailyQuotes || null;
- if (_rq && _rq.date && (!_lq || _rq.date >= _lq.date)) store.dailyQuotes = _rq;
+ if (_rq && _rq.date && (!_lq || (_rq.date >= _lq.date && !(_lq.pv === 'v478' && _rq.pv !== 'v478')))) store.dailyQuotes = _rq;
  } catch (e) {}
  // v205：云端合并后立刻把体重数值收敛为斤 + 清理同日重复（幂等），
  // 防止云端残留的「公斤口径 / 被反复翻倍」的旧值混进本地造成 4 倍、8 倍。
@@ -15546,257 +15545,256 @@ function fmtMoney(n) {
 // v238：每类扩到 50 条（共 150），按大步长轮换——15 天一轮的「来来回回就这些」已根治
 // v339：主人嫌不够鸡血——三池整体重写为「打足鸡血」版：上=乐观正能量、中=赚钱动力、下=减肥动力
 const moodQuotes = [
- "状态拉满，今天就是我的主场",
- "我命由我不由天，干就完了",
- "凡事发生，必有利于我",
- "运气偏爱斗志昂扬的人",
- "能量满格，谁也别想熄灭我",
- "主角心态开场，全场为我让路",
- "拒绝内耗，我的精力很贵",
- "笑对一切，我就是这么刚",
- "相信自己，这事就成了大半",
- "心中有火，眼里有光，往前冲",
- "乐观是强者才有的特权",
- "我选的路，爬也爬到顶",
- "低谷是跳板，弹我更高的",
- "今天也要嚣张地自信",
- "心态一稳，天下无敌",
- "我的人生，我亲自加码",
- "烦恼退后，我要发光了",
- "挺直腰板，好运自然来",
- "敢想敢干，宇宙都配合",
- "情绪自己控，节奏自己带",
- "热爱可抵岁月漫长",
- "我的字典里没有「不行」",
- "越挫越勇，越战越强",
- "狠角色都是每天进步一点点",
- "心之所向，全力以赴",
- "光明正大努力，理直气壮优秀",
- "底气是自己一寸寸挣来的",
- "微笑是铠甲，冲！",
- "保持饥饿，保持锋利",
- "打不倒我的，必使我更强大",
- "今天也要做自己的小太阳",
- "与其焦虑未来，不如点燃现在",
- "我很好，而且会越来越好",
- "抬头挺胸，未来是我的",
- "把羡慕别人的力气花在自己身上",
- "信心这东西，装着装着就成真",
- "斗志不能熄，越烧越旺",
- "人生是旷野，我要跑着去",
- "敢开始的人，已经赢了一半",
- "快乐是自己给的，我给得起",
- "保持热爱，奔赴山海",
- "我偏要强，我偏要赢",
- "日子再普通，也要过得沸腾",
- "心气不能散，散了人就输了",
- "每天醒来，都是一次翻盘的机会",
- "正面硬刚，漂亮地活",
- "我的状态，我全权负责",
- "有目标的人，睡不着也精神",
- "把「想」变成「正在做」",
- "正能量不是傻乐，是选择强大",
- // v343 扩容 50→80：主人要「每天都不重复」——配合洗牌发牌，80 天内绝不重样
- "我自带光芒，走到哪亮到哪",
- "好运正在派送中，请保持斗志",
- "我的心气，比天还高",
- "今天这关，我过定了",
- "乐观是底牌，行动是王牌",
- "血厚的人，才配谈运气",
- "我不等风来，我追着风跑",
- "眼里有光的人，走路都带风",
- "状态在线，全世界让路",
- "我的热血，刚烧到沸点",
- "关关难过，关关过",
- "自信放大了，困难就缩小了",
- "我这种人，只会越来越顺",
- "脾气可以有，志气不能丢",
- "敢拼的人，老天都会搭手",
- "每天都要比昨天更带劲",
- "我的剧本，我演大主角",
- "冲劲这东西，我从来不缺",
- "心气不灭，早晚出头",
- "把日子过成升级打怪",
- "我这股劲，自己都害怕",
- "越是关键时刻，越兴奋",
- "好戏在后头，我现在就在场",
- "我的能量，超乎我想象",
- "昂着头的人，不会走下坡",
- "把每个今天，都过成主场",
- "心态不崩，我就没输",
- "我的运气，靠自己充值",
- "清醒又上进，就是我",
- "天生狠人，不服就干"
+ "状态直接拉满，今天就是我的主场",
+ "我命由我不由天，认准方向干就完了",
+ "凡事发生，最后必有利于我",
+ "运气向来偏爱斗志昂扬的人",
+ "能量满格，谁也别想熄灭我这团火",
+ "主角心态一开场，全场都为我让路",
+ "拒绝一切内耗，我的精力实在很贵",
+ "笑着面对一切，我就是这么刚",
+ "先相信自己，这事就已经成了大半",
+ "心中有火，眼里有光，只管往前冲",
+ "乐观从来是强者才配有的特权",
+ "我自己选的路，爬也要爬到顶",
+ "低谷只是跳板，弹我跳得更高",
+ "今天也要嚣张又笃定地自信",
+ "心态一旦稳住，天下都无敌",
+ "我的人生，由我亲自一路加码",
+ "烦恼统统退后，轮到我要发光了",
+ "挺直腰板，好运自然找上门",
+ "敢想敢干，连宇宙都会配合我",
+ "情绪自己控住，节奏由自己来带",
+ "一腔热爱可抵这岁月漫长",
+ "我的字典里从来就没有「不行」",
+ "越挫就越勇，越战就越强",
+ "狠角色都是每天逼自己进步一点",
+ "心之所向，就值得我全力以赴",
+ "光明正大地努力，理直气壮地优秀",
+ "底气全是自己一寸寸挣来的",
+ "微笑就是铠甲，抬头往前冲",
+ "永远保持饥饿，永远保持锋利",
+ "凡是打不倒我的，必使我更强大",
+ "今天也要做自己的那颗小太阳",
+ "与其焦虑未来，不如立刻点燃现在",
+ "我现在很好，而且会越来越好",
+ "抬头挺胸往前，未来一定是我的",
+ "把羡慕别人的力气，狠狠花在自己身上",
+ "信心这东西，装着装着就真的成真",
+ "斗志绝不能熄，越烧就越旺",
+ "人生是旷野，我要一路跑着去",
+ "敢先开始的人，就已经赢了一半",
+ "快乐是自己给的，我完全给得起",
+ "一直保持热爱，径直奔赴山海",
+ "我偏要强，我偏要赢到底",
+ "日子再普通，也要过得滚烫沸腾",
+ "心气绝不能散，散了人就真输了",
+ "每天醒来，都是一次彻底翻盘的机会",
+ "正面硬刚，然后漂漂亮亮地活",
+ "我的状态，从头到尾我全权负责",
+ "有目标的人，睡不着也照样精神",
+ "把「我想」狠狠变成「正在做」",
+ "正能量从不傻乐，是主动选择强大",
+ "我自带光芒，走到哪里就亮到哪里",
+ "好运正在派送中，请务必保持斗志",
+ "我的心气，向来比天还要高",
+ "今天这一关，我是过定了",
+ "乐观是底牌，行动才是真王牌",
+ "血厚扛得住的人，才配谈运气",
+ "我不等风来，我自己追着风跑",
+ "眼里有光的人，连走路都带着风",
+ "状态一在线，全世界都给我让路",
+ "我的热血，才刚刚烧到沸点",
+ "关关难过，我照样关关过",
+ "自信放大了，困难自然就缩小了",
+ "我这种人，往后只会越来越顺",
+ "脾气可以有，但志气绝不能丢",
+ "敢拼到底的人，老天都会搭把手",
+ "每天都要比昨天活得更带劲",
+ "我的剧本，我亲自演大主角",
+ "冲劲这东西，我从来就没有缺过",
+ "心气不灭，早晚轮到我出头",
+ "把日子过成一路升级打怪",
+ "我这股狠劲，连自己都害怕",
+ "越是关键时刻，我越来劲越兴奋",
+ "好戏在后头，我现在就在场中央",
+ "我的能量，远远超乎我想象",
+ "昂着头的人，从来不会走下坡",
+ "把每一个今天，都过成主场",
+ "心态不崩，我就根本没输",
+ "我的运气，全靠自己一笔笔充值",
+ "清醒、上进、带劲，就是我",
+ "天生就是狠人，不服就直接干",
 ];
 
 const moneyQuotes = [
- "搞钱是正事，搞钱使我快乐",
- "财富是底气，搞钱要拼命",
- "野心不是贬义词，是发动机",
- "赚钱的速度，要追上欲望",
- "你值得贵的，报价别手软",
- "主动的人，先赚到钱",
- "搞钱治愈一切，包括不开心",
- "努力变现的人，浑身在发光",
- "每一分钱，都是努力的选票",
- "别人躺平的时候，我在搞钱",
- "我的目标是：钱包鼓鼓",
- "会赚钱是本事，敢赚钱是胆量",
- "今天也要为钱包冲锋陷阵",
- "收入是尊严，存款是退路",
- "该谈钱的时候，别客气",
- "你的手艺，就是你的印钞机",
- "订单会有的，钱包会鼓的",
- "把爱好变成钱，双倍快乐",
- "搞钱的女人，运气爆棚",
- "账户余额是信心，一分一分攒",
- "今天不搞钱，明天被钱搞",
- "报价大胆点，你值这个数",
- "客户是资源，口碑是复利",
- "节流是防守，开源才是进攻",
- "我要的不是零花钱，是自由",
- "赚到钱的感觉，真的很上头",
- "双手挣来的，花着最硬气",
- "你的作品很贵，时间也是",
- "小钱不放过，大钱接得住",
- "搞钱要紧，其他靠边站",
- "存款破万那天，笑出声",
- "又美又会赚，才是王炸",
- "每一单，都是给未来铺路",
- "机会不等人的，上手就干",
- "收钱不心虚，付出劳动了",
- "今年目标：钱包再厚一圈",
- "会花钱是快乐，会赚钱是本事",
- "搞钱不丢人，穷才拧巴",
- "你的价值，市场会给答案",
- "订单爆满，是我应得的",
- "谈钱不伤感情，穷才伤",
- "复利的世界里，耐心的人赢",
- "被动收入，是我的终极浪漫",
- "赚钱的战场，我在第一排",
- "把技能点满，把钱赚满",
- "今天流的汗，都是明天的钱",
- "我不抠门，我只是会赚",
- "财富是打出来的，不是等出来的",
- "搞钱这件事，我天赋异禀",
- "钱包鼓起来，说话都大声",
- // v343 扩容 50→80
- "我的钱包，只进不退",
- "谈钱是正经事，别觉得俗",
- "赚钱不努力，等于浪费命",
- "银行卡数字，是我的军功章",
- "今天也要把钱挣得漂亮",
- "会搞钱的人，最有魅力",
- "我的目标很俗：钱越多越好",
- "每一分进账，都值得庆祝",
- "舍不得面子，赚不到钱",
- "钱是胆，越多胆越肥",
- "这单必须拿，我有预感",
- "把钱谈清楚，感情更长久",
- "我的时薪，值得翻倍",
- "赚钱的路上，没有舒适区",
- "存款是底气，谁都不借",
- "忙而不盲，赚得明白",
- "今天搞钱，明天数钱",
- "我的商业脑，该上场了",
- "机会面前，手要快心要狠",
- "花出去的，十倍赚回来",
- "认真搞钱的人，眼里有刀",
- "小生意认真做，也能翻身",
- "我的收入，要配得上野心",
- "别谈理想了，先搞到钱",
- "钱到手，话才说得响",
- "趁年轻，把钱挣够",
- "我卖的每一样，都很值",
- "客户满意，我数钱手软",
- "省钱不如赚钱，搞钱要猛",
- "我的口袋，迟早沉甸甸"
+ "搞钱就是正事，搞钱让我真快乐",
+ "财富就是底气，搞钱就得拼命",
+ "野心从来不是贬义词，是发动机",
+ "赚钱的速度，一定要追上欲望",
+ "你值得更贵的，报价千万别手软",
+ "主动出手的人，永远先赚到钱",
+ "搞钱能治愈一切，包括不开心",
+ "努力变现的人，浑身都在发光",
+ "每一分钱，都是给努力的选票",
+ "别人躺平的时候，我还在搞钱",
+ "我的目标很直接：钱包鼓鼓",
+ "会赚钱是本事，敢赚钱才是胆量",
+ "今天也要为钱包狠狠冲锋陷阵",
+ "收入是尊严，存款就是我的退路",
+ "该谈钱的时候，一点都别客气",
+ "你的好手艺，就是你的印钞机",
+ "订单会有的，钱包也一定会鼓的",
+ "把爱好变成钱，是双倍的快乐",
+ "认真搞钱的女人，运气最爆棚",
+ "账户余额就是信心，一分一分攒",
+ "今天不搞钱，明天就要被钱搞",
+ "报价再大胆点，你就值这个数",
+ "客户是资源，口碑才是真复利",
+ "节流只是防守，开源才叫进攻",
+ "我要的从来不是零花钱，是自由",
+ "自己赚到钱的感觉，真的很上头",
+ "双手挣来的钱，花着最硬气",
+ "你的作品很贵，你的时间也是",
+ "小钱绝不放过，大钱稳稳接住",
+ "搞钱最要紧，其他先靠边站",
+ "存款破万那天，我要笑出声",
+ "又美又会赚，那才叫王炸",
+ "每一单，都是在给未来铺路",
+ "机会不等人的，看准上手就干",
+ "收钱不心虚，我实打实付出了",
+ "今年目标：把钱包再攒厚一圈",
+ "会花钱是快乐，会赚钱才是本事",
+ "搞钱一点不丢人，穷才拧巴",
+ "你的价值，市场迟早会给答案",
+ "订单排到爆满，都是我应得的",
+ "谈钱不伤感情，穷才真的伤",
+ "复利的世界里，耐心的人最后赢",
+ "被动收入，就是我的终极浪漫",
+ "赚钱的战场，我永远在第一排",
+ "把技能点满，把钱包也赚满",
+ "今天流的汗，都是明天进账的钱",
+ "我一点不抠门，我只是太会赚",
+ "财富是实打出来的，不是等出来的",
+ "搞钱这件事，我还真天赋异禀",
+ "钱包鼓起来，说话都跟着大声",
+ "我的钱包，今后只进不退",
+ "谈钱是正经事，一点别觉得俗",
+ "赚钱不努力，简直等于浪费命",
+ "银行卡里的数字，是我的军功章",
+ "今天也要把钱挣得漂漂亮亮",
+ "会搞钱的人，浑身最有魅力",
+ "我的目标很俗气：钱越多越好",
+ "每一分进账，都值得好好庆祝",
+ "舍不得这张面子，就赚不到钱",
+ "钱就是胆，越多我的胆越肥",
+ "这一单必须拿下，我有预感",
+ "把钱先谈清楚，感情才更长久",
+ "我的时薪，早就值得翻倍",
+ "赚钱的路上，从来没有舒适区",
+ "存款是底气，谁开口都不借",
+ "忙而不盲，每一分都赚得明白",
+ "今天狠狠搞钱，明天慢慢数钱",
+ "我的商业脑，是时候该上场了",
+ "机会面前，手要快心更要狠",
+ "今天花出去的，十倍赚回来",
+ "认真搞钱的人，眼睛里都有刀",
+ "小生意认真做，照样也能翻身",
+ "我的收入，一定要配得上野心",
+ "先别谈理想了，先把钱搞到手",
+ "钱到了手，话才说得响亮",
+ "趁年轻这股劲，把钱挣够",
+ "我卖的每一样，都值这个价",
+ "客户满意，我数钱数到手软",
+ "省钱不如赚钱，搞钱就要够猛",
+ "我的口袋，迟早装得沉甸甸",
 ];
 
 const fitnessQuotes = [
- "汗水是脂肪的眼泪，继续碾",
- "自律即自由，我想要",
- "今天的汗，是明天的锁骨线",
- "管住嘴，是为了想要的生活",
- "别停下，脂肪正在求饶",
- "燃烧吧，我的卡路里",
- "马甲线在终点等我",
- "身材管理，是长期主义的浪漫",
- "每一次训练，都是给自己的勋章",
- "瘦下来的世界，规则都变友好",
- "欲望是毒，自律是解药",
- "对自己狠一点，未来甜很多",
- "动起来，赘肉才怕你",
- "体重秤不会骗人，努力也不会",
- "今天偷的懒，明天秤上见",
- "把嘴馋的冲动，换成一组训练",
- "身体是神殿，用来训练的",
- "想要的衣服，身材得配得上",
- "不是瘦才美，是我要掌控自己",
- "脂肪很顽固，我比它更顽固",
- "今天的不想动，掐死它",
- "心肺在变强，我在变强",
- "运动也会上瘾，先从今天起",
- "甩掉的每一斤，都是旧我的告别",
- "镜子不会说谎，它会奖励你",
- "昨天的体重翻篇，今天重新开练",
- "核心收紧，意志也收紧",
- "好看的衣服，是练出来的门票",
- "撑住最后三个，奇迹就发生",
- "有氧的尽头，是更好的自己",
- "拒绝油腻，拒绝躺平",
- "我不想后悔，所以要练",
- "身体记得你的每一次坚持",
- "代谢可以养，意志可以磨",
- "变美是生意，汗水是本金",
- "吃得干净，练得干净",
- "好看是选择，不是运气",
- "健康是1，其他是0",
- "把「以后再说」改成「现在就练」",
- "我的身体，我亲自雕琢",
- "不要摆烂，我要发光",
- "每一组力竭，都是脂肪的葬礼",
- "瘦不是目标，赢才是",
- "别羡慕别人，去成为别人羡慕的",
- "疲惫是借口，汗水是证据",
- "跑步很苦，但越来越爽",
- "今天多走一千步，明天多瘦一分",
- "和身体合作，而不是对抗",
- "好身材是自信的作弊器",
- "燃烧吧，把不可能烧成灰",
- // v343 扩容 50→80
- "汗水流过的路，都有回报",
- "今天多练一分钟，明天多瘦一分",
- "脂肪在颤抖，我在加速",
- "我的意志，比铁还硬",
- "秤上的数字，我说了算",
- "把赘肉，一点点撕掉",
- "自律的人，连脂肪都让路",
- "今天的酸痛，明天的骄傲",
- "我练的不是身体，是狠劲",
- "想瘦的念头，要压过食欲",
- "这组做完，离目标又近了",
- "穿不进的衣服，是战书",
- "我的腰，迟早细回来",
- "运动是苦，瘦下来是甜",
- "别停，镜子在看",
- "脂肪最怕的，是我这种坚持",
- "每一次呼吸，都在燃烧",
- "我的身材，我自己雕刻",
- "今天不吃亏，明天不受罪",
- "狠下心减肥，才能惊艳人",
- "汗水不会背叛你",
- "瘦下来，世界都变温柔",
- "我的节奏，脂肪跟不上",
- "撑住，脂肪正在崩溃",
- "把运动，变成每天的正经事",
- "我的身体，值得最好的",
- "动了就有效果，坚持就蜕变",
- "不想练的时候，才是最该练",
- "腿会酸，眼会亮，值",
- "最后的冲刺，脂肪的终点"
+ "汗水是脂肪的眼泪，继续狠狠碾",
+ "自律就是自由，这份自由我想要",
+ "今天流的汗，是明天的锁骨线",
+ "管住嘴，是为了过上想要的生活",
+ "千万别停下，脂肪正在求饶",
+ "狠狠燃烧吧，我的卡路里",
+ "马甲线就在终点等着我",
+ "身材管理，是长期主义最狠的浪漫",
+ "每一次训练，都是给自己挣的勋章",
+ "瘦下来的世界，规则都变得友好",
+ "嘴馋的欲望是毒，自律是解药",
+ "现在对自己狠一点，未来甜很多",
+ "先动起来，赘肉才会怕你",
+ "体重秤不会骗人，努力也绝不会",
+ "今天偷的懒，明天全在秤上见",
+ "把嘴馋的冲动，狠狠换成一组训练",
+ "身体是神殿，就是用来训练的",
+ "想要的那件衣服，身材得配得上",
+ "不是瘦才美，是我要彻底掌控自己",
+ "脂肪再顽固，我也比它更顽固",
+ "今天那句不想动，直接掐死它",
+ "心肺在变强，我也跟着在变强",
+ "运动真的会上瘾，先从今天起",
+ "甩掉的每一斤，都是跟旧我的告别",
+ "镜子不会说谎，它早晚会奖励你",
+ "昨天的体重翻篇，今天立刻重新开练",
+ "核心收紧，意志也跟着收紧",
+ "好看的衣服，是练出来的入场门票",
+ "撑住最后这三个，奇迹就发生",
+ "有氧的尽头，一定是更好的自己",
+ "拒绝油腻，也彻底拒绝躺平",
+ "我一点不想后悔，所以现在要练",
+ "身体记得你的每一次死扛坚持",
+ "代谢可以慢慢养，意志可以狠狠磨",
+ "变美是笔生意，汗水就是本金",
+ "吃得干净，练得也干干净净",
+ "好看是选择，从来不是运气",
+ "健康是那个 1，其他都是 0",
+ "把「以后再说」狠狠改成「现在就练」",
+ "我的身体，由我亲自一刀刀雕琢",
+ "绝不摆烂，我要一路发光到底",
+ "每一组力竭，都是脂肪的告别葬礼",
+ "瘦从来不是目标，赢才是",
+ "别光羡慕别人，去成为别人羡慕的",
+ "疲惫只是借口，汗水才是证据",
+ "跑步很苦，但跑完越来越爽",
+ "今天多走一千步，明天就多瘦一分",
+ "学会和身体合作，而不是硬对抗",
+ "好身材就是自信的作弊器",
+ "狠狠燃烧吧，把不可能烧成灰",
+ "汗水流过的路，迟早都有回报",
+ "今天多练一分钟，明天就多瘦一分",
+ "脂肪正在颤抖，我还在继续加速",
+ "我的意志，向来比铁还硬",
+ "秤上的数字，最终我说了算",
+ "把赘肉，一点一点狠狠撕掉",
+ "够自律的人，连脂肪都得让路",
+ "今天的酸痛，就是明天的骄傲",
+ "我练的从来不是身体，是狠劲",
+ "想瘦的念头，必须压过食欲",
+ "这一组做完，离目标又近一步",
+ "穿不进的那件衣服，是战书",
+ "我的腰，迟早一天细回来",
+ "运动是苦，瘦下来是真的甜",
+ "别停，镜子可一直看着",
+ "脂肪最怕的，就是我这种坚持",
+ "每一次深呼吸，都在燃烧脂肪",
+ "我的身材，只能由我自己雕刻",
+ "今天不吃这点亏，明天就要受罪",
+ "狠下心减肥，才能狠狠惊艳人",
+ "汗水从来不会背叛你",
+ "瘦下来之后，世界都变温柔",
+ "我的节奏，脂肪根本跟不上",
+ "再撑住一下，脂肪正在崩溃",
+ "把运动，变成每天最正经的事",
+ "我的身体，值得世上最好的",
+ "动了就有效果，坚持就会蜕变",
+ "越不想练的时候，才最该练",
+ "腿会酸，眼睛会亮，太值了",
+ "最后这段冲刺，就是脂肪的终点",
 ];
 
+// v478：池子整体扩写后当天立刻换新句（云端旧 dailyQuotes 不带 pv 一律重抽）
+const QUOTE_POOL_VER = 'v478';
 // —— v343 激励语「洗牌发牌」机制（主人要「每天都不重复」）——
 // 旧机制 d%len 顺序轮换的两大毛病：① 50 天一轮回；② d 按年初起算，每年元旦清零重念。
 // 新机制：每个池子 Fisher-Yates 洗成一副牌，游标每天走一张 → 一圈内 80 天绝对不重复、
@@ -15852,7 +15850,8 @@ function getDailyQuote() {
  const today = todayStr();
  // 1) 今天已定过三条（本机定的或云端同步来的）→ 原样返回：同一天刷新不变、多端一致
  if (store.dailyQuotes && store.dailyQuotes.date === today &&
- store.dailyQuotes.mood && store.dailyQuotes.money && store.dailyQuotes.fitness) {
+ store.dailyQuotes.mood && store.dailyQuotes.money && store.dailyQuotes.fitness &&
+ store.dailyQuotes.pv === QUOTE_POOL_VER) {
  return { mood: store.dailyQuotes.mood, money: store.dailyQuotes.money, fitness: store.dailyQuotes.fitness };
  }
  // 2) 洗牌发牌抽今天的三条
@@ -15873,7 +15872,7 @@ function getDailyQuote() {
  };
  }
  // 4) 记进 store：当天固定 + 云同步让另一端同三条（saveData 不回调本函数，无死循环）
- store.dailyQuotes = { date: today, mood: q.mood, money: q.money, fitness: q.fitness };
+ store.dailyQuotes = { date: today, mood: q.mood, money: q.money, fitness: q.fitness, pv: QUOTE_POOL_VER };
  try { saveData(true); } catch (e) {}
  return q;
 }
@@ -25960,8 +25959,7 @@ function planEnsure() {
  return { key: 'health', name: '健康管理', icon: '', type: 'checklist', note: '先检查 · 再安排，逐项打勾', items: [
  { key: 'blood', name: '体检抽血', note: '看指标适不适合用身体补剂', kind: 'check', done: false, date: '', result: '' },
  { key: 'anal', name: '肛肠科检查', note: '评估适不适合做痔疮手术', kind: 'check', done: false, date: '', result: '' },
- { key: 'mole', name: '点痣', note: '恢复期别抠痂 · 注意防晒', kind: 'todo', done: false, date: '' },
- { key: 'moleFu', name: '点痣复诊', note: '看恢复状态', kind: 'todo', done: false, date: '', plan: '2026-11-26' },
+ { key: 'mole', name: '点痣', note: '恢复期别抠痂 · 注意防晒', kind: 'todo', done: true, date: '2026-11-05', fuDone: false, fuDate: '', fuPlan: '2026-11-26' },
  { key: 'ear', name: '打耳洞', note: '认准正规店 · 银针养耳', kind: 'todo', done: false, date: '' }
  ] };
  };
@@ -25989,19 +25987,40 @@ function planEnsure() {
  store.planGoals.splice(idx, 0, _healthDef());
  touched = true;
  }
- // 3) 健康卡条目兜底：老数据缺项就按默认补全
+ // 3) 健康卡条目兜底（v478：点痣是一项两阶段，不再有独立 moleFu）
  store.planGoals.forEach(function (g) {
  if (g.key !== 'health') return;
  if (!Array.isArray(g.items)) { g.items = _healthDef().items; touched = true; return; }
+ // v478：把旧的独立「点痣复诊」合并进 mole 的第二阶段，并删掉这一条
+ var fuIdx = -1;
+ for (var fi = 0; fi < g.items.length; fi++) if (g.items[fi].key === 'moleFu') fuIdx = fi;
+ if (fuIdx >= 0) {
+ var fu = g.items[fuIdx];
+ g.items.splice(fuIdx, 1);
+ var mo = null;
+ g.items.forEach(function (it) { if (it.key === 'mole') mo = it; });
+ if (mo) {
+ mo.fuPlan = fu.plan || '2026-11-26';
+ if (fu.done) { mo.fuDone = true; mo.fuDate = fu.date || todayStr(); }
+ if (!mo.done) { mo.done = true; mo.date = '2026-11-05'; }
+ }
+ touched = true;
+ }
  _healthDef().items.forEach(function (def) {
  let has = false;
  g.items.forEach(function (it) { if (it.key === def.key) has = true; });
- if (!has) {
- g.items.push(JSON.parse(JSON.stringify(def)));
- if (def.key === 'moleFu') { g.items.forEach(function (it) { if (it.key === 'mole' && !it.done) { it.done = true; it.date = '2026-11-05'; } }); }
- touched = true;
- }
+ if (!has) { g.items.push(JSON.parse(JSON.stringify(def))); touched = true; }
  });
+ // 阶段字段兜底 + 保证 mole 排在 ear 前面，两项永远在一起
+ g.items.forEach(function (it) {
+ if (it.key !== 'mole') return;
+ if (!it.fuPlan) { it.fuPlan = '2026-11-26'; touched = true; }
+ if (typeof it.fuDone !== 'boolean') { it.fuDone = false; touched = true; }
+ if (!it.fuDate) { it.fuDate = ''; }
+ });
+ var mi = -1, ei = -1;
+ for (var si = 0; si < g.items.length; si++) { if (g.items[si].key === 'mole') mi = si; if (g.items[si].key === 'ear') ei = si; }
+ if (mi >= 0 && ei >= 0 && mi > ei) { var mv = g.items.splice(mi, 1)[0]; g.items.splice(ei, 0, mv); touched = true; }
  });
  // 4) 身体补剂默认开始日
  store.planGoals.forEach(function (g) {
@@ -26372,6 +26391,27 @@ function planGoalCardChecklist(g) {
  const pct = items.length ? Math.round(doneN / items.length * 100) : 0;
  const today = todayStr();
  const row = function (it) {
+ if (it.key === 'mole') {
+   const _p = it.fuPlan || '2026-11-26';
+   const _fd = it.fuDate || '';
+   const _d1 = it.date || '';
+   const _l1 = _d1 ? (_d1.slice(0, 4) === today.slice(0, 4) ? _d1.slice(5).replace('-', ' / ') : _d1.replace(/-/g, ' / ')) : '';
+   const _l2 = _fd ? _fd.slice(5).replace('-', ' / ') : '';
+   return '<div class="plan-ck-item plan-ck-stage">'
+    + '<div class="plan-ck-stage-head"><span class="plan-ck-name">点痣</span>'
+    + '<span class="plan-ck-chip todo">两阶段</span>'
+    + '<span class="plan-ck-stage-note">恢复期别抠痂 · 注意防晒</span></div>'
+    + '<div class="plan-ck-stage-row' + (it.done ? ' done' : '') + '">'
+    + '<span class="plan-ck-box" role="checkbox" aria-checked="' + (it.done ? 'true' : 'false') + '" onclick="planHealthCheck(\'mole\')">' + (it.done ? '✓' : '') + '</span>'
+    + '<span class="plan-ck-stage-txt">已经点了</span>'
+    + (_l1 ? '<span class="plan-ck-date">✓ ' + _l1 + ' 完成</span>' : '<span class="plan-ck-date">待打卡</span>')
+    + '</div>'
+    + '<div class="plan-ck-stage-row' + (it.fuDone ? ' done' : '') + '">'
+    + '<span class="plan-ck-box" role="checkbox" aria-checked="' + (it.fuDone ? 'true' : 'false') + '" onclick="planMoleFuCheck()">' + (it.fuDone ? '✓' : '') + '</span>'
+    + '<span class="plan-ck-stage-txt">点痣等待复诊</span>'
+    + (_l2 ? '<span class="plan-ck-date">✓ ' + _l2 + ' 已复诊</span>' : '<span class="plan-ck-date">' + _p.slice(5).replace('-', '/') + ' 去复诊</span>')
+    + '</div></div>';
+ }
  const dt = it.date || '';
  const dLabel = dt ? (dt.slice(0, 4) === today.slice(0, 4) ? dt.slice(5).replace('-', ' / ') : dt.replace(/-/g, ' / ')) : '';
  let h = '<div class="plan-ck-item' + (it.done ? ' done' : '') + '">'
@@ -26420,6 +26460,24 @@ function planHealthCheck(itemKey) {
  } else {
  it.done = true; it.date = todayStr();
  try { finToast('「' + it.name + '」完成 '); } catch (e) {}
+ }
+ saveData();
+ renderPlanGoals();
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+}
+// v478：点痣第二阶段「等待复诊」单独打勾（第一阶段仍走 planHealthCheck）
+function planMoleFuCheck() {
+ const g = planGoalByKey('health');
+ if (!g || !Array.isArray(g.items)) return;
+ let it = null;
+ g.items.forEach(function (x) { if (x.key === 'mole') it = x; });
+ if (!it) return;
+ if (it.fuDone) {
+ it.fuDone = false; it.fuDate = '';
+ try { finToast('已取消「点痣复诊」'); } catch (e) {}
+ } else {
+ it.fuDone = true; it.fuDate = todayStr();
+ try { finToast('「点痣复诊」完成 '); } catch (e) {}
  }
  saveData();
  renderPlanGoals();
@@ -29126,12 +29184,33 @@ body.theme-y2k .mn-sheet .mn-sheet-paper textarea.mn-sheet-text{font-family:var(
 /* ===== v477-2 折叠分类：收起时露出最新一张的一行字（超长省略） ===== */
 .mn-fold-prev{font-family:var(--mn-hand);font-size:11.5px;font-weight:600;color:#7A5967;padding:0 13px 10px 31px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9;line-height:1.4;}
 /* ===== v477-3 体重日历：称前/称后纯色圆点（前=薄荷绿、后=雾紫，低饱和不印字） ===== */
-.weight-cal-toilet.wt-dot{width:12px;height:12px;border-radius:50%;display:inline-flex;box-sizing:border-box;padding:0;flex:0 0 auto;}
+.weight-cal-toilet.wt-dot{width:9px;height:9px;border-radius:50%;display:inline-flex;box-sizing:border-box;padding:0;flex:0 0 auto;}
 .weight-cal-toilet.wt-dot.wt-before.done{background:#8CBC9E;}
 .weight-cal-toilet.wt-dot.wt-after.done{background:#B9A3DC;}
-.weight-cal-toilet.wt-dot.wt-before:not(.done){border:1.4px solid #A9CDB6;background:transparent;}
-.weight-cal-toilet.wt-dot.wt-after:not(.done){border:1.4px solid #CFBFEA;background:transparent;}
-.weight-cal-toilet.wt-dot:not(.done):not(.wt-before):not(.wt-after){border:1.4px solid #d5c8ce;background:transparent;}
-.weight-cal-ex .wt-dot + .wt-dot{margin-left:3px;}
+.weight-cal-toilet.wt-dot.wt-before:not(.done){border:1.2px solid #A9CDB6;background:transparent;}
+.weight-cal-toilet.wt-dot.wt-after:not(.done){border:1.2px solid #CFBFEA;background:transparent;}
+.weight-cal-toilet.wt-dot:not(.done):not(.wt-before):not(.wt-after){border:1.2px solid #d5c8ce;background:transparent;}
+.weight-cal-ex .wt-dot + .wt-dot{margin-left:0;}
+/* ===== v478-1 体重日历：称前/称后圆点缩小贴近（绿/紫分色不变） ===== */
+.weight-cal-ex{gap:1px;}
+.weight-cal-legend .wt-dot{width:10px;height:10px;}
+/* ===== v478-2 减重多少紧贴在打卡多少天旁边（全端生效，撤掉原来的 margin-left:auto） ===== */
+body.theme-y2k .weight-cal-badge-updown,
+body.theme-y2k #home-weight-cal .weight-cal-badge-updown{margin-left:0 !important;}
+@media (min-width:769px){
+  body.theme-y2k .weight-cal-badge,
+  body.theme-y2k #home-weight-cal .weight-cal-badge{margin-left:auto !important;}
+}
+/* ===== v478-3 健康管理：点痣合并为一项两阶段 ===== */
+.plan-ck-item.plan-ck-stage{display:block;padding:8px 10px;background:#fff;border-color:#f3dde6;}
+.plan-ck-stage-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px;}
+.plan-ck-stage-note{font-size:10.5px;color:#b08a9c;}
+.plan-ck-stage-row{display:flex;align-items:center;gap:8px;margin-top:4px;padding:4px 7px;border-radius:9px;background:#fffafc;border:1px solid #f7e7ee;}
+.plan-ck-stage-row.done{background:#f7fdf9;border-color:#E9F2EC;}
+.plan-ck-stage-row .plan-ck-box{width:16px;height:16px;margin-top:0;border-width:1.5px;font-size:10px;}
+.plan-ck-stage-row.done .plan-ck-box{background:#8CBC9E;border-color:transparent;box-shadow:0 1px 3px rgba(140,188,158,.28);}
+.plan-ck-stage-txt{font-size:11.5px;font-weight:800;color:#5E4F55;flex:1;min-width:0;}
+.plan-ck-stage-row.done .plan-ck-stage-txt{color:#8CBC9E;}
+.plan-ck-stage-row .plan-ck-date{margin-left:auto;white-space:nowrap;}
 </style>
 </body></html>
