@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-06-480"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-06-481"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8290,7 +8290,7 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
  })();
  </script></div><!-- ==================== 待办事项（v381：只留日常待办，工作待办整块移除、数据合并进日常） ==================== --><div id="panel-todo-daily" class="panel"><div class="card todo-section"><div class="todo-panel-head"><div class="todo-panel-head-left"><div class="todo-panel-title"> 日常待办</div><div class="todo-panel-sub">生活正事 · 分类打理</div></div><div class="todo-summary" id="todo-summary-daily"></div></div><div class="todo-add-row"><textarea id="todo-input-daily" class="todo-text-input" rows="2" placeholder="写点要做的事…（自动识别分类，也可手动选）" oninput="autoSuggestTodoTag(this.value)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUserTodo('daily')}"></textarea><div class="todo-tag-picker" id="todo-tag-picker"></div><div class="todo-add-bottom"><div class="todo-date-wrap"><input type="date" id="todo-date-daily" class="todo-date-input" title="选择日期（可选，留空=无期限）"></div><button class="todo-add-btn" onclick="addUserTodo('daily')">+ 添加</button><button class="todo-add-btn" onclick="openGroupModal('daily')" title="新建「一个类目 + 多条小点」的待办"> 类目</button></div></div><div class="todo-filter-bar" id="todo-filter-bar"></div><div id="todo-list-daily"></div><div id="todo-done-daily" class="todo-done-section"></div></div></div><!-- ==================== 收入台账 ==================== --><div id="panel-income" class="panel"><div class="tip-box"><b>使用说明</b>：定制单来一单告诉我记一笔（下单日期/需完成日期/金额/状态）。美化档可一条条记「美化档明细」（档数×98自动算金额），也可按月看销量汇总。数据本地保存~
  </div><div class="fin-topbar"><div class="fin-month"><span style="font-size:14px;"></span><select id="income-month" onchange="__incomeMonthPinned=true;renderIncome()"><option value="2026-07">2026年7月</option><option value="2026-08" selected>2026年8月</option><option value="2026-09">2026年9月</option><option value="2026-10">2026年10月</option><option value="2026-11">2026年11月</option><option value="2026-12">2026年12月</option></select></div><button class="fin-add-btn" onclick="openCustomOrderModal()">+ 记定制单</button><button class="fin-add-btn" onclick="openBeautyRecordModal()">+ 记美化档</button></div><div class="stats-grid" id="income-stats"></div><div class="card"><div class="card-title" style="color:#b48bf2;"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M14 4l5 5-9 9-5 1 1-5z"/></svg></span> 定制单明细</div><div id="custom-orders-table"></div></div><div class="card"><div class="card-title" style="color:#F2C4D4;"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1 0 2-1 2-2s-1-1-1-2 1-2 2-2h3a3 3 0 0 0 3-3c0-4-4-7-9-7z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="15.5" cy="9.5" r="1"/></svg></span> 美化档明细</div><div id="beauty-records-table"></div></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/></svg></span> 月度收入明细</div><div id="monthly-income-list"></div></div></div><!-- ==================== 记定制单 弹窗 ==================== --><div id="custom-order-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeCustomOrderModal()"><div class="modal-card"><div class="arm-head"><button type="button" class="arm-close" onclick="closeCustomOrderModal()" aria-label="关闭"></button><div id="co-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记定制单</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 下单时间</label><input type="date" id="co-date" /></div><div class="co-field"><label> 截止时间</label><input type="date" id="co-deadline" /></div><div class="co-field"><label> 金额（元）</label><input type="number" id="co-amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00" /></div><div class="co-field"><label> 备注</label><input type="text" id="co-desc" placeholder="如：人物+二套服装 / 美化档×3" /></div><div class="co-field"><label>状态</label><div class="co-status"><span class="co-status-opt active" data-st="making" onclick="setCoStatus('making')">制作中</span><span class="co-status-opt" data-st="done" onclick="setCoStatus('done')">已交付</span></div></div></div><div class="co-actions"><button class="co-cancel" onclick="closeCustomOrderModal()">取消</button><button class="co-save" onclick="submitCustomOrder()">保存定制单</button></div></div></div><!-- ==================== 美化档明细 记美化档 弹窗 ==================== --><div id="beauty-record-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeBeautyRecordModal()"><div class="modal-card"><div class="arm-head"><button type="button" class="arm-close" onclick="closeBeautyRecordModal()" aria-label="关闭"></button><div id="beauty-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记美化档</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 日期</label><input type="date" id="beauty-date" /></div><div class="co-field"><label> 档数（销量）</label><div style="display:flex;align-items:center;gap:8px;"><button type="button" onclick="beautyCountStep(-1)" aria-label="减少一档" style="flex:none;width:40px;height:40px;border:1.5px solid var(--c-pink-deep,#D89CB0);border-radius:10px;background:#fff;color:var(--c-pink-deep,#D89CB0);font-size:18px;font-weight:800;cursor:pointer;line-height:1;">−</button><input type="number" id="beauty-count" inputmode="numeric" min="1" step="1" value="1" oninput="updateBeautyAmount()" style="flex:1;text-align:center;min-height:40px;" /><button type="button" onclick="beautyCountStep(1)" aria-label="增加一档" style="flex:none;width:40px;height:40px;border:1.5px solid var(--c-pink-deep,#D89CB0);border-radius:10px;background:#fff;color:var(--c-pink-deep,#D89CB0);font-size:18px;font-weight:800;cursor:pointer;line-height:1;">＋</button></div></div><div class="co-field"><label> 金额（元，自动=档数×98；可手动改，以手动为准）</label><input type="number" id="beauty-amount" inputmode="decimal" min="0" step="0.01" placeholder="自动计算（可手动改）" oninput="onBeautyAmountManualEdit()" /><button type="button" onclick="resetBeautyAmountAuto()" style="margin-top:6px;padding:7px 11px;border:1.5px solid var(--c-pink-deep,#D89CB0);border-radius:8px;background:#fff;color:var(--c-pink-deep,#D89CB0);font-size:12px;font-weight:700;cursor:pointer;min-height:32px;"> 按档数重算</button></div><div class="co-field"><label> 备注</label><input type="text" id="beauty-note" placeholder="如：人物+二套服装美化" /></div></div><div class="co-actions"><button class="co-cancel" onclick="closeBeautyRecordModal()">取消</button><button class="co-save" onclick="submitBeautyRecord()">保存美化档</button></div></div></div><!-- ==================== 运动详细记录 记一项 弹窗 ==================== --><div id="exercise-item-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeExerciseItemModal()"><div class="modal-card" style="max-width:420px;"><div class="arm-head"><button type="button" class="arm-close" onclick="closeExerciseItemModal()" aria-label="关闭"></button><div id="ei-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记一项运动</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="ei-date" /></div><div class="co-field"><label>类型</label><div class="co-status" id="ei-type-wrap"><span class="co-status-opt active" data-t="有氧操" onclick="setEiType('有氧操')">有氧操</span><span class="co-status-opt" data-t="爬坡" onclick="setEiType('爬坡')">爬坡</span><span class="co-status-opt" data-t="器械" onclick="setEiType('器械')">器械</span></div></div><div class="co-field"><label>项目名</label><input type="text" id="ei-name" placeholder="如：爬坡 / 哑铃 / 帕梅拉" /></div><div class="co-field"><label>时长（分钟）</label><input type="number" id="ei-duration" inputmode="decimal" min="0" step="1" placeholder="如 30" /></div><div class="co-field"><label>组数</label><input type="text" id="ei-sets" placeholder="如 3组×15" /></div><div class="co-field"><label>备注</label><input type="text" id="ei-note" placeholder="如：心率140" /></div></div><div class="co-actions"><button class="co-cancel" onclick="closeExerciseItemModal()">取消</button><button class="co-save" onclick="submitExerciseItem()">保存</button></div></div></div><!-- 体重修改弹窗 --><div id="weight-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeWeightEditModal()"><div class="modal-card" style="max-width:380px;"><div class="arm-head"><button type="button" class="arm-close" onclick="closeWeightEditModal()" aria-label="关闭"></button><div id="we-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">️ 修改体重记录</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 日期</label><input type="date" id="we-date"></div><div class="co-field"><label>️ 体重 (斤)</label><input type="number" id="we-value" step="0.1" min="60" max="400" inputmode="decimal" placeholder="如 177.8"></div><div class="co-field"><label> 备注</label><input type="text" id="we-note" placeholder="如 早起空腹"></div><div class="co-toilet-row"><label class="co-check-label"><input type="checkbox" id="we-toilet-before"> 称体重前上厕所</label><label class="co-check-label"><input type="checkbox" id="we-toilet-after"> 称体重后上厕所</label></div></div><div class="co-actions"><button class="co-cancel" onclick="closeWeightEditModal()">取消</button><button class="co-save" onclick="submitWeightEdit()">保存</button></div></div></div><!-- 身体数据（三围）弹窗 --><div id="body-record-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeBodyRecordModal()"><div class="modal-card" style="max-width:380px;"><div class="arm-head"><button type="button" class="arm-close" onclick="closeBodyRecordModal()" aria-label="关闭"></button><div id="body-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;"> 身体数据</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 日期</label><input type="date" id="body-date"></div><div class="co-field"><label> 胸围 (cm)</label><input type="number" id="body-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 82.5"></div><div class="co-field"><label> 腰围 (cm)</label><input type="number" id="body-waist" step="0.1" min="0" inputmode="decimal" placeholder="如 62.0"></div><div class="co-field"><label> 臀围 (cm)</label><input type="number" id="body-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 90.0"></div><div class="co-field"><label> 备注</label><input type="text" id="body-note" placeholder="如 饭后 / 健身后"></div></div><div class="co-actions"><button class="co-cancel" onclick="closeBodyRecordModal()">取消</button><button class="co-save" onclick="submitBodyRecord()">保存</button></div></div></div><!-- 运动打卡修改弹窗 --><div id="exercise-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeExerciseEditModal()"><div class="modal-card" style="max-width:420px;"><div class="arm-head"><button type="button" class="arm-close" onclick="closeExerciseEditModal()" aria-label="关闭"></button><div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">‍️ 修改运动打卡</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 日期</label><input type="date" id="ee-date"></div><div style="display:flex;gap:8px;margin-bottom:10px;"><label class="co-status" style="flex:1;justify-content:center;cursor:pointer;"><input type="checkbox" id="ee-aerobics" style="display:none;"><span class="co-status-opt" data-ee="aerobics" onclick="eePick('aerobics')"> 健身操</span></label><label class="co-status" style="flex:1;justify-content:center;cursor:pointer;"><input type="checkbox" id="ee-cardio" style="display:none;"><span class="co-status-opt" data-ee="cardio" onclick="eePick('cardio')"> 有氧</span></label><label class="co-status" style="flex:1;justify-content:center;cursor:pointer;"><input type="checkbox" id="ee-weights" style="display:none;"><span class="co-status-opt" data-ee="weights" onclick="eePick('weights')">️ 器械</span></label></div><div class="co-field"><label> 有氧类型（可选）</label><input type="text" id="ee-cardioType" placeholder="如 跑步 / 跳绳"></div><div class="co-field"><label>️ 器械内容</label><input type="text" id="ee-weightsContent" placeholder="如 哑铃 / 划船机"></div><div style="display:flex;gap:8px;"><div class="co-field" style="flex:1;"><label> 组数</label><input type="text" id="ee-sets" placeholder="如 3组×15"></div><div class="co-field" style="flex:1;"><label>️ 时长</label><input type="text" id="ee-duration" placeholder="如 30分钟"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="closeExerciseEditModal()">取消</button><button class="co-save" onclick="submitExerciseEdit()">保存</button></div></div></div><!-- 如厕修改弹窗 --><div id="toilet-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeToiletEditModal()"><div class="modal-card" style="max-width:340px;"><div class="arm-head"><button type="button" class="arm-close" onclick="closeToiletEditModal()" aria-label="关闭"></button><div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;"> 修改如厕记录</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 日期</label><input type="date" id="te-date"></div><div class="co-field"><label> 次数</label><input type="number" id="te-count" min="1" max="20" step="1" inputmode="numeric" placeholder="如 1"></div></div><div class="co-actions"><button class="co-cancel" onclick="closeToiletEditModal()">取消</button><button class="co-save" onclick="submitToiletEdit()">保存</button></div></div></div><!-- 面膜修改弹窗 --><div id="mask-edit-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)closeMaskEditModal()"><div class="modal-card" style="max-width:340px;"><div class="arm-head"><button type="button" class="arm-close" onclick="closeMaskEditModal()" aria-label="关闭"></button><div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;"> 修改面膜记录</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label> 日期</label><input type="date" id="me-date"></div></div><div class="co-actions"><button class="co-cancel" onclick="closeMaskEditModal()">取消</button><button class="co-save" onclick="submitMaskEdit()">保存</button></div></div></div><!-- ==================== 减肥记录 ==================== --><div id="panel-fitness" class="panel"><div class="tip-box"><b>使用说明</b>：每天只记一次体重。下方统计与主页「体重记录日历」<b>完全同步同源同月</b>，点日历标题旁的 可切换月份查看历史，「今」按钮回到今天所在月。哪天忘了打卡，日历会<b>自动沿用前一天的体重</b>（浅色数字），曲线不断档。运动打卡请进左侧「有氧器械」。
- </div><div class="goal-row" id="weight-goal-row"><div class="fitness-ring" id="goal-ring"></div><div class="goal-main"><div class="goal-line"><label for="weight-goal-input"> 目标体重</label><input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal"><span class="goal-unit">斤</span></div><div class="goal-line"><label for="start-weight-input">️ 起始体重</label><input type="number" id="start-weight-input" step="0.1" min="60" max="600" placeholder="如 180" inputmode="decimal"><span class="goal-unit">斤</span></div><div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div></div></div><div class="stats-grid" id="fitness-stats"></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 16a4 4 0 0 1 10 0"/><circle cx="12" cy="8" r="1.4"/></svg></span> 体重趋势图<span class="wc-month" id="wc-month"></span></div><div class="chart-container" id="weight-chart"></div></div><!-- 身体数据（三围） --><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 17h18M6 4v16M18 4v16"/></svg></span> 身体数据（三围）
+ </div><div class="goal-row" id="weight-goal-row"><div class="fitness-ring" id="goal-ring"></div><div class="goal-main"><div class="goal-line"><label for="weight-goal-input"> 目标体重</label><input type="number" id="weight-goal-input" step="0.1" min="60" max="400" placeholder="如 130" inputmode="decimal"><span class="goal-unit">斤</span></div><div class="goal-line"><label for="start-weight-input">️ 起始体重</label><input type="number" id="start-weight-input" step="0.1" min="60" max="600" placeholder="如 180" inputmode="decimal"><span class="goal-unit">斤</span></div><div class="goal-info" id="goal-info">还没设目标呢，填一个小目标吧～</div></div></div><div class="stats-grid" id="fitness-stats"></div><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 16a4 4 0 0 1 10 0"/><circle cx="12" cy="8" r="1.4"/></svg></span> 体重趋势图<span class="wc-month" id="wc-month"></span></div><div class="chart-container" id="weight-chart"></div></div><!-- ===== v481 身材围度 · 模块开始（整体移除请连同结尾注释、body 末尾 #bs-modal 与 #hami-v481-fix、主 script 内 v481 JS 段、store.bodySizes、_RESTORE_ARR 的 bodySizes、mergeStoreInto 兜底、renderFitness 钩子一起删） ===== --><div class="card bs-card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M12 6v10M8 9h8M9 16l-1 5M15 16l1 5M8 9L6 15M16 9l2 6"/></svg></span> 身材围度<button class="bs-add" type="button" onclick="bsOpenModal()">记围度</button></div><div id="bs-root"></div></div><!-- ===== v481 身材围度 · 模块结束 ===== --><!-- 身体数据（三围） --><div class="card"><div class="card-title"><span class="ct-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 17h18M6 4v16M18 4v16"/></svg></span> 身体数据（三围）
  <button class="media-add-btn" style="margin-left:auto;" onclick="openBodyRecordModal()">记一项</button></div><div id="body-stats"></div></div><div class="card"><div class="card-title">每日体重
  <button class="media-add-btn" style="margin-left:auto;" onclick="openWeightEditModal()">记一项</button></div><div id="weight-table-wrap"><table><thead><tr><th>日期</th><th>体重</th><th>备注</th></tr></thead><tbody id="weight-table"></tbody></table></div></div></div><!-- ==================== 学车进度（临时模块） ==================== --><div id="panel-drive" class="panel"><div class="card drive-card"><div class="drive-header"><div class="drive-title"> 学车进度</div><div class="drive-overall" id="drive-overall"></div></div><div class="drive-progress-bar drive-overall-bar"><div class="drive-progress-fill" id="drive-overall-fill"></div></div><div class="drive-tabs" id="drive-tabs"></div><div id="drive-learn-root"></div></div></div><!-- ==================== 有氧运动 · 器械打卡（独立面板） ==================== --><div id="panel-exercise" class="panel"><div class="tip-box"><b>使用说明</b>：运动分三类打卡 —— ①<b>有氧操</b> ②<b>爬坡</b> ③<b>器械</b>。点「记一项」选类型、填项目和时长；下方三张分类卡点一下可只看该类记录。
  </div><div class="ex-cat-overview" id="exercise-cat-overview"></div><div class="card"><div class="card-title">每日运动打卡
@@ -8691,6 +8691,7 @@ let store = {
  beautyRecords: [], // 美化档明细记录 { date, count(档数), amount(=count*98), note, status }
  weightRecords: [], // 仅保存主人真实记录的体重（单位：斤），不再预填演示数据
  bodyRecords: [], // 身体数据（三围）：{ date, chest, waist, hip, note }
+ bodySizes: [], // v481 身材围度：{ date, upperArm, foreArm, chest, belly, thigh, calf }（cm）
  weightSeedV1Applied: false, // 八月份体重种子一次性补入标记（true 后不再补，避免删了又被复活）
  screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
  tripSeedV1Applied: false, // 广州三天行程一次性补入标记（true 后不再重复覆盖）
@@ -11071,6 +11072,16 @@ function deepMergeUnion(a, b, topKey, L, R) {
 }
 function mergeStoreInto(local, remote) {
  if (!remote || typeof remote !== 'object') return local;
+ // v481：身材围度按日期并集（本地同日优先），避免新字段跨端丢失
+ try {
+  if (Array.isArray(remote.bodySizes)) {
+   const _a = Array.isArray(local.bodySizes) ? local.bodySizes : [];
+   const _m = {};
+   _a.forEach(function (r) { if (r && r.date) _m[r.date] = r; });
+   remote.bodySizes.forEach(function (r) { if (r && r.date && !_m[r.date]) _m[r.date] = r; });
+   local.bodySizes = Object.keys(_m).sort().map(function (d) { return _m[d]; });
+  }
+ } catch (e) {}
  // v199：云端若仍是「公斤」口径（没有体重单位哨兵），先 ×2 换算成斤再合并，
  // 否则「本地已是斤 + 云端还是公斤」会混出 4 倍值 / 减半值。
  try { if (typeof convertWeightFieldsToJin === 'function') remote = convertWeightFieldsToJin(remote); } catch (e) {}
@@ -14849,7 +14860,7 @@ function loadData() {
  // 只靠云端异步拉回续命；更糟的是本地空壳在云端合并里「先到先得」，
  // 会把云端真实数据顶掉，于是打卡怎么点都回到从前。
  // 修法：统一按类型校验后整块恢复，以后新加模块只需往这张表里加一行。
- var _RESTORE_ARR = ['moodNotes', 'planHabits', 'planGoals', 'planSkills', 'growthLogs', 'bodyRecords',
+ var _RESTORE_ARR = ['moodNotes', 'planHabits', 'planGoals', 'planSkills', 'growthLogs', 'bodyRecords', 'bodySizes',
  'benchmarkNotes', 'publishSchedule', 'accountDeleted', 'weightToilet'];
  var _RESTORE_OBJ = ['studyPlan', 'driveLearn'];
  _RESTORE_ARR.forEach(function (k) {
@@ -18353,6 +18364,7 @@ function renderFitness() {
  </div>
  `;
  try { renderBodyStats(); } catch (e) {}
+ try { renderBodySizes(); } catch (e) {}
 }
 
 // 运动明细归类：主人三类 —— 有氧操 / 爬坡·椭圆机 / 器械
@@ -19912,6 +19924,134 @@ async function deleteWeightRecord(idx) {
  finToast(' 已删除体重记录');
 }
 
+// ==================== v481 身材围度（人体线条模型 + 6 部位）· 模块开始（可整块移除） ====================
+// 6 个部位：上臂 / 下臂 / 胸 / 肚子 / 大腿 / 小腿，单位 cm；按日期留档，可看与上次的变化
+const BS_PARTS = [
+ { k: 'upperArm', n: '上臂', no: 1, y: 92,  x1: 132, x2: 150 },
+ { k: 'foreArm',  n: '下臂', no: 2, y: 142, x1: 138, x2: 156 },
+ { k: 'chest',    n: '胸',   no: 3, y: 84,  x1: 78,  x2: 122, lx: 62 },
+ { k: 'belly',    n: '肚子', no: 4, y: 124, x1: 80,  x2: 120, lx: 64 },
+ { k: 'thigh',    n: '大腿', no: 5, y: 188, x1: 106, x2: 130 },
+ { k: 'calf',     n: '小腿', no: 6, y: 256, x1: 110, x2: 134 }
+];
+let bsEditIdx = -1, bsHistOpen = false;
+function bsList() {
+ if (!Array.isArray(store.bodySizes)) store.bodySizes = [];
+ return store.bodySizes.filter(function (r) { return r && r.date; })
+  .sort(function (a, b) { return b.date.localeCompare(a.date); });
+}
+function bsFigure() {
+ let lines = '', dots = '';
+ BS_PARTS.forEach(function (p) {
+  lines += '<path d="M' + p.x1 + ' ' + p.y + ' L' + p.x2 + ' ' + p.y + '" stroke="#DCAFC9" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/>';
+  const cx = p.lx ? p.lx : (p.x2 + 10);
+  if (p.lx) lines += '<path d="M' + (p.lx + 9) + ' ' + p.y + ' L' + p.x1 + ' ' + p.y + '" stroke="#EFC0D2" stroke-width="1.2"/>';
+  dots += '<circle cx="' + cx + '" cy="' + p.y + '" r="9" fill="#FFFDFE" stroke="#EFC0D2" stroke-width="1.6"/>'
+   + '<text x="' + cx + '" y="' + (p.y + 3.4) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#9B6B82">' + p.no + '</text>';
+ });
+ return '<svg viewBox="0 0 190 320" xmlns="http://www.w3.org/2000/svg" aria-label="身材围度示意图">'
+  + '<circle cx="95" cy="28" r="15" fill="none" stroke="#EFC0D2" stroke-width="3"/>'
+  + '<path d="M95 48 L95 152" stroke="#F3D7E3" stroke-width="30" stroke-linecap="round"/>'
+  + '<path d="M70 64 L120 64" stroke="#EFC0D2" stroke-width="9" stroke-linecap="round"/>'
+  + '<path d="M70 64 L56 116 L50 162" fill="none" stroke="#EFC0D2" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>'
+  + '<path d="M120 64 L134 116 L140 162" fill="none" stroke="#EFC0D2" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>'
+  + '<path d="M84 152 L78 222 L74 292" fill="none" stroke="#EFC0D2" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>'
+  + '<path d="M106 152 L112 222 L116 292" fill="none" stroke="#EFC0D2" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>'
+  + lines + dots + '</svg>';
+}
+function bsDiff(cur, prev, k) {
+ if (!prev || cur[k] == null || prev[k] == null) return '';
+ const d = parseFloat((cur[k] - prev[k]).toFixed(1));
+ if (!d) return '<span class="bs-diff flat">→ 0</span>';
+ return '<span class="bs-diff ' + (d < 0 ? 'down' : 'up') + '">' + (d < 0 ? '↓' : '↑') + ' ' + Math.abs(d).toFixed(1) + '</span>';
+}
+function renderBodySizes() {
+ const el = document.getElementById('bs-root');
+ if (!el) return;
+ const list = bsList();
+ if (!list.length) {
+  el.innerHTML = '<div class="bs-wrap"><div class="bs-figure">' + bsFigure() + '</div>'
+   + '<div class="bs-list"><div class="bs-empty">还没有围度记录<br>点「记围度」填第一次</div></div></div>';
+  return;
+ }
+ const cur = list[0], prev = list[1];
+ let rows = '';
+ BS_PARTS.forEach(function (p) {
+  const v = cur[p.k] != null ? parseFloat(cur[p.k]).toFixed(1) : '—';
+  rows += '<div class="bs-row"><span class="bs-no">' + p.no + '</span><span class="bs-name">' + p.n + '</span>'
+   + '<span class="bs-val">' + v + '<small>cm</small></span>' + bsDiff(cur, prev, p.k) + '</div>';
+ });
+ let html = '<div class="bs-wrap"><div class="bs-figure">' + bsFigure() + '</div><div class="bs-list">' + rows + '</div></div>'
+  + '<div class="bs-foot"><span>最近 ' + cur.date.slice(5).replace('-', '/') + ' · 共 ' + list.length + ' 次</span>'
+  + '<button type="button" class="bs-hist" onclick="bsToggleHistory()">' + (bsHistOpen ? '收起' : '历史') + '</button></div>';
+ if (bsHistOpen) {
+  html += '<div class="bs-history"><table><thead><tr><th>日期</th>'
+   + BS_PARTS.map(function (p) { return '<th>' + p.n + '</th>'; }).join('') + '<th>操作</th></tr></thead><tbody>';
+  list.forEach(function (r) {
+   const idx = store.bodySizes.indexOf(r);
+   html += '<tr><td>' + r.date.slice(5).replace('-', '/') + '</td>'
+    + BS_PARTS.map(function (p) { return '<td>' + (r[p.k] != null ? parseFloat(r[p.k]).toFixed(1) : '—') + '</td>'; }).join('')
+    + '<td><button type="button" onclick="bsOpenModal(' + idx + ')">改</button><button type="button" onclick="bsDelete(' + idx + ')">删</button></td></tr>';
+  });
+  html += '</tbody></table></div>';
+ }
+ el.innerHTML = html;
+}
+function bsToggleHistory() { bsHistOpen = !bsHistOpen; renderBodySizes(); }
+function bsOpenModal(idx) {
+ bsEditIdx = (typeof idx === 'number' && idx >= 0 && store.bodySizes && store.bodySizes[idx]) ? idx : -1;
+ const r = bsEditIdx >= 0 ? store.bodySizes[bsEditIdx] : null;
+ const t = document.getElementById('bs-modal-title');
+ if (t) t.textContent = r ? '改围度' : '记围度';
+ const d = document.getElementById('bs-date');
+ if (d) d.value = r ? (r.date || todayStr()) : todayStr();
+ BS_PARTS.forEach(function (p) {
+  const e = document.getElementById('bs-' + p.k);
+  if (e) e.value = r && r[p.k] != null ? r[p.k] : '';
+ });
+ const m = document.getElementById('bs-modal');
+ if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function bsCloseModal() {
+ const m = document.getElementById('bs-modal');
+ if (m) m.style.display = 'none';
+ document.body.style.overflow = '';
+ bsEditIdx = -1;
+}
+function bsSubmit() {
+ const dEl = document.getElementById('bs-date');
+ const date = (dEl && dEl.value ? dEl.value : todayStr()).trim();
+ const rec = { date: date };
+ let filled = 0;
+ BS_PARTS.forEach(function (p) {
+  const e = document.getElementById('bs-' + p.k);
+  const v = parseFloat(e ? e.value : '');
+  if (!isNaN(v) && v > 0) { rec[p.k] = parseFloat(v.toFixed(1)); filled++; }
+ });
+ if (!filled) { try { finToast('至少填一个围度数字'); } catch (e) {} return; }
+ if (!Array.isArray(store.bodySizes)) store.bodySizes = [];
+ const same = store.bodySizes.findIndex(function (r) { return r && r.date === date; });
+ if (bsEditIdx >= 0) store.bodySizes[bsEditIdx] = rec;
+ else if (same >= 0) store.bodySizes[same] = rec;
+ else store.bodySizes.push(rec);
+ try { saveData(); } catch (e) {}
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+ bsCloseModal();
+ renderBodySizes();
+ try { finToast('围度已记录'); } catch (e) {}
+}
+async function bsDelete(idx) {
+ const r = store.bodySizes && store.bodySizes[idx];
+ if (!r) return;
+ try { if (typeof hamiConfirm === 'function' && !await hamiConfirm('确定删除 ' + r.date + ' 的围度记录吗？')) return; } catch (e) {}
+ try { if (typeof hamiTombAdd === 'function') hamiTombAdd('bodySizes', r); } catch (e) {}
+ store.bodySizes.splice(idx, 1);
+ try { saveData(); } catch (e) {}
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
+ renderBodySizes();
+ try { finToast('已删除围度记录'); } catch (e) {}
+}
+// ==================== v481 身材围度 · 模块结束 ====================
 // ==================== 身体数据（三围） ====================
 let bodyEditIdx = -1;
 function openBodyRecordModal(idx) {
@@ -29520,6 +29660,44 @@ button.plan-quick-chip.off{opacity:.55;cursor:default;}
 @media (max-width:768px){
  .plan-quick{padding:9px 10px 10px;margin-bottom:10px;}
  button.plan-quick-chip{padding:5px 9px;font-size:11.5px;}
+}
+</style>
+<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>肚子 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
+<style id="hami-v481-fix">
+/* v481 身材围度：人体线条模型 + 6 部位数据 */
+.bs-card .card-title{display:flex;align-items:center;}
+button.bs-add{margin-left:auto;padding:5px 12px;border:1px solid #EFD0DE;border-radius:999px;background:rgba(255,255,255,.9);color:#5E4F55;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(226,168,192,.13);}
+button.bs-add:hover{background:#FDEFF5;}
+.bs-wrap{display:flex;gap:14px;align-items:flex-start;}
+.bs-figure{flex:0 0 170px;max-width:170px;}
+.bs-figure svg{width:100%;height:auto;display:block;}
+.bs-list{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+.bs-row{display:flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid #F3E0E9;border-radius:10px;background:rgba(255,255,255,.82);}
+.bs-no{width:17px;height:17px;flex:0 0 auto;border-radius:50%;background:#FBE9F1;border:1px solid #EFC0D2;color:#9B6B82;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.bs-name{font-size:12px;color:#5E4F55;font-weight:600;flex:1;min-width:0;white-space:nowrap;}
+.bs-val{font-size:16px;font-weight:800;color:#5E4F55;white-space:nowrap;}
+.bs-val small{font-size:10px;font-weight:600;color:#B08A9C;margin-left:2px;}
+.bs-diff{font-size:10.5px;font-weight:700;white-space:nowrap;min-width:38px;text-align:right;}
+.bs-diff.down{color:#7FA88C;}
+.bs-diff.up{color:#C9849A;}
+.bs-diff.flat{color:#B08A9C;}
+.bs-empty{padding:22px 10px;text-align:center;font-size:12px;color:#B08A9C;line-height:1.8;}
+.bs-foot{margin-top:9px;display:flex;align-items:center;gap:8px;font-size:11px;color:#B08A9C;}
+button.bs-hist{margin-left:auto;border:none;background:none;color:#9B6B82;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;padding:2px 4px;}
+.bs-history{margin-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.bs-history table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap;}
+.bs-history th,.bs-history td{padding:5px 7px;border-bottom:1px solid #F6E7EE;text-align:center;color:#5E4F55;}
+.bs-history th{color:#B08A9C;font-weight:700;}
+.bs-history td button{border:none;background:none;color:#9B6B82;font-family:inherit;font-size:11px;cursor:pointer;padding:0 3px;}
+.bs-fields{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+@media (max-width:768px){
+ .bs-wrap{gap:8px;}
+ .bs-figure{flex:0 0 118px;max-width:118px;}
+ .bs-row{padding:4px 6px;gap:4px;}
+ .bs-name{font-size:11px;}
+ .bs-val{font-size:14px;}
+ .bs-diff{font-size:9.5px;min-width:32px;}
+ .bs-no{width:15px;height:15px;font-size:9px;}
 }
 </style>
 </body></html>
