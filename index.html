@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-486"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-487"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10398,28 +10398,106 @@ const HAMI_SYNC = {
  token: ('ghp_' + 'Uw5ciaeVcu' + '7B9GA6O5Q2a' + '4Pin9BAKs3' + 'ahsnv'),
   appSecret: 'hami-cloud-sync-app-secret-2026'
 };
-// === 跨工作台待办同步·Hami 侧（sync/shared-todos.json 明文，复用 HAMI_SYNC；与 Atelier Hour 工作台共享同一份待办）===
-(function () {
-  if (typeof HAMI_SYNC === 'undefined' || !HAMI_SYNC.token) return;
-  const API = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/sync/shared-todos.json?ref=' + HAMI_SYNC.branch;
-  const HDR = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' };
-  function b64enc(s) { const b = new TextEncoder().encode(s); let x = ''; b.forEach(function (c) { x += String.fromCharCode(c); }); return btoa(x); }
-  function b64dec(b) { const x = atob(String(b).replace(/\s+/g, '')); const b2 = Uint8Array.from(x, function (c) { return c.charCodeAt(0); }); return new TextDecoder().decode(b2); }
-  async function ghGet() { try { const r = await fetch(API, { headers: HDR, cache: 'no-store' }); if (r.status === 404) return []; if (!r.ok) return []; const j = await r.json(); if (!j.content) return []; try { const o = JSON.parse(b64dec(j.content)); return Array.isArray(o.todos) ? o.todos : []; } catch (e) { return []; } } catch (e) { return []; } }
-  async function ghPut(arr) { try { const r0 = await fetch(API, { headers: HDR }); let sha = null; try { if (r0.ok) { const j = await r0.json(); if (j.sha) sha = j.sha; } } catch (e) {} const body = { message: 'sync todos ' + new Date().toISOString(), content: b64enc(JSON.stringify({ todos: arr })), branch: HAMI_SYNC.branch }; if (sha) body.sha = sha; const res = await fetch(API, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, HDR), body: JSON.stringify(body) }); return res.ok; } catch (e) { return false; } }
-  function merge(base, inc) { const m = {}; (base || []).forEach(function (t) { if (t && t.id) m[t.id] = t; }); (inc || []).forEach(function (t) { if (!t || !t.id) return; const o = m[t.id]; if (!o || (t.updatedAt || 0) >= (o.updatedAt || 0)) m[t.id] = t; }); return Object.values(m); }
-  let pushing = false, pending = false, timer = null;
-  async function push() { if (pushing) { pending = true; return; } pushing = true; try { const remote = await ghGet(); const local = (store.userTodos || []).map(function (t) { if (!t.updatedAt) t.updatedAt = t.date ? Date.parse(t.date) : (t.createdAt || Date.now()); return t; }); const merged = merge(remote, local); await ghPut(merged); } catch (e) {} pushing = false; if (pending) { pending = false; push(); } }
-  async function pull() { try { const remote = await ghGet(); if (!remote.length) return; const local = store.userTodos || []; const merged = merge(local, remote); const sig = function (a) { return JSON.stringify(a.map(function (t) { return [t.id, t.updatedAt, t.done, t.text]; })); }; if (sig(merged) !== sig(local)) { store.userTodos = merged; try { saveData(); } catch (e) {} try { if (typeof renderTodoPanel === 'function') renderTodoPanel(); } catch (e) {} try { if (typeof renderHomeTodo === 'function') renderHomeTodo(); } catch (e) {} } } catch (e) {} }
-  window.__hamiTodoPush = push;
-  window.__hamiTodoDebug = { getTodos: function () { return store.userTodos; } };
-  window.__hamiTodoPull = pull;
-  window.__hamiTodoSchedulePush = function () { if (timer) clearTimeout(timer); timer = setTimeout(function () { push(); }, 800); };
-  setTimeout(function () { pull(); }, 1500);
-  setInterval(pull, 12000);
-  window.addEventListener('focus', pull);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) pull(); });
-})();
+/* patch-sync v2：跨工作台待办同步（sync/shared-todos.json，与 Hami / Atelier 共享同一份待办）
+ * 架构：云端单一权威。pull 直接采用云端（不再并集），push 写本地全量（删除可传播）。
+ * 启动守卫：首次成功 pull 前禁止任何推送，杜绝本机旧缓存 / IDB 历史快照把陈旧数据推上云。
+ * knownIds：区分「另一端新增」与「任一端的删除」，两端并发编辑互不吞。
+ * normalize：按任务文字去重、category 优先 work，云端自愈，任何来源的重复/错分类自动压平。
+ * 本块自包含、业务代码零改动，可整块移除；移除后两侧退回各自本地待办。
+ */
+  (function(){
+    const TOKEN=HAMI_SYNC.token;
+    const API='https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/sync/shared-todos.json?ref=' + HAMI_SYNC.branch;
+    const HDR={'Authorization':'token '+TOKEN,'Accept':'application/vnd.github+json','User-Agent':'hami-sync'};
+    function b64enc(s){const b=new TextEncoder().encode(s);let x='';b.forEach(function(c){x+=String.fromCharCode(c);});return btoa(x);}
+    function b64dec(b){const x=atob(String(b).replace(/\s+/g,''));const b2=Uint8Array.from(x,function(c){return c.charCodeAt(0);});return new TextDecoder().decode(b2);}
+    /* 成功返回数组（可为空），失败返回 null —— 失败绝不能被当成「云端为空」而覆盖/清空本地 */
+    async function ghGet(){ try{ const r=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); if(r.status===404) return []; if(!r.ok) return null; const j=await r.json(); if(!j.content) return null; try{ const o=JSON.parse(b64dec(j.content)); return Array.isArray(o.todos)?o.todos:null; }catch(e){ return null; } }catch(e){ return null; } }
+    async function ghPut(arr){ try{ const r0=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); let sha=null; try{ if(r0.ok){const j=await r0.json(); if(j.sha) sha=j.sha;} }catch(e){} const body={message:'sync todos v2 '+new Date().toISOString(),content:b64enc(JSON.stringify({todos:arr,v:2,updatedAt:Date.now()})),branch:HAMI_SYNC.branch}; if(sha) body.sha=sha; const res=await fetch(API,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},HDR),body:JSON.stringify(body)}); return res.ok; }catch(e){ return false; } }
+    function txt(t){ return String((t&&t.text)||'').trim().toLowerCase(); }
+    function normalize(arr){
+      const g={},out=[];
+      (arr||[]).forEach(function(t){ if(!t||typeof t!=='object') return; const k=txt(t)||('id:'+(t.id||'')); if(!g[k]) g[k]=[]; g[k].push(t); });
+      Object.keys(g).forEach(function(k){
+        const v=g[k]; let best=null;
+        v.forEach(function(t){ if(!best){best=t;return;} if(t.category==='work'&&best.category!=='work'){best=t;return;} if((t.updatedAt||0)>(best.updatedAt||0)&&!(best.category==='work'&&t.category!=='work')) best=t; });
+        const r=Object.assign({},best);
+        v.forEach(function(t){ if(t.done) r.done=true; if((t.updatedAt||0)>(r.updatedAt||0)) r.updatedAt=t.updatedAt; });
+        if(v.some(function(t){return t.category==='work';})) r.category='work';
+        if(!r.updatedAt) r.updatedAt=r.createdAt||Date.now();
+        if(!r.id) r.id='sync_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+        out.push(r);
+      });
+      return out;
+    }
+    function sig(arr){ return JSON.stringify((arr||[]).map(function(t){return [t&&t.id,t&&t.text,t&&t.category,!!(t&&t.done),t&&t.updatedAt,t&&t.deadline,t&&t.tag];}).sort(function(a,b){return String(a[0]).localeCompare(String(b[0]));})); }
+    function localGet(){ return (store&&store.userTodos)||[]; }
+    function localSet(arr){ store.userTodos=arr; try{ saveData(true); }catch(e){} }
+    function render(){ try{ if(typeof renderTodoPanel==='function') renderTodoPanel(); }catch(e){} try{ if(typeof renderHomeTodo==='function') renderHomeTodo(); }catch(e){} }
+    let ready=false, pushing=false, pending=false, syncing=false, dirty=false, timer=null;
+    const waiters=[];
+    const knownIds={};
+    function remember(arr){ (arr||[]).forEach(function(t){ if(t&&t.id) knownIds[t.id]=1; }); }
+    async function push(){
+      if(!ready){ dirty=true; return; }
+      if(pushing){ pending=true; return new Promise(function(res){ waiters.push(res); }); }
+      pushing=true;
+      try{
+        const remote=await ghGet();
+        if(remote===null){ dirty=true; }
+        else{
+          const rIds={}; remote.forEach(function(t){ if(t&&t.id) rIds[t.id]=1; });
+          /* 云端已没有、本端曾知道的 id → 另一端删了，本端跟着删（删除传播） */
+          let local=(localGet()||[]).filter(function(t){ return t&&t.id&&!(knownIds[t.id]&&!rIds[t.id]); });
+          /* 云端有、本端从未知道的 id → 另一端新增，补进本端（不吞对方数据） */
+          const lIds={}; local.forEach(function(t){ if(t&&t.id) lIds[t.id]=1; });
+          remote.forEach(function(t){ if(t&&t.id&&!lIds[t.id]&&!knownIds[t.id]){ local.push(t); lIds[t.id]=1; } });
+          local=normalize(local);
+          if(sig(local)!==sig(remote)){
+            const ok=await ghPut(local);
+            if(ok){ remember(local); dirty=false; } else dirty=true;
+          } else dirty=false;
+        }
+      }catch(e){ dirty=true; }
+      pushing=false;
+      if(pending){ pending=false; await push(); }
+      const _w=waiters.splice(0); _w.forEach(function(f){ f(); });
+    }
+    async function pull(){
+      if(syncing) return; syncing=true;
+      try{
+        if(dirty&&ready) await push();
+        const remote=await ghGet();
+        if(remote===null){ syncing=false; return; }
+        const clean=normalize(remote);
+        /* 云端自愈：有重复/错分类就回写一次，之后两端都稳定 */
+        if(sig(clean)!==sig(remote)) await ghPut(clean);
+        remember(remote); remember(clean);
+        if(!remote.length){
+          ready=true;
+          if((localGet()||[]).length){ dirty=true; await push(); }
+          syncing=false; return;
+        }
+        /* 云端权威覆盖本地，绝不并集 —— 旧数据一次清干净且不会复活 */
+        if(sig(clean)!==sig(localGet())){ localSet(clean); render(); }
+        dirty=false; ready=true;
+      }catch(e){}
+      syncing=false;
+    }
+    window.__hamiTodoPush=push;
+    window.__hamiTodoPull=pull;
+    window.__hamiTodoDebug={
+      getTodos:function(){ return store.userTodos; },
+      setTodos:function(arr){ store.userTodos=arr; try{ saveData(true); }catch(e){} dirty=true; const _p=push(); render(); return _p; },
+      state:function(){ return {ready:ready,dirty:dirty,known:Object.keys(knownIds).length}; }
+    };
+    window.__hamiTodoSchedulePush=function(){ dirty=true; if(timer) clearTimeout(timer); timer=setTimeout(function(){ push(); },800); };
+    setTimeout(pull,200);
+    setInterval(pull,12000);
+    window.addEventListener('focus',pull);
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) pull(); });
+  })();
+
 const SYNC_PWD_KEY = 'hami_sync_pwd';
 let hamiSyncReady = false; // 首次拉取完成（或失败）后才允许推送，避免覆盖云端
 let hamiSyncEnabled = false;
@@ -15102,6 +15180,8 @@ function tryRecoverStoreFromIDB() {
  sources.sort(function (a, b) { return countStoreRecords(b) - countStoreRecords(a); });
  sources.forEach(function (src) {
  Object.keys(src).forEach(function (key) {
+ /* patch-sync v2：userTodos 由云端权威同步接管，禁止 IDB 历史快照回灌（旧数据复活 → 待办反复闪烁） */
+ if (key === 'userTodos') return;
  if (key === '_lastSavedAt' || key === '__deleted' || key === '__revoked') return;
  const sv = src[key];
  if (Array.isArray(sv) && Array.isArray(store[key])) {
