@@ -4,8 +4,9 @@
    - 距上次成功回源 < 3 分钟：普通打开直接吐缓存，不再发起整页回源（真·秒开）；
    - 超过 3 分钟：网络优先，900ms 没回来就先给缓存，后台下载完静默写缓存；
    - 强刷（Ctrl+F5 / 带 _v= / reload / no-store）：永远网络优先 8 秒，主人照样立刻拿最新版；
-   - version.txt 永远 no-store 网络优先；sw.js 自身不缓存；跨域（云同步）完全不碰。 */
-var CACHE = 'hami-sw-v4';
+   - version.txt 永远 no-store 网络优先；sw.js 自身不缓存；跨域（云同步）完全不碰。
+   v489：缓存名升级清掉滞留的旧版 HTML；_cb= 自检跳转纳入强刷判定，保证一次刷新必拿最新版。 */
+var CACHE = 'hami-sw-v5';
 var FRESH_MS = 3 * 60 * 1000;
 
 self.addEventListener('install', function (e) { e.waitUntil(self.skipWaiting()); });
@@ -74,8 +75,9 @@ self.addEventListener('fetch', function (e) {
   }
   var isDoc = req.mode === 'navigate' || req.destination === 'document';
   if (isDoc) {
-    var force = /[?&]_v=/.test(req.url) || req.cache === 'reload' || req.cache === 'no-store';
+    var force = /[?&](_v=|_cb=)/.test(req.url) || req.cache === 'reload' || req.cache === 'no-store';
     if (force) { e.respondWith(networkFirst(req, 8000)); return; }
+    /* v489：文档导航一律后台静默换新；缓存只作离线兜底，绝不主动喂旧版给在线主人 */
     e.respondWith(freshEnough().then(function (fresh) {
       if (!fresh) return networkFirst(req, 900);
       return caches.match(req).then(function (hit) {
