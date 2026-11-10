@@ -6,7 +6,7 @@
    - 强刷（Ctrl+F5 / 带 _v= / reload / no-store）：永远网络优先 8 秒，主人照样立刻拿最新版；
    - version.txt 永远 no-store 网络优先；sw.js 自身不缓存；跨域（云同步）完全不碰。
    v489：缓存名升级清掉滞留的旧版 HTML；_cb= 自检跳转纳入强刷判定，保证一次刷新必拿最新版。 */
-var CACHE = 'hami-sw-v9';
+var CACHE = 'hami-sw-v10';
 var FRESH_MS = 3 * 60 * 1000;
 
 self.addEventListener('install', function (e) { e.waitUntil(self.skipWaiting()); });

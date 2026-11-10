@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-494"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-495"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -11242,6 +11242,8 @@ function deepMergeUnion(a, b, topKey, L, R) {
  return out;
 }
 function mergeStoreInto(local, remote) {
+ /* patch-sync v3.4（v495）：userTodos 由 todos-v4 通道独占，原生云同步 hami-store
+    的旧快照与删除墓碑一律不碰待办，否则权威 20 条会被墓碑剔成 15 条并反复闪烁。*/
  if (!remote || typeof remote !== 'object') return local;
  // v481：身材围度按日期并集（本地同日优先）；v483：按日期墓碑剔除，删除/改日期跨端不复活
  try {
@@ -11312,7 +11314,7 @@ function mergeStoreInto(local, remote) {
  const rr = (remote && typeof remote === 'object') ? (remote.__revoked || null) : null;
  if (rr && typeof rr === 'object') {
  if (!local.__revoked || typeof local.__revoked !== 'object') local.__revoked = {};
- Object.keys(rr).forEach(function (listKey) {
+ Object.keys(rr).forEach(function (listKey) { if (listKey === 'userTodos') return; /* patch-sync v3.4 */
  const rarr = rr[listKey];
  if (!Array.isArray(rarr) || !rarr.length) return;
  if (!local.__revoked[listKey]) local.__revoked[listKey] = [];
@@ -11339,7 +11341,7 @@ function mergeStoreInto(local, remote) {
  const rd = (remote && typeof remote === 'object') ? (remote.__deleted || null) : null;
  if (rd && typeof rd === 'object') {
  if (!local.__deleted || typeof local.__deleted !== 'object') local.__deleted = {};
- Object.keys(rd).forEach(function (listKey) {
+ Object.keys(rd).forEach(function (listKey) { if (listKey === 'userTodos') return; /* patch-sync v3.4 */
  const rarr = rd[listKey];
  if (!Array.isArray(rarr) || !rarr.length) return;
  if (!local.__deleted[listKey]) local.__deleted[listKey] = [];
@@ -11358,7 +11360,7 @@ function mergeStoreInto(local, remote) {
  // 用墓碑剔除本地 & 远端
  const ld = (local && typeof local === 'object') ? (local.__deleted || null) : null;
  if (ld) {
- Object.keys(ld).forEach(function (listKey) {
+ Object.keys(ld).forEach(function (listKey) { if (listKey === 'userTodos') return; /* patch-sync v3.4 */
  const keys = ld[listKey];
  if (!Array.isArray(keys) || !keys.length) return;
  const keySet = new Set(keys);
@@ -11512,7 +11514,7 @@ function mergeStoreInto(local, remote) {
  || k === 'weightJinFixV205' || k === 'weightUnitJinV1'
  || k === '_fieldTs'
  || k === 'weightSeedV1Applied' || k === 'screenshotSeedV1Applied' || k === 'tripSeedV1Applied'
- || k === '_toiletSeedPurgedV1' || k === 'migratedGradDesign') return;
+ || k === '_toiletSeedPurgedV1' || k === 'migratedGradDesign' || k === 'userTodos') return; /* patch-sync v3.4 */
  const rv = remote[k];
  const lv = local[k];
  if (Array.isArray(rv)) {
