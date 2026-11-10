@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-490"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-491"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -17370,6 +17370,14 @@ function switchPanel(name, navEl) {
  }
  // v245：面板切换后元素才真正有尺寸——重新应用一次背景几何（旋转的放大倍数需要按实际宽高算）
  try { applyAllBgMasks(); } catch (e) {}
+ // v491：每次打开减肥面板，体重趋势图自动定位到最新日期；主人左右拖动查看后才保持自己的位置
+ if (name === 'fitness') {
+  try {
+   __wcUserScrolled = false;
+   var _wcx = document.getElementById('weight-chart');
+   if (_wcx) __wcSetScroll(_wcx, _wcx.scrollWidth);
+  } catch (e) {}
+ }
  // v230：进入「数据备份」面板时刷新 内容清单 / 备份位置 / 上次备份时间
  if (name === 'data-backup') {
  try { renderBackupManifest(); } catch (e) {}
@@ -18594,7 +18602,20 @@ function quickAddExercise(cat) {
 }
 
 // ==================== 体重图 ====================
-var __wcData = null, __wcZoom = 1, __wcRaf = 0, __wcLatestDate = null, __wcUserScrolled = false;
+var __wcData = null, __wcZoom = 1, __wcRaf = 0, __wcLatestDate = null, __wcUserScrolled = false, __wcProgrammatic = false, __wcTarget = null;
+/* v491：旧写法用 scroll 事件判定「主人拖过」，但程序自己设 scrollLeft 也会触发 scroll，
+   标志被误置 true；renderFitness() 又被打卡/存盘/经期等十多处高频调用，
+   下一次重绘就按旧比例把视口拉回最左 —— 看起来就是「打开没定位到最新」。
+   现在统一走 __wcSetScroll，并只有真实输入（拖动/单指滑/滚轮/键盘）才置 __wcUserScrolled。 */
+function __wcSetScroll(el, v){
+ if(!el) return;
+ __wcProgrammatic = true;
+ try { el.scrollLeft = v; } catch(e){}
+ __wcTarget = el.scrollLeft;               // 浏览器会 clamp，记实际值用于兜底比对
+ try { requestAnimationFrame(function(){ requestAnimationFrame(function(){ __wcProgrammatic=false; __wcTarget=null; }); }); }
+ catch(e){ __wcProgrammatic=false; __wcTarget=null; }
+}
+function __wcMarkUser(){ __wcUserScrolled = true; }
 function renderWeightChart(data) {
  if (data.length === 0) {
  document.getElementById('weight-chart').innerHTML = `<div class="empty-state"><div class="big-icon"></div><p>暂无数据</p></div>`;
@@ -18675,9 +18696,9 @@ function renderWeightChart(data) {
  __wcLatestDate = latestDate;
  if (!__wcUserScrolled || latestChanged) {
  __wcUserScrolled = false;
- wc.scrollLeft = wc.scrollWidth;
+ __wcSetScroll(wc, wc.scrollWidth);
  } else if (prevMax > 1 && wc.scrollWidth > wc.clientWidth) {
- wc.scrollLeft = (prevScroll / prevMax) * (wc.scrollWidth - wc.clientWidth);
+ __wcSetScroll(wc, (prevScroll / prevMax) * (wc.scrollWidth - wc.clientWidth));
  }
 }
 
@@ -18687,10 +18708,14 @@ function renderWeightChart(data) {
  if (!el) return;
  let down = false, sx = 0, sl = 0;
  el.addEventListener('mousedown', e => { down = true; sx = e.pageX; sl = el.scrollLeft; el.style.cursor = 'grabbing'; });
- window.addEventListener('mousemove', e => { if (!down) return; e.preventDefault(); el.scrollLeft = sl - (e.pageX - sx); });
+ window.addEventListener('mousemove', e => { if (!down) return; e.preventDefault(); __wcMarkUser(); el.scrollLeft = sl - (e.pageX - sx); });
  window.addEventListener('mouseup', () => { if (down) { down = false; el.style.cursor = 'grab'; } });
  // v338：只要发生滚动（拖动/触屏/滚动条），就视为主人手动定位过——之后重渲染保持视口；有新纪录时才重新贴到最新
- el.addEventListener('scroll', function () { __wcUserScrolled = true; });
+ el.addEventListener('scroll', function () {
+ if (__wcProgrammatic) return;
+ if (__wcTarget != null && Math.abs(el.scrollLeft - __wcTarget) <= 2) return;
+ __wcUserScrolled = true;
+ });
 
  function scheduleRepaint() {
  if (__wcRaf) return;
@@ -18707,6 +18732,7 @@ function renderWeightChart(data) {
  el.addEventListener('wheel', function (e) {
  if (!__wcData) return;
  e.preventDefault();
+ __wcMarkUser();
  applyZoom(__wcZoom * (e.deltaY > 0 ? 0.9 : 1.1));
  }, { passive: false });
 
@@ -18719,12 +18745,14 @@ function renderWeightChart(data) {
  }
  }, { passive: true });
  el.addEventListener('touchmove', function (e) {
+ if (e.touches.length === 1) __wcMarkUser();
  if (e.touches.length === 2 && pinchStart > 0) {
  e.preventDefault();
  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) || 1;
  applyZoom(pinchZoom * (d / pinchStart));
  }
  }, { passive: false });
+ el.addEventListener('keydown', function () { __wcMarkUser(); });
  el.addEventListener('touchend', function (e) {
  if (!e.touches || e.touches.length < 2) pinchStart = 0;
  });
@@ -20127,8 +20155,9 @@ const BS_PARTS = [
  { k:'foreArm',  n:'下臂', no:2, side:'l', ax:30, ay:52, ml:27, mw:7  },
  { k:'chest',    n:'胸',   no:3, side:'r', ax:64, ay:33, ml:35, mw:30 },
  { k:'belly',    n:'肚子', no:4, side:'r', ax:61, ay:48, ml:38, mw:24 },
- { k:'thigh',    n:'大腿', no:5, side:'l', ax:43, ay:63, ml:37, mw:11 },
- { k:'calf',     n:'小腿', no:6, side:'r', ax:57, ay:80, ml:53, mw:9  }
+ { k:'hip',      n:'臀围', no:5, side:'r', ax:62, ay:58, ml:36, mw:28 },
+ { k:'thigh',    n:'大腿', no:6, side:'l', ax:43, ay:63, ml:37, mw:11 },
+ { k:'calf',     n:'小腿', no:7, side:'r', ax:57, ay:80, ml:53, mw:9  }
 ];
 let bsEditIdx = -1, bsHistOpen = true, bsMigrated = false;
 function bsList() {
@@ -29974,7 +30003,7 @@ button.plan-quick-chip.off{opacity:.55;cursor:default;}
  button.plan-quick-chip{padding:5px 9px;font-size:11.5px;}
 }
 </style>
-<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>肚子 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
+<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>肚子 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>臀围 (cm)</label><input type="number" id="bs-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 92.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
 <style id="hami-v482-fix">
 /* v482 身材围度：主人参考图作底图 + 图上六部位标注 + 较上次/较首次增减；两卡合一 */
 @media (min-width:769px){ .bs-card{grid-column:span 2;} }
@@ -30095,5 +30124,21 @@ button.pq-item.wait .pq-state,button.pq-item.off .pq-state{color:#B08A9C;backgro
  .bs-shead,.bs-srow{grid-template-columns:1fr .8fr .8fr .8fr .9fr;gap:2px;padding:5px 3px;font-size:10px;}
  .bs-spk{width:48px;height:18px;}
 }
+
+/* ===== v491 心境便签：宽度跟手 + 卡片改/删键回归 ===== */
+/* #panel-mood 在 y2k 主题下是 grid，margin:0 auto 会按 min-content 缩成 425px 固定窄列 */
+.mn-wrap{width:100%;max-width:none;min-width:0;box-sizing:border-box;margin:0 auto;}
+/* v471 把卡片操作键全隐藏了，这里只恢复卡片上的，全屏翻看层仍用它自带的底栏 */
+.mn-ops{display:inline-flex !important;align-items:center;gap:5px;}
+.mn-stage .mn-ops,.mn-fold-open .mn-ops{display:inline-flex !important;}
+.mn-stage .mn-card.mn-confirming .mn-ops{display:inline-flex !important;}
+.mn-viewer .mn-ops{display:none !important;}
+.mn-ops button{padding:3px 9px;font-size:10.5px;border-radius:8px;}
+.mn-card-foot{flex-wrap:wrap;row-gap:5px;}
+@media (max-width:768px){
+ .mn-ops button{padding:2px 7px;font-size:10px;}
+}
+/* v491 臀围加进图后，第七行标签不挤 */
+.bs-side-top{margin-bottom:4px;}
 </style>
 </body></html>
