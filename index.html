@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-493"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-494"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10407,6 +10407,8 @@ const HAMI_SYNC = {
  * 本地联调测试项不再上云，云端残留项也不再触发每轮回写，彻底断乒乓。
  * patch-sync v3.2（v493）：pull 防锁死 + Hami 启动期多点补拉，
  * 抵消原生云同步 hami-store 启动阶段回写旧 userTodos 的竞态。
+ * patch-sync v3.3（v494）：ghGet 6s 超时 + 推送不阻塞拉取 + 启动密集补拉，
+ * 让 Hami 冷启动秒级拿到 Atelier 权威数据。
  * 本块自包含、业务代码零改动，可整块移除；移除后两侧退回各自本地待办。
  */
   (function(){
@@ -10418,7 +10420,7 @@ const HAMI_SYNC = {
     function b64enc(s){const b=new TextEncoder().encode(s);let x='';b.forEach(function(c){x+=String.fromCharCode(c);});return btoa(x);}
     function b64dec(b){const x=atob(String(b).replace(/\s+/g,''));const b2=Uint8Array.from(x,function(c){return c.charCodeAt(0);});return new TextDecoder().decode(b2);}
     /* 成功返回数组（可为空），失败返回 null —— 失败绝不能被当成「云端为空」而清空本地 */
-    async function ghGet(){ try{ const r=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); if(r.status===404) return []; if(!r.ok) return null; const j=await r.json(); if(!j.content) return null; try{ const o=JSON.parse(b64dec(j.content)); return Array.isArray(o.todos)?o.todos:null; }catch(e){ return null; } }catch(e){ return null; } }
+    async function ghGet(){ /* patch-sync v3.3：6s 超时，杜绝挂起拖住整轮 pull */ try{ const _ac=new AbortController(); const _to=setTimeout(function(){try{_ac.abort();}catch(e){}},6000); let r; try{ r=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store',signal:_ac.signal}); }finally{ clearTimeout(_to); } if(r.status===404) return []; if(!r.ok) return null; const j=await r.json(); if(!j.content) return null; try{ const o=JSON.parse(b64dec(j.content)); return Array.isArray(o.todos)?o.todos:null; }catch(e){ return null; } }catch(e){ return null; } }
     async function ghPut(arr){ try{ const r0=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); let sha=null; try{ if(r0.ok){const j=await r0.json(); if(j.sha) sha=j.sha;} }catch(e){} const body={message:'sync todos v4 '+new Date().toISOString(),content:b64enc(JSON.stringify({todos:arr,v:2,updatedAt:Date.now()})),branch:BRANCH}; if(sha) body.sha=sha; const res=await fetch(API,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},HDR),body:JSON.stringify(body)}); return res.ok; }catch(e){ return false; } }
     function txt(t){ return String((t&&t.text)||'').trim().toLowerCase(); }
     function normalize(arr){
@@ -10478,10 +10480,10 @@ const HAMI_SYNC = {
     }
     async function pull(){
       /* patch-sync v3.2：单次 pull 挂起超 10s 也放行新一轮，杜绝永久锁死 */
-      if(syncing && Date.now()-syncingAt<10000) return;
+      if(syncing && Date.now()-syncingAt<3000) return;
       syncing=true; syncingAt=Date.now();
       try{
-        if(dirty&&ready) await push();
+        if(dirty&&ready) push(); /* patch-sync v3.3：推送不阻塞拉取 */
         const remote=await ghGet();
         if(remote===null){ ready=true; syncing=false; return; }
         const clean=normalize(remote);
@@ -10528,7 +10530,7 @@ const HAMI_SYNC = {
     window.__hamiTodoSchedulePush=function(){ if(window.__todoSyncApplying) return; dirty=true; if(timer) clearTimeout(timer); timer=setTimeout(function(){ push(); },800); };
     setTimeout(pull,200);
     /* patch-sync v3.2：启动期原生云同步 hami-store 会覆盖 userTodos，多点补拉保证最终一致 */
-    [1500,4000,8000,15000].forEach(function(ms){ setTimeout(pull,ms); });
+    [800,2000,4000,7000,11000,16000].forEach(function(ms){ setTimeout(pull,ms); });
     setInterval(pull,12000);
     let lastPull=0; function throttledPull(){ const n=Date.now(); if(n-lastPull<3000) return; lastPull=n; pull(); } window.addEventListener('focus',throttledPull);
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) throttledPull(); });
