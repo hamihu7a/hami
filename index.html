@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-487"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-488"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10417,7 +10417,8 @@ const HAMI_SYNC = {
     function txt(t){ return String((t&&t.text)||'').trim().toLowerCase(); }
     function normalize(arr){
       const g={},out=[];
-      (arr||[]).forEach(function(t){ if(!t||typeof t!=='object') return; const k=txt(t)||('id:'+(t.id||'')); if(!g[k]) g[k]=[]; g[k].push(t); });
+      /* patch-sync v2：一次性过滤早期联调遗留的测试条目；云端发现即自愈回写，主人端永不见假待办 */
+      (arr||[]).forEach(function(t){ if(!t||typeof t!=='object') return; if(/^【(E2E测试|隔离测试|旧数据)】/.test(String(t.text||''))) return; const k=txt(t)||('id:'+(t.id||'')); if(!g[k]) g[k]=[]; g[k].push(t); });
       Object.keys(g).forEach(function(k){
         const v=g[k]; let best=null;
         v.forEach(function(t){ if(!best){best=t;return;} if(t.category==='work'&&best.category!=='work'){best=t;return;} if((t.updatedAt||0)>(best.updatedAt||0)&&!(best.category==='work'&&t.category!=='work')) best=t; });
