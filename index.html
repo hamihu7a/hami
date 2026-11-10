@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-484"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-486"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -9006,7 +9006,8 @@ function _stampFieldTs() {
  try {
  if (k in prev) changed = JSON.stringify(prev[k]) !== JSON.stringify(store[k]);
  } catch (e) { changed = true; }
- if (changed) store._fieldTs[k] = now;
+ // v485：单调递增，抵御时钟回拨 / 同毫秒连改 / 云端未来戳，保证「谁最后改谁赢」不倒退
+ if (changed) store._fieldTs[k] = Math.max(now, (store._fieldTs[k] || 0) + 1);
  });
  } catch (e) {}
 }
@@ -9073,7 +9074,10 @@ function saveData(skipCloud) {
  // v417：改动前的快照入撤销栈（云合并等内部存盘不算）
  try { hamiHistoryBeforeSave(!!skipCloud); } catch (e) {}
  // v2026-10-27：给本次真正改动的字段盖字段级时间戳（必须在 hamiHistoryBeforeSave 之后、基线更新之前）
- try { _stampFieldTs(); } catch (e) {}
+ // v485：skipCloud=true 是「云端合并 / 内部整理 / 后台同步」的内部存盘，改动来自云端不是主人编辑，
+ // 绝不能盖本机字段戳——否则接收端时间戳虚高，经 _fieldTs 并集扩散上云，反向挡掉另一端真正的编辑。
+ // 末尾 hamiHistoryAfterSave 仍会刷新撤销基线，保证之后主人真实编辑的差量检测正确。
+ try { if (!skipCloud) _stampFieldTs(); } catch (e) {}
  // 根治 userTodos 重复：每次保存前按「文本+分类」去重，保留最早创建的那条（done 状态取"完成"那条）。
  // 不论是早期 seed bug、云端多次合并，还是「删了又从云端拉回来」，都会在写入前被压平。
  try {
@@ -10799,6 +10803,8 @@ function normDest(d) {
  } catch (e) { return String(d || ''); }
 }
 function _dedupKey(k, it) {
+ // v485：_uts 只用于判定「同一条记录谁更新」，绝不参与身份；否则改一次就变新增、墓碑也会失效。
+ if (it && typeof it === 'object' && !Array.isArray(it) && it._uts != null) { it = Object.assign({}, it); delete it._uts; }
  switch (k) {
  case 'weightRecords': return 'w_' + (it.date || '') + '_' + (it.value != null ? it.value : (it.after != null ? it.after : ''));
  case 'exerciseRecords': return 'e_' + (it.date || '');
@@ -10845,6 +10851,8 @@ function _dedupKey(k, it) {
 // 让墓碑 / 合并 / 渲染前的 dedup 都能从多个角度抓住同一份数据。
 function _contentKey(k, it) {
  if (!it || typeof it !== 'object') return '';
+ // v485：同上，_uts 不参与内容键。
+ if (it._uts != null) { it = Object.assign({}, it); delete it._uts; }
  if (k === 'futurePosts') {
  return 'fpC:' + String(it.title || '').trim() + '|' + String(it.date || '') + '|' + String(it.account || 'big');
  }
@@ -11423,6 +11431,21 @@ function mergeStoreInto(local, remote) {
  if (k === 'planHabits' || k === 'planGoals' || k === 'planSkills') {
  mergePlanItem(li, it);
  }
+ // v485：同一条记录按「记录级修改时间戳」后者赢——根治「改了标题/备注/金额/日期，另一端看不到」。
+ // 只覆盖标量叶子；对象/数组字段（history / checks / tags / subtasks…）交给上面的只增不减逻辑，
+ // 绝不整条替换；done / id / _uts 单独保护；云端空值不抹本地真实值；老数据无 _uts 时行为完全不变。
+ try {
+ const _rt = it._uts || 0, _lt = li._uts || 0;
+ if (_rt > _lt) {
+ Object.keys(it).forEach(function (f) {
+ if (f === 'done' || f === 'id' || f === '_uts') return;
+ const v = it[f];
+ if (v == null || v === '' || typeof v === 'object') return;
+ li[f] = v;
+ });
+ li._uts = _rt;
+ }
+ } catch (e) {}
  }
  } catch (e) {}
  return; // 不重复 push
@@ -11661,6 +11684,8 @@ function hamiPushRecord(listKey, item) {
  // 详见 calcAccountNetGated / renderAccount / refreshDisposableDisplay，原 autoUnlockDepositOnNewRecord 已移除。
  if (item && typeof item === 'object' && !Array.isArray(item)) {
  if (!item.id) item.id = _hamiNewId(listKey);
+ // v485：记录级修改时间戳，跨端判断同一条谁更新（不参与任何去重键）
+ try { item._uts = Math.max(Date.now(), (item._uts || 0) + 1); } catch (e) {}
  try { hamiTombRevoke(listKey, item); } catch (e) {}
  store[listKey].push(item);
  return item;
@@ -11754,6 +11779,8 @@ function hamiEditRecord(listKey, idx, newItem, renderFn) {
  // v109：两条都没有 id 时，给新版补一个（否则改一改身份就漂了，云端会并回旧记录）
  if ((!oldItem || !oldItem.id) && !newItem.id) newItem.id = _hamiNewId(listKey);
  if (typeof hamiTombOldVersion === 'function') hamiTombOldVersion(listKey, oldItem, newItem);
+ // v485：编辑后的戳必须严格大于旧版，另一端才能认出这是「更新」而不是同一条的旧快照
+ try { newItem._uts = Math.max(Date.now(), ((oldItem && oldItem._uts) || 0) + 1, (newItem._uts || 0) + 1); } catch (e) {}
  arr[idx] = newItem;
  if (typeof hamiDeleteSync === 'function') hamiDeleteSync();
  if (typeof renderFn === 'function') { try { renderFn(); } catch (e) {} }
@@ -11769,6 +11796,8 @@ function hamiEditInPlace(listKey, idx, renderFn) {
  try {
  const arr = store[listKey];
  if (!Array.isArray(arr) || !(idx >= 0) || !arr[idx]) return false;
+ // v485：原地改字段也要盖记录级戳，否则这类编辑另一端永远看不到
+ try { arr[idx]._uts = Math.max(Date.now(), (arr[idx]._uts || 0) + 1); } catch (e) {}
  if (typeof hamiDeleteSync === 'function') hamiDeleteSync();
  if (typeof renderFn === 'function') { try { renderFn(); } catch (e) {} }
  return true;
@@ -16362,10 +16391,13 @@ let __grpEditIdx = -1;
 function normalizeUserTodos() {
  if (!Array.isArray(store.userTodos)) return;
  // v381：一次性把旧的「工作」分类待办合并进「日常」（工作代办整块移除，数据一条不丢）
+ // patch-sync：原逻辑每次加载都会把 work 降级成 daily（workMergedV381 标志未被 loadData 恢复，每次刷新都重跑），
+ // 导致 Atelier 同步过来的项目待办分类被吞、云端反复被覆盖。Hami 现已支持 work（双栏「项目待办」），
+ // 故此处仅保留计数/落盘语义，不再降级分类，让 work 稳定留存。
  if (!store.workMergedV381) {
  let n = 0;
  store.userTodos.forEach(function (ut) {
- if (ut && (ut.category || 'daily') === 'work') { ut.category = 'daily'; n++; }
+ if (ut && (ut.category || 'daily') === 'work') { n++; }
  });
  store.workMergedV381 = true;
  if (n > 0) { try { saveData(); } catch (e) {} }
@@ -24003,6 +24035,8 @@ function updateAccountData(key, followers, likes, weekly) {
  store.accountsMeta.lastUpdate = formatAccountUpdateTime(new Date());
  store.accountsMeta._lastSavedAt = Date.now();
  try { markSyncAction('自媒体数据'); } catch (e) {} // v262：同步提示点名"自媒体数据"
+ // v485：自媒体账号显式盖字段戳（双保险，不依赖撤销基线差量检测），保证「谁最后改谁赢」稳定生效
+ try { if (!store._fieldTs || typeof store._fieldTs !== 'object') store._fieldTs = {}; var _at = Math.max(Date.now(), (store._fieldTs.accounts || 0) + 1); store._fieldTs.accounts = _at; store._fieldTs.accountsMeta = _at; } catch (e) {}
  const saved = saveData();
  try { renderDesktopAccounts(); } catch(e) {}
  const wText = (weekly != null && !isNaN(weekly)) ? ('，本周 ' + weekly) : '';
@@ -24095,6 +24129,8 @@ function submitAccountDrawer() {
  store.accountsMeta.lastUpdate = formatAccountUpdateTime(new Date());
  store.accountsMeta._lastSavedAt = Date.now();
  try { markSyncAction('自媒体数据'); } catch (e) {} // v262：同步提示点名"自媒体数据"
+ // v485：自媒体账号显式盖字段戳（双保险，不依赖撤销基线差量检测），保证「谁最后改谁赢」稳定生效
+ try { if (!store._fieldTs || typeof store._fieldTs !== 'object') store._fieldTs = {}; var _at = Math.max(Date.now(), (store._fieldTs.accounts || 0) + 1); store._fieldTs.accounts = _at; store._fieldTs.accountsMeta = _at; } catch (e) {}
  const saved = saveData();
  try { renderDesktopAccounts(); } catch (e) {}
  closeAccountDrawer();
