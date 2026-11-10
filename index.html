@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-489"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-490"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10398,26 +10398,27 @@ const HAMI_SYNC = {
  token: ('ghp_' + 'Uw5ciaeVcu' + '7B9GA6O5Q2a' + '4Pin9BAKs3' + 'ahsnv'),
   appSecret: 'hami-cloud-sync-app-secret-2026'
 };
-/* patch-sync v2：跨工作台待办同步（sync/todos-v3.json；v489 独立通道，旧版页面仍写 shared-todos.json，互不干扰）
- * 架构：云端单一权威。pull 直接采用云端（不再并集），push 写本地全量（删除可传播）。
- * 启动守卫：首次成功 pull 前禁止任何推送，杜绝本机旧缓存 / IDB 历史快照把陈旧数据推上云。
- * knownIds：区分「另一端新增」与「任一端的删除」，两端并发编辑互不吞。
- * normalize：按任务文字去重、category 优先 work，云端自愈，任何来源的重复/错分类自动压平。
+/* patch-sync v3（v490）：跨工作台待办同步 —— Atelier 本地绝对权威
+ * 通道 sync/todos-v4.json（旧版页面写 shared-todos.json / todos-v3.json，互不干扰）。
+ * 【主人铁律】项目代办以 Atelier Hour 为准；Atelier 已勾选完成的代办绝不允许被刷新回未完成。
+ * Atelier（主）：pull 只补「从未见过的」云端项、done 只升不降，绝不修改/删除本地任何项；push 本地全量覆盖云端。
+ * Hami（从）  ：pull 云端权威覆盖本地；push 以云端为基础叠加（新增 + done 只升不降），绝不删除云端任何条目。
  * 本块自包含、业务代码零改动，可整块移除；移除后两侧退回各自本地待办。
  */
   (function(){
+    const MASTER=false;
     const TOKEN=HAMI_SYNC.token;
-    const API='https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/sync/todos-v3.json?ref=' + HAMI_SYNC.branch;
+    const API='https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/sync/todos-v4.json?ref=' + HAMI_SYNC.branch;
+    const BRANCH=HAMI_SYNC.branch;
     const HDR={'Authorization':'token '+TOKEN,'Accept':'application/vnd.github+json','User-Agent':'hami-sync'};
     function b64enc(s){const b=new TextEncoder().encode(s);let x='';b.forEach(function(c){x+=String.fromCharCode(c);});return btoa(x);}
     function b64dec(b){const x=atob(String(b).replace(/\s+/g,''));const b2=Uint8Array.from(x,function(c){return c.charCodeAt(0);});return new TextDecoder().decode(b2);}
-    /* 成功返回数组（可为空），失败返回 null —— 失败绝不能被当成「云端为空」而覆盖/清空本地 */
+    /* 成功返回数组（可为空），失败返回 null —— 失败绝不能被当成「云端为空」而清空本地 */
     async function ghGet(){ try{ const r=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); if(r.status===404) return []; if(!r.ok) return null; const j=await r.json(); if(!j.content) return null; try{ const o=JSON.parse(b64dec(j.content)); return Array.isArray(o.todos)?o.todos:null; }catch(e){ return null; } }catch(e){ return null; } }
-    async function ghPut(arr){ try{ const r0=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); let sha=null; try{ if(r0.ok){const j=await r0.json(); if(j.sha) sha=j.sha;} }catch(e){} const body={message:'sync todos v3 '+new Date().toISOString(),content:b64enc(JSON.stringify({todos:arr,v:2,updatedAt:Date.now()})),branch:HAMI_SYNC.branch}; if(sha) body.sha=sha; const res=await fetch(API,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},HDR),body:JSON.stringify(body)}); return res.ok; }catch(e){ return false; } }
+    async function ghPut(arr){ try{ const r0=await fetch(API+'&_='+Date.now(),{headers:HDR,cache:'no-store'}); let sha=null; try{ if(r0.ok){const j=await r0.json(); if(j.sha) sha=j.sha;} }catch(e){} const body={message:'sync todos v4 '+new Date().toISOString(),content:b64enc(JSON.stringify({todos:arr,v:2,updatedAt:Date.now()})),branch:BRANCH}; if(sha) body.sha=sha; const res=await fetch(API,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},HDR),body:JSON.stringify(body)}); return res.ok; }catch(e){ return false; } }
     function txt(t){ return String((t&&t.text)||'').trim().toLowerCase(); }
     function normalize(arr){
       const g={},out=[];
-      /* patch-sync v2：一次性过滤早期联调遗留的测试条目；云端发现即自愈回写，主人端永不见假待办 */
       (arr||[]).forEach(function(t){ if(!t||typeof t!=='object') return; if(/^【(E2E测试|隔离测试|旧数据)】/.test(String(t.text||''))) return; const k=txt(t)||('id:'+(t.id||'')); if(!g[k]) g[k]=[]; g[k].push(t); });
       Object.keys(g).forEach(function(k){
         const v=g[k]; let best=null;
@@ -10439,6 +10440,7 @@ const HAMI_SYNC = {
     const waiters=[];
     const knownIds={};
     function remember(arr){ (arr||[]).forEach(function(t){ if(t&&t.id) knownIds[t.id]=1; }); }
+    function release(){ pushing=false; if(pending){ pending=false; push(); } const _w=waiters.splice(0); _w.forEach(function(f){ f(); }); }
     async function push(){
       if(!ready){ dirty=true; return; }
       if(pushing){ pending=true; return new Promise(function(res){ waiters.push(res); }); }
@@ -10446,42 +10448,67 @@ const HAMI_SYNC = {
       try{
         const remote=await ghGet();
         if(remote===null){ dirty=true; }
-        else{
-          const rIds={}; remote.forEach(function(t){ if(t&&t.id) rIds[t.id]=1; });
-          /* 云端已没有、本端曾知道的 id → 另一端删了，本端跟着删（删除传播） */
-          let local=(localGet()||[]).filter(function(t){ return t&&t.id&&!(knownIds[t.id]&&!rIds[t.id]); });
-          /* 云端有、本端从未知道的 id → 另一端新增，补进本端（不吞对方数据） */
-          const lIds={}; local.forEach(function(t){ if(t&&t.id) lIds[t.id]=1; });
-          remote.forEach(function(t){ if(t&&t.id&&!lIds[t.id]&&!knownIds[t.id]){ local.push(t); lIds[t.id]=1; } });
-          local=normalize(local);
-          if(sig(local)!==sig(remote)){
-            const ok=await ghPut(local);
-            if(ok){ remember(local); dirty=false; } else dirty=true;
-          } else dirty=false;
+        else if(MASTER){
+          /* 主端：本地全量即权威；本地为空时保护云端，不误清空 */
+          const local=normalize(localGet()||[]);
+          if(!local.length && remote.length){ dirty=false; }
+          else if(sig(local)!==sig(remote)){ const ok=await ghPut(local); dirty=!ok; }
+          else dirty=false;
+        }else{
+          /* 从端：以云端为基础叠加，绝不删除云端任何条目（根除「14 条冲掉 20 条」） */
+          const map={},order=[];
+          normalize(remote).forEach(function(r){ const k=txt(r); if(k&&!map[k]){ map[k]=r; order.push(k); } });
+          (localGet()||[]).forEach(function(l){
+            const k=txt(l); if(!k) return;
+            if(!map[k]){ map[k]=l; order.push(k); }
+            else if(l.done && !map[k].done){
+              map[k]=Object.assign({},map[k],{done:true,completedAt:l.completedAt||Date.now(),updatedAt:Date.now()});
+            }
+          });
+          const merged=order.map(function(k){ return map[k]; });
+          if(sig(merged)!==sig(remote)){ const ok=await ghPut(merged); dirty=!ok; }
+          else dirty=false;
         }
       }catch(e){ dirty=true; }
-      pushing=false;
-      if(pending){ pending=false; await push(); }
-      const _w=waiters.splice(0); _w.forEach(function(f){ f(); });
+      release();
     }
     async function pull(){
       if(syncing) return; syncing=true;
       try{
         if(dirty&&ready) await push();
         const remote=await ghGet();
-        if(remote===null){ syncing=false; return; }
+        if(remote===null){ ready=true; syncing=false; return; }
         const clean=normalize(remote);
-        /* 云端自愈：有重复/错分类就回写一次，之后两端都稳定 */
-        if(sig(clean)!==sig(remote)) await ghPut(clean);
-        remember(remote); remember(clean);
-        if(!remote.length){
+        if(MASTER){
+          /* 主端铁律：绝不修改/删除本地已有项 */
+          let local=(localGet()||[]).slice();
+          if(!local.length && clean.length){
+            local=clean.slice(); localSet(local); render();
+          }else if(clean.length){
+            const byText={}; local.forEach(function(t){ byText[txt(t)]=t; });
+            let changed=false;
+            clean.forEach(function(r){
+              const k=txt(r), l=byText[k];
+              if(!l){
+                /* 只补「从未见过的」云端项；见过但本地没有 = 主人主动删的，绝不复活 */
+                if(!knownIds[r.id]){ local.push(Object.assign({},r)); byText[k]=local[local.length-1]; changed=true; }
+              }else if(r.done && !l.done){
+                l.done=true; l.completedAt=l.completedAt||r.completedAt||Date.now(); changed=true;
+              }
+            });
+            if(changed){ localSet(local); render(); }
+          }
+          remember(clean); remember(local);
           ready=true;
-          if((localGet()||[]).length){ dirty=true; await push(); }
-          syncing=false; return;
+          /* 本地权威回写云端：Atelier 有什么，云端就有什么 */
+          const merged=normalize(localGet()||[]);
+          if(merged.length && sig(merged)!==sig(remote)) await ghPut(merged);
+          dirty=false;
+        }else{
+          remember(remote); remember(clean);
+          if(clean.length && sig(clean)!==sig(localGet())){ localSet(clean); render(); }
+          dirty=false; ready=true;
         }
-        /* 云端权威覆盖本地，绝不并集 —— 旧数据一次清干净且不会复活 */
-        if(sig(clean)!==sig(localGet())){ localSet(clean); render(); }
-        dirty=false; ready=true;
       }catch(e){}
       syncing=false;
     }
@@ -10489,8 +10516,8 @@ const HAMI_SYNC = {
     window.__hamiTodoPull=pull;
     window.__hamiTodoDebug={
       getTodos:function(){ return store.userTodos; },
-      setTodos:function(arr){ store.userTodos=arr; try{ saveData(true); }catch(e){} dirty=true; const _p=push(); render(); return _p; },
-      state:function(){ return {ready:ready,dirty:dirty,known:Object.keys(knownIds).length}; }
+      setTodos:function(arr){ store.userTodos=arr; window.__todoSyncApplying=true; try{ saveData(true); }catch(e){} window.__todoSyncApplying=false; dirty=true; const _p=push(); render(); return _p; },
+      state:function(){ return {ready:ready,dirty:dirty,master:MASTER,known:Object.keys(knownIds).length}; }
     };
     window.__hamiTodoSchedulePush=function(){ if(window.__todoSyncApplying) return; dirty=true; if(timer) clearTimeout(timer); timer=setTimeout(function(){ push(); },800); };
     setTimeout(pull,200);
@@ -10498,6 +10525,7 @@ const HAMI_SYNC = {
     let lastPull=0; function throttledPull(){ const n=Date.now(); if(n-lastPull<3000) return; lastPull=n; pull(); } window.addEventListener('focus',throttledPull);
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) throttledPull(); });
   })();
+
 
 const SYNC_PWD_KEY = 'hami_sync_pwd';
 let hamiSyncReady = false; // 首次拉取完成（或失败）后才允许推送，避免覆盖云端
