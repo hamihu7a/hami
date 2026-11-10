@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-491"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-492"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10403,6 +10403,8 @@ const HAMI_SYNC = {
  * 【主人铁律】项目代办以 Atelier Hour 为准；Atelier 已勾选完成的代办绝不允许被刷新回未完成。
  * Atelier（主）：pull 只补「从未见过的」云端项、done 只升不降，绝不修改/删除本地任何项；push 本地全量覆盖云端。
  * Hami（从）  ：pull 云端权威覆盖本地；push 以云端为基础叠加（新增 + done 只升不降），绝不删除云端任何条目。
+ * patch-sync v3.1（v492）：云端/本地一律按 normalize 后的「有效数据」比较；
+ * 本地联调测试项不再上云，云端残留项也不再触发每轮回写，彻底断乒乓。
  * 本块自包含、业务代码零改动，可整块移除；移除后两侧退回各自本地待办。
  */
   (function(){
@@ -10452,13 +10454,13 @@ const HAMI_SYNC = {
           /* 主端：本地全量即权威；本地为空时保护云端，不误清空 */
           const local=normalize(localGet()||[]);
           if(!local.length && remote.length){ dirty=false; }
-          else if(sig(local)!==sig(remote)){ const ok=await ghPut(local); dirty=!ok; }
+          else if(sig(local)!==sig(normalize(remote))){ /* patch-sync v3.1 */ const ok=await ghPut(local); dirty=!ok; }
           else dirty=false;
         }else{
           /* 从端：以云端为基础叠加，绝不删除云端任何条目（根除「14 条冲掉 20 条」） */
           const map={},order=[];
           normalize(remote).forEach(function(r){ const k=txt(r); if(k&&!map[k]){ map[k]=r; order.push(k); } });
-          (localGet()||[]).forEach(function(l){
+          normalize(localGet()||[]).forEach(function(l){ /* patch-sync v3.1 */
             const k=txt(l); if(!k) return;
             if(!map[k]){ map[k]=l; order.push(k); }
             else if(l.done && !map[k].done){
@@ -10502,7 +10504,7 @@ const HAMI_SYNC = {
           ready=true;
           /* 本地权威回写云端：Atelier 有什么，云端就有什么 */
           const merged=normalize(localGet()||[]);
-          if(merged.length && sig(merged)!==sig(remote)) await ghPut(merged);
+          if(merged.length && sig(merged)!==sig(clean)) await ghPut(merged); /* patch-sync v3.1 */
           dirty=false;
         }else{
           remember(remote); remember(clean);
