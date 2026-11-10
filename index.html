@@ -9045,6 +9045,7 @@ function hamiRedo() {
 
 function saveData(skipCloud) {
  if (_loadBroken) return;
+ if (window.__hamiTodoSchedulePush) window.__hamiTodoSchedulePush();
  // v417：改动前的快照入撤销栈（云合并等内部存盘不算）
  try { hamiHistoryBeforeSave(!!skipCloud); } catch (e) {}
  // v2026-10-27：给本次真正改动的字段盖字段级时间戳（必须在 hamiHistoryBeforeSave 之后、基线更新之前）
@@ -10367,8 +10368,30 @@ const HAMI_SYNC = {
  // 注意：令牌分片存储，运行时拼接回完整值，避免在仓库里出现完整明文而被 GitHub 密钥扫描拦截。
  // 它仅本仓库写权限；明文在公开页有泄露风险，建议主人日后改用仅限本仓库的 fine-grained token 替换下面几片。
  token: ('ghp_' + 'Uw5ciaeVcu' + '7B9GA6O5Q2a' + '4Pin9BAKs3' + 'ahsnv'),
- appSecret: 'hami-cloud-sync-app-secret-2026'
+  appSecret: 'hami-cloud-sync-app-secret-2026'
 };
+// === 跨工作台待办同步·Hami 侧（sync/shared-todos.json 明文，复用 HAMI_SYNC；与 Atelier Hour 工作台共享同一份待办）===
+(function () {
+  if (typeof HAMI_SYNC === 'undefined' || !HAMI_SYNC.token) return;
+  const API = 'https://api.github.com/repos/' + HAMI_SYNC.repo + '/contents/sync/shared-todos.json?ref=' + HAMI_SYNC.branch;
+  const HDR = { 'Authorization': 'token ' + HAMI_SYNC.token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'hami-sync' };
+  function b64enc(s) { const b = new TextEncoder().encode(s); let x = ''; b.forEach(function (c) { x += String.fromCharCode(c); }); return btoa(x); }
+  function b64dec(b) { const x = atob(String(b).replace(/\s+/g, '')); const b2 = Uint8Array.from(x, function (c) { return c.charCodeAt(0); }); return new TextDecoder().decode(b2); }
+  async function ghGet() { try { const r = await fetch(API, { headers: HDR, cache: 'no-store' }); if (r.status === 404) return []; if (!r.ok) return []; const j = await r.json(); if (!j.content) return []; try { const o = JSON.parse(b64dec(j.content)); return Array.isArray(o.todos) ? o.todos : []; } catch (e) { return []; } } catch (e) { return []; } }
+  async function ghPut(arr) { try { const r0 = await fetch(API, { headers: HDR }); let sha = null; try { if (r0.ok) { const j = await r0.json(); if (j.sha) sha = j.sha; } } catch (e) {} const body = { message: 'sync todos ' + new Date().toISOString(), content: b64enc(JSON.stringify({ todos: arr })), branch: HAMI_SYNC.branch }; if (sha) body.sha = sha; const res = await fetch(API, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, HDR), body: JSON.stringify(body) }); return res.ok; } catch (e) { return false; } }
+  function merge(base, inc) { const m = {}; (base || []).forEach(function (t) { if (t && t.id) m[t.id] = t; }); (inc || []).forEach(function (t) { if (!t || !t.id) return; const o = m[t.id]; if (!o || (t.updatedAt || 0) >= (o.updatedAt || 0)) m[t.id] = t; }); return Object.values(m); }
+  let pushing = false, pending = false, timer = null;
+  async function push() { if (pushing) { pending = true; return; } pushing = true; try { const remote = await ghGet(); const local = (store.userTodos || []).map(function (t) { if (!t.updatedAt) t.updatedAt = t.date ? Date.parse(t.date) : (t.createdAt || Date.now()); return t; }); const merged = merge(remote, local); await ghPut(merged); } catch (e) {} pushing = false; if (pending) { pending = false; push(); } }
+  async function pull() { try { const remote = await ghGet(); if (!remote.length) return; const local = store.userTodos || []; const merged = merge(local, remote); const sig = function (a) { return JSON.stringify(a.map(function (t) { return [t.id, t.updatedAt, t.done, t.text]; })); }; if (sig(merged) !== sig(local)) { store.userTodos = merged; try { saveData(); } catch (e) {} try { if (typeof renderTodoPanel === 'function') renderTodoPanel(); } catch (e) {} try { if (typeof renderHomeTodo === 'function') renderHomeTodo(); } catch (e) {} } } catch (e) {} }
+  window.__hamiTodoPush = push;
+  window.__hamiTodoDebug = { getTodos: function () { return store.userTodos; } };
+  window.__hamiTodoPull = pull;
+  window.__hamiTodoSchedulePush = function () { if (timer) clearTimeout(timer); timer = setTimeout(function () { push(); }, 800); };
+  setTimeout(function () { pull(); }, 1500);
+  setInterval(pull, 12000);
+  window.addEventListener('focus', pull);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) pull(); });
+})();
 const SYNC_PWD_KEY = 'hami_sync_pwd';
 let hamiSyncReady = false; // 首次拉取完成（或失败）后才允许推送，避免覆盖云端
 let hamiSyncEnabled = false;
