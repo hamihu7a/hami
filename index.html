@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-492"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-493"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10405,6 +10405,8 @@ const HAMI_SYNC = {
  * Hami（从）  ：pull 云端权威覆盖本地；push 以云端为基础叠加（新增 + done 只升不降），绝不删除云端任何条目。
  * patch-sync v3.1（v492）：云端/本地一律按 normalize 后的「有效数据」比较；
  * 本地联调测试项不再上云，云端残留项也不再触发每轮回写，彻底断乒乓。
+ * patch-sync v3.2（v493）：pull 防锁死 + Hami 启动期多点补拉，
+ * 抵消原生云同步 hami-store 启动阶段回写旧 userTodos 的竞态。
  * 本块自包含、业务代码零改动，可整块移除；移除后两侧退回各自本地待办。
  */
   (function(){
@@ -10438,7 +10440,7 @@ const HAMI_SYNC = {
     function localGet(){ return (store&&store.userTodos)||[]; }
     function localSet(arr){ store.userTodos=arr; window.__todoSyncApplying=true; try{ saveData(true); }catch(e){} window.__todoSyncApplying=false; }
     function render(){ try{ if(typeof renderTodoPanel==='function') renderTodoPanel(); }catch(e){} try{ if(typeof renderHomeTodo==='function') renderHomeTodo(); }catch(e){} }
-    let ready=false, pushing=false, pending=false, syncing=false, dirty=false, timer=null;
+    let ready=false, pushing=false, pending=false, syncing=false, syncingAt=0, dirty=false, timer=null;
     const waiters=[];
     const knownIds={};
     function remember(arr){ (arr||[]).forEach(function(t){ if(t&&t.id) knownIds[t.id]=1; }); }
@@ -10475,7 +10477,9 @@ const HAMI_SYNC = {
       release();
     }
     async function pull(){
-      if(syncing) return; syncing=true;
+      /* patch-sync v3.2：单次 pull 挂起超 10s 也放行新一轮，杜绝永久锁死 */
+      if(syncing && Date.now()-syncingAt<10000) return;
+      syncing=true; syncingAt=Date.now();
       try{
         if(dirty&&ready) await push();
         const remote=await ghGet();
@@ -10523,6 +10527,8 @@ const HAMI_SYNC = {
     };
     window.__hamiTodoSchedulePush=function(){ if(window.__todoSyncApplying) return; dirty=true; if(timer) clearTimeout(timer); timer=setTimeout(function(){ push(); },800); };
     setTimeout(pull,200);
+    /* patch-sync v3.2：启动期原生云同步 hami-store 会覆盖 userTodos，多点补拉保证最终一致 */
+    [1500,4000,8000,15000].forEach(function(ms){ setTimeout(pull,ms); });
     setInterval(pull,12000);
     let lastPull=0; function throttledPull(){ const n=Date.now(); if(n-lastPull<3000) return; lastPull=n; pull(); } window.addEventListener('focus',throttledPull);
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) throttledPull(); });
