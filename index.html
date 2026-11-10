@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-495"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-10-496"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -9955,26 +9955,16 @@ async function initBgCacheAndMigrate() {
  try { saveData(); } catch (e) {} // 空间刚腾出来，立刻把业务数据补写一次
  }
  try { localStorage.setItem('hami_bg_idb_ts', JSON.stringify(BG_IDB_TS)); } catch (e) {}
- // v453：一次性清扫——主人反复删除背景图，云端每次都把旧图拉回来。
- // 这里一次性立全量墓碑（清本机 + 清云端），此后只有主人主动上传的图才会回来。
- try {
-  if (!localStorage.getItem('hami_bg_tomb_seed_453')) {
-   var _tb = bgTombAll(), _now = Date.now();
-   Object.keys(BG_KEYS).forEach(function (k) {
-    delete BG_CACHE[k]; delete BG_IDB_TS[k];
-    try { _bgAllDel(k); } catch (e) {}
-    try { bgIdbDel(k); } catch (e) {}
-    try { localStorage.removeItem(BG_KEYS[k]); } catch (e) {}
-    _tb[k] = _now;
-   });
-   bgTombSave(_tb);
-   try { localStorage.setItem('hami_bg_tomb_seed_453', '1'); } catch (e) {}
-   try { bgMarkRev(_now); } catch (e) {}
-   try { applyAllBgs(); } catch (e) {}
-   try { setTimeout(function () { bgUploadAllToCloud(true).catch(function () {}); }, 4000); } catch (e) {}
-  }
- } catch (e) {}
- // 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
+ // v496【根治「上传过的背景图过几天全端消失」】：原 v453 在这里做「一次性全量清扫」——
+// 只要本机丢了 hami_bg_tomb_seed_453 标记（换设备 / 清站点数据 / 新浏览器 / 隐私模式），
+// 启动时就会把 BG_CACHE、localStorage 主存、IndexedDB 里的所有背景图删光，给每个 key 立
+// 同一时刻的删除墓碑，再把「只有墓碑、零图片」的档案推上云；其它设备拉到墓碑后也会把
+// 自己本机好好的图删掉。11-05 20:53 主人 11-03/11-04 上传的「时间与激励语」背景图就是这样没的。
+// 现在只补标记，绝不删图、不立墓碑、不上传。真正删除仍只由主人点「恢复默认纯色背景」触发。
+try {
+ if (!localStorage.getItem('hami_bg_tomb_seed_453')) { try { localStorage.setItem('hami_bg_tomb_seed_453', '1'); } catch (e) {} }
+} catch (e) {}
+// 启动时主动从云端拉背景图（不论 IDB 有没有，都拉一次，避免"本地清缓存后背景图全没"）
  try { syncBgsFromCloudOnBoot(); } catch (e) {}
 }
 
@@ -10247,6 +10237,7 @@ async function bgDownloadFromCloud(silent) {
  await Promise.all(bkeys.map(function (k) {
  const data = bgs[k];
  try { BG_CACHE[k] = data; } catch (e) {}
+ try { if (!_rTomb[k]) bgTombClear(k); } catch (e) {} // v496
  try { BG_IDB_TS[k] = remote.updatedAt || Date.now(); } catch (e) {}
  return bgIdbSet(k, data).then(function () { done++; }).catch(function () { done++; });
  }));
