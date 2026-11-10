@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-499"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-500"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -8719,6 +8719,7 @@ let store = {
  screenshotSeedV1Applied: false, // 截图数据一次性同步标记（true 后不再重复覆盖）
  tripSeedV1Applied: false, // 广州三天行程一次性补入标记（true 后不再重复覆盖）
  startWeight: 180.0, // 起始体重基准线（单位：斤，1 公斤 = 2 斤；v205 起默认值直接写斤值）
+ height: 166, // v500 身高（cm），用于统一 BMI 计算；一处修改全站 BMI 同步
  exerciseRecords: [
  { date: "2026-07-30", aerobics: true, cardio: true, cardioType: "爬坡40分钟", weights: true, weightsContent: "器械30分钟", sets: "", duration: "70分钟" },
  { date: "2026-07-31", aerobics: false, cardio: false, weights: false, cardioType: "", weightsContent: "", sets: "", duration: "休息日" },
@@ -15151,6 +15152,7 @@ function loadData() {
  if (p.weightGoal != null) store.weightGoal = p.weightGoal;
  // 起始体重：同理显式恢复
  if (p.startWeight != null) store.startWeight = p.startWeight;
+if (p.height != null) store.height = p.height; // v500 身高随存档/云同步恢复
  // v205：体重单位哨兵必须显式恢复（v199 漏了这一步，导致每次打开网页都重新 ×2 —— 1422 斤事故的元凶）
  if (p.weightUnitJinV1) store.weightUnitJinV1 = true;
  if (p.weightJinFixV205) store.weightJinFixV205 = true;
@@ -18557,19 +18559,13 @@ function renderFitness() {
  const cardioCount = monthExercises.filter(e=>e.cardio).length;
  const weightsCount = monthExercises.filter(e=>e.weights).length;
 
- // v295：BMI（身高固定 166cm），体重单位为斤
- let bmiVal = '—', bmiUnit = '待记录', bmiCls = '';
- if (latestAfter != null) {
- const bmi = (latestAfter / 2) / (1.66 * 1.66);
- bmiVal = bmi.toFixed(1);
- if (bmi < 18.5) { bmiUnit = '偏瘦'; bmiCls = 'green'; }
- else if (bmi < 24) { bmiUnit = '正常 '; bmiCls = 'green'; }
- else if (bmi < 28) { bmiUnit = '超重 ️'; bmiCls = 'red'; }
- else { bmiUnit = '过高 ️'; bmiCls = 'red'; }
- }
+ // v500：BMI 统一走 getBMI()（真实身高 store.height + 最新体重），一处计算全站同步
+const _bmi = getBMI();
+let bmiVal = _bmi.val != null ? _bmi.val.toFixed(1) : '—', bmiUnit = _bmi.unit, bmiCls = _bmi.cls;
+const _bmiH = (store.height != null) ? parseFloat(store.height) : 166;
 
  document.getElementById('fitness-stats').innerHTML = `
- <div class="stat-card"><div class="label">起始体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${startWeight.toFixed(1)}</div><div class="unit">斤</div></div><div class="stat-card"><div class="label">最新体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${latestAfterText}</div><div class="unit">斤</div></div><div class="stat-card"><div class="label">累计减重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${parseFloat(totalLost) > 0 ? 'green' : (totalLost !== '—' ? 'red' : '')}">${parseFloat(totalLost) > 0 ? '-' : ''}${totalLost}</div><div class="unit">斤</div></div><div class="stat-card"><div class="label">BMI · 身高166cm</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${bmiCls}">${bmiVal}</div><div class="unit">${bmiUnit}</div></div>
+ <div class="stat-card"><div class="label">起始体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${startWeight.toFixed(1)}</div><div class="unit">斤</div></div><div class="stat-card"><div class="label">最新体重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value">${latestAfterText}</div><div class="unit">斤</div></div><div class="stat-card"><div class="label">累计减重</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${parseFloat(totalLost) > 0 ? 'green' : (totalLost !== '—' ? 'red' : '')}">${parseFloat(totalLost) > 0 ? '-' : ''}${totalLost}</div><div class="unit">斤</div></div><div class="stat-card"><div class="label">BMI · 身高${_bmiH}cm</div><div class="label">最后更新：${fitnessLastMD}</div><div class="value ${bmiCls}">${bmiVal}</div><div class="unit">${bmiUnit}</div></div>
  `;
 
  renderWeightGoal(startWeight, latestAfter);
@@ -20270,8 +20266,8 @@ const BS_PARTS = [
  { k:'upperArm', n:'上臂', no:1, side:'l', ax:31, ay:36, ml:27, mw:8  },
  { k:'foreArm',  n:'下臂', no:2, side:'l', ax:30, ay:52, ml:27, mw:7  },
  { k:'chest',    n:'胸',   no:3, side:'r', ax:64, ay:33, ml:35, mw:30 },
- { k:'belly',    n:'肚子', no:4, side:'r', ax:61, ay:48, ml:38, mw:24 },
- { k:'hip',      n:'臀围', no:5, side:'r', ax:62, ay:58, ml:36, mw:28 },
+ { k:'belly',    n:'肚子', no:4, side:'r', ax:56, ay:45, ml:41, mw:14 },
+ { k:'hip',      n:'臀围', no:5, side:'r', ax:68, ay:62, ml:40, mw:28 },
  { k:'thigh',    n:'大腿', no:6, side:'l', ax:43, ay:63, ml:37, mw:11 },
  { k:'calf',     n:'小腿', no:7, side:'r', ax:57, ay:80, ml:53, mw:9  }
 ];
@@ -20313,6 +20309,36 @@ function bsDelta(a,b2,k) {
 function bsDeltaTxt(d) { return d==null ? '—' : (d<0?'↓ ':d>0?'↑ ':'→ ')+Math.abs(d).toFixed(1); }
 function bsDeltaCls(d) { return d==null?'flat':(d<0?'down':d>0?'up':'flat'); }
 function bsVal(r,k) { return r && r[k]!=null ? parseFloat(r[k]).toFixed(1) : '—'; }
+// v500：统一 BMI 单源 = 真实身高(cm) / 真实最新体重(kg)。身高存 store.height，体重取全部记录最新一条（斤→kg）。
+// 所有出现 BMI 的模块都调它，保证全站同一个最新真实值；体重降了会自动重算。
+function getBMI() {
+  const h = (store.height != null) ? parseFloat(store.height) : 166;
+  if (!h || h < 100 || h > 250) return { val:null, unit:'待记录', cls:'' };
+  let w = null;
+  try {
+    const arr = (store.weightRecords || []).map(function(x){ return { date:x.date, v:(x.value!=null?x.value:(x.after!=null?x.after:x.before)) }; })
+      .filter(function(x){ return x.v != null; })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); });
+    if (arr.length) w = arr[arr.length-1].v / 2; // 斤→kg
+  } catch(e){}
+  if (w == null) return { val:null, unit:'待记录', cls:'' };
+  const bmi = w / Math.pow(h/100, 2);
+  let unit='待记录', cls='';
+  if (bmi < 18.5) { unit='偏瘦'; cls='green'; }
+  else if (bmi < 24) { unit='正常'; cls='green'; }
+  else if (bmi < 28) { unit='超重'; cls='red'; }
+  else { unit='过高'; cls='red'; }
+  return { val:bmi, unit:unit, cls:cls };
+}
+// v500：最新体重（斤），用于身材围度卡片 BMI 备注
+function bsLatestWJin() {
+  try {
+    const arr = (store.weightRecords || []).map(function(x){ return { date:x.date, v:(x.value!=null?x.value:(x.after!=null?x.after:x.before)) }; })
+      .filter(function(x){ return x.v != null; })
+      .sort(function(a,b){ return a.date.localeCompare(b.date); });
+    return arr.length ? arr[arr.length-1].v.toFixed(1) : '—';
+  } catch(e){ return '—'; }
+}
 function bsFigure(cur, list) {
  let rows = '';
  BS_PARTS.forEach(function(p){
@@ -20384,7 +20410,16 @@ function renderBodySizes() {
  bsMigrateOld();
  const list = bsList();
  const cur = list[0] || null;
- let html = '<div class="bs-body">'+bsFigure(cur,list)+bsSide(cur,list)+'</div>';
+ const _bh = (store.height != null) ? store.height : 166;
+ const _bb = getBMI();
+ const _bw = bsLatestWJin();
+ let html = '<div class="bs-profile">'
+   + '<div class="bs-prof-item"><label>我的身高</label><input id="bs-height" type="number" min="120" max="220" step="0.5" value="'+_bh+'" onchange="bsSaveHeight()"><span class="bs-prof-unit">cm</span></div>'
+   + '<div class="bs-prof-item bs-prof-bmi"><label>BMI</label>'
+   + '<div class="bs-prof-bmi-val '+_bb.cls+'" id="bs-bmi-val">'+(_bb.val!=null?_bb.val.toFixed(1):'—')+'<small>'+_bb.unit+'</small></div>'
+   + '<span class="bs-prof-note" id="bs-bmi-note">身高'+_bh+'cm · 最新体重'+_bw+'斤 实时换算</span></div>'
+   + '</div>'
+   + '<div class="bs-body">'+bsFigure(cur,list)+bsSide(cur,list)+'</div>';
  if (!cur) {
   html += '<div class="bs-empty">还没有围度记录 · 点右上「记围度」填第一次，之后每次更新都能看到增减</div>';
  } else {
@@ -20427,6 +20462,22 @@ function bsCloseModal() {
  if (m) m.style.display = 'none';
  document.body.style.overflow = '';
  bsEditIdx = -1;
+}
+// v500：身高输入变更 → 存 store.height，刷新本卡片 BMI 与健身统计（全站 BMI 统一）
+function bsSaveHeight() {
+  const e = document.getElementById('bs-height');
+  if (!e) return;
+  const v = parseFloat(e.value);
+  if (!isNaN(v) && v >= 100 && v <= 250) store.height = v;
+  else if (e.value.trim() === '') store.height = 166;
+  try { saveData(); } catch(e2){}
+  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch(e2){}
+  const b = getBMI();
+  const bv = document.getElementById('bs-bmi-val');
+  if (bv) { bv.className = 'bs-prof-bmi-val ' + b.cls; bv.innerHTML = (b.val!=null?b.val.toFixed(1):'—') + '<small>' + b.unit + '</small>'; }
+  const nt = document.getElementById('bs-bmi-note');
+  if (nt) nt.textContent = '身高' + (store.height||166) + 'cm · 最新体重' + bsLatestWJin() + '斤 实时换算';
+  try { if (typeof renderFitness === 'function') renderFitness(); } catch(e2){}
 }
 function bsSubmit() {
  const dEl = document.getElementById('bs-date');
@@ -30131,6 +30182,20 @@ button.plan-quick-chip.off{opacity:.55;cursor:default;}
 /* v482 身材围度：主人参考图作底图 + 图上六部位标注 + 较上次/较首次增减；两卡合一 */
 @media (min-width:769px){ .bs-card{grid-column:span 2;} }
 .bs-card .card-title{display:flex;align-items:center;}
+/* v500：身材围度「我的资料」块（身高输入 + BMI 实时值） */
+.bs-profile{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 8px 8px;padding:8px 10px;border:1px solid #F0D7E4;border-radius:12px;background:rgba(255,250,253,.7);}
+.bs-prof-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#9B6B82;}
+.bs-prof-item > label{font-weight:700;color:#5E4F55;white-space:nowrap;}
+.bs-prof-item input{width:62px;padding:4px 6px;border:1px solid #ffd0dc;border-radius:8px;font-size:14px;font-weight:800;color:#5E4F55;text-align:center;font-family:inherit;background:#fff;}
+.bs-prof-unit{color:#B08A9C;font-weight:600;}
+.bs-prof-bmi{margin-left:auto;flex-direction:column;align-items:flex-end;gap:0;}
+.bs-prof-bmi > label{font-size:10.5px;color:#B08A9C;}
+.bs-prof-bmi-val{font-size:18px;font-weight:800;color:#5E4F55;line-height:1.1;}
+.bs-prof-bmi-val.green{color:#7FA88C;}
+.bs-prof-bmi-val.red{color:#C9849A;}
+.bs-prof-bmi-val small{font-size:10px;font-weight:700;margin-left:3px;color:#B08A9C;}
+.bs-prof-note{display:block;font-size:9.5px;color:#B08A9C;margin-top:1px;white-space:nowrap;}
+@media (max-width:768px){ .bs-profile{padding:6px 8px;gap:8px;} .bs-prof-item input{width:54px;} .bs-prof-bmi{margin-left:0;} }
 button.bs-add{margin-left:auto;padding:5px 12px;border:1px solid #EFD0DE;border-radius:999px;background:rgba(255,255,255,.9);color:#5E4F55;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(226,168,192,.13);}
 button.bs-add:hover{background:#FDEFF5;}
 .bs-body{display:flex;gap:16px;align-items:flex-start;}
