@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-498"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-499"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -16295,18 +16295,12 @@ function collectCheckinAlerts() {
  if (!hasWeight && hour >= 8 && hour < 13) {
  alerts.push({ icon: '️', text: '该量体重啦！记得记录哦~', type: 'weight' });
  }
- // 运动打卡提醒：19:00-20:00 之间
- if (!hasExercise && hour >= 19 && hour < 20) {
- alerts.push({ icon: '‍️', text: '该运动打卡啦！加油~' });
- }
+ // v499：运动打卡提醒撤出主页提醒条（主人要求）
  // 量体重未完成超时提醒：13:00 以后还没量（持续提醒，直到量了为止）
  if (!hasWeight && hour >= 13) {
  alerts.push({ icon: '️', text: '今天还没量体重！别忘了~', type: 'weight' });
  }
- // 运动未完成超时提醒：20:00 以后还没打卡
- if (!hasExercise && hour >= 20) {
- alerts.push({ icon: '‍️', text: '今天还没运动打卡！' });
- }
+ // v499：运动超时提醒同步撤出主页提醒条
  // 如厕异常提醒：仅第3天没上厕所才提醒，前两天（健康/观察）不提醒
  if (toiletInfo.has && toiletInfo.state === 'alert') {
  alerts.push({ icon: '', text: '已' + toiletInfo.daysSince + '日没上厕所，务必注意！' });
@@ -20297,7 +20291,12 @@ function bsMigrateOld() {
    if (!r || !r.date) return;
    let t = null;
    for (let i=0;i<store.bodySizes.length;i++) if (store.bodySizes[i] && store.bodySizes[i].date===r.date) { t=store.bodySizes[i]; break; }
-   if (!t) { t = { date:r.date }; store.bodySizes.push(t); added++; }
+   if (!t) {
+    let _tomb = false;
+    try { _tomb = store.__deleted && Array.isArray(store.__deleted.bodySizes) && store.__deleted.bodySizes.indexOf('bsd_' + r.date) >= 0; } catch(e){}
+    if (_tomb) return; // v499：主人删过的日期，绝不再从旧三围记录复活
+    t = { date:r.date }; store.bodySizes.push(t); added++;
+   }
    if (r.chest!=null && t.chest==null) t.chest=r.chest;
    if (r.waist!=null && t.belly==null) t.belly=r.waist;
    if (r.hip!=null && t.hip==null) t.hip=r.hip;
@@ -27105,6 +27104,7 @@ function renderPlanHabits() {
  if (byKey.skin) html += planRenderPairCard('pair-skin', '', '养皮肤', [byKey.skin]);
  // 养头发：周期卡，独立一张
  store.planHabits.forEach(function (h) {
+ if (h.key === 'hair') return; // v499：护发素按主人要求撤出提升计划（数据保留）
  if (h.type === 'cycle') html += planRenderHairCard(h);
  else if (h.type === 'patch') html += planRenderPatchCard(h);
  else if (h.type === 'course') html += planRenderFaceCourse(h);
@@ -27288,6 +27288,7 @@ function renderPlanGoals() {
  planEnsure();
  let html = '';
  store.planGoals.forEach(function (g) {
+ if (g.key === 'photos' || g.key === 'drive') return; // v499：对比照 / 学车拿证按主人要求撤出（数据保留）
  if (g.type === 'link') html += planGoalCardDrive(g);
  else if (g.type === 'checklist') html += planGoalCardChecklist(g);
  else if (g.type === 'phase') html += planGoalCardPhase(g);
@@ -27907,7 +27908,7 @@ function v483Streak(map) {
 const PQ_GROUPS = [
  { k:'skin',  name:'护肤',     sub:'身体 · 脸部',   tone:'pink'   },
  { k:'supp',  name:'保健品',   sub:'镁 · 维生素D',  tone:'purple' },
- { k:'daily', name:'日常养护', sub:'头发 · 牙齿',   tone:'blue'   }
+ { k:'daily', name:'日常养护', sub:'牙齿',        tone:'blue'   }
 ];
 function v483Summary() {
  const sumEl = document.getElementById('plan-summary');
@@ -27934,7 +27935,7 @@ function planQuickItems() {
   items.push({ k:'mg', g:'supp', label:'镁', sub:'睡前吃', tip:'睡前吃', done:has(by.supp,'mg'), streak:v483Streak(by.supp.mg) });
   items.push({ k:'vit', g:'supp', label:'维生素D', sub:'早上吃', tip:'早上吃', done:has(by.supp,'vit'), streak:v483Streak(by.supp.vit) });
  }
- if (by.hair) items.push({ k:'hair', g:'daily', label:'护发素', sub:'调好就打卡', tip:'调好护发素就打卡', done:has(by.hair,'history'), streak:v483Streak(by.hair.history) });
+ // v499：护发素撤出快速打卡（数据保留）
  if (by.patch) {
   let st = { doneToday: false, due: true, next: '' }, used = 0;
   try { st = planPatchState(by.patch); } catch (e) {}
