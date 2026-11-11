@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-500"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-501"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -14182,8 +14182,11 @@ async function importAllData(file) {
  try {
  if (bundle.data.accounts) store.accounts = bundle.data.accounts;
  if (bundle.data.accountsMeta) store.accountsMeta = Object.assign({}, store.accountsMeta, bundle.data.accountsMeta);
+ // v501：自媒体字段（作品/数据流水/待发布/墓碑/健康度）一并手术恢复，其它数据一概不碰
+ var _bmf = ['mediaRecords','accountRecords','futurePosts','accountDeleted','accountHealth','publishSchedule'];
  Object.keys(bundle.data).forEach(function (k) {
  if (k === 'accounts' || k === 'accountsMeta') return;
+ if (_bmf.indexOf(k) >= 0) { try { store[k] = bundle.data[k]; } catch (e) {} return; }
  try { localStorage.setItem(k, bundle.data[k]); } catch (e) {}
  });
  saveData();
@@ -20266,8 +20269,8 @@ const BS_PARTS = [
  { k:'upperArm', n:'上臂', no:1, side:'l', ax:31, ay:36, ml:27, mw:8  },
  { k:'foreArm',  n:'下臂', no:2, side:'l', ax:30, ay:52, ml:27, mw:7  },
  { k:'chest',    n:'胸',   no:3, side:'r', ax:64, ay:33, ml:35, mw:30 },
- { k:'belly',    n:'肚子', no:4, side:'r', ax:56, ay:45, ml:41, mw:14 },
- { k:'hip',      n:'臀围', no:5, side:'r', ax:68, ay:62, ml:40, mw:28 },
+ { k:'belly',    n:'腹部', no:4, side:'r', ax:56, ay:44, ml:41, mw:14 },
+ { k:'hip',      n:'臀围', no:5, side:'r', ax:64, ay:56, ml:37, mw:26 },
  { k:'thigh',    n:'大腿', no:6, side:'l', ax:43, ay:63, ml:37, mw:11 },
  { k:'calf',     n:'小腿', no:7, side:'r', ax:57, ay:80, ml:53, mw:9  }
 ];
@@ -20329,15 +20332,6 @@ function getBMI() {
   else if (bmi < 28) { unit='超重'; cls='red'; }
   else { unit='过高'; cls='red'; }
   return { val:bmi, unit:unit, cls:cls };
-}
-// v500：最新体重（斤），用于身材围度卡片 BMI 备注
-function bsLatestWJin() {
-  try {
-    const arr = (store.weightRecords || []).map(function(x){ return { date:x.date, v:(x.value!=null?x.value:(x.after!=null?x.after:x.before)) }; })
-      .filter(function(x){ return x.v != null; })
-      .sort(function(a,b){ return a.date.localeCompare(b.date); });
-    return arr.length ? arr[arr.length-1].v.toFixed(1) : '—';
-  } catch(e){ return '—'; }
 }
 function bsFigure(cur, list) {
  let rows = '';
@@ -20412,13 +20406,8 @@ function renderBodySizes() {
  const cur = list[0] || null;
  const _bh = (store.height != null) ? store.height : 166;
  const _bb = getBMI();
- const _bw = bsLatestWJin();
- let html = '<div class="bs-profile">'
-   + '<div class="bs-prof-item"><label>我的身高</label><input id="bs-height" type="number" min="120" max="220" step="0.5" value="'+_bh+'" onchange="bsSaveHeight()"><span class="bs-prof-unit">cm</span></div>'
-   + '<div class="bs-prof-item bs-prof-bmi"><label>BMI</label>'
-   + '<div class="bs-prof-bmi-val '+_bb.cls+'" id="bs-bmi-val">'+(_bb.val!=null?_bb.val.toFixed(1):'—')+'<small>'+_bb.unit+'</small></div>'
-   + '<span class="bs-prof-note" id="bs-bmi-note">身高'+_bh+'cm · 最新体重'+_bw+'斤 实时换算</span></div>'
-   + '</div>'
+ // v501：身高固定值 + BMI 实时换算，「身材围度」标题下一行极简显示（身高不可编辑）
+ let html = '<div class="bs-inline">身高'+_bh+'cm · BMI '+(_bb.val!=null?_bb.val.toFixed(1):'—')+'</div>'
    + '<div class="bs-body">'+bsFigure(cur,list)+bsSide(cur,list)+'</div>';
  if (!cur) {
   html += '<div class="bs-empty">还没有围度记录 · 点右上「记围度」填第一次，之后每次更新都能看到增减</div>';
@@ -20462,22 +20451,6 @@ function bsCloseModal() {
  if (m) m.style.display = 'none';
  document.body.style.overflow = '';
  bsEditIdx = -1;
-}
-// v500：身高输入变更 → 存 store.height，刷新本卡片 BMI 与健身统计（全站 BMI 统一）
-function bsSaveHeight() {
-  const e = document.getElementById('bs-height');
-  if (!e) return;
-  const v = parseFloat(e.value);
-  if (!isNaN(v) && v >= 100 && v <= 250) store.height = v;
-  else if (e.value.trim() === '') store.height = 166;
-  try { saveData(); } catch(e2){}
-  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch(e2){}
-  const b = getBMI();
-  const bv = document.getElementById('bs-bmi-val');
-  if (bv) { bv.className = 'bs-prof-bmi-val ' + b.cls; bv.innerHTML = (b.val!=null?b.val.toFixed(1):'—') + '<small>' + b.unit + '</small>'; }
-  const nt = document.getElementById('bs-bmi-note');
-  if (nt) nt.textContent = '身高' + (store.height||166) + 'cm · 最新体重' + bsLatestWJin() + '斤 实时换算';
-  try { if (typeof renderFitness === 'function') renderFitness(); } catch(e2){}
 }
 function bsSubmit() {
  const dEl = document.getElementById('bs-date');
@@ -30177,25 +30150,13 @@ button.plan-quick-chip.off{opacity:.55;cursor:default;}
  button.plan-quick-chip{padding:5px 9px;font-size:11.5px;}
 }
 </style>
-<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>肚子 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>臀围 (cm)</label><input type="number" id="bs-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 92.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
+<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>腹部 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>臀围 (cm)</label><input type="number" id="bs-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 92.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
 <style id="hami-v482-fix">
 /* v482 身材围度：主人参考图作底图 + 图上六部位标注 + 较上次/较首次增减；两卡合一 */
 @media (min-width:769px){ .bs-card{grid-column:span 2;} }
 .bs-card .card-title{display:flex;align-items:center;}
-/* v500：身材围度「我的资料」块（身高输入 + BMI 实时值） */
-.bs-profile{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 8px 8px;padding:8px 10px;border:1px solid #F0D7E4;border-radius:12px;background:rgba(255,250,253,.7);}
-.bs-prof-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#9B6B82;}
-.bs-prof-item > label{font-weight:700;color:#5E4F55;white-space:nowrap;}
-.bs-prof-item input{width:62px;padding:4px 6px;border:1px solid #ffd0dc;border-radius:8px;font-size:14px;font-weight:800;color:#5E4F55;text-align:center;font-family:inherit;background:#fff;}
-.bs-prof-unit{color:#B08A9C;font-weight:600;}
-.bs-prof-bmi{margin-left:auto;flex-direction:column;align-items:flex-end;gap:0;}
-.bs-prof-bmi > label{font-size:10.5px;color:#B08A9C;}
-.bs-prof-bmi-val{font-size:18px;font-weight:800;color:#5E4F55;line-height:1.1;}
-.bs-prof-bmi-val.green{color:#7FA88C;}
-.bs-prof-bmi-val.red{color:#C9849A;}
-.bs-prof-bmi-val small{font-size:10px;font-weight:700;margin-left:3px;color:#B08A9C;}
-.bs-prof-note{display:block;font-size:9.5px;color:#B08A9C;margin-top:1px;white-space:nowrap;}
-@media (max-width:768px){ .bs-profile{padding:6px 8px;gap:8px;} .bs-prof-item input{width:54px;} .bs-prof-bmi{margin-left:0;} }
+/* v501：身高 + BMI 标题下一行极简显示（同行不转行） */
+.bs-inline{margin:0 8px 8px;font-size:11.5px;font-weight:700;color:#9B6B82;white-space:nowrap;letter-spacing:.3px;}
 button.bs-add{margin-left:auto;padding:5px 12px;border:1px solid #EFD0DE;border-radius:999px;background:rgba(255,255,255,.9);color:#5E4F55;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(226,168,192,.13);}
 button.bs-add:hover{background:#FDEFF5;}
 .bs-body{display:flex;gap:16px;align-items:flex-start;}
