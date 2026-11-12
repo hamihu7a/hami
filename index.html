@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-11-501"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-502"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -12205,6 +12205,7 @@ async function pullAndMerge() {
  // v148 同步核心：mergeStoreInto 已改为「本地优先并集」——本地 localStorage 是绝对事实来源，
  // 云端只补充本地没有的记录，绝不覆盖/删除本地已有数据（根治刷新/同步丢数据）。
  mergeStoreInto(store, remote.store);
+ try { hamiMediaHeal(false); } catch (e) {} // v502：云端旧档回拉后立刻兜底，保证推上去的永远是新档
  try { restoreDriveSubject1Once(); } catch (e) {} // v366：科目一勾选一次性补回（合并后仍缺才生效）
  // v304：天气位置以云端(通常为手机端)为准，跨端保持一致（不受本机旧自动定位干扰）
  try { if (remote.store && remote.store.weatherLocation) { store.weatherLocation = remote.store.weatherLocation; } } catch(e) {}
@@ -14183,7 +14184,7 @@ async function importAllData(file) {
  if (bundle.data.accounts) store.accounts = bundle.data.accounts;
  if (bundle.data.accountsMeta) store.accountsMeta = Object.assign({}, store.accountsMeta, bundle.data.accountsMeta);
  // v501：自媒体字段（作品/数据流水/待发布/墓碑/健康度）一并手术恢复，其它数据一概不碰
- var _bmf = ['mediaRecords','accountRecords','futurePosts','accountDeleted','accountHealth','publishSchedule'];
+ var _bmf = ['mediaRecords','futurePosts','accountDeleted','accountHealth','publishSchedule'] // v502：accountRecords 是财务流水，绝不恢复;
  Object.keys(bundle.data).forEach(function (k) {
  if (k === 'accounts' || k === 'accountsMeta') return;
  if (_bmf.indexOf(k) >= 0) { try { store[k] = bundle.data[k]; } catch (e) {} return; }
@@ -15069,6 +15070,39 @@ function fixImportedCustomIncomeV213() {
  }
 }
 
+// ==================== v502 自媒体权威数据 + 开机自愈 ====================
+// 数据来自 F 盘 2026-11-10 16:55 完整备份（主人 11月6日 16:52 更新的新版自媒体数据）。
+// 经逐字段 diff：只有 accounts / accountsMeta 两个字段被旧档覆盖；只修这 2 个，体重 / 便签 / 围度 / 财务流水等一律不碰。
+// 旧档特征（10月18日 / 大号6000粉 / 无更新日期）出现时自动换回权威数据，并推上云端。
+const HAMI_MEDIA_V502 = {"accounts":{"big":{"name":"sims哈弥老师","platform":"小红书","accountId":"hamihami1998","followers":6163,"prevFollowers":6000,"following":82,"posts":85,"likes":41000,"weekly":0,"intro":"sim4 EA风捏人博主｜每月分享免费人物","tags":["美化档人物","人物定制","mod分享"],"link":"https://xhslink.cn/m/22yurpdUfyZ"},"small":{"name":"sims哈弥定制版","platform":"小红书","accountId":"18609934171","followers":113,"prevFollowers":112,"following":2,"posts":7,"likes":960,"weekly":0,"intro":"疯狂接人物定制中ING...","tags":["mod分享","人物定制"],"link":"https://xhslink.cn/m/5amTW4hpyz1"},"douyin":{"name":"sims哈弥老师","platform":"抖音","accountId":"38967046377","followers":756,"prevFollowers":759,"following":70,"posts":65,"likes":13100,"weekly":0,"intro":"sim4 模拟人生究极爱好者","tags":["作品","日常","特效","推荐","收藏"],"link":"https://v.douyin.com/W6Pxj2TJcNQ/"}},"accountsMeta":{"lastUpdate":"11月6日 16:52","_lastSavedAt":1793955141197}};
+
+function hamiMediaHeal(allowPush) {
+ try {
+  var am = (store && store.accountsMeta) || {};
+  var big = ((store && store.accounts) || {}).big || {};
+  var lu = String(am.lastUpdate || '');
+  var isOld = (!lu || lu.indexOf('10月18') >= 0 || lu.indexOf('8月18') >= 0 || Number(big.followers) === 6000);
+  if (!isOld) { try { localStorage.setItem('hami_media_v502_ok', '1'); } catch (e) {} return false; }
+  var d = HAMI_MEDIA_V502;
+  ['accounts','accountsMeta'].forEach(function (k) {
+   if (d[k] != null) store[k] = JSON.parse(JSON.stringify(d[k]));
+  });
+  // 字段戳盖新：另一端普通拉取时云端（本版）后者赢，杜绝旧档再压回来
+  if (!store._fieldTs || typeof store._fieldTs !== 'object') store._fieldTs = {};
+  var ft = Date.now();
+  ['accounts','accountsMeta'].forEach(function (k) {
+   store._fieldTs[k] = Math.max(ft, (store._fieldTs[k] || 0) + 1);
+  });
+  try { localStorage.setItem('hami_media_v502_ok', '1'); } catch (e) {}
+  try { saveData(true); } catch (e) {} // true = 只存本机不回推，避免启动瞬间同步死循环
+  if (allowPush) {
+   // 云同步在 200ms / 4s 才就绪；commitToCloud 自带 pending 队列，就绪后自动补推
+   try { setTimeout(function () { try { commitToCloud(); } catch (e) {} }, 3800); } catch (e) {}
+   try { setTimeout(function () { try { commitToCloud(); } catch (e) {} }, 9000); } catch (e) {}
+  }
+  return true;
+ } catch (e) { return false; }
+}
 function loadData() {
  try {
  // 版本号检测：仅用于记录日志，绝不在版本不匹配时清空 localStorage（否则主人的真实数据会被删除，例如八月份体重记录）
@@ -20268,7 +20302,7 @@ const BS_IMG = 'data:image/webp;base64,UklGRpaVAABXRUJQVlA4IIqVAAAQ9AGdASqKApgDP
 const BS_PARTS = [
  { k:'upperArm', n:'上臂', no:1, side:'l', ax:31, ay:36, ml:27, mw:8  },
  { k:'foreArm',  n:'下臂', no:2, side:'l', ax:30, ay:52, ml:27, mw:7  },
- { k:'chest',    n:'胸',   no:3, side:'r', ax:64, ay:33, ml:35, mw:30 },
+ { k:'chest',    n:'胸部',   no:3, side:'r', ax:64, ay:33, ml:35, mw:30 },
  { k:'belly',    n:'腹部', no:4, side:'r', ax:56, ay:44, ml:41, mw:14 },
  { k:'hip',      n:'臀围', no:5, side:'r', ax:64, ay:56, ml:37, mw:26 },
  { k:'thigh',    n:'大腿', no:6, side:'l', ax:43, ay:63, ml:37, mw:11 },
@@ -28562,6 +28596,7 @@ try { setTimeout(function () { try { maybeRemindBackup(); } catch (e2) {} }, 250
 initSettingsPanel();
 ensureDefaults();
 autoDedupeImportantDates();
+try { hamiMediaHeal(true); } catch (e) {} // v502：自媒体数据开机自愈并延迟推云端
 saveData();
 
 // 打开网页：体重日历一律定位到「今天所在月」（像日历软件一样，打开即回到本月；
@@ -29389,12 +29424,12 @@ function mnCardHtml(n, big, demo){
   if(!demo) {
     h += '<span class="mn-ops">';
     if(mnState.confirmId===n.id){
-      h += '<button class="mn-sure" type="button" onclick="event.stopPropagation();mnDelete(\''+n.id+'\')">确定删</button>';
-      h += '<button type="button" onclick="event.stopPropagation();mnCancelDel()">取消</button>';
+      h += '<button class="mn-sure" type="button" onclick="arguments[0].stopPropagation();mnDelete(\''+n.id+'\')">确定删</button>';
+      h += '<button type="button" onclick="arguments[0].stopPropagation();mnCancelDel()">取消</button>';
     } else {
-      h += '<button type="button" title="改这张" onclick="event.stopPropagation();mnOpenEditor(\''+n.id+'\')">改</button>';
-      h += '<button class="mn-favbtn'+(n.fav?' on':'')+'" type="button" title="'+(n.fav?'取消收藏':'收进收藏')+'" onclick="event.stopPropagation();mnToggleFav(\''+n.id+'\')">收</button>';
-      h += '<button class="mn-del" type="button" title="删这张" onclick="event.stopPropagation();mnAskDel(\''+n.id+'\')">删</button>';
+      h += '<button type="button" title="改这张" onclick="arguments[0].stopPropagation();mnOpenEditor(\''+n.id+'\')">改</button>';
+      h += '<button class="mn-favbtn'+(n.fav?' on':'')+'" type="button" title="'+(n.fav?'取消收藏':'收进收藏')+'" onclick="arguments[0].stopPropagation();mnToggleFav(\''+n.id+'\')">收</button>';
+      h += '<button class="mn-del" type="button" title="删这张" onclick="arguments[0].stopPropagation();mnAskDel(\''+n.id+'\')">删</button>';
     }
     h += '</span>';
   }
@@ -29464,7 +29499,14 @@ function mnRender(){
                +  '<div class="mn-fold-line" onclick="mnToggleNoteFold(\''+n.id+'\')">'
                +  '<span class="mn-fold-sum">'+mnEsc(sum)+'</span>'
                +  '<span class="mn-fold-date">'+mnStamp(n.ts).split(' ')[0]+'</span>'
-               +  '<i>'+(o?'−':'＋')+'</i></div>';
+               +  '<i>'+(o?'−':'＋')+'</i>'
+               +  '<span class="mn-row-ops">'
+               +   (mnState.rowConfirmId===n.id
+                     ? '<button type="button" data-mn-op="del-yes" data-mn-id="'+n.id+'">确定删</button>'
+                       + '<button type="button" data-mn-op="del-no" data-mn-id="'+n.id+'">取消</button>'
+                     : '<button type="button" data-mn-op="edit" data-mn-id="'+n.id+'">改</button>'
+                       + '<button type="button" data-mn-op="del" data-mn-id="'+n.id+'">删</button>')
+               +  '</span></div>';
           if(o) html += '<div class="mn-fold-open">'+mnCardHtml(n,false,false)+'</div>';
           html += '</div>';
         });
@@ -29982,6 +30024,19 @@ function mnViewerDel(){
     },true);
     draw();
   }
+  // v502：行内改 / 删按钮的事件委托立即注册，不等 DOMContentLoaded
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      var b = (t && t.closest) ? t.closest('[data-mn-op]') : null;
+      if (!b) return;
+      try { e.stopPropagation(); e.preventDefault(); } catch (er) {}
+      var op = b.getAttribute('data-mn-op'), id = b.getAttribute('data-mn-id');
+      if (!id) return;
+      if (op === 'edit') { try { mnOpenEditor(id); } catch (er) {} }
+      else if (op === 'del') { mnState.rowConfirmId = id; try { mnRender(); } catch (er) {} }
+      else if (op === 'del-no') { mnState.rowConfirmId = null; try { mnRender(); } catch (er) {} }
+      else if (op === 'del-yes') { mnState.rowConfirmId = null; try { mnDelete(id); } catch (er) {} }
+    }, true);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 </script>
@@ -30150,7 +30205,7 @@ button.plan-quick-chip.off{opacity:.55;cursor:default;}
  button.plan-quick-chip{padding:5px 9px;font-size:11.5px;}
 }
 </style>
-<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>腹部 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>臀围 (cm)</label><input type="number" id="bs-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 92.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
+<div id="bs-modal" class="modal-mask" style="display:none;" onclick="if(event.target===this)bsCloseModal()"><div class="modal-card" style="max-width:400px;"><div class="arm-head"><button type="button" class="arm-close" onclick="bsCloseModal()" aria-label="关闭"></button><div id="bs-modal-title" style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#5a3a48;letter-spacing:1px;">记围度</div><span style="width:36px;"></span></div><div class="co-body"><div class="co-field"><label>日期</label><input type="date" id="bs-date"></div><div class="bs-fields"><div class="co-field"><label>上臂 (cm)</label><input type="number" id="bs-upperArm" step="0.1" min="0" inputmode="decimal" placeholder="如 28.5"></div><div class="co-field"><label>下臂 (cm)</label><input type="number" id="bs-foreArm" step="0.1" min="0" inputmode="decimal" placeholder="如 23.0"></div><div class="co-field"><label>胸部 (cm)</label><input type="number" id="bs-chest" step="0.1" min="0" inputmode="decimal" placeholder="如 86.0"></div><div class="co-field"><label>腹部 (cm)</label><input type="number" id="bs-belly" step="0.1" min="0" inputmode="decimal" placeholder="如 76.0"></div><div class="co-field"><label>臀围 (cm)</label><input type="number" id="bs-hip" step="0.1" min="0" inputmode="decimal" placeholder="如 92.0"></div><div class="co-field"><label>大腿 (cm)</label><input type="number" id="bs-thigh" step="0.1" min="0" inputmode="decimal" placeholder="如 52.0"></div><div class="co-field"><label>小腿 (cm)</label><input type="number" id="bs-calf" step="0.1" min="0" inputmode="decimal" placeholder="如 34.0"></div></div></div><div class="co-actions"><button class="co-cancel" onclick="bsCloseModal()">取消</button><button class="co-save" onclick="bsSubmit()">保存</button></div></div></div>
 <style id="hami-v482-fix">
 /* v482 身材围度：主人参考图作底图 + 图上六部位标注 + 较上次/较首次增减；两卡合一 */
 @media (min-width:769px){ .bs-card{grid-column:span 2;} }
@@ -30288,6 +30343,15 @@ button.pq-item.wait .pq-state,button.pq-item.off .pq-state{color:#B08A9C;backgro
  .mn-ops button{padding:2px 7px;font-size:10px;}
 }
 /* v491 臀围加进图后，第七行标签不挤 */
+/* ===== v502 便签册：每条摘要行直接给「改 / 删」，触屏好点、不用展开两层 ===== */
+.mn-row-ops{display:inline-flex !important;gap:5px;margin-left:8px;flex:0 0 auto;position:relative;z-index:6;pointer-events:auto;}
+.mn-row-ops button{border:1px solid #F2E5EC;background:rgba(255,255,255,.96);border-radius:9px;font-size:11px;font-weight:800;color:#8C7B82;padding:5px 11px;min-height:32px;min-width:38px;cursor:pointer;font-family:inherit;pointer-events:auto;touch-action:manipulation;}
+.mn-row-ops button[data-mn-op="del"],.mn-row-ops button[data-mn-op="del-yes"]{color:#C9849A;background:#FBE9EE;border-color:#F3D6DF;}
+.mn-fold-line .mn-fold-sum{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:768px){
+ .mn-row-ops{gap:4px;margin-left:6px;}
+ .mn-row-ops button{padding:7px 12px;min-height:38px;min-width:44px;font-size:11.5px;}
+}
 .bs-side-top{margin-bottom:4px;}
 </style>
 </body></html>
