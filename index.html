@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-503"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-504"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -10430,7 +10430,47 @@ const HAMI_SYNC = {
       });
       return out;
     }
-    function sig(arr){ return JSON.stringify((arr||[]).map(function(t){return [t&&t.id,t&&t.text,t&&t.category,!!(t&&t.done),t&&t.updatedAt,t&&t.deadline,t&&t.tag];}).sort(function(a,b){return String(a[0]).localeCompare(String(b[0]));})); }
+    /* patch-sync v3.6：内容级同步 —— 小点(subtasks)文字/勾选、类型、日期都参与跨端同步 */
+    function cSig(t){ return JSON.stringify([t&&t.text,t&&t.type,t&&t.date,t&&t.deadline,t&&t.tag,((t&&t.subtasks)||[]).map(function(s){return [s&&s.text,!!(s&&s.done)];})]); }
+    function rev(t){ return Number(t&&t._cs)||Number(t&&t.updatedAt)||Number(t&&t.createdAt)||0; }
+    function subMerge(a,b,preferLocal){
+      const aa=(a||[]).slice(), bb=(b||[]).slice(), n=Math.max(aa.length,bb.length), out=[];
+      for(let i=0;i<n;i++){
+        const x=aa[i], y=bb[i];
+        if(!x){ if(y) out.push(Object.assign({},y)); continue; }
+        if(!y){ out.push(Object.assign({},x)); continue; }
+        const o=Object.assign({},preferLocal?x:y); o.done=!!(x.done||y.done); out.push(o);
+      }
+      return out;
+    }
+    function mergeItem(l,r){
+      if(!l) return Object.assign({},r); if(!r) return Object.assign({},l);
+      const useLocal=(rev(l)>rev(r))||(rev(l)===rev(r)&&MASTER);
+      const o=Object.assign({},useLocal?l:r);
+      o.done=!!(l.done||r.done);
+      if(o.done&&!o.completedAt) o.completedAt=l.completedAt||r.completedAt||Date.now();
+      o.subtasks=subMerge(l.subtasks,r.subtasks,useLocal);
+      if(l.category==='work'||r.category==='work') o.category='work';
+      return o;
+    }
+    function sig(arr){ return JSON.stringify((arr||[]).map(function(t){return [t&&t.id,t&&t.text,t&&t.category,!!(t&&t.done),t&&t.updatedAt,t&&t.deadline,t&&t.tag,t&&t.type,cSig(t)];}).sort(function(a,b){return String(a[0]).localeCompare(String(b[0]));})); }
+    /* patch-sync v3.6：内容基准 —— 只有主人真的改了才盖修订戳；启动拉取不算改动 */
+    let baseSig={}, stamping=false;
+    function syncBase(){ const m={}; (localGet()||[]).forEach(function(t){ if(t&&t.id) m[t.id]=cSig(t); }); baseSig=m; }
+    function localSetQuiet(arr){ store.userTodos=arr; window.__todoSyncApplying=true; try{ saveData(true); }catch(e){} window.__todoSyncApplying=false; }
+    function stampUserEdits(){
+      if(stamping) return; stamping=true;
+      try{
+        const cur=localGet()||[]; let changed=false;
+        cur.forEach(function(t){
+          if(!t||!t.id) return;
+          const s=cSig(t), prev=baseSig[t.id];
+          if(prev!==undefined && prev!==s){ t._cs=Date.now(); changed=true; }
+          baseSig[t.id]=s;
+        });
+        if(changed) localSetQuiet(cur);
+      }finally{ stamping=false; }
+    }
     function localGet(){ return (store&&store.userTodos)||[]; }
     function localSet(arr){ store.userTodos=arr; window.__todoSyncApplying=true; try{ saveData(true); }catch(e){} window.__todoSyncApplying=false; }
     function render(){ try{ if(typeof renderTodoPanel==='function') renderTodoPanel(); }catch(e){} try{ if(typeof renderHomeTodo==='function') renderHomeTodo(); }catch(e){} }
@@ -10453,33 +10493,23 @@ const HAMI_SYNC = {
           else if(sig(local)!==sig(normalize(remote))){ /* patch-sync v3.1 */ const ok=await ghPut(local); dirty=!ok; }
           else dirty=false;
         }else{
-          /* 从端：以云端为基础叠加，绝不删除云端任何条目（根除「14 条冲掉 20 条」） */
-          /* patch-sync v3.5：按 id 认领同一条 —— Hami 改文字时更新云端文字，不再新增一条重复项 */
-          const map={},order=[],byId={};
-          normalize(remote).forEach(function(r){ const k=txt(r); if(r&&r.id) byId[r.id]=r; if(k&&!map[k]){ map[k]=r; order.push(k); } });
-          normalize(localGet()||[]).forEach(function(l){ /* patch-sync v3.5 */
-            const k=txt(l); if(!k) return;
-            const same=(l&&l.id)?byId[l.id]:null;
-            if(same){
-              if(txt(same)!==k){
-                const oldK=txt(same);
-                same.text=l.text; same.updatedAt=l.updatedAt||same.updatedAt||0;
-                if(l.deadline!==undefined) same.deadline=l.deadline;
-                if(l.tag!==undefined) same.tag=l.tag;
-                if(l.subtasks!==undefined) same.subtasks=l.subtasks;
-                delete map[oldK]; map[k]=same;
-                const i=order.indexOf(oldK); if(i>=0) order[i]=k;
-              }
-              /* patch-sync v3.5：勾选完成照旧回传；时间戳取已有值，绝不每轮生成新值 */
-              if(l.done && !same.done){ same.done=true; same.completedAt=l.completedAt||Date.now(); }
+          /* patch-sync v3.6：以云端条目集合为基础（绝不删云端条目），同 id 项按内容修订戳合并 */
+          const bid={}, order=[];
+          normalize(remote).forEach(function(r){ const k=txt(r); if(r&&r.id) bid[r.id]=r; order.push({k:k,r:r}); });
+          normalize(localGet()||[]).forEach(function(l){
+            if(!l) return; const k=txt(l); if(!k) return;
+            const hit=l.id?bid[l.id]:null;
+            if(hit){
+              const m=mergeItem(l,hit);
+              for(let i=0;i<order.length;i++){ if(order[i].r===hit){ order[i].r=m; order[i].k=txt(m); break; } }
+              bid[l.id]=m;
               return;
             }
-            if(!map[k]){ map[k]=l; order.push(k); }
-            else if(l.done && !map[k].done){
-              map[k]=Object.assign({},map[k],{done:true,completedAt:l.completedAt||Date.now(),updatedAt:map[k].updatedAt||Date.now()});
-            }
+            let slot=null; for(let i=0;i<order.length;i++){ if(order[i].k===k){ slot=order[i]; break; } }
+            if(!slot) order.push({k:k,r:l});
+            else if(l.done&&!slot.r.done) slot.r=Object.assign({},slot.r,{done:true,completedAt:l.completedAt||Date.now()});
           });
-          const merged=order.map(function(k){ return map[k]; }).filter(Boolean);
+          const merged=order.map(function(x){return x.r;}).filter(Boolean);
           if(sig(merged)!==sig(remote)){ const ok=await ghPut(merged); dirty=!ok; }
           else dirty=false;
         }
@@ -10522,42 +10552,31 @@ const HAMI_SYNC = {
           dirty=false;
         }else{
           remember(remote); remember(clean);
-          /* patch-sync v3.5：有「未推送改动」时，pull 不许用云端无条件覆盖本地，
-             否则主人刚新增/改字/勾选的待办会在 800ms 内被吞掉，云端永远收不到，Atelier 也就看不到。
-             dirty=false 后仍恢复原样覆盖，保证 Atelier 的删除/改动能正常传播。 */
           const guard=dirty;
           if(clean.length){
-            let next=clean;
-            if(guard){
-              const cur=normalize(localGet()||[]), m={}, ord=[], bid={};
-              clean.forEach(function(r){ const k=txt(r); if(r&&r.id) bid[r.id]=r; if(k&&!m[k]){ m[k]=r; ord.push(k); } });
-              cur.forEach(function(l){
-                const k=txt(l); if(!k) return;
-                const same=(l&&l.id)?bid[l.id]:null;
-                if(same){
-                  if(txt(same)!==k){
-                    const oldK=txt(same);
-                    same.text=l.text; same.updatedAt=l.updatedAt||same.updatedAt||0;
-                    if(l.deadline!==undefined) same.deadline=l.deadline;
-                    if(l.tag!==undefined) same.tag=l.tag;
-                    if(l.subtasks!==undefined) same.subtasks=l.subtasks;
-                    delete m[oldK]; m[k]=same;
-                    const i=ord.indexOf(oldK); if(i>=0) ord[i]=k;
-                  }
-                  if(l.done && !same.done){ same.done=true; same.completedAt=l.completedAt||Date.now(); }
-                }else if(!m[k]){ m[k]=l; ord.push(k); }
-                else if(l.done && !m[k].done){
-                  m[k]=Object.assign({},m[k],{done:true,completedAt:l.completedAt||Date.now(),updatedAt:m[k].updatedAt||Date.now()});
-                }
-              });
-              next=ord.map(function(k){ return m[k]; }).filter(Boolean);
-            }
+            const cur=normalize(localGet()||[]), bid={}, order=[];
+            clean.forEach(function(r){ const k=txt(r); if(r&&r.id) bid[r.id]=r; order.push({k:k,r:r}); });
+            cur.forEach(function(l){
+              if(!l) return; const k=txt(l); if(!k) return;
+              const hit=l.id?bid[l.id]:null;
+              if(hit){
+                const m=mergeItem(l,hit);
+                for(let i=0;i<order.length;i++){ if(order[i].r===hit){ order[i].r=m; order[i].k=txt(m); break; } }
+                bid[l.id]=m;
+                return;
+              }
+              let exists=false; for(let i=0;i<order.length;i++){ if(order[i].k===k){ exists=true; break; } }
+              if(!exists) order.push({k:k,r:l});
+            });
+            const next=order.map(function(x){return x.r;}).filter(Boolean);
             if(sig(next)!==sig(localGet())){ localSet(next); render(); }
           }
-          if(!guard) dirty=false;   /* 有待推送改动时保留标记，由 push 成败决定，避免网络失败丢改动 */
+          syncBase();
+          if(!guard) dirty=false;
           ready=true;
         }
       }catch(e){}
+      syncBase();
       syncing=false;
     }
     window.__hamiTodoPush=push;
@@ -10567,7 +10586,7 @@ const HAMI_SYNC = {
       setTodos:function(arr){ store.userTodos=arr; window.__todoSyncApplying=true; try{ saveData(true); }catch(e){} window.__todoSyncApplying=false; dirty=true; const _p=push(); render(); return _p; },
       state:function(){ return {ready:ready,dirty:dirty,master:MASTER,known:Object.keys(knownIds).length}; }
     };
-    window.__hamiTodoSchedulePush=function(){ if(window.__todoSyncApplying) return; dirty=true; if(timer) clearTimeout(timer); timer=setTimeout(function(){ push(); },800); };
+    window.__hamiTodoSchedulePush=function(){ if(window.__todoSyncApplying) return; stampUserEdits(); dirty=true; if(timer) clearTimeout(timer); timer=setTimeout(function(){ push(); },800); };
     setTimeout(pull,200);
     /* patch-sync v3.2：启动期原生云同步 hami-store 会覆盖 userTodos，多点补拉保证最终一致 */
     [800,2000,4000,7000,11000,16000].forEach(function(ms){ setTimeout(pull,ms); });
