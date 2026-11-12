@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-502"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-503"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -27002,45 +27002,36 @@ function planRenderPatchCard(h) {
  const st = planPatchState(h);
  const cnt = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).length;
  const last = h.lastDone ? h.lastDone.slice(5).replace('-', '/') : '';
- const nx = st.next.slice(5).replace('-', '/');
- const total = Math.max(1, parseInt(h.total) || 6);
+ // v503：不再预先排出「几号该贴」的点阵 / 下次日期 / 疗程进度条。
+ // 只认主人实际打卡日：打卡后隔一天在顶部轮播提醒，随时想贴也随时能打卡。
  let tip, btn;
- if (cnt >= total) {
-   tip = '<span class="plan-cycle-tip">' + total + ' 贴已用完 · 好好保持</span>';
-   btn = '';
+ if (st.doneToday) {
+   tip = '<span class="plan-cycle-tip">已贴 · 隔一天提醒你</span>';
+   btn = '<button class="plan-hair-btn" type="button" onclick="planPatchUndo()">撤销今天</button>';
  } else if (st.due) {
    tip = '<span class="plan-cycle-tip hot">今天该贴了 · 记得打卡</span>';
    btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">贴好了 · 打卡</button>';
- } else if (st.doneToday) {
-   tip = '<span class="plan-cycle-tip">今天已贴 · 下次 ' + nx + '</span>';
-   btn = '<button class="plan-hair-btn" type="button" onclick="planPatchUndo()">撤销今天</button>';
  } else {
-   tip = '<span class="plan-cycle-tip">剩 ' + (total - cnt) + ' 贴 · 下次 ' + nx + '</span>';
-   btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">提前贴一片</button>';
+   tip = '<span class="plan-cycle-tip">已记下 · 隔一天提醒你</span>';
+   btn = '<button class="plan-hair-btn primary" type="button" onclick="planPatchDone()">今天也贴一片</button>';
  }
- const pct = st.due ? 100 : Math.round((st.diff < 0 ? 0 : st.diff) / st.cycle * 100);
  return '<div class="plan-habit" data-habit="patch">'
  + '<div class="plan-habit-head"><span class="plan-habit-ico"></span>'
  + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
  + '<span class="plan-habit-cadence">隔天一次</span></div>'
- + '<div class="plan-cycle-line"><span class="plan-cycle-day">已贴 ' + cnt + '/' + (Math.max(1, parseInt(h.total) || 6)) + ' 贴</span>' + tip + '</div>'
- + '<div class="plan-cycle-bar"><span class="cb-fill" style="width:' + pct + '%;"></span></div>'
- + '<div class="plan-patch-dots">' + planPatchDotsHtml(h) + '</div>'
- + '<div class="plan-patch-streak">连续达成 ' + planPatchStreak(h) + ' 期 · 剩余 ' + (Math.max(1, parseInt(h.total) || 6) - cnt) + ' 贴</div>'
+ + '<div class="plan-cycle-line"><span class="plan-cycle-day">累计 ' + cnt + ' 贴</span>' + tip + '</div>'
  + '<div class="plan-hair-btns">' + btn + '</div>'
  + (last ? '<div class="plan-hair-last">上次 ' + last + '</div>' : '')
  + '</div>';
 }
 function planPatchDone() {
  const h = planHabitByKey('patch'); if (!h) return;
- const _used = Object.keys(h.history || {}).filter(function (d) { return h.history[d]; }).length;
- if (_used >= (parseInt(h.total) || 6)) { try { finToast('6 贴都用完啦'); } catch (e) {} return; }
  const today = todayStr();
  h.lastDone = today;
  if (!h.history) h.history = {};
  h.history[today] = 1;
  saveData(); renderPlanHabits();
- try { finToast('牙贴打卡 · 下次 ' + planPatchNext(h).slice(5).replace('-', '/')); } catch (e) {}
+ try { finToast('牙贴打卡 · 隔一天提醒你'); } catch (e) {}
  try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
  try { if (typeof renderCountdown === 'function') renderCountdown(); } catch (e) {}
 }
@@ -27995,16 +27986,14 @@ function planQuickItems() {
  }
  // v499：护发素撤出快速打卡（数据保留）
  if (by.patch) {
-  let st = { doneToday: false, due: true, next: '' }, used = 0;
+  let st = { doneToday: false, due: true, next: '' };
   try { st = planPatchState(by.patch); } catch (e) {}
-  try { used = Object.keys(by.patch.history || {}).filter(function (d) { return by.patch.history[d]; }).length; } catch (e) {}
-  const total = parseInt(by.patch.total) || 6;
   items.push({
    k:'patch', g:'daily', label:'牙贴',
-   sub: st.doneToday ? '今天已贴' : (st.due ? '今天该贴' : '隔天 · 下次 ' + st.next),
-   tip: used >= total ? '6 贴已用完' : (st.doneToday ? '今天已贴 · 点一下撤销' : (st.due ? '今天该贴了' : '隔天一次 · 下次 ' + st.next)),
-   done: !!st.doneToday, off: used >= total, wait: !st.due && !st.doneToday && used < total,
-   streak: used + '/' + total
+   sub: st.doneToday ? '今天已贴' : (st.due ? '今天该贴' : '隔天 · 已记下'),
+   tip: st.doneToday ? '今天已贴 · 点一下撤销' : (st.due ? '今天该贴了' : '已记下 · 隔一天提醒你'),
+   done: !!st.doneToday, off: false, wait: !st.due && !st.doneToday,
+   streak: ''
   });
  }
  return items;
@@ -28097,7 +28086,7 @@ function renderCountdown() {
  try {
   const _patchHabit = (store.planHabits || []).filter(function (x) { return x && x.type === 'patch'; })[0];
   if (_patchHabit && _patchHabit.lastDone && typeof planPatchState === 'function' && planPatchState(_patchHabit).due) {
-   alerts.push({ icon: '', label: '该贴美白牙贴了 · 去打卡', days: 0, targetDate: todayDate, kind: 'patch', hideDays: true });
+   alerts.push({ icon: '', label: '隔一天啦 · 该贴美白牙贴了', days: 0, targetDate: todayDate, kind: 'patch', hideDays: true });
   }
  } catch (e) {}
 
@@ -29467,7 +29456,7 @@ function mnRender(){
   document.getElementById('mn-stage-label').textContent = '最新一张';
   document.getElementById('mn-stage-card').innerHTML = latest ? mnCardHtml(latest,true,false)
     : mnCardHtml(mnDemo(),true,true);
-  document.getElementById('mn-stage-note').textContent = arr.length>1 ? ('其余 '+(arr.length-1)+' 张按分类收着') : '';
+  document.getElementById('mn-stage-note').textContent = arr.length>1 ? ('其余 '+(arr.length-1)+' 张 · 点任意一条看全文') : '';
 
   /* 按分类折叠的便签册 */
   var rest = arr.slice(1), html = '';
@@ -29480,7 +29469,7 @@ function mnRender(){
     MN_CATS.forEach(function(c){
       var list = rest.filter(function(n){ return n.cat===c.k; });
       if(!list.length) return;
-      var open = !!mnState.openCats[c.k];
+      var open = mnState.openCats[c.k] !== false; /* v503：默认全展开，写过的便签一眼可见 */
       html += '<div class="mn-fold mn-cat-'+c.k+'">'
            +  '<button class="mn-fold-head" type="button" onclick="mnToggleCatFold(\''+c.k+'\')">'
            +  '<span class="mn-fold-dot"></span><b>'+c.n+'</b><small>'+list.length+' 张</small><i>'+(open?'−':'＋')+'</i></button>';
@@ -29496,10 +29485,10 @@ function mnRender(){
           var sum = String(n.text).replace(/\s+/g,' ');
           if(sum.length > 32) sum = sum.slice(0,32)+'…';
           html += '<div class="mn-fold-item">'
-               +  '<div class="mn-fold-line" onclick="mnToggleNoteFold(\''+n.id+'\')">'
+               +  '<div class="mn-fold-line" onclick="mnOpenViewer(\''+n.id+'\')" title="点开看整张">'
                +  '<span class="mn-fold-sum">'+mnEsc(sum)+'</span>'
                +  '<span class="mn-fold-date">'+mnStamp(n.ts).split(' ')[0]+'</span>'
-               +  '<i>'+(o?'−':'＋')+'</i>'
+               +  '<i class="mn-fold-more">看全文</i>'
                +  '<span class="mn-row-ops">'
                +   (mnState.rowConfirmId===n.id
                      ? '<button type="button" data-mn-op="del-yes" data-mn-id="'+n.id+'">确定删</button>'
@@ -29518,7 +29507,7 @@ function mnRender(){
   box.innerHTML = html;
 }
 
-function mnToggleCatFold(k){ mnState.openCats[k]=!mnState.openCats[k]; mnRender(); }
+function mnToggleCatFold(k){ mnState.openCats[k]=!(mnState.openCats[k]!==false); mnRender(); }
 function mnToggleNoteFold(id){ mnState.openNotes[id]=!mnState.openNotes[id]; mnRender(); }
 function mnResetFold(){ mnState.openCats={}; mnState.openNotes={}; mnState.stageId=null; }
 function mnSetCat(k){ mnState.cat=k; mnResetFold(); mnRender(); }
@@ -29543,12 +29532,17 @@ function mnAskDel(id){
 }
 function mnCancelDel(){ mnState.confirmId=null; mnRender(); }
 function mnDelete(id){
-  var a=mnNotes(); for(var i=0;i<a.length;i++) if(a[i].id===id){ a.splice(i,1); break; }
-  mnState.confirmId=null;
+  var a=mnNotes(), hit=null;
+  for(var i=0;i<a.length;i++) if(a[i].id===id){ hit=a[i]; a.splice(i,1); break; }
+  mnState.confirmId=null; mnState.rowConfirmId=null;
   if(mnState.stageId===id) mnState.stageId=null;
   if(mnState.viewerId===id) mnCloseViewer();
   delete mnState.openNotes[id];
-  store.moodNotes=a; mnSaveStore(); mnRender();
+  // v503：删前写通用墓碑。只 splice 不写墓碑 → 云同步 mergeStoreInto 按 id 并集把旧便签合回来（删了马上回来）
+  if(hit){ try { hamiTombAdd('moodNotes', hit); } catch(e){} }
+  store.moodNotes=a; mnSaveStore();
+  try { if(typeof hamiDeleteSync==='function') hamiDeleteSync(); } catch(e){}
+  mnRender();
 }
 
 /* —— 写卡 / 编辑：分类自带纸样，手选过纸样后不覆盖 —— */
@@ -30353,5 +30347,14 @@ button.pq-item.wait .pq-state,button.pq-item.off .pq-state{color:#B08A9C;backgro
  .mn-row-ops button{padding:7px 12px;min-height:38px;min-width:44px;font-size:11.5px;}
 }
 .bs-side-top{margin-bottom:4px;}
+/* ===== v503 便签：点任意一条看整张全文 ===== */
+.mn-fold-line .mn-fold-more{font-style:normal;font-size:10.5px;font-weight:800;color:#C98CA8;flex:0 0 auto;white-space:nowrap;letter-spacing:.3px;}
+.mn-viewer{overflow-y:auto;}
+.mn-viewer-inner{margin:auto;}
+.mn-viewer .mn-card{justify-content:flex-start;}
+@media (max-width:768px){
+ .mn-fold-line .mn-fold-more{font-size:10px;}
+ .mn-viewer-inner{width:min(520px,96vw);}
+}
 </style>
 </body></html>
