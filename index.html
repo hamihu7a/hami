@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-504"><script>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="hami-build" content="2026-11-12-505"><script>
 /* v151 one-shot recover: write 9.18-10.05 records straight into localStorage */
 (function(){
  try{
@@ -718,15 +718,15 @@
  .hami-cmd-bar .cmd-send { font-size: 12px; padding: 6px 9px; }
  }
  /* 健康·目标体重行 + 进度环（v333：删除修改按钮，直接点数字编辑；上下排布压紧凑） */
- .goal-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 8px; }
- .goal-row .goal-main { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 4px; }
+ .goal-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: rgba(255,255,255,0.7); border: 1px solid var(--c-line); border-radius: var(--radius-sm); padding: 5px 8px; margin-bottom: 6px; }
+ .goal-row .goal-main { flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 3px; }
  .goal-row .goal-line { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
- .goal-row label { font-size: 12px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; width: 78px; }
+ .goal-row label { font-size: 11px; color: var(--c-pink-deep); font-weight: 600; white-space: nowrap; width: 62px; }
  .goal-row .goal-unit { font-size: 12px; color: var(--c-muted); }
- .goal-row input { width: 70px; padding: 3px 6px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 14px; text-align: center; background: #fff; color: var(--c-text); }
+ .goal-row input { width: 56px; padding: 2px 5px; border: 1px solid var(--c-line); border-radius: 8px; font-size: 13px; text-align: center; background: #fff; color: var(--c-text); }
  .goal-row input:focus { outline: none; border-color: var(--c-pink); box-shadow: 0 0 0 3px rgba(255,158,181,0.25); }
- .goal-row .goal-info { font-size: 11px; color: var(--c-muted); line-height: 1.3; padding-top: 3px; border-top: 1px solid var(--c-line, #ffe4ec); }
- .goal-row .goal-info b { font-size: 13px; color: var(--c-pink-deep); }
+ .goal-row .goal-info { font-size: 10px; color: var(--c-muted); line-height: 1.3; padding-top: 2px; border-top: 1px solid var(--c-line, #ffe4ec); }
+ .goal-row .goal-info b { font-size: 12px; color: var(--c-pink-deep); }
 
  /* 数据备份温和提醒（满 60 条时显示） */
  .backup-tip {
@@ -8415,7 +8415,7 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
 .mn-fold-body{padding:0 10px 10px;}
 .mn-fold-item{border-radius:10px;background:rgba(255,255,255,.74);border:1px solid rgba(255,255,255,.95);margin-bottom:6px;overflow:hidden;}
 .mn-fold-line{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;}
-.mn-fold-sum{flex:1;min-width:0;font-size:11.5px;color:#5E4F55;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mn-fold-sum{flex:1 1 auto;min-width:0;font-size:11.5px;color:#5E4F55;font-weight:600;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;word-break:break-word;}
 .mn-fold-date{font-size:9.5px;color:#A49099;font-weight:700;flex-shrink:0;}
 .mn-fold-line i{font-style:normal;font-size:12px;font-weight:800;color:#7A5967;flex-shrink:0;line-height:1;}
 .mn-fold-open{padding:2px 8px 8px;}
@@ -8608,18 +8608,16 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
     <div class="mn-modal-head"><b>图取字</b><button class="mn-x" type="button" onclick="mnCloseOcr()">×</button></div>
     <div class="mn-ocr-drop" onclick="document.getElementById('mn-ocr-file').click()">选一张图片</div>
     <input id="mn-ocr-file" type="file" accept="image/*" style="display:none;" onchange="mnOcrPick(this)">
-    <div class="mn-ocr-crop" id="mn-ocr-crop"><img id="mn-ocr-img" src="" alt=""><div class="mn-ocr-rect" id="mn-ocr-rect"></div></div>
+    <div class="mn-ocr-preview" id="mn-ocr-preview" style="display:none;"><img id="mn-ocr-img" src="" alt=""></div>
     <div class="mn-ocr-actions">
-      <button class="mn-mini" type="button" onclick="mnOcrRun()">重认整张</button>
-      <button class="mn-mini" type="button" onclick="mnOcrRunCrop()">只认框里</button>
-      <span class="mn-ocr-hint">在图上拖个框，只认这块最准</span>
+      <button class="mn-mini" type="button" onclick="mnOcrRun()">重认一次</button>
+      <button class="mn-mini" type="button" onclick="document.getElementById('mn-ocr-final').value=''">清空</button>
     </div>
     <div class="mn-ocr-status" id="mn-ocr-status">选好图片自动认字，首次需联网装字典</div>
-    <div class="mn-ocr-lines" id="mn-ocr-lines"></div>
-    <div class="mn-ocr-manual"><textarea id="mn-ocr-manual" placeholder="没认出来？把文字粘这儿，一行一句"></textarea><button class="mn-mini" type="button" onclick="mnOcrManual()">分行</button></div>
-    <div class="mn-field-label">选中的字（可改）</div>
-    <textarea id="mn-ocr-final" class="mn-textarea" style="min-height:150px;" placeholder="点上面的句子选进来"></textarea>
-    <div class="mn-ocr-editrow"><span>框里随意改，换行都留着</span><button class="mn-mini" type="button" onclick="mnOcrZoomOpen()">放大改字</button></div>
+
+    <div class="mn-field-label">认出来的字（直接改，换行都留着）</div>
+    <textarea id="mn-ocr-final" class="mn-textarea" style="min-height:170px;" placeholder="选图后自动填进来；没认出来就直接在这儿手打 / 粘贴"></textarea>
+
     <div class="mn-field-label">记到哪类</div>
     <div class="mn-cat-pick" id="mn-ocr-cat"></div>
     <div class="mn-field-label">便签款式</div>
@@ -8629,16 +8627,7 @@ body.theme-y2k #desktop-fortune .weather-title-lines .title-line { display: inli
       <button class="mn-btn" type="button" onclick="mnOcrSave()">记上去</button>
     </div>
   </div>
-  <div id="mn-ocr-zoom" class="mn-ocr-zoom" style="display:none;">
-    <div class="mn-ocr-zoom-box">
-      <div class="mn-ocr-zoom-top"><span>改选中的字</span><button class="mn-x" type="button" onclick="mnOcrZoomCancel()">×</button></div>
-      <textarea id="mn-ocr-zoom-text" class="mn-ocr-zoom-text" placeholder="慢慢改，换行和空行都会留着"></textarea>
-      <div class="mn-ocr-zoom-foot">
-        <button class="mn-mini" type="button" onclick="mnOcrZoomCancel()">取消</button>
-        <button class="mn-act mn-act-main" type="button" onclick="mnOcrZoomDone()">改好了</button>
-      </div>
-    </div>
-  </div>
+
 </div>
 
 <div id="mn-viewer" class="mn-viewer" style="display:none;" onclick="if(event.target===this)mnCloseViewer()">
@@ -12417,6 +12406,7 @@ var _hamiBannerLastShowAt = 0; // 上次显示横幅的时刻
 var _hamiBannerFailStreak = 0; // 连续失败计数
 var _hamiBannerLastFailKey = ''; // 上次失败的指纹：相同错误不重复计数
 var _cloudPushPending = false; // v218：同步就绪前的本地改动记下来，就绪后立刻补推，杜绝"记了没上云"
+var _firstPullDone = false; // v505：云端首次拉取完成前，不弹「去量体重」提醒（避免另一台设备已记录的体重还没同步下来就误提醒）
 var _commitFailNotified = false; // v231：本轮失败是否已弹过一次横幅（只弹一次，之后静默重试，绝不刷屏）
 var _commitRetryDelay = 5000; // v231：失败重试退避间隔（5s→10s→20s→30s 封顶），成功后复位
 
@@ -12769,6 +12759,7 @@ async function initCloudSync(statusEl, force) {
  if (!_cryptoReady()) { _diagStep('加密环境检查', false, 'crypto.subtle 不可用，浏览器不支持或非 https'); cloudStatus('️ 当前环境不支持加密，请用 https 打开本页', '#c75b86'); syncBadgeShow('未同步', true); return; }
  _diagStep('加密环境检查', true, 'crypto.subtle 可用');
  await pullAndMerge(); // 先成功拉取，失败则进入下方 catch 重试
+ _firstPullDone = true; try { checkCheckinAlerts(); } catch (e) {}
  hamiSyncReady = true;
  _diagStep('拉取云端完成', true, '');
  // v218：同步刚就绪，把就绪前累积的本地改动立刻补推上云（防"记了没上云"）
@@ -12805,6 +12796,7 @@ async function initCloudSync(statusEl, force) {
  setTimeout(_try, 15000);
  } else {
  hamiSyncReady = true;
+ _firstPullDone = true; try { checkCheckinAlerts(); } catch (e) {}
  // v218：即便首次同步最终失败，也把就绪前累积的本地改动补推一次（不依赖先拉到云端）
  if (_cloudPushPending) { _cloudPushPending = false; try { commitToCloud(); } catch (e) {} }
  // 即使最终失败，也尝试补传一下背景图（store 可能还是空，但背景图值得保留）
@@ -16350,12 +16342,12 @@ function collectCheckinAlerts() {
  const maskInfo = getNextMaskInfo();
 
  // 量体重提醒：早上8点起到13点前温柔提醒（每天打开都能看到）
- if (!hasWeight && hour >= 8 && hour < 13) {
+ if (!hasWeight && _firstPullDone && hour >= 8 && hour < 13) {
  alerts.push({ icon: '️', text: '该量体重啦！记得记录哦~', type: 'weight' });
  }
  // v499：运动打卡提醒撤出主页提醒条（主人要求）
  // 量体重未完成超时提醒：13:00 以后还没量（持续提醒，直到量了为止）
- if (!hasWeight && hour >= 13) {
+ if (!hasWeight && _firstPullDone && hour >= 13) {
  alerts.push({ icon: '️', text: '今天还没量体重！别忘了~', type: 'weight' });
  }
  // v499：运动超时提醒同步撤出主页提醒条
@@ -18528,13 +18520,13 @@ function renderWeightGoal(startWeight, latestAfter) {
  if (goal != null && document.activeElement !== input) input.value = goal;
 
  // 进度环几何
- const R = 24, C = 2 * Math.PI * R;
+ const R = 18, C = 2 * Math.PI * R;
 
  if (goal == null || latestAfter == null) {
  info.innerHTML = goal == null
  ? '还没设目标呢，填一个小目标吧～'
  : `目标 <b>${goal.toFixed(1)}</b> 斤，本月还没记体重哦～`;
- ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="7"/><text x="30" y="34" text-anchor="middle" font-size="12" fill="var(--c-muted)">—</text></svg>`;
+ ring.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="6"/><text x="22" y="26" text-anchor="middle" font-size="11" fill="var(--c-muted)">—</text></svg>`;
  return;
  }
 
@@ -18551,9 +18543,9 @@ function renderWeightGoal(startWeight, latestAfter) {
  info.innerHTML = `当前 <b>${latestAfter.toFixed(1)}</b> 斤 · 还差 <b>${remain.toFixed(1)}</b> 斤达标 · 已完成 <b>${pct.toFixed(0)}%</b>`;
  }
 
- ring.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="7"/><circle cx="30" cy="30" r="${R}" fill="none" stroke="var(--c-pink)" stroke-width="7"
+ ring.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R}" fill="none" stroke="var(--c-pink-soft)" stroke-width="6"/><circle cx="22" cy="22" r="${R}" fill="none" stroke="var(--c-pink)" stroke-width="6"
  stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${(C - dash).toFixed(1)}"
- transform="rotate(-90 30 30)" style="transition:stroke-dasharray .5s ease;"/><text x="30" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="var(--c-pink-deep)">${pct.toFixed(0)}%</text></svg>`;
+ transform="rotate(-90 22 22)" style="transition:stroke-dasharray .5s ease;"/><text x="22" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="var(--c-pink-deep)">${pct.toFixed(0)}%</text></svg>`;
 }
 
 function bindWeightGoalInput() {
@@ -20301,6 +20293,7 @@ function submitWeightEdit() {
  finToast(' 已记体重 ' + val.toFixed(1) + ' 斤（' + date + '）');
  }
  saveData();
+ try { if (typeof commitToCloud === 'function') commitToCloud(); } catch (e) {}
  closeWeightEditModal();
  refreshWeightViews(); // 统一刷新：首页日历 / 三·健康记录 / 首页打卡卡 / 提醒
 }
@@ -20460,7 +20453,19 @@ function renderBodySizes() {
  const _bh = (store.height != null) ? store.height : 166;
  const _bb = getBMI();
  // v501：身高固定值 + BMI 实时换算，「身材围度」标题下一行极简显示（身高不可编辑）
+ let _bsDateLine = '';
+ if (cur) {
+   const _td0 = todayStr();
+   const _lastD = list[0].date;
+   const _tm = _td0.split('-'); const _ty = parseInt(_tm[0],10), _tmo = parseInt(_tm[1],10), _tdn = parseInt(_tm[2],10);
+   let _ny = _ty, _nmo = _tmo;
+   if (_tdn > 11) { _nmo = _tmo + 1; if (_nmo > 12) { _nmo = 1; _ny = _ty + 1; } }
+   const _nextD = _ny + '-' + String(_nmo).padStart(2,'0') + '-11';
+   const _left = Math.max(0, Math.round((new Date(_nextD + 'T00:00:00') - new Date(_td0 + 'T00:00:00')) / 86400000));
+   _bsDateLine = '<div class="bs-inline">上次记录 '+_lastD+' · 下次 '+_nextD+'（每月11日）· 还差 '+_left+' 天</div>';
+ }
  let html = '<div class="bs-inline">身高'+_bh+'cm · BMI '+(_bb.val!=null?_bb.val.toFixed(1):'—')+'</div>'
+   + _bsDateLine
    + '<div class="bs-body">'+bsFigure(cur,list)+bsSide(cur,list)+'</div>';
  if (!cur) {
   html += '<div class="bs-empty">还没有围度记录 · 点右上「记围度」填第一次，之后每次更新都能看到增减</div>';
@@ -26655,7 +26660,7 @@ function planRenderSuppCard(h) {
     + '<div class="plan-habit-head"><span class="plan-habit-ico"></span>'
     + '<span class="plan-habit-name">' + escTodo(h.name) + '</span>'
     + '<span class="plan-habit-cadence">每天</span></div>'
-    + '<div class="v479-two">' + col('镁 · 睡前', h.mg, 'mg', 'g') + col('维生素D · 早', h.vit, 'vit', 'p') + '</div></div>';
+    + '<div class="v479-two">' + col('镁 · 睡前', h.mg, 'mg', 'g') + '</div></div>';
 }
 // —— 月度同角度对比照：起 / 中 / 末 三格 ——
 function planCompressPhoto(file, cb) {
@@ -27975,7 +27980,7 @@ function v483Streak(map) {
 }
 const PQ_GROUPS = [
  { k:'skin',  name:'护肤',     sub:'身体 · 脸部',   tone:'pink'   },
- { k:'supp',  name:'保健品',   sub:'镁 · 维生素D',  tone:'purple' },
+ { k:'supp',  name:'保健品',   sub:'镁',  tone:'purple' },
  { k:'daily', name:'日常养护', sub:'牙齿',        tone:'blue'   }
 ];
 function v483Summary() {
@@ -28001,7 +28006,6 @@ function planQuickItems() {
  }
  if (by.supp) {
   items.push({ k:'mg', g:'supp', label:'镁', sub:'睡前吃', tip:'睡前吃', done:has(by.supp,'mg'), streak:v483Streak(by.supp.mg) });
-  items.push({ k:'vit', g:'supp', label:'维生素D', sub:'早上吃', tip:'早上吃', done:has(by.supp,'vit'), streak:v483Streak(by.supp.vit) });
  }
  // v499：护发素撤出快速打卡（数据保留）
  if (by.patch) {
@@ -29494,7 +29498,7 @@ function mnRender(){
            +  '<span class="mn-fold-dot"></span><b>'+c.n+'</b><small>'+list.length+' 张</small><i>'+(open?'−':'＋')+'</i></button>';
       if(!open && list.length){
         var pv = String(list[0].text).replace(/\s+/g,' ');
-        if(pv.length > 42) pv = pv.slice(0,42)+'…';
+        if(pv.length > 80) pv = pv.slice(0,80)+'…';
         html += '<div class="mn-fold-prev">'+mnEsc(pv)+'</div>';
       }
       if(open){
@@ -29502,7 +29506,7 @@ function mnRender(){
         list.forEach(function(n){
           var o = !!mnState.openNotes[n.id];
           var sum = String(n.text).replace(/\s+/g,' ');
-          if(sum.length > 32) sum = sum.slice(0,32)+'…';
+          if(sum.length > 80) sum = sum.slice(0,80)+'…';
           html += '<div class="mn-fold-item">'
                +  '<div class="mn-fold-line" onclick="mnOpenViewer(\''+n.id+'\')" title="点开看整张">'
                +  '<span class="mn-fold-sum">'+mnEsc(sum)+'</span>'
@@ -29685,20 +29689,17 @@ function mnOcrRenderPapers(){
 function mnOcrPickCat(k){ mnOcr.cat=k; if(!mnOcr.paperTouched) mnOcr.paper=mnCat(k).paper||'line'; mnOcrRenderCats(); mnOcrRenderPapers(); }
 function mnOcrPickPaper(k){ mnOcr.paper=k; mnOcr.paperTouched=true; mnOcrRenderPapers(); }
 function mnOcrReset(){
-  mnOcr.lines=[]; mnOcr.picked={}; mnOcr.canvas=null; mnOcr.crop=null; mnOcr.busy=false;
+  mnOcr.canvas=null; mnOcr.busy=false;
   mnOcr.cat = mnState.cat!=='all' ? mnState.cat : 'mood';
   mnOcr.paper = mnCat(mnOcr.cat).paper||'line'; mnOcr.paperTouched=false;
   var f=document.getElementById('mn-ocr-file'); if(f) f.value='';
   var im=document.getElementById('mn-ocr-img'); if(im) im.removeAttribute('src');
-  var rc=document.getElementById('mn-ocr-rect'); if(rc) rc.style.display='none';
-  document.getElementById('mn-ocr-lines').innerHTML='';
-  document.getElementById('mn-ocr-manual').value='';
-  document.getElementById('mn-ocr-final').value='';
-  var z=document.getElementById('mn-ocr-zoom'); if(z) z.style.display='none';
-  mnOcrStatus('选好图片自动认字，首次需联网装字典（约 2MB）');
+  var pv=document.getElementById('mn-ocr-preview'); if(pv) pv.style.display='none';
+  var fin=document.getElementById('mn-ocr-final'); if(fin) fin.value='';
+  mnOcrStatus('选一张图片，自动认字（首次需联网装字典约 2MB）');
   mnOcrRenderCats(); mnOcrRenderPapers();
 }
-function mnOpenOcr(){ mnOcrReset(); document.getElementById('mn-ocr').style.display='flex'; mnOcrBindCrop(); }
+function mnOpenOcr(){ mnOcrReset(); document.getElementById('mn-ocr').style.display='flex'; }
 function mnCloseOcr(){ document.getElementById('mn-ocr').style.display='none'; var z=document.getElementById('mn-ocr-zoom'); if(z) z.style.display='none'; mnOcr.busy=false; }
 /* 原图上拖框，框内区域可单独放大重认 */
 function mnOcrBindCrop(){
@@ -29743,10 +29744,10 @@ function mnOcrPick(input){
       var eg=en.getContext('2d');
       try { eg.filter='grayscale(1) contrast(1.5) brightness(1.06)'; } catch(err){}
       eg.imageSmoothingQuality='high'; eg.drawImage(cv,0,0);
-      mnOcr.canvas=en; mnOcr.crop=null;
+      mnOcr.canvas=en;
       var im2=document.getElementById('mn-ocr-img'); if(im2) im2.src=cv.toDataURL('image/jpeg',.9);
-      var rc=document.getElementById('mn-ocr-rect'); if(rc) rc.style.display='none';
-      mnOcrStatus('图已放好，正在分条认字…');
+      var pv=document.getElementById('mn-ocr-preview'); if(pv) pv.style.display='flex';
+      mnOcrStatus('正在认字…');
       mnOcrRun();
     };
     im.onerror=function(){ mnOcrStatus('这张图读不出来，换一张'); };
@@ -29909,8 +29910,9 @@ function mnOcrStart(cropOnly){
     function step(){
       if(i>=parts.length){
         var lines=mnOcrMerge(bag);
-        mnOcrSetLines(lines.join('\n'));
-        mnOcrStatus(lines.length?('认完了，共 '+lines.length+' 段，点掉不要的'):'没认出来，拖框只认那块，或把文字粘在下面');
+        var txt=lines.join('\n');
+        var fin=document.getElementById('mn-ocr-final'); if(fin) fin.value=txt;
+        mnOcrStatus(lines.length?('认完了，共 '+lines.length+' 段，直接在框里改'):'没认出来，可以直接在框里手打 / 粘贴');
         mnOcr.busy=false; return;
       }
       var p=parts[i];
@@ -30358,12 +30360,12 @@ button.pq-item.wait .pq-state,button.pq-item.off .pq-state{color:#B08A9C;backgro
 /* v491 臀围加进图后，第七行标签不挤 */
 /* ===== v502 便签册：每条摘要行直接给「改 / 删」，触屏好点、不用展开两层 ===== */
 .mn-row-ops{display:inline-flex !important;gap:5px;margin-left:8px;flex:0 0 auto;position:relative;z-index:6;pointer-events:auto;}
-.mn-row-ops button{border:1px solid #F2E5EC;background:rgba(255,255,255,.96);border-radius:9px;font-size:11px;font-weight:800;color:#8C7B82;padding:5px 11px;min-height:32px;min-width:38px;cursor:pointer;font-family:inherit;pointer-events:auto;touch-action:manipulation;}
+.mn-row-ops button{border:1px solid #F2E5EC;background:rgba(255,255,255,.96);border-radius:9px;font-size:10px;font-weight:800;color:#8C7B82;padding:2px 8px;min-height:24px;min-width:28px;cursor:pointer;font-family:inherit;pointer-events:auto;touch-action:manipulation;}
 .mn-row-ops button[data-mn-op="del"],.mn-row-ops button[data-mn-op="del-yes"]{color:#C9849A;background:#FBE9EE;border-color:#F3D6DF;}
-.mn-fold-line .mn-fold-sum{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mn-fold-line .mn-fold-sum{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5;word-break:break-word;}
 @media (max-width:768px){
  .mn-row-ops{gap:4px;margin-left:6px;}
- .mn-row-ops button{padding:7px 12px;min-height:38px;min-width:44px;font-size:11.5px;}
+ .mn-row-ops button{padding:5px 9px;min-height:30px;min-width:34px;font-size:10.5px;}
 }
 .bs-side-top{margin-bottom:4px;}
 /* ===== v503 便签：点任意一条看整张全文 ===== */
